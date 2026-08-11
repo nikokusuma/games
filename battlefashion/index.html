@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anime Fashion Runway - AI Judge & Multiplayer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=M+PLUS+Rounded+1c:wght@400;700;800&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        animePink: '#FF6B9D',
+                        animePurple: '#8A4FFF',
+                        animeCyan: '#00F0FF',
+                        animeDark: '#121124',
+                        animeCard: '#1C1A35',
+                        animeGold: '#FFD700'
+                    },
+                    fontFamily: {
+                        anime: ['"M PLUS Rounded 1c"', 'Fredoka', 'sans-serif'],
+                        heading: ['Fredoka', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background: radial-gradient(circle at top left, #1f1a3a, #0d0b18);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .glass-panel {
+            background: rgba(28, 26, 53, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 107, 157, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .anime-btn {
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.3);
+        }
+        .anime-btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(255, 107, 157, 0.5);
+        }
+        .anime-btn:active {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        .neon-text-pink {
+            text-shadow: 0 0 10px rgba(255, 107, 157, 0.7), 0 0 20px rgba(255, 107, 157, 0.5);
+        }
+        .neon-text-cyan {
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.7), 0 0 20px rgba(0, 240, 255, 0.5);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(18, 17, 36, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #FF6B9D;
+            border-radius: 999px;
+        }
+
+        @keyframes floatAnim {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        .animate-float {
+            animation: floatAnim 4s ease-in-out infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.8; }
+        }
+        .pulse-glow {
+            animation: pulseGlow 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="p-2 md:p-6 text-slate-100 flex flex-col min-h-screen justify-between">
+
+    <!-- Top Header -->
+    <header class="max-w-6xl w-full mx-auto mb-4 flex justify-between items-center glass-panel p-4 rounded-2xl">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-animePink to-animePurple flex items-center justify-center text-xl text-white font-black shadow-lg">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </div>
+            <div>
+                <h1 class="text-xl md:text-2xl font-black bg-gradient-to-r from-animePink via-purple-300 to-animeCyan bg-clip-text text-transparent font-heading tracking-wide">
+                    ANIME FASHION RUNWAY
+                </h1>
+                <p class="text-xs text-pink-300/80 font-medium">Multiplayer 2D Design & AI Sensei Judging</p>
+            </div>
+        </div>
+
+        <div id="userInfoHeader" class="hidden flex items-center gap-3 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
+            <i class="fa-solid fa-user-ninja text-animeCyan"></i>
+            <span id="headerPlayerName" class="font-bold text-sm text-pink-200">Player</span>
+            <span id="headerRoomBadge" class="bg-animePurple/60 text-xs px-2 py-0.5 rounded-md font-mono text-cyan-200">NO ROOM</span>
+        </div>
+    </header>
+
+    <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Main Dynamic Screen Container -->
+    <main class="max-w-6xl w-full mx-auto flex-1 flex flex-col items-center justify-center relative">
+
+        <!-- SCREEN 1: LOGIN & LOBBY JOIN -->
+        <section id="screenLobby" class="w-full max-w-lg glass-panel p-6 md:p-8 rounded-3xl flex flex-col gap-6 shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-12 -right-12 w-40 h-40 bg-animePink/20 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="absolute -bottom-12 -left-12 w-40 h-40 bg-animeCyan/20 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="text-center">
+                <div class="inline-block px-3 py-1 bg-pink-500/20 text-pink-300 text-xs rounded-full font-bold uppercase tracking-wider mb-2 border border-pink-500/30">
+                    ✨ Runway Competition ✨
+                </div>
+                <h2 class="text-3xl font-black text-white font-heading">Selamat Datang!</h2>
+                <p class="text-slate-300 text-sm mt-1">Buat busana anime impianmu & dinilai langsung oleh AI Sensei!</p>
+            </div>
+
+            <!-- Player Name Input -->
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-pink-300 uppercase tracking-wider block">
+                    <i class="fa-solid fa-signature text-animePink mr-1"></i> Nama Perancang (Player Name)
+                </label>
+                <input type="text" id="inputPlayerName" placeholder="Contoh: Sakura_Chic" maxlength="15"
+                    class="w-full bg-slate-900/80 border-2 border-pink-500/30 rounded-2xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-animePink focus:ring-2 focus:ring-animePink/30 transition-all font-bold">
+            </div>
+
+            <!-- Choose Action Tabs -->
+            <div class="grid grid-cols-2 gap-3 p-1 bg-slate-900/60 rounded-2xl border border-white/10">
+                <button id="tabCreate" onclick="switchLobbyTab('create')" class="py-2.5 rounded-xl font-bold text-sm transition-all bg-gradient-to-r from-animePink to-purple-600 text-white shadow-md">
+                    <i class="fa-solid fa-plus-circle mr-1"></i> Buat Room
+                </button>
+                <button id="tabJoin" onclick="switchLobbyTab('join')" class="py-2.5 rounded-xl font-bold text-sm text-slate-400 hover:text-white transition-all">
+                    <i class="fa-solid fa-right-to-bracket mr-1"></i> Gabung Code
+                </button>
+            </div>
+
+            <!-- Tab Content: Create Room -->
+            <div id="contentCreateRoom" class="space-y-4">
+                <p class="text-xs text-slate-400 text-center">Buat ruang perlombaan baru dan bagikan Room Code ke temanmu!</p>
+                <button onclick="handleCreateRoom()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-animePink via-purple-600 to-animeCyan text-white font-black text-lg tracking-wide anime-btn flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-crown text-yellow-300"></i> BUAT ROOM BARU
+                </button>
+            </div>
+
+            <!-- Tab Content: Join Room -->
+            <div id="contentJoinRoom" class="space-y-4 hidden">
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-cyan-300 uppercase tracking-wider block">
+                        <i class="fa-solid fa-key text-animeCyan mr-1"></i> Masukkan Room Code
+                    </label>
+                    <input type="text" id="inputRoomCode" placeholder="Contoh: CHIC88" uppercase maxlength="8"
+                        class="w-full bg-slate-900/80 border-2 border-cyan-500/30 rounded-2xl px-4 py-3 text-cyan-300 uppercase font-mono font-bold text-center text-xl tracking-widest focus:outline-none focus:border-animeCyan focus:ring-2 focus:ring-animeCyan/30 transition-all">
+                </div>
+                <button onclick="handleJoinRoom()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-animeCyan to-blue-600 text-white font-black text-lg tracking-wide anime-btn flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> GABUNG PERTANDINGAN
+                </button>
+            </div>
+        </section>
+
+        <!-- SCREEN 2: WAITING ROOM LOBBY -->
+        <section id="screenRoomLobby" class="w-full max-w-4xl glass-panel p-6 md:p-8 rounded-3xl flex flex-col gap-6 shadow-2xl hidden">
+            <!-- Room Top Info Bar -->
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-900/60 p-4 rounded-2xl border border-white/10">
+                <div class="flex items-center gap-3">
+                    <div class="bg-animePink/20 text-animePink p-3 rounded-xl text-xl">
+                        <i class="fa-solid fa-door-open"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs text-slate-400 font-bold uppercase tracking-wider block">KODE RUANGAN (ROOM CODE)</span>
+                        <div class="flex items-center gap-2">
+                            <span id="displayRoomCode" class="text-2xl font-black font-mono text-animeCyan tracking-widest">------</span>
+                            <button onclick="copyRoomCode()" class="px-2.5 py-1 bg-white/10 hover:bg-white/20 rounded-lg text-xs text-pink-300 font-bold transition-all">
+                                <i class="fa-solid fa-copy mr-1"></i> Salin
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <!-- Theme Selector (Host Only) -->
+                    <div id="themeSelectBox" class="flex-1 md:w-64">
+                        <label class="text-xs text-pink-300 font-bold block mb-1">TEMA FASHION:</label>
+                        <select id="selectTheme" class="w-full bg-slate-900 border border-pink-500/40 rounded-xl px-3 py-2 text-sm text-white font-bold focus:outline-none">
+                            <option value="Cyberpunk Harajuku Streetwear">Cyberpunk Harajuku Streetwear</option>
+                            <option value="Gothic Lolita Tea Party">Gothic Lolita Tea Party</option>
+                            <option value="Magical Girl Idol Stage">Magical Girl Idol Stage</option>
+                            <option value="Royal Magic Academy Uniform">Royal Magic Academy Uniform</option>
+                            <option value="Summer Festival Yukata Fantasy">Summer Festival Yukata Fantasy</option>
+                            <option value="Dark Fantasy Demon Princess">Dark Fantasy Demon Princess</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Player Grid -->
+            <div>
+                <h3 class="text-base font-bold text-slate-200 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-users text-animePink"></i> Perancang Yang Bergabung (<span id="playerCountText">0</span>)
+                </h3>
+                <div id="playerGridContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <!-- Dynamic player cards rendered via JS -->
+                </div>
+            </div>
+
+            <!-- Host / Player Controls -->
+            <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                <button id="btnStartGame" onclick="handleStartGame()" class="flex-1 py-4 bg-gradient-to-r from-animePink via-purple-600 to-animeCyan text-white font-black text-lg rounded-2xl anime-btn shadow-lg flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-play text-yellow-300"></i> MULAI PERTANDINGAN
+                </button>
+                <button onclick="leaveRoom()" class="px-6 py-4 bg-red-500/20 border border-red-500/40 hover:bg-red-500/30 text-red-300 font-bold rounded-2xl transition-all">
+                    <i class="fa-solid fa-door-arrow-left"></i> Keluar
+                </button>
+            </div>
+        </section>
+
+        <!-- SCREEN 3: DESIGN STUDIO PHASE -->
+        <section id="screenStudio" class="w-full max-w-6xl glass-panel p-4 md:p-6 rounded-3xl flex flex-col gap-4 shadow-2xl hidden">
+            <!-- Studio Header Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/70 p-3 rounded-2xl border border-pink-500/30">
+                <div class="flex items-center gap-2">
+                    <span class="px-3 py-1 bg-animePink/20 text-animePink font-bold text-xs rounded-lg border border-animePink/30 uppercase">
+                        TEMA RUNWAY
+                    </span>
+                    <span id="studioThemeTitle" class="text-base md:text-lg font-black text-yellow-300 font-heading">
+                        Theme Name
+                    </span>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-white/10">
+                        <i class="fa-solid fa-stopwatch text-animeCyan animate-pulse"></i>
+                        <span id="timerText" class="font-mono text-xl font-black text-cyan-300">03:00</span>
+                    </div>
+
+                    <button id="btnSubmitDesign" onclick="handleSubmitDesign()" class="px-5 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-black rounded-xl text-sm anime-btn flex items-center gap-2">
+                        <i class="fa-solid fa-check-circle"></i> Selesai Desain!
+                    </button>
+                </div>
+            </div>
+
+            <!-- Studio Main Layout Grid: Canvas Left | Customizer Controls Right -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- Left Column: 2D Canvas Preview & Pitch (5 cols) -->
+                <div class="lg:col-span-5 flex flex-col items-center gap-3 bg-slate-950/60 p-4 rounded-2xl border border-white/10">
+                    <!-- Canvas Container -->
+                    <div class="relative w-full max-w-[340px] aspect-[3/4] rounded-2xl overflow-hidden bg-slate-900 shadow-2xl border-2 border-pink-500/40 flex items-center justify-center">
+                        <canvas id="animeCanvas" width="360" height="480" class="w-full h-full object-contain"></canvas>
+                        
+                        <!-- Floating Controls overlay on canvas -->
+                        <button onclick="randomizeOutfit()" class="absolute top-3 right-3 w-9 h-9 bg-slate-900/80 hover:bg-animePink text-white rounded-full flex items-center justify-center text-xs shadow-lg border border-white/20 transition-all" title="Acak Kombinasi (Randomize)">
+                            <i class="fa-solid fa-dice text-yellow-300"></i>
+                        </button>
+                    </div>
+
+                    <!-- Story / Pitch Text Input for AI Judge -->
+                    <div class="w-full space-y-1">
+                        <label class="text-xs font-bold text-pink-300 flex items-center justify-between">
+                            <span><i class="fa-solid fa-comment-dots mr-1"></i> Catatan Perancang untuk AI Judge:</span>
+                            <span class="text-[10px] text-slate-400">Opsional</span>
+                        </label>
+                        <textarea id="inputDesignPitch" rows="2" placeholder="Ceritakan konsep busanamu pada AI Sensei... (contoh: Menggabungkan nuansa cyberpunk neon dengan gaun kimono)"
+                            class="w-full bg-slate-900/90 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-animePink transition-all resize-none"></textarea>
+                    </div>
+                </div>
+
+                <!-- Right Column: Outfit Customizer Tabs & Controls (7 cols) -->
+                <div class="lg:col-span-7 flex flex-col gap-3">
+                    
+                    <!-- Customizer Navigation Tabs -->
+                    <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                        <button onclick="switchCategory('hair')" id="catBtn_hair" class="cat-tab-btn flex-1 py-2 px-3 bg-animePink text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 whitespace-nowrap border border-pink-400">
+                            <i class="fa-solid fa-scissors"></i> Rambut
+                        </button>
+                        <button onclick="switchCategory('tops')" id="catBtn_tops" class="cat-tab-btn flex-1 py-2 px-3 bg-slate-800 text-slate-300 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 whitespace-nowrap border border-white/10 hover:bg-slate-700">
+                            <i class="fa-solid fa-shirt"></i> Pakaian
+                        </button>
+                        <button onclick="switchCategory('bottoms')" id="catBtn_bottoms" class="cat-tab-btn flex-1 py-2 px-3 bg-slate-800 text-slate-300 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 whitespace-nowrap border border-white/10 hover:bg-slate-700">
+                            <i class="fa-solid fa-person-dress"></i> Rok / Celana
+                        </button>
+                        <button onclick="switchCategory('shoes')" id="catBtn_shoes" class="cat-tab-btn flex-1 py-2 px-3 bg-slate-800 text-slate-300 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 whitespace-nowrap border border-white/10 hover:bg-slate-700">
+                            <i class="fa-solid fa-shoe-prints"></i> Sepatu
+                        </button>
+                        <button onclick="switchCategory('acc')" id="catBtn_acc" class="cat-tab-btn flex-1 py-2 px-3 bg-slate-800 text-slate-300 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 whitespace-nowrap border border-white/10 hover:bg-slate-700">
+                            <i class="fa-solid fa-hat-wizard"></i> Aksesoris
+                        </button>
+                        <button onclick="switchCategory('face')" id="catBtn_face" class="cat-tab-btn flex-1 py-2 px-3 bg-slate-800 text-slate-300 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 whitespace-nowrap border border-white/10 hover:bg-slate-700">
+                            <i class="fa-solid fa-face-smile-wink"></i> Wajah
+                        </button>
+                    </div>
+
+                    <!-- Dynamic Options Container -->
+                    <div id="customizerPanel" class="bg-slate-900/80 p-4 rounded-2xl border border-white/10 min-h-[300px] flex flex-col justify-between gap-4">
+                        <div id="itemSelectionGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[220px] overflow-y-auto pr-1">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+
+                        <!-- Color Customizer Tool Section -->
+                        <div id="colorCustomizerBox" class="bg-slate-950/80 p-3 rounded-xl border border-white/10 flex flex-col gap-2">
+                            <span class="text-xs font-bold text-cyan-300 flex items-center gap-1">
+                                <i class="fa-solid fa-palette"></i> Penyesuaian Warna (Color Picker)
+                            </span>
+                            <div id="colorSwatches" class="flex flex-wrap gap-2 items-center">
+                                <!-- Preset color circles -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- SCREEN 4: SHOWCASE & AI JUDGE STAGE -->
+        <section id="screenJudging" class="w-full max-w-5xl glass-panel p-6 md:p-8 rounded-3xl flex flex-col gap-6 shadow-2xl hidden">
+            <div class="text-center">
+                <span class="px-4 py-1.5 bg-gradient-to-r from-animePink to-animePurple text-white text-xs font-black rounded-full uppercase tracking-widest shadow-md">
+                    ✨ AI Sensei Runway Stage ✨
+                </span>
+                <h2 id="judgingStageTitle" class="text-2xl md:text-3xl font-black text-white font-heading mt-2">
+                    Penilaian Juri AI sedang Berlangsung...
+                </h2>
+            </div>
+
+            <!-- Stage & Showcase Carousel -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                
+                <!-- Player Model Stage Spotlight (5 cols) -->
+                <div class="md:col-span-5 flex flex-col items-center bg-gradient-to-b from-purple-950/60 to-slate-950 p-4 rounded-2xl border-2 border-animePink/40 relative overflow-hidden">
+                    <div id="stageGlow" class="absolute inset-0 bg-gradient-to-t from-pink-500/20 via-transparent to-cyan-500/10 pointer-events-none"></div>
+                    
+                    <span id="showcasePlayerName" class="text-xl font-black text-animePink font-heading mb-2 z-10">
+                        Player Name
+                    </span>
+                    
+                    <div class="w-full max-w-[280px] aspect-[3/4] bg-slate-900 rounded-2xl overflow-hidden shadow-2xl relative border border-white/10">
+                        <img id="showcaseCanvasImg" src="" alt="Anime Fashion Design" class="w-full h-full object-contain">
+                    </div>
+                </div>
+
+                <!-- AI Sensei Critique Panel (7 cols) -->
+                <div class="md:col-span-7 bg-slate-900/90 p-5 rounded-2xl border border-cyan-500/30 flex flex-col gap-4">
+                    
+                    <!-- AI Sensei Avatar Header -->
+                    <div class="flex items-center gap-4 pb-3 border-b border-white/10">
+                        <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-pink-500 to-animePurple p-0.5 shadow-lg">
+                            <div class="w-full h-full bg-slate-900 rounded-full flex items-center justify-center text-2xl text-animePink font-bold">
+                                🌸
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-black text-white text-lg font-heading">Sensei Hikari (AI Judge)</h4>
+                            <p class="text-xs text-pink-300 font-medium">Spesialis Haute Couture Anime & Fashion Critic</p>
+                        </div>
+                    </div>
+
+                    <!-- AI Evaluation Status / Output -->
+                    <div id="aiEvaluationBox" class="space-y-3">
+                        <div id="aiLoadingSpinner" class="flex flex-col items-center justify-center py-8 gap-3">
+                            <div class="w-10 h-10 border-4 border-animePink border-t-transparent rounded-full animate-spin"></div>
+                            <p class="text-xs text-cyan-300 font-bold animate-pulse">Sensei Hikari sedang mengamati detail busanamu...</p>
+                        </div>
+
+                        <div id="aiResultContent" class="hidden space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span id="aiScoreBadge" class="text-4xl font-black font-heading text-yellow-300 bg-yellow-500/20 px-4 py-1 rounded-2xl border border-yellow-500/40">
+                                    0 / 100
+                                </span>
+                                <span id="aiStyleTitle" class="text-xs font-black uppercase tracking-wider bg-animePurple/40 text-pink-200 px-3 py-1.5 rounded-xl border border-purple-400/30">
+                                    Title Badge
+                                </span>
+                            </div>
+
+                            <div class="bg-slate-950/80 p-3.5 rounded-xl border border-white/10">
+                                <p id="aiCritiqueText" class="text-xs md:text-sm text-slate-200 leading-relaxed italic">
+                                    "Kombinasi warna dan gaya yang sangat menarik!"
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Next Player Button -->
+                    <div class="flex justify-end pt-2">
+                        <button id="btnNextShowcase" onclick="nextShowcasePlayer()" class="px-6 py-2.5 bg-gradient-to-r from-animePink to-animePurple text-white font-bold text-sm rounded-xl anime-btn flex items-center gap-2">
+                            Pemain Berikutnya <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- SCREEN 5: FINAL LEADERBOARD -->
+        <section id="screenLeaderboard" class="w-full max-w-3xl glass-panel p-6 md:p-8 rounded-3xl flex flex-col gap-6 shadow-2xl text-center hidden">
+            <div>
+                <span class="text-4xl animate-bounce inline-block">🏆</span>
+                <h2 class="text-3xl font-black text-white font-heading mt-2 bg-gradient-to-r from-yellow-300 via-animePink to-animeCyan bg-clip-text text-transparent">
+                    HASIL PERTANDINGAN
+                </h2>
+                <p class="text-xs text-slate-300 mt-1">Pemenang Anime Fashion Runway Musim Ini!</p>
+            </div>
+
+            <!-- Leaderboard List -->
+            <div id="leaderboardContainer" class="flex flex-col gap-3">
+                <!-- Dynamically filled with ranked cards -->
+            </div>
+
+            <div class="flex justify-center gap-4 pt-4">
+                <button onclick="restartLobby()" class="px-8 py-3.5 bg-gradient-to-r from-animePink via-purple-600 to-animeCyan text-white font-black rounded-2xl anime-btn text-base">
+                    <i class="fa-solid fa-rotate-right mr-2"></i> Main Lagi
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-6xl w-full mx-auto mt-6 text-center text-xs text-slate-500 py-2">
+        <p>Anime Fashion Runway 2D • Powered by Google Gemini AI Vision Judging • Firebase Realtime Sync</p>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Expose Firestore helper functions globally so non-module scripts can call them
+        window.doc = doc;
+        window.setDoc = setDoc;
+        window.getDoc = getDoc;
+        window.onSnapshot = onSnapshot;
+        window.updateDoc = updateDoc;
+
+        // Firebase Global Environment Variables
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'anime-fashion-app-default';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "demo-key",
+            authDomain: "demo.firebaseapp.com",
+            projectId: "demo-project",
+            storageBucket: "demo.appspot.com",
+            messagingSenderId: "1234567",
+            appId: "1:1234567:web:1234"
+        };
+
+        let app, db, auth;
+        let currentUser = null;
+        let localUserId = null;
+
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+        } catch (e) {
+            console.warn("Firebase initialization issue, running local fallback mode:", e);
+        }
+
+        // Initialize Authentication
+        async function initAuth() {
+            if (!auth) return;
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    const userCred = await signInWithCustomToken(auth, __initial_auth_token);
+                    currentUser = userCred.user;
+                } else {
+                    const userCred = await signInAnonymously(auth);
+                    currentUser = userCred.user;
+                }
+                localUserId = currentUser.uid;
+                console.log("Authenticated User ID:", localUserId);
+            } catch (err) {
+                console.error("Auth error:", err);
+                localUserId = 'user_' + Math.random().toString(36).substring(2, 9);
+            }
+        }
+        initAuth();
+
+        // Export Firebase helpers to window
+        window.getRoomDocRef = function(roomId) {
+            return doc(db, 'artifacts', appId, 'public', 'data', 'fashion_rooms', roomId);
+        };
+        window.getFirebaseDb = () => db;
+        window.getLocalUserId = () => localUserId || 'user_' + Math.random().toString(36).substring(2, 9);
+    </script>
+
+    <script>
+        
+        // --- GLOBAL GAME STATE ---
+        let currentRoomId = null;
+        let isHost = false;
+        let playerName = '';
+        let roomUnsubscribe = null;
+        let gameTimerInterval = null;
+        let studioTimeLeft = 180;
+        let activeCategory = 'hair';
+        let currentShowcaseIndex = 0;
+        let roomPlayersData = {};
+
+        // Outfit Configuration Model for 2D Anime Avatar
+        let outfitConfig = {
+            skinColor: '#FFE0BD',
+            eyeStyle: 'cute',
+            eyeColor: '#8A4FFF',
+            mouthStyle: 'smile',
+            hairStyle: 'twintails',
+            hairColorPrimary: '#FF6B9D',
+            hairColorHighlight: '#FFD700',
+            topStyle: 'school_blazer',
+            topColor: '#1C1A35',
+            topAccentColor: '#FF6B9D',
+            bottomStyle: 'pleated_skirt',
+            bottomColor: '#8A4FFF',
+            shoesStyle: 'mary_janes',
+            shoesColor: '#121124',
+            accessory: 'cat_ears',
+            accessoryColor: '#FF6B9D'
+        };
+
+        // Customizer Item Catalog
+        const catalog = {
+            hair: [
+                { id: 'twintails', name: 'Twin Tails Idol' },
+                { id: 'hime_cut', name: 'Hime Cut Classic' },
+                { id: 'short_bob', name: 'Cyber Short Bob' },
+                { id: 'long_wavy', name: 'Princess Wavy' },
+                { id: 'side_ponytail', name: 'Side Ponytail' }
+            ],
+            tops: [
+                { id: 'school_blazer', name: 'Academy Blazer' },
+                { id: 'lolita_dress', name: 'Gothic Lolita Top' },
+                { id: 'cyber_jacket', name: 'Neon Cyber Jacket' },
+                { id: 'kimono_top', name: 'Festival Yukata Top' },
+                { id: 'idol_vest', name: 'Star Idol Corset' }
+            ],
+            bottoms: [
+                { id: 'pleated_skirt', name: 'Pleated Mini Skirt' },
+                { id: 'frilly_skirt', name: 'Frilly Petticoat' },
+                { id: 'cyber_shorts', name: 'Cyber Shorts' },
+                { id: 'long_skirt', name: 'Elegant Long Skirt' }
+            ],
+            shoes: [
+                { id: 'mary_janes', name: 'Mary Jane Ribbon' },
+                { id: 'cyber_boots', name: 'Cyber High Boots' },
+                { id: 'geta_sandals', name: 'Traditional Geta' },
+                { id: 'sneakers', name: 'Anime High Sneakers' }
+            ],
+            acc: [
+                { id: 'cat_ears', name: 'Neko Ears' },
+                { id: 'halo', name: 'Angel Halo' },
+                { id: 'ribbon_bow', name: 'Giant Hair Bow' },
+                { id: 'glasses', name: 'Cute Glasses' },
+                { id: 'none', name: 'Tanpa Aksesoris' }
+            ],
+            face: [
+                { id: 'smile', name: 'Senyum Ceria' },
+                { id: 'wink', name: 'Kedip Manis' },
+                { id: 'cat_mouth', name: 'Mulut Kucing :3' }
+            ]
+        };
+
+        const presetColors = [
+            '#FF6B9D', '#8A4FFF', '#00F0FF', '#FFD700', '#FF4757',
+            '#2ED573', '#1E90FF', '#2F3542', '#FFFFFF', '#FFA502'
+        ];
+
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `px-4 py-3 rounded-2xl font-bold text-xs shadow-xl flex items-center gap-2 border pointer-events-auto transition-all transform translate-y-2 opacity-0 ${
+                type === 'error' ? 'bg-red-900/90 text-red-200 border-red-500/50' :
+                type === 'success' ? 'bg-emerald-900/90 text-emerald-200 border-emerald-500/50' :
+                'bg-animeCard/90 text-pink-200 border-animePink/50'
+            }`;
+            toast.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation' : 'fa-sparkles'}"></i> ${msg}`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 50);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function switchLobbyTab(tab) {
+            document.getElementById('tabCreate').className = tab === 'create'
+                ? 'py-2.5 rounded-xl font-bold text-sm transition-all bg-gradient-to-r from-animePink to-purple-600 text-white shadow-md'
+                : 'py-2.5 rounded-xl font-bold text-sm text-slate-400 hover:text-white transition-all';
+            
+            document.getElementById('tabJoin').className = tab === 'join'
+                ? 'py-2.5 rounded-xl font-bold text-sm transition-all bg-gradient-to-r from-animeCyan to-blue-600 text-white shadow-md'
+                : 'py-2.5 rounded-xl font-bold text-sm text-slate-400 hover:text-white transition-all';
+
+            document.getElementById('contentCreateRoom').classList.toggle('hidden', tab !== 'create');
+            document.getElementById('contentJoinRoom').classList.toggle('hidden', tab !== 'join');
+        }
+
+        function switchScreen(screenId) {
+            ['screenLobby', 'screenRoomLobby', 'screenStudio', 'screenJudging', 'screenLeaderboard'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        async function handleCreateRoom() {
+            const inputName = document.getElementById('inputPlayerName').value.trim();
+            if (!inputName) {
+                showToast("Harap masukkan nama perancang terlebih dahulu!", "error");
+                return;
+            }
+            playerName = inputName;
+            const generatedCode = 'ROOM' + Math.floor(1000 + Math.random() * 9000);
+            currentRoomId = generatedCode;
+            isHost = true;
+
+            const uid = window.getLocalUserId();
+            const initialRoomData = {
+                roomId: generatedCode,
+                hostId: uid,
+                status: 'LOBBY',
+                theme: document.getElementById('selectTheme').value,
+                players: {
+                    [uid]: {
+                        id: uid,
+                        name: playerName,
+                        isHost: true,
+                        ready: true,
+                        outfitConfig: outfitConfig,
+                        pitch: '',
+                        submitted: false,
+                        score: null,
+                        critique: '',
+                        title: ''
+                    }
+                },
+                createdAt: Date.now()
+            };
+
+            const db = window.getFirebaseDb();
+            if (db) {
+                try {
+                    await setDoc(window.getRoomDocRef(generatedCode), initialRoomData);
+                    subscribeToRoom(generatedCode);
+                } catch (e) {
+                    console.error("Firestore Error:", e);
+                    localFallbackLobby(initialRoomData);
+                }
+            } else {
+                localFallbackLobby(initialRoomData);
+            }
+
+            updateUserHeader();
+            switchScreen('screenRoomLobby');
+            showToast(`Room ${generatedCode} berhasil dibuat!`, 'success');
+        }
+
+        async function handleJoinRoom() {
+            const inputName = document.getElementById('inputPlayerName').value.trim();
+            const code = document.getElementById('inputRoomCode').value.trim().toUpperCase();
+
+            if (!inputName) {
+                showToast("Harap masukkan nama perancang!", "error");
+                return;
+            }
+            if (!code) {
+                showToast("Masukkan Room Code!", "error");
+                return;
+            }
+
+            playerName = inputName;
+            currentRoomId = code;
+            isHost = false;
+            const uid = window.getLocalUserId();
+
+            const db = window.getFirebaseDb();
+            if (db) {
+                try {
+                    const docRef = window.getRoomDocRef(code);
+                    const docSnap = await getDoc(docRef);
+
+                    if (!docSnap.exists()) {
+                        showToast("Room Code tidak ditemukan!", "error");
+                        return;
+                    }
+
+                    const roomData = docSnap.data();
+                    roomData.players[uid] = {
+                        id: uid,
+                        name: playerName,
+                        isHost: false,
+                        ready: true,
+                        outfitConfig: outfitConfig,
+                        pitch: '',
+                        submitted: false,
+                        score: null,
+                        critique: '',
+                        title: ''
+                    };
+
+                    await updateDoc(docRef, { players: roomData.players });
+                    subscribeToRoom(code);
+                    updateUserHeader();
+                    switchScreen('screenRoomLobby');
+                    showToast(`Berhasil bergabung ke Room ${code}!`, 'success');
+
+                } catch (e) {
+                    console.error("Join Error:", e);
+                    showToast("Gagal bergabung ke ruangan.", "error");
+                }
+            } else {
+                showToast("Firebase belum siap, coba sebentar lagi.", "error");
+            }
+        }
+
+        function localFallbackLobby(data) {
+            renderRoomLobbyUI(data);
+        }
+
+        function subscribeToRoom(code) {
+            const db = window.getFirebaseDb();
+            if (!db) return;
+
+            if (roomUnsubscribe) roomUnsubscribe();
+
+            roomUnsubscribe = onSnapshot(window.getRoomDocRef(code), (snapshot) => {
+                if (!snapshot.exists()) {
+                    showToast("Ruangan telah ditutup.", "error");
+                    leaveRoom();
+                    return;
+                }
+
+                const data = snapshot.data();
+                roomPlayersData = data.players || {};
+
+                // Handle status transitions
+                if (data.status === 'LOBBY') {
+                    renderRoomLobbyUI(data);
+                } else if (data.status === 'DESIGNING') {
+                    if (document.getElementById('screenStudio').classList.contains('hidden')) {
+                        startStudioPhase(data);
+                    }
+                } else if (data.status === 'JUDGING') {
+                    if (document.getElementById('screenJudging').classList.contains('hidden')) {
+                        startJudgingPhase(data);
+                    }
+                } else if (data.status === 'RESULTS') {
+                    renderFinalLeaderboard(data);
+                }
+            }, (err) => {
+                console.error("Snapshot error:", err);
+            });
+        }
+
+        function renderRoomLobbyUI(data) {
+            document.getElementById('displayRoomCode').innerText = data.roomId;
+            const players = Object.values(data.players || {});
+            document.getElementById('playerCountText').innerText = players.length;
+
+            const grid = document.getElementById('playerGridContainer');
+            grid.innerHTML = '';
+
+            players.forEach(p => {
+                const isMe = p.id === window.getLocalUserId();
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-2xl border flex items-center justify-between gap-3 ${
+                    isMe ? 'bg-animePink/10 border-animePink/60' : 'bg-slate-900/60 border-white/10'
+                }`;
+                card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center font-bold text-white text-lg">
+                            ${p.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <div class="font-bold text-sm text-white flex items-center gap-1.5">
+                                ${p.name}
+                                ${p.isHost ? '<i class="fa-solid fa-crown text-yellow-300 text-xs" title="Host"></i>' : ''}
+                                ${isMe ? '<span class="text-[10px] bg-pink-500/30 text-pink-300 px-1.5 py-0.2 rounded font-normal">(Kamu)</span>' : ''}
+                            </div>
+                            <span class="text-[10px] text-slate-400">Siap Bertanding</span>
+                        </div>
+                    </div>
+                    <span class="w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]"></span>
+                `;
+                grid.appendChild(card);
+            });
+
+            // Toggle host UI elements
+            const uid = window.getLocalUserId();
+            const amIHost = data.hostId === uid;
+            document.getElementById('btnStartGame').style.display = amIHost ? 'flex' : 'none';
+            document.getElementById('themeSelectBox').style.pointerEvents = amIHost ? 'auto' : 'none';
+            if (!amIHost) {
+                document.getElementById('selectTheme').value = data.theme;
+            }
+        }
+
+        function updateUserHeader() {
+            document.getElementById('userInfoHeader').classList.remove('hidden');
+            document.getElementById('headerPlayerName').innerText = playerName;
+            document.getElementById('headerRoomBadge').innerText = currentRoomId || 'NO ROOM';
+        }
+
+        function copyRoomCode() {
+            if (!currentRoomId) return;
+            navigator.clipboard.writeText(currentRoomId);
+            showToast("Room Code berhasil disalin!", "success");
+        }
+
+        function leaveRoom() {
+            if (roomUnsubscribe) roomUnsubscribe();
+            currentRoomId = null;
+            switchScreen('screenLobby');
+            document.getElementById('userInfoHeader').classList.add('hidden');
+        }
+
+        async function handleStartGame() {
+            if (!currentRoomId) return;
+            const selectedTheme = document.getElementById('selectTheme').value;
+
+            const db = window.getFirebaseDb();
+            if (db) {
+                await updateDoc(window.getRoomDocRef(currentRoomId), {
+                    status: 'DESIGNING',
+                    theme: selectedTheme,
+                    startTime: Date.now()
+                });
+            } else {
+                startStudioPhase({ theme: selectedTheme });
+            }
+        }
+
+        function startStudioPhase(roomData) {
+            switchScreen('screenStudio');
+            document.getElementById('studioThemeTitle').innerText = roomData.theme || 'Anime Runway';
+            
+            // Render initial customizer UI
+            initCustomizerUI();
+            renderAnimeCharacter();
+
+            // Start countdown timer
+            studioTimeLeft = 180;
+            updateTimerDisplay();
+
+            if (gameTimerInterval) clearInterval(gameTimerInterval);
+            gameTimerInterval = setInterval(() => {
+                studioTimeLeft--;
+                updateTimerDisplay();
+                if (studioTimeLeft <= 0) {
+                    clearInterval(gameTimerInterval);
+                    handleSubmitDesign();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(studioTimeLeft / 60).toString().padStart(2, '0');
+            const s = (studioTimeLeft % 60).toString().padStart(2, '0');
+            document.getElementById('timerText').innerText = `${m}:${s}`;
+        }
+
+        function renderAnimeCharacter() {
+            const canvas = document.getElementById('animeCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // 1. Stage Background Glow
+            const bgGrad = ctx.createRadialGradient(w/2, h/2, 20, w/2, h/2, w);
+            bgGrad.addColorStop(0, '#2D1B4E');
+            bgGrad.addColorStop(1, '#0F0C1B');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, w, h);
+
+            // Sparkle Particle Background
+            ctx.fillStyle = '#FF6B9D33';
+            for (let i = 0; i < 20; i++) {
+                const x = (i * 37) % w;
+                const y = (i * 53) % h;
+                ctx.beginPath();
+                ctx.arc(x, y, (i % 3) + 1, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            const centerX = w / 2;
+            const centerY = h / 2 + 30;
+
+            // 2. BACK HAIR LAYER
+            ctx.fillStyle = outfitConfig.hairColorPrimary;
+            if (outfitConfig.hairStyle === 'twintails') {
+                // Left & Right long twintails
+                ctx.beginPath();
+                ctx.ellipse(centerX - 65, centerY - 20, 25, 110, Math.PI / 12, 0, Math.PI * 2);
+                ctx.ellipse(centerX + 65, centerY - 20, 25, 110, -Math.PI / 12, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (outfitConfig.hairStyle === 'long_wavy') {
+                ctx.beginPath();
+                ctx.ellipse(centerX, centerY + 20, 75, 120, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 3. BODY & SKIN BASE
+            // Neck
+            ctx.fillStyle = outfitConfig.skinColor;
+            ctx.fillRect(centerX - 12, centerY - 65, 24, 25);
+
+            // Head (Anime V-shape jaw)
+            ctx.beginPath();
+            ctx.moveTo(centerX - 45, centerY - 110);
+            ctx.quadraticCurveTo(centerX - 45, centerY - 55, centerX, centerY - 40);
+            ctx.quadraticCurveTo(centerX + 45, centerY - 55, centerX + 45, centerY - 110);
+            ctx.quadraticCurveTo(centerX, centerY - 140, centerX - 45, centerY - 110);
+            ctx.fill();
+
+            // Shoulders & Arms Base
+            ctx.beginPath();
+            ctx.moveTo(centerX - 50, centerY - 45);
+            ctx.lineTo(centerX + 50, centerY - 45);
+            ctx.lineTo(centerX + 65, centerY + 80);
+            ctx.lineTo(centerX - 65, centerY + 80);
+            ctx.closePath();
+            ctx.fill();
+
+            // Legs Base
+            ctx.fillRect(centerX - 22, centerY + 80, 16, 110);
+            ctx.fillRect(centerX + 6, centerY + 80, 16, 110);
+
+            // 4. SHOES
+            ctx.fillStyle = outfitConfig.shoesColor;
+            ctx.beginPath();
+            ctx.roundRect(centerX - 24, centerY + 180, 20, 18, 5);
+            ctx.roundRect(centerX + 4, centerY + 180, 20, 18, 5);
+            ctx.fill();
+
+            // 5. BOTTOMS (Skirt / Shorts)
+            ctx.fillStyle = outfitConfig.bottomColor;
+            if (outfitConfig.bottomStyle === 'pleated_skirt') {
+                ctx.beginPath();
+                ctx.moveTo(centerX - 48, centerY + 25);
+                ctx.lineTo(centerX + 48, centerY + 25);
+                ctx.lineTo(centerX + 62, centerY + 85);
+                ctx.lineTo(centerX - 62, centerY + 85);
+                ctx.closePath();
+                ctx.fill();
+
+                // Skirt pleat lines
+                ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+                ctx.lineWidth = 2;
+                for (let i = -40; i <= 40; i += 16) {
+                    ctx.beginPath();
+                    ctx.moveTo(centerX + i * 0.8, centerY + 25);
+                    ctx.lineTo(centerX + i * 1.1, centerY + 85);
+                    ctx.stroke();
+                }
+            } else if (outfitConfig.bottomStyle === 'cyber_shorts') {
+                ctx.fillRect(centerX - 42, centerY + 25, 84, 45);
+            } else {
+                // Long skirt
+                ctx.beginPath();
+                ctx.moveTo(centerX - 45, centerY + 25);
+                ctx.lineTo(centerX + 45, centerY + 25);
+                ctx.lineTo(centerX + 70, centerY + 175);
+                ctx.lineTo(centerX - 70, centerY + 175);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // 6. TOPS / DRESS
+            ctx.fillStyle = outfitConfig.topColor;
+            ctx.beginPath();
+            ctx.moveTo(centerX - 45, centerY - 45);
+            ctx.lineTo(centerX + 45, centerY - 45);
+            ctx.lineTo(centerX + 42, centerY + 30);
+            ctx.lineTo(centerX - 42, centerY + 30);
+            ctx.closePath();
+            ctx.fill();
+
+            // Top Ribbons / Accents
+            ctx.fillStyle = outfitConfig.topAccentColor;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY - 30, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 7. FACIAL FEATURES (Eyes, Blush, Mouth)
+            // Blush
+            ctx.fillStyle = 'rgba(255, 107, 157, 0.4)';
+            ctx.beginPath();
+            ctx.ellipse(centerX - 25, centerY - 68, 10, 5, 0, 0, Math.PI * 2);
+            ctx.ellipse(centerX + 25, centerY - 68, 10, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Anime Eyes
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.ellipse(centerX - 22, centerY - 82, 12, 16, 0, 0, Math.PI * 2);
+            ctx.ellipse(centerX + 22, centerY - 82, 12, 16, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Iris
+            ctx.fillStyle = outfitConfig.eyeColor;
+            ctx.beginPath();
+            ctx.ellipse(centerX - 22, centerY - 82, 8, 12, 0, 0, Math.PI * 2);
+            ctx.ellipse(centerX + 22, centerY - 82, 8, 12, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Eye Highlights
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(centerX - 25, centerY - 87, 3, 0, Math.PI * 2);
+            ctx.arc(centerX + 19, centerY - 87, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Eyelashes / Eyeliner
+            ctx.strokeStyle = '#121124';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(centerX - 22, centerY - 85, 13, Math.PI * 1.1, Math.PI * 1.9);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(centerX + 22, centerY - 85, 13, Math.PI * 1.1, Math.PI * 1.9);
+            ctx.stroke();
+
+            // Mouth
+            ctx.strokeStyle = '#121124';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            if (outfitConfig.mouthStyle === 'wink') {
+                ctx.arc(centerX, centerY - 58, 6, 0, Math.PI);
+            } else if (outfitConfig.mouthStyle === 'cat_mouth') {
+                ctx.moveTo(centerX - 6, centerY - 58);
+                ctx.quadraticCurveTo(centerX - 3, centerY - 54, centerX, centerY - 58);
+                ctx.quadraticCurveTo(centerX + 3, centerY - 54, centerX + 6, centerY - 58);
+            } else {
+                ctx.arc(centerX, centerY - 60, 8, 0.2, Math.PI - 0.2);
+            }
+            ctx.stroke();
+
+            // 8. FRONT HAIR LAYER & BANGS
+            ctx.fillStyle = outfitConfig.hairColorPrimary;
+            ctx.beginPath();
+            // Bangs
+            ctx.moveTo(centerX - 46, centerY - 105);
+            ctx.quadraticCurveTo(centerX - 20, centerY - 70, centerX - 10, centerY - 95);
+            ctx.quadraticCurveTo(centerX, centerY - 65, centerX + 10, centerY - 95);
+            ctx.quadraticCurveTo(centerX + 20, centerY - 70, centerX + 46, centerY - 105);
+            ctx.quadraticCurveTo(centerX, centerY - 150, centerX - 46, centerY - 105);
+            ctx.fill();
+
+            // Hair Highlight Stripe
+            ctx.fillStyle = outfitConfig.hairColorHighlight;
+            ctx.beginPath();
+            ctx.ellipse(centerX, centerY - 115, 25, 4, -Math.PI / 12, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 9. ACCESSORIES
+            if (outfitConfig.accessory === 'cat_ears') {
+                ctx.fillStyle = outfitConfig.accessoryColor;
+                // Left Neko Ear
+                ctx.beginPath();
+                ctx.moveTo(centerX - 45, centerY - 110);
+                ctx.lineTo(centerX - 55, centerY - 150);
+                ctx.lineTo(centerX - 25, centerY - 125);
+                ctx.closePath();
+                ctx.fill();
+
+                // Right Neko Ear
+                ctx.beginPath();
+                ctx.moveTo(centerX + 45, centerY - 110);
+                ctx.lineTo(centerX + 55, centerY - 150);
+                ctx.lineTo(centerX + 25, centerY - 125);
+                ctx.closePath();
+                ctx.fill();
+            } else if (outfitConfig.accessory === 'halo') {
+                ctx.strokeStyle = '#FFD700';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.ellipse(centerX, centerY - 155, 30, 8, 0, 0, Math.PI * 2);
+                ctx.stroke();
+            } else if (outfitConfig.accessory === 'glasses') {
+                ctx.strokeStyle = '#121124';
+                ctx.lineWidth = 2.5;
+                ctx.strokeRect(centerX - 32, centerY - 88, 20, 14);
+                ctx.strokeRect(centerX + 12, centerY - 88, 20, 14);
+                ctx.beginPath();
+                ctx.moveTo(centerX - 12, centerY - 82);
+                ctx.lineTo(centerX + 12, centerY - 82);
+                ctx.stroke();
+            }
+        }
+
+        function initCustomizerUI() {
+            renderItemSelectionGrid();
+            renderColorSwatches();
+        }
+
+        function switchCategory(cat) {
+            activeCategory = cat;
+            document.querySelectorAll('.cat-tab-btn').forEach(btn => {
+                btn.className = 'cat-tab-btn flex-1 py-2 px-3 bg-slate-800 text-slate-300 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 whitespace-nowrap border border-white/10 hover:bg-slate-700';
+            });
+            document.getElementById(`catBtn_${cat}`).className = 'cat-tab-btn flex-1 py-2 px-3 bg-animePink text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 whitespace-nowrap border border-pink-400';
+
+            renderItemSelectionGrid();
+        }
+
+        function renderItemSelectionGrid() {
+            const grid = document.getElementById('itemSelectionGrid');
+            grid.innerHTML = '';
+            const items = catalog[activeCategory] || [];
+
+            items.forEach(item => {
+                const isSelected = checkIsItemSelected(activeCategory, item.id);
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-xl border text-center cursor-pointer transition-all ${
+                    isSelected ? 'bg-animePink/20 border-animePink text-white shadow-lg' : 'bg-slate-950/60 border-white/10 text-slate-300 hover:bg-white/5'
+                }`;
+                card.onclick = () => selectItem(activeCategory, item.id);
+                card.innerHTML = `
+                    <div class="text-xs font-bold mb-1">${item.name}</div>
+                    <span class="text-[10px] text-pink-300">${isSelected ? '✓ Terpilih' : 'Pilih'}</span>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function checkIsItemSelected(cat, itemId) {
+            if (cat === 'hair') return outfitConfig.hairStyle === itemId;
+            if (cat === 'tops') return outfitConfig.topStyle === itemId;
+            if (cat === 'bottoms') return outfitConfig.bottomStyle === itemId;
+            if (cat === 'shoes') return outfitConfig.shoesStyle === itemId;
+            if (cat === 'acc') return outfitConfig.accessory === itemId;
+            if (cat === 'face') return outfitConfig.mouthStyle === itemId;
+            return false;
+        }
+
+        function selectItem(cat, itemId) {
+            if (cat === 'hair') outfitConfig.hairStyle = itemId;
+            if (cat === 'tops') outfitConfig.topStyle = itemId;
+            if (cat === 'bottoms') outfitConfig.bottomStyle = itemId;
+            if (cat === 'shoes') outfitConfig.shoesStyle = itemId;
+            if (cat === 'acc') outfitConfig.accessory = itemId;
+            if (cat === 'face') outfitConfig.mouthStyle = itemId;
+
+            renderItemSelectionGrid();
+            renderAnimeCharacter();
+        }
+
+        function renderColorSwatches() {
+            const box = document.getElementById('colorSwatches');
+            box.innerHTML = '';
+
+            presetColors.forEach(color => {
+                const btn = document.createElement('button');
+                btn.className = 'w-7 h-7 rounded-full border-2 border-white/30 hover:scale-110 transition-transform shadow-md';
+                btn.style.backgroundColor = color;
+                btn.onclick = () => applyColorToCategory(color);
+                box.appendChild(btn);
+            });
+
+            // Native Color Picker input
+            const colorPicker = document.createElement('input');
+            colorPicker.type = 'color';
+            colorPicker.className = 'w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none';
+            colorPicker.oninput = (e) => applyColorToCategory(e.target.value);
+            box.appendChild(colorPicker);
+        }
+
+        function applyColorToCategory(color) {
+            if (activeCategory === 'hair') outfitConfig.hairColorPrimary = color;
+            if (activeCategory === 'tops') outfitConfig.topColor = color;
+            if (activeCategory === 'bottoms') outfitConfig.bottomColor = color;
+            if (activeCategory === 'shoes') outfitConfig.shoesColor = color;
+            if (activeCategory === 'acc') outfitConfig.accessoryColor = color;
+
+            renderAnimeCharacter();
+        }
+
+        function randomizeOutfit() {
+            const getRandom = arr => arr[Math.floor(Math.random() * arr.length)];
+            outfitConfig.hairStyle = getRandom(catalog.hair).id;
+            outfitConfig.topStyle = getRandom(catalog.tops).id;
+            outfitConfig.bottomStyle = getRandom(catalog.bottoms).id;
+            outfitConfig.shoesStyle = getRandom(catalog.shoes).id;
+            outfitConfig.accessory = getRandom(catalog.acc).id;
+            outfitConfig.hairColorPrimary = getRandom(presetColors);
+            outfitConfig.topColor = getRandom(presetColors);
+            outfitConfig.bottomColor = getRandom(presetColors);
+
+            renderItemSelectionGrid();
+            renderAnimeCharacter();
+            showToast("Gaya acak dihasilkan!", "info");
+        }
+
+        async function handleSubmitDesign() {
+            if (gameTimerInterval) clearInterval(gameTimerInterval);
+
+            const canvas = document.getElementById('animeCanvas');
+            const dataUrl = canvas.toDataURL('image/png');
+            const pitch = document.getElementById('inputDesignPitch').value.trim();
+            const uid = window.getLocalUserId();
+
+            showToast("Desainmu telah dikirim! Menunggu runway...", "success");
+
+            const db = window.getFirebaseDb();
+            if (db && currentRoomId) {
+                const docRef = window.getRoomDocRef(currentRoomId);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const roomData = docSnap.data();
+                    roomData.players[uid].outfitConfig = outfitConfig;
+                    roomData.players[uid].pitch = pitch;
+                    roomData.players[uid].imageBase64 = dataUrl;
+                    roomData.players[uid].submitted = true;
+
+                    // Check if all players submitted
+                    const allSubmitted = Object.values(roomData.players).every(p => p.submitted);
+                    if (allSubmitted || isHost) {
+                        roomData.status = 'JUDGING';
+                    }
+
+                    await updateDoc(docRef, {
+                        players: roomData.players,
+                        status: roomData.status
+                    });
+                }
+            } else {
+                startJudgingPhase({
+                    theme: document.getElementById('selectTheme').value,
+                    players: {
+                        [uid]: {
+                            id: uid,
+                            name: playerName,
+                            outfitConfig: outfitConfig,
+                            pitch: pitch,
+                            imageBase64: dataUrl
+                        }
+                    }
+                });
+            }
+        }
+
+        function startJudgingPhase(roomData) {
+            switchScreen('screenJudging');
+            const players = Object.values(roomData.players || {});
+            currentShowcaseIndex = 0;
+            evaluatePlayerShowcase(players, roomData.theme);
+        }
+
+        async function evaluatePlayerShowcase(playersList, theme) {
+            if (currentShowcaseIndex >= playersList.length) {
+                // Done judging all players, transition to final leaderboard
+                if (isHost && currentRoomId) {
+                    const db = window.getFirebaseDb();
+                    if (db) {
+                        await updateDoc(window.getRoomDocRef(currentRoomId), { status: 'RESULTS' });
+                    }
+                } else if (!currentRoomId) {
+                    renderFinalLeaderboard({ players: roomPlayersData });
+                }
+                return;
+            }
+
+            const p = playersList[currentShowcaseIndex];
+            document.getElementById('showcasePlayerName').innerText = p.name;
+            document.getElementById('showcaseCanvasImg').src = p.imageBase64 || '';
+            document.getElementById('aiLoadingSpinner').classList.remove('hidden');
+            document.getElementById('aiResultContent').classList.add('hidden');
+
+            // Invoke Gemini AI Judge API
+            const aiResult = await callGeminiAIJudge(p, theme);
+
+            // Update local state with score
+            p.score = aiResult.score;
+            p.critique = aiResult.critique;
+            p.title = aiResult.title;
+
+            if (currentRoomId) {
+                roomPlayersData[p.id] = p;
+                const db = window.getFirebaseDb();
+                if (db) {
+                    const docRef = window.getRoomDocRef(currentRoomId);
+                    await updateDoc(docRef, { [`players.${p.id}`]: p });
+                }
+            }
+
+            // Display UI Evaluation
+            document.getElementById('aiLoadingSpinner').classList.add('hidden');
+            document.getElementById('aiResultContent').classList.remove('hidden');
+            document.getElementById('aiScoreBadge').innerText = `${aiResult.score} / 100`;
+            document.getElementById('aiStyleTitle').innerText = aiResult.title;
+            document.getElementById('aiCritiqueText').innerText = `"${aiResult.critique}"`;
+
+            // Confetti effect for good score!
+            if (aiResult.score >= 80) {
+                confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+            }
+        }
+
+        function nextShowcasePlayer() {
+            const players = Object.values(roomPlayersData);
+            currentShowcaseIndex++;
+            const theme = document.getElementById('selectTheme').value;
+            evaluatePlayerShowcase(players, theme);
+        }
+
+        async function callGeminiAIJudge(player, theme) {
+            const apiKey = ""; // Canvas runtime environment automatically inserts key if empty string
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const systemPrompt = `Kamu adalah 'Sensei Hikari', seorang juri fashion anime haute couture 2D yang ekspresif, antusias, dan jujur.
+Tugasmu adalah menilai karya busana anime pemain berdasarkan tema.
+Berikan penilaian dalam FORMAT JSON STRICT berikut:
+{
+  "score": <angka 60 sampai 100>,
+  "title": "<Gelar Fashion singkat, contoh: 'Harajuku Cyber Icon' atau 'Gothic Elegance Queen'>",
+  "critique": "<Kritik penuh gaya anime dalam Bahasa Indonesia, ceria, mengomentari kombinasi warna, aksesoris, dan tema>"
+}`;
+
+            const userPrompt = `Nilai busana anime ini!
+Tema Kompetisi: "${theme}"
+Nama Perancang: "${player.name}"
+Catatan Konsep Perancang: "${player.pitch || 'Tidak ada catatan'}"
+Komposisi Busana: ${JSON.stringify(player.outfitConfig)}`;
+
+            try {
+                // Prepare multimodal payload if base64 image exists
+                let contents = [];
+                if (player.imageBase64 && player.imageBase64.includes('data:image')) {
+                    const cleanBase64 = player.imageBase64.split(',')[1];
+                    contents = [{
+                        parts: [
+                            { text: userPrompt },
+                            {
+                                inlineData: {
+                                    mimeType: 'image/png',
+                                    data: cleanBase64
+                                }
+                            }
+                        ]
+                    }];
+                } else {
+                    contents = [{ parts: [{ text: userPrompt }] }];
+                }
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: contents,
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: {
+                            responseMimeType: "application/json"
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                const jsonText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (jsonText) {
+                    return JSON.parse(jsonText);
+                }
+            } catch (err) {
+                console.warn("AI Judge API busy or offline, generating sensei review locally:", err);
+            }
+
+            // High Quality Offline Fallback Judge Logic
+            const randomScore = Math.floor(78 + Math.random() * 20);
+            return {
+                score: randomScore,
+                title: "Vibrant Anime Stylist",
+                critique: `Sugoi, ${player.name}! Perpaduan warna dan aksesoris pada busanamu memberikan nuansa ${theme} yang sangat kental dan estetik!`
+            };
+        }
+
+        function renderFinalLeaderboard(roomData) {
+            switchScreen('screenLeaderboard');
+            const players = Object.values(roomData.players || roomPlayersData);
+
+            // Sort by AI score descending
+            players.sort((a, b) => (b.score || 0) - (a.score || 0));
+
+            const container = document.getElementById('leaderboardContainer');
+            container.innerHTML = '';
+
+            players.forEach((p, idx) => {
+                const rank = idx + 1;
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-2xl border flex items-center justify-between gap-4 ${
+                    rank === 1 ? 'bg-gradient-to-r from-yellow-500/20 to-amber-900/40 border-yellow-500/60 shadow-lg' :
+                    rank === 2 ? 'bg-gradient-to-r from-slate-400/20 to-slate-800/40 border-slate-400/50' :
+                    rank === 3 ? 'bg-gradient-to-r from-amber-700/20 to-amber-950/40 border-amber-700/50' :
+                    'bg-slate-900/60 border-white/10'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-lg ${
+                            rank === 1 ? 'bg-yellow-400 text-slate-950' :
+                            rank === 2 ? 'bg-slate-300 text-slate-950' :
+                            rank === 3 ? 'bg-amber-600 text-white' : 'bg-slate-800 text-slate-400'
+                        }">
+                            #${rank}
+                        </div>
+                        <div class="text-left">
+                            <h4 class="font-bold text-base text-white">${p.name}</h4>
+                            <span class="text-xs text-pink-300 font-medium">${p.title || 'Anime Stylist'}</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-2xl font-black text-yellow-300 font-heading">${p.score || 0}</span>
+                        <span class="text-xs text-slate-400 block">Nilai AI</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            // Trigger Victory Confetti
+            confetti({
+                particleCount: 120,
+                spread: 80,
+                origin: { y: 0.5 }
+            });
+        }
+
+        function restartLobby() {
+            switchScreen('screenRoomLobby');
+        }
+
+        // Global Window event hooks
+        window.onload = function() {
+            // Render default character on load
+            renderAnimeCharacter();
+        };
+    </script>
+</body>
+</html>
