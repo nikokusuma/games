@@ -1,0 +1,1664 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>3D Anime Realistic Fashion Studio & Runway</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- FontAwesome Icons -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Playfair+Display:ital,wght@0,700;1,600&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Three.js & OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <!-- Firebase JS SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'anime-fashion-studio';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+      apiKey: "demo-key", authDomain: "demo.firebaseapp.com", projectId: "demo-project"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    window.db = db;
+    window.auth = auth;
+    window.appId = appId;
+    window.doc = doc;
+    window.getDoc = getDoc;
+    window.setDoc = setDoc;
+    window.updateDoc = updateDoc;
+    window.onSnapshot = onSnapshot;
+
+    window.initUserAuth = async function() {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          const cred = await signInWithCustomToken(auth, __initial_auth_token);
+          window.currentUser = cred.user;
+        } else {
+          const cred = await signInAnonymously(auth);
+          window.currentUser = cred.user;
+        }
+        console.log("Firebase Auth success, User ID:", window.currentUser.uid);
+      } catch (err) {
+        console.warn("Firebase Auth fallback active:", err);
+        window.currentUser = { uid: "user_" + Math.random().toString(36).substring(2, 8) };
+      }
+    };
+    window.initUserAuth();
+  </script>
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #070913;
+      min-height: 100vh;
+      color: #f8fafc;
+      overflow-x: hidden;
+      user-select: none;
+    }
+    .font-anime-title {
+      font-family: 'Fredoka', cursive;
+    }
+    .font-serif-custom {
+      font-family: 'Playfair Display', serif;
+    }
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(244, 114, 182, 0.25);
+      box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6);
+    }
+    .glass-btn {
+      background: linear-gradient(135deg, #ec4899 0%, #a855f7 50%, #6366f1 100%);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .glass-btn:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 12px 25px -5px rgba(236, 72, 153, 0.6);
+    }
+    /* Hide scrollbar for clean horizontal tab navigation */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    /* Custom Vertical Scrollbar */
+    ::-webkit-scrollbar {
+      width: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.8);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(to bottom, #ec4899, #8b5cf6);
+      border-radius: 999px;
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen selection:bg-pink-500 selection:text-white">
+
+  <!-- INITIAL MODE SELECTION MODAL -->
+  <div id="initialModeModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+    <div class="glass-panel max-w-xl w-full rounded-3xl p-6 md:p-8 border-pink-500/40 text-center space-y-6 shadow-2xl relative overflow-hidden">
+      <!-- Background Ambient Glow -->
+      <div class="absolute -top-12 -left-12 w-40 h-40 bg-pink-500/20 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-12 -right-12 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div>
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-500 text-3xl text-white shadow-lg shadow-pink-500/40 mb-3">
+          <i class="fa-solid fa-wand-magic-sparkles animate-pulse"></i>
+        </div>
+        <h2 class="text-2xl md:text-3xl font-extrabold font-anime-title text-white tracking-wide">
+          PILIH MODE PERMAINAN
+        </h2>
+        <p class="text-xs md:text-sm text-slate-300 mt-1">
+          Selamat datang di 3D Anime Fashion Studio! Tentukan mode bermainmu:
+        </p>
+      </div>
+
+      <!-- Mode Selection Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-left">
+        <!-- Solo Card -->
+        <button onclick="selectInitialMode('solo')" class="p-4 rounded-2xl bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700/80 hover:border-pink-500 transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between group">
+          <div>
+            <div class="w-10 h-10 rounded-xl bg-pink-500/20 text-pink-400 flex items-center justify-center mb-3 text-lg group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-palette"></i>
+            </div>
+            <h3 class="font-bold font-anime-title text-white text-base">Mode Solo</h3>
+            <p class="text-[11px] text-slate-400 mt-1 leading-snug">Bebas berkreasi. Pilih tema busana sesukamu.</p>
+          </div>
+          <span class="mt-3 inline-block text-[10px] font-bold text-pink-400 group-hover:underline">Pilih Solo &rarr;</span>
+        </button>
+
+        <!-- VS AI Card -->
+        <button onclick="selectInitialMode('vs_ai')" class="p-4 rounded-2xl bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700/80 hover:border-purple-500 transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between group relative">
+          <span class="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-purple-500/30 border border-purple-400 text-purple-200 text-[8px] font-extrabold uppercase font-anime-title">Random Tema</span>
+          <div>
+            <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center mb-3 text-lg group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-robot"></i>
+            </div>
+            <h3 class="font-bold font-anime-title text-white text-base">VS AI Rival</h3>
+            <p class="text-[11px] text-slate-400 mt-1 leading-snug">Tantang AI Rival! <strong class="text-purple-300">Tema acak</strong> akan ditentukan otomatis.</p>
+          </div>
+          <span class="mt-3 inline-block text-[10px] font-bold text-purple-400 group-hover:underline">Pilih VS AI &rarr;</span>
+        </button>
+
+        <!-- Multiplayer Card -->
+        <button onclick="selectInitialMode('multiplayer')" class="p-4 rounded-2xl bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700/80 hover:border-indigo-500 transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between group relative">
+          <span class="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-indigo-500/30 border border-indigo-400 text-indigo-200 text-[8px] font-extrabold uppercase font-anime-title">Random Tema</span>
+          <div>
+            <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center mb-3 text-lg group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-users"></i>
+            </div>
+            <h3 class="font-bold font-anime-title text-white text-base">Multiplayer</h3>
+            <p class="text-[11px] text-slate-400 mt-1 leading-snug">Lawan pemain lain! <strong class="text-indigo-300">Tema acak</strong> akan ditentukan.</p>
+          </div>
+          <span class="mt-3 inline-block text-[10px] font-bold text-indigo-400 group-hover:underline">Pilih Room &rarr;</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- HEADER / NAVBAR -->
+  <header class="w-full glass-panel border-b border-pink-500/30 px-3 md:px-6 py-2.5 flex justify-between items-center z-50 sticky top-0 shadow-lg">
+    <div class="flex items-center gap-2.5">
+      <div class="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-500 flex items-center justify-center text-lg text-white shadow-lg shadow-pink-500/40 cursor-pointer" onclick="openModeModal()" title="Klik untuk ganti mode">
+        <i class="fa-solid fa-cube animate-pulse"></i>
+      </div>
+      <div>
+        <h1 class="text-base md:text-xl font-extrabold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-200 font-anime-title leading-tight">
+          3D ANIME STYLIST <span class="text-pink-400 font-serif-custom italic text-xs md:text-sm">Studio 3D</span>
+        </h1>
+        <p class="text-[9px] md:text-[11px] text-pink-300/80 font-semibold tracking-wider">3D REALTIME ANIME DRESS-UP & RUNWAY</p>
+      </div>
+    </div>
+
+    <!-- Mode Badge Selector & User Status -->
+    <div class="flex items-center gap-2 md:gap-4">
+      <!-- Active Theme Badge (Desktop) -->
+      <div class="hidden lg:flex items-center gap-2 bg-slate-950/80 px-3 py-1 rounded-full border border-pink-500/30 text-xs">
+        <span class="w-2 h-2 rounded-full bg-pink-400 animate-ping"></span>
+        <span class="text-slate-400 text-[10px] font-bold">TEMA:</span>
+        <span id="headerCategoryText" class="font-bold text-pink-300 font-anime-title text-xs">Magical Girl Fantasy</span>
+      </div>
+
+      <!-- Mode Selector -->
+      <div class="flex bg-slate-900/90 p-1 rounded-xl border border-pink-500/30 text-[11px]">
+        <button onclick="setGameMode('solo')" id="btnModeSolo" class="px-2.5 py-1 rounded-lg bg-pink-500 text-white font-bold transition">Solo</button>
+        <button onclick="setGameMode('vs_ai')" id="btnModeAi" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-bold transition">VS AI</button>
+        <button onclick="setGameMode('multiplayer')" id="btnModeMulti" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-bold transition flex items-center gap-1">
+          <i class="fa-solid fa-users text-[10px]"></i> Room
+        </button>
+      </div>
+
+      <button onclick="openModeModal()" class="hidden sm:flex px-2.5 py-1 rounded-xl bg-slate-900 border border-slate-700 hover:border-pink-500 text-slate-300 text-xs font-bold transition items-center gap-1" title="Buka Pilihan Mode">
+        <i class="fa-solid fa-sliders text-pink-400"></i> Mode
+      </button>
+
+      <div class="text-right hidden sm:block">
+        <div id="playerNameDisplay" class="text-xs font-bold text-slate-100">Sakura Stylist</div>
+        <div id="playerModeDisplay" class="text-[10px] text-emerald-400 flex items-center justify-end gap-1 font-semibold">
+          <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> Mode Solo
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN APP CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-2 md:p-5 flex flex-col justify-start">
+
+    <!-- MULTIPLAYER ROOM BANNER MODAL -->
+    <div id="multiplayerRoomCard" class="hidden glass-panel rounded-2xl p-4 mb-4 border-indigo-500/40 bg-gradient-to-r from-indigo-950/90 via-slate-900 to-purple-950/90 shadow-xl">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-3">
+        <div>
+          <span class="px-2.5 py-0.5 bg-indigo-500/30 border border-indigo-400 text-indigo-200 text-[10px] font-bold rounded-full uppercase font-anime-title">
+            <i class="fa-solid fa-network-wired mr-1"></i> Multi-Player Arena Online
+          </span>
+          <h3 class="text-base font-bold text-white font-anime-title mt-1">Lobby Kode Room Stylist</h3>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          <div id="roomCreateJoinBtns" class="flex items-center gap-2 w-full md:w-auto">
+            <button onclick="createMultiplayerRoom()" class="flex-1 md:flex-initial px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-extrabold hover:brightness-110 shadow-lg">
+              <i class="fa-solid fa-plus-circle mr-1"></i> Buat Room
+            </button>
+            <div class="flex items-center gap-1 flex-1 md:flex-initial">
+              <input type="text" id="joinRoomInput" placeholder="KODE" maxlength="6" class="w-24 px-2 py-1.5 bg-slate-950 border border-indigo-500/40 rounded-xl text-xs text-center font-mono font-bold text-pink-300 uppercase outline-none focus:border-pink-500">
+              <button onclick="joinMultiplayerRoom()" class="px-3 py-1.5 rounded-xl bg-pink-600 hover:bg-pink-500 text-white text-xs font-bold">
+                Gabung
+              </button>
+            </div>
+          </div>
+
+          <div id="activeRoomInfo" class="hidden flex-wrap items-center gap-3 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-pink-500/40 w-full md:w-auto justify-between">
+            <div>
+              <span class="text-[9px] text-slate-400 uppercase font-bold block">Kode Room:</span>
+              <span id="displayRoomCode" class="text-base font-mono font-extrabold text-pink-400 tracking-wider">------</span>
+            </div>
+            <div class="text-right">
+              <span id="roomStatusBadge" class="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">Menunggu Lawan...</span>
+              <div id="playersInRoomText" class="text-[10px] text-slate-300 font-semibold">1 / 2 Pemain</div>
+            </div>
+            <button onclick="leaveMultiplayerRoom()" class="text-slate-400 hover:text-red-400 text-xs px-2 py-1">
+              <i class="fa-solid fa-right-from-bracket"></i> Keluar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 1: STUDIO 3D DESIGNER -->
+    <section id="studioView" class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+      
+      <!-- Studio Control Bar Header -->
+      <div class="lg:col-span-12 glass-panel rounded-2xl p-3 md:p-4 flex flex-wrap justify-between items-center gap-3 border-pink-500/30">
+        <div class="flex items-center gap-2.5">
+          <span class="px-2.5 py-1 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-extrabold rounded-xl text-[10px] md:text-xs tracking-wider font-anime-title">STUDIO 3D</span>
+          <h3 id="studioCategoryTitle" class="text-base md:text-lg font-bold text-white font-anime-title">Magical Girl Fantasy</h3>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <select id="themeSelector" onchange="changeThemeCategory(this.value)" class="bg-slate-900 border border-pink-500/40 rounded-xl px-2.5 py-1.5 text-xs text-pink-300 font-bold outline-none cursor-pointer">
+            <option value="magical">Magical Girl Fantasy</option>
+            <option value="cyber">Akihabara Cyberpunk 2099</option>
+            <option value="gothic">Gothic Lolita Tea Party</option>
+            <option value="gala">Royal Anime Princess Gala</option>
+            <option value="kimono">Matsuri Summer Yukata</option>
+          </select>
+
+          <button onclick="goToRunwayView()" class="px-4 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs font-extrabold hover:brightness-110 shadow-lg shadow-emerald-500/30 transition flex items-center gap-1.5 font-anime-title">
+            <i class="fa-solid fa-person-walking-luggage text-sm"></i> RUNWAY 3D
+          </button>
+        </div>
+      </div>
+
+      <!-- Left Control Panel: Customization Tools -->
+      <div class="lg:col-span-4 glass-panel rounded-2xl p-3.5 md:p-4 space-y-3.5 border-slate-700/60 max-h-[600px] lg:max-h-[640px] overflow-y-auto">
+        
+        <div class="flex items-center justify-between border-b border-slate-700/60 pb-2.5">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-pink-400 flex items-center gap-1.5">
+            <i class="fa-solid fa-shirt"></i> Kustomisasi Busana 3D
+          </h3>
+          <span class="text-[9px] bg-pink-500/20 text-pink-300 font-semibold px-2 py-0.5 rounded-full">Pro Render</span>
+        </div>
+
+        <!-- Customization Category Tabs -->
+        <div class="flex gap-1 overflow-x-auto pb-1 text-[11px] font-bold no-scrollbar">
+          <button onclick="setTab('outfit')" id="tabOutfit" class="px-3 py-1.5 rounded-xl bg-pink-500 text-white whitespace-nowrap transition">Gaun / Outfit</button>
+          <button onclick="setTab('hair')" id="tabHair" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 whitespace-nowrap transition">Rambut</button>
+          <button onclick="setTab('acc')" id="tabAcc" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 whitespace-nowrap transition">Aksesori</button>
+          <button onclick="setTab('shoes')" id="tabShoes" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 whitespace-nowrap transition">Sepatu</button>
+          <button onclick="setTab('wings')" id="tabWings" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 whitespace-nowrap transition">Sayap</button>
+        </div>
+
+        <!-- Dynamic Style Options Grid -->
+        <div class="space-y-1.5">
+          <label class="text-[11px] font-semibold text-slate-300 block" id="sectionOptionTitle">Pilihan Model Busana</label>
+          <div class="grid grid-cols-2 gap-1.5" id="styleOptionsGrid">
+            <!-- Injected via JavaScript -->
+          </div>
+        </div>
+
+        <!-- Primary Color Palette -->
+        <div class="space-y-1.5 pt-2 border-t border-slate-800/80">
+          <div class="flex justify-between items-center">
+            <label class="text-[11px] font-semibold text-slate-300">Warna Pakaian Utama</label>
+            <span class="text-[10px] text-pink-400 font-mono font-bold" id="colorPrimaryDisplay">#ec4899</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5" id="primaryColorPalette"></div>
+        </div>
+
+        <!-- Secondary Color Palette -->
+        <div class="space-y-1.5 pt-2 border-t border-slate-800/80">
+          <div class="flex justify-between items-center">
+            <label class="text-[11px] font-semibold text-slate-300">Warna Aksen / Detail</label>
+            <span class="text-[10px] text-purple-400 font-mono font-bold" id="colorSecondaryDisplay">#f43f5e</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5" id="secondaryColorPalette"></div>
+        </div>
+
+        <!-- Hair Color Palette -->
+        <div class="space-y-1.5 pt-2 border-t border-slate-800/80">
+          <div class="flex justify-between items-center">
+            <label class="text-[11px] font-semibold text-slate-300">Warna Rambut Anime</label>
+            <span class="text-[10px] text-cyan-400 font-mono font-bold" id="colorHairDisplay">#fb7185</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5" id="hairColorPalette"></div>
+        </div>
+
+        <!-- Material Properties & Shading -->
+        <div class="space-y-2.5 pt-2.5 border-t border-slate-800/80">
+          <label class="text-[11px] font-semibold text-slate-300 block">Material & Tekstur Fabric</label>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10px] text-slate-400 block mb-1">Kilau Fabric</label>
+              <input type="range" id="roughnessSlider" min="0.1" max="0.9" step="0.05" value="0.3" oninput="updateMaterialProperties()" class="w-full accent-pink-500 cursor-pointer">
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 block mb-1">Kemilau Metalik</label>
+              <input type="range" id="metalnessSlider" min="0.0" max="0.9" step="0.05" value="0.2" oninput="updateMaterialProperties()" class="w-full accent-purple-500 cursor-pointer">
+            </div>
+          </div>
+
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-1">Motif Tekstur Anime</label>
+            <div class="grid grid-cols-3 gap-1">
+              <button onclick="setPattern('solid')" class="py-1.5 px-2 rounded-xl bg-slate-900 text-[10px] text-slate-300 border border-slate-800 hover:border-pink-500 transition">Polos</button>
+              <button onclick="setPattern('sakura')" class="py-1.5 px-2 rounded-xl bg-slate-900 text-[10px] text-pink-300 border border-slate-800 hover:border-pink-500 transition">Sakura</button>
+              <button onclick="setPattern('glitter')" class="py-1.5 px-2 rounded-xl bg-slate-900 text-[10px] text-amber-300 border border-slate-800 hover:border-pink-500 transition">Glitter</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Center 3D Interactive Viewport -->
+      <div class="lg:col-span-8 glass-panel rounded-2xl p-2 relative h-[480px] md:h-[580px] lg:h-[640px] flex flex-col border-purple-500/30 overflow-hidden shadow-2xl">
+        
+        <!-- Top Floating Camera & Rotate Controls -->
+        <div class="absolute top-3 left-3 z-10 flex flex-wrap gap-1.5">
+          <button onclick="setCameraView('full')" class="px-2.5 py-1 rounded-xl bg-slate-900/90 border border-pink-500/30 text-[11px] font-bold text-pink-300 hover:bg-pink-500/20 shadow-md transition">
+            <i class="fa-solid fa-arrows-to-eye"></i> Penuh
+          </button>
+          <button onclick="setCameraView('face')" class="px-2.5 py-1 rounded-xl bg-slate-900/90 border border-slate-700 text-[11px] font-bold text-slate-300 hover:bg-pink-500/20 shadow-md transition">
+            <i class="fa-solid fa-face-smile"></i> Wajah
+          </button>
+          <button onclick="toggleTurntable()" id="turntableBtn" class="px-2.5 py-1 rounded-xl bg-slate-900/90 border border-slate-700 text-[11px] font-bold text-slate-300 hover:bg-pink-500/20 shadow-md transition">
+            <i class="fa-solid fa-rotate"></i> Putar Auto: ON
+          </button>
+        </div>
+
+        <div class="absolute top-3 right-3 z-10 hidden sm:flex items-center gap-2">
+          <span class="text-[10px] bg-slate-900/90 border border-pink-500/40 text-pink-300 font-mono px-2.5 py-1 rounded-xl shadow-md">
+            <i class="fa-solid fa-hand-pointer mr-1"></i> Putar / Zoom 3D Canvas
+          </span>
+        </div>
+
+        <!-- THREE.JS CANVAS CONTAINER -->
+        <div id="canvas3DContainer" class="w-full h-full rounded-xl bg-slate-950 overflow-hidden cursor-grab active:cursor-grabbing relative">
+          <!-- Canvas injected dynamically -->
+        </div>
+
+        <!-- Pose Animation Selector Bar -->
+        <div class="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 glass-panel px-3 py-1.5 rounded-2xl flex items-center gap-2 border-pink-500/40 shadow-2xl">
+          <span class="text-[10px] font-bold text-pink-300 uppercase tracking-wider hidden sm:inline">Pose:</span>
+          <button onclick="setAnimePose('idle')" id="poseBtnIdle" class="px-2.5 py-0.5 rounded-lg bg-pink-500 text-xs text-white font-bold transition">Santai</button>
+          <button onclick="setAnimePose('catwalk')" id="poseBtnCatwalk" class="px-2.5 py-0.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-300 font-bold hover:border-pink-500 transition">Catwalk</button>
+          <button onclick="setAnimePose('cute')" id="poseBtnCute" class="px-2.5 py-0.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-300 font-bold hover:border-pink-500 transition">Cute Wave</button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- VIEW 2: RUNWAY 3D & AI JUDGING -->
+    <section id="runwayView" class="hidden flex-col items-center justify-center space-y-4 py-2">
+      
+      <!-- Stage Header -->
+      <div class="text-center space-y-1">
+        <span id="runwayModeTag" class="px-3 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/30 text-[10px] font-extrabold tracking-widest uppercase font-anime-title">
+          3D GRAND CATWALK ARENA
+        </span>
+        <h2 id="runwayMainHeading" class="text-2xl md:text-3xl font-extrabold font-anime-title text-slate-100">Penilaian AI Gemini 3D</h2>
+        <p id="runwaySubHeading" class="text-slate-400 text-xs max-w-lg mx-auto">Model 3D Anda sedang tampil di panggung catwalk utama. Juri AI memindai perpaduan warna dan estetika busana.</p>
+      </div>
+
+      <!-- Runway Stage Container -->
+      <div class="w-full max-w-4xl glass-panel rounded-2xl p-4 md:p-6 relative overflow-hidden bg-slate-950/90 border-pink-500/30 shadow-2xl space-y-5">
+        
+        <!-- Summary Display Grid -->
+        <div id="runwayCardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+          
+          <!-- Player 1 Design Summary -->
+          <div id="player1Card" class="bg-slate-900/80 rounded-xl p-4 border border-pink-500/30 space-y-2.5 relative">
+            <div id="p1WinnerBadge" class="hidden absolute -top-2.5 -right-2.5 bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold shadow-lg font-anime-title animate-bounce z-10">
+              🏆 PEMENANG!
+            </div>
+            <div class="flex justify-between items-center border-b border-slate-800 pb-1.5">
+              <h4 id="p1TitleText" class="font-bold text-pink-300 text-xs font-anime-title">Karyamu: Sakura Stylist</h4>
+              <span class="text-[9px] bg-pink-500/20 text-pink-300 px-2 py-0.5 rounded-full font-bold">STYLIST 1</span>
+            </div>
+
+            <ul class="text-xs text-slate-300 space-y-1 font-medium">
+              <li class="flex justify-between"><span class="text-slate-400">Tema:</span><span id="summaryTheme" class="font-bold text-slate-100">Magical Girl</span></li>
+              <li class="flex justify-between"><span class="text-slate-400">Outfit:</span><span id="summaryOutfit" class="font-bold text-pink-400">Magical Dress</span></li>
+              <li class="flex justify-between"><span class="text-slate-400">Rambut:</span><span id="summaryHair" class="font-bold text-purple-400">Twintails</span></li>
+              <li class="flex justify-between"><span class="text-slate-400">Aksesori & Sayap:</span><span id="summaryAcc" class="font-bold text-cyan-400">Cat Ears + Angel</span></li>
+              <li class="flex justify-between"><span class="text-slate-400">Motif Fabric:</span><span id="summaryMaterial" class="font-bold text-amber-400">Star Glitter</span></li>
+            </ul>
+
+            <div class="pt-2 border-t border-slate-800 flex justify-between items-center">
+              <span class="text-xs text-slate-400 font-semibold">Skor Individual:</span>
+              <span id="p1ScoreText" class="text-xl font-extrabold text-pink-400 font-anime-title">--</span>
+            </div>
+          </div>
+
+          <!-- Opponent / AI Summary Box -->
+          <div id="opponentCard" class="bg-slate-900/80 rounded-xl p-4 border border-purple-500/30 space-y-2.5 relative">
+            <div id="p2WinnerBadge" class="hidden absolute -top-2.5 -right-2.5 bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold shadow-lg font-anime-title animate-bounce z-10">
+              🏆 PEMENANG!
+            </div>
+            
+            <div class="flex justify-between items-center border-b border-slate-800 pb-1.5">
+              <h4 id="p2TitleText" class="font-bold text-purple-300 text-xs font-anime-title">Lawan: AI Rival Celestia</h4>
+              <span id="p2RoleBadge" class="text-[9px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full font-bold">AI RIVAL</span>
+            </div>
+
+            <ul id="p2DetailsList" class="text-xs text-slate-300 space-y-1 font-medium">
+              <li class="flex justify-between"><span class="text-slate-400">Tema:</span><span id="p2SummaryTheme" class="font-bold text-slate-100">Magical Girl</span></li>
+              <li class="flex justify-between"><span class="text-slate-400">Outfit:</span><span id="p2SummaryOutfit" class="font-bold text-pink-400">Cyber Suit</span></li>
+              <li class="flex justify-between"><span class="text-slate-400">Rambut:</span><span id="p2SummaryHair" class="font-bold text-purple-400">Hime Cut</span></li>
+              <li class="flex justify-between"><span class="text-slate-400">Aksesori & Sayap:</span><span id="p2SummaryAcc" class="font-bold text-cyan-400">Cyber Visor</span></li>
+              <li class="flex justify-between"><span class="text-slate-400">Motif Fabric:</span><span id="p2SummaryMaterial" class="font-bold text-amber-400">Solid Chrome</span></li>
+            </ul>
+
+            <div class="pt-2 border-t border-slate-800 flex justify-between items-center">
+              <span class="text-xs text-slate-400 font-semibold">Skor Individual:</span>
+              <span id="p2ScoreText" class="text-xl font-extrabold text-purple-400 font-anime-title">--</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- AI Judging Status Box -->
+        <div id="aiJudgingBox" class="p-4 md:p-5 rounded-2xl bg-gradient-to-r from-purple-950/80 via-slate-900 to-pink-950/80 border border-pink-500/40 text-center space-y-3">
+          <div id="aiSpinner" class="flex flex-col items-center justify-center gap-2 text-pink-400 py-3">
+            <i class="fa-solid fa-wand-magic-sparkles fa-spin text-2xl"></i>
+            <span id="spinnerText" class="font-bold text-xs text-slate-200">Juri AI Gemini sedang menilai kreasi busana 3D Anda...</span>
+          </div>
+
+          <div id="aiResultsContent" class="hidden space-y-3 text-left">
+            <div class="flex items-center gap-3 border-b border-slate-800 pb-2.5">
+              <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-400 to-yellow-500 flex items-center justify-center text-slate-950 font-extrabold text-xl shadow-lg">
+                <i class="fa-solid fa-trophy"></i>
+              </div>
+              <div>
+                <span class="text-[9px] text-amber-400 uppercase font-extrabold tracking-wider">HASIL RUNWAY CATWALK 3D</span>
+                <h3 id="verdictTitle" class="text-lg font-extrabold text-white font-anime-title">Desain S-Rank Sangat Memukau!</h3>
+              </div>
+            </div>
+
+            <div class="space-y-1.5">
+              <h5 class="text-[10px] font-bold text-pink-300 uppercase tracking-wider">Ulasan Resmi Juri AI:</h5>
+              <p id="aiCritiqueText" class="text-xs text-slate-300 leading-relaxed italic bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                "Kombinasi warna dan proporsi desain 3D Anda memberikan impresi visual yang menakjubkan!"
+              </p>
+            </div>
+
+            <div class="flex justify-end pt-1">
+              <button onclick="backToStudio()" class="px-5 py-2 rounded-xl font-extrabold text-white glass-btn flex items-center gap-2 text-xs shadow-xl font-anime-title">
+                <i class="fa-solid fa-rotate-right"></i> Kembali ke Studio
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    let scene, camera, renderer, controls;
+    let characterGroup, outfitGroup, hairGroup, accGroup, wingsGroup, shoesGroup, particleSystem;
+    const animClock = new THREE.Clock();
+    const fabricTextureMap = {};
+
+    const PALETTE_PRIMARY = ['#ec4899', '#f43f5e', '#a855f7', '#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#06b6d4', '#e11d48', '#8b5cf6', '#14b8a6', '#f97316'];
+    const PALETTE_SECONDARY = ['#f43f5e', '#ec4899', '#e11d48', '#a855f7', '#38bdf8', '#fde047', '#34d399', '#fb7185', '#c084fc', '#818cf8', '#2dd4bf', '#fbbf24'];
+    const PALETTE_HAIR = ['#fb7185', '#c084fc', '#818cf8', '#38bdf8', '#34d399', '#fde047', '#f43f5e', '#a855f7', '#06b6d4', '#e11d48', '#475569', '#1e293b'];
+
+    let gameState = {
+      gameMode: 'solo', // 'solo', 'vs_ai', 'multiplayer'
+      theme: 'magical',
+      activeTab: 'outfit',
+      autoRotate: true,
+      currentPose: 'idle',
+
+      // Room State
+      currentRoomCode: null,
+      isHost: false,
+      roomUnsubscribe: null,
+
+      // Player Design
+      design: {
+        outfit: 'magical',
+        hair: 'twintails',
+        acc: 'nekomimi',
+        shoes: 'boots',
+        wings: 'angel',
+        
+        colorPrimary: '#ec4899',
+        colorSecondary: '#f43f5e',
+        colorHair: '#fb7185',
+
+        roughness: 0.3,
+        metalness: 0.2,
+        pattern: 'solid'
+      },
+
+      // AI Rival Design
+      aiRivalDesign: null
+    };
+
+    function randomizeTheme() {
+      const themes = ['magical', 'cyber', 'gothic', 'gala', 'kimono'];
+      const randomTheme = themes[Math.floor(Math.random() * themes.length)];
+      changeThemeCategory(randomTheme);
+      const selector = document.getElementById('themeSelector');
+      if (selector) selector.value = randomTheme;
+    }
+
+    function selectInitialMode(mode) {
+      document.getElementById('initialModeModal').classList.add('hidden');
+      setGameMode(mode);
+    }
+
+    function openModeModal() {
+      document.getElementById('initialModeModal').classList.remove('hidden');
+    }
+
+    function setGameMode(mode) {
+      gameState.gameMode = mode;
+      
+      const btnSolo = document.getElementById('btnModeSolo');
+      const btnAi = document.getElementById('btnModeAi');
+      const btnMulti = document.getElementById('btnModeMulti');
+      const roomCard = document.getElementById('multiplayerRoomCard');
+      const playerModeDisplay = document.getElementById('playerModeDisplay');
+      const themeSelector = document.getElementById('themeSelector');
+
+      btnSolo.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-bold transition";
+      btnAi.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-bold transition";
+      btnMulti.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-bold transition flex items-center gap-1";
+      roomCard.classList.add('hidden');
+
+      if (mode === 'solo') {
+        btnSolo.className = "px-2.5 py-1 rounded-lg bg-pink-500 text-white font-bold transition";
+        if (playerModeDisplay) playerModeDisplay.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> Mode Solo`;
+        if (themeSelector) themeSelector.disabled = false;
+      } else if (mode === 'vs_ai') {
+        btnAi.className = "px-2.5 py-1 rounded-lg bg-purple-600 text-white font-bold transition";
+        if (playerModeDisplay) playerModeDisplay.innerHTML = `<i class="fa-solid fa-robot text-purple-400"></i> Mode VS AI`;
+        randomizeTheme();
+        generateAiRivalDesign();
+        if (themeSelector) themeSelector.disabled = true;
+      } else if (mode === 'multiplayer') {
+        btnMulti.className = "px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-bold transition flex items-center gap-1";
+        if (playerModeDisplay) playerModeDisplay.innerHTML = `<i class="fa-solid fa-users text-indigo-400"></i> Mode Room`;
+        randomizeTheme();
+        roomCard.classList.remove('hidden');
+        if (themeSelector) themeSelector.disabled = true;
+      }
+    }
+
+    function generateAiRivalDesign() {
+      const outfits = ['magical', 'cyber', 'gothic', 'gala', 'kimono'];
+      const hairs = ['twintails', 'hime', 'buns', 'ponytail'];
+      const accs = ['nekomimi', 'tiara', 'visor', 'none'];
+      const wings = ['angel', 'demon', 'halo', 'none'];
+      const patterns = ['solid', 'sakura', 'glitter'];
+
+      gameState.aiRivalDesign = {
+        outfit: outfits[Math.floor(Math.random() * outfits.length)],
+        hair: hairs[Math.floor(Math.random() * hairs.length)],
+        acc: accs[Math.floor(Math.random() * accs.length)],
+        wings: wings[Math.floor(Math.random() * wings.length)],
+        pattern: patterns[Math.floor(Math.random() * patterns.length)],
+        colorPrimary: PALETTE_PRIMARY[Math.floor(Math.random() * PALETTE_PRIMARY.length)],
+        colorSecondary: PALETTE_SECONDARY[Math.floor(Math.random() * PALETTE_SECONDARY.length)]
+      };
+    }
+
+    async function createMultiplayerRoom() {
+      if (!window.db || !window.currentUser) {
+        alert("Sistem Firebase sedang diinisialisasi. Silakan coba sebentar lagi.");
+        return;
+      }
+
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      gameState.currentRoomCode = code;
+      gameState.isHost = true;
+
+      const roomRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'rooms', code);
+      const roomData = {
+        roomId: code,
+        theme: gameState.theme,
+        createdAt: Date.now(),
+        status: 'waiting',
+        host: {
+          id: window.currentUser.uid,
+          name: 'Host Stylist (' + code.substring(0, 3) + ')',
+          design: gameState.design,
+          submitted: false
+        },
+        guest: null,
+        judgingResult: null
+      };
+
+      try {
+        await window.setDoc(roomRef, roomData);
+        setupRoomListener(code);
+        updateRoomUI(true, code, 'Menunggu Lawan...', '1 / 2 Pemain');
+      } catch (err) {
+        console.error("Gagal membuat room:", err);
+      }
+    }
+
+    async function joinMultiplayerRoom() {
+      const codeInput = document.getElementById('joinRoomInput').value.trim().toUpperCase();
+      if (codeInput.length !== 6) {
+        alert("Masukkan 6-digit Kode Room valid!");
+        return;
+      }
+
+      if (!window.db || !window.currentUser) return;
+
+      const roomRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'rooms', codeInput);
+      try {
+        const snap = await window.getDoc(roomRef);
+        if (!snap.exists()) {
+          alert("Kode Room tidak ditemukan!");
+          return;
+        }
+
+        gameState.currentRoomCode = codeInput;
+        gameState.isHost = false;
+
+        await window.updateDoc(roomRef, {
+          status: 'ready',
+          guest: {
+            id: window.currentUser.uid,
+            name: 'Guest Stylist (' + codeInput.substring(3) + ')',
+            design: gameState.design,
+            submitted: false
+          }
+        });
+
+        setupRoomListener(codeInput);
+        updateRoomUI(true, codeInput, 'Siap Bertanding!', '2 / 2 Pemain');
+      } catch (err) {
+        console.error("Gagal bergabung room:", err);
+      }
+    }
+
+    function setupRoomListener(roomCode) {
+      if (gameState.roomUnsubscribe) gameState.roomUnsubscribe();
+
+      const roomRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'rooms', roomCode);
+      gameState.roomUnsubscribe = window.onSnapshot(roomRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const room = docSnap.data();
+          const playerCount = (room.host ? 1 : 0) + (room.guest ? 1 : 0);
+          
+          let statusText = 'Menunggu Lawan...';
+          if (room.status === 'ready') statusText = 'Lawan Siap Bertanding!';
+          if (room.status === 'judging') statusText = 'Sedang Dinilai Gemini AI!';
+
+          updateRoomUI(true, roomCode, statusText, `${playerCount} / 2 Pemain`);
+
+          if (room.judgingResult) {
+            renderMultiplayerResults(room.judgingResult);
+          }
+        }
+      }, (err) => console.error("Room sync error:", err));
+    }
+
+    function updateRoomUI(inRoom, code, status, playersText) {
+      const btnGroup = document.getElementById('roomCreateJoinBtns');
+      const infoBox = document.getElementById('activeRoomInfo');
+
+      if (inRoom) {
+        btnGroup.classList.add('hidden');
+        infoBox.classList.remove('hidden');
+        infoBox.classList.add('flex');
+        document.getElementById('displayRoomCode').innerText = code;
+        document.getElementById('roomStatusBadge').innerText = status;
+        document.getElementById('playersInRoomText').innerText = playersText;
+      } else {
+        btnGroup.classList.remove('hidden');
+        infoBox.classList.add('hidden');
+        infoBox.classList.remove('flex');
+      }
+    }
+
+    function leaveMultiplayerRoom() {
+      if (gameState.roomUnsubscribe) gameState.roomUnsubscribe();
+      gameState.currentRoomCode = null;
+      gameState.isHost = false;
+      updateRoomUI(false, '', '', '');
+    }
+
+    function initThreeJS() {
+      const container = document.getElementById('canvas3DContainer');
+      const width = container.clientWidth || 600;
+      const height = container.clientHeight || 500;
+
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0a0c18);
+      scene.fog = new THREE.FogExp2(0x0a0c18, 0.035);
+
+      camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+      camera.position.set(0, 1.4, 4.2);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      container.innerHTML = '';
+      container.appendChild(renderer.domElement);
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.maxPolarAngle = Math.PI / 2 + 0.1;
+      controls.minDistance = 1.6;
+      controls.maxDistance = 6.5;
+      controls.target.set(0, 1.2, 0);
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+      scene.add(ambientLight);
+
+      const keyLight = new THREE.SpotLight(0xec4899, 1.8);
+      keyLight.position.set(3, 5, 4);
+      keyLight.castShadow = true;
+      scene.add(keyLight);
+
+      const fillLight = new THREE.PointLight(0xa855f7, 1.2, 10);
+      fillLight.position.set(-3, 3, 2);
+      scene.add(fillLight);
+
+      const rimLight = new THREE.DirectionalLight(0x38bdf8, 1.5);
+      rimLight.position.set(0, 4, -4);
+      scene.add(rimLight);
+
+      // Stage Pedestal Ground
+      const stageGeo = new THREE.CylinderGeometry(1.8, 2.0, 0.2, 32);
+      const stageMat = new THREE.MeshStandardMaterial({ color: 0x1e1b4b, roughness: 0.2, metalness: 0.8 });
+      const stageMesh = new THREE.Mesh(stageGeo, stageMat);
+      stageMesh.position.y = -0.1;
+      stageMesh.receiveShadow = true;
+      scene.add(stageMesh);
+
+      // Glowing Ring
+      const ringGeo = new THREE.RingGeometry(1.6, 1.75, 32);
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0xec4899, side: THREE.DoubleSide });
+      const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+      ringMesh.rotation.x = Math.PI / 2;
+      ringMesh.position.y = 0.01;
+      scene.add(ringMesh);
+
+      createParticleSparkles();
+
+      characterGroup = new THREE.Group();
+      scene.add(characterGroup);
+
+      buildBaseAnimeBody();
+      rebuild3DCharacterParts();
+
+      window.addEventListener('resize', onWindowResize);
+    }
+
+    function createAnimeFaceTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#fff0e6';
+      ctx.fillRect(0, 0, 512, 512);
+
+      // Blush
+      ctx.fillStyle = 'rgba(244, 63, 94, 0.25)';
+      ctx.beginPath();
+      ctx.arc(170, 270, 35, 0, Math.PI * 2);
+      ctx.arc(342, 270, 35, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Eyes Outer Contour
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.ellipse(180, 230, 35, 50, 0, 0, Math.PI * 2);
+      ctx.ellipse(332, 230, 35, 50, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Iris Gradient
+      const eyeGrad = ctx.createLinearGradient(0, 180, 0, 280);
+      eyeGrad.addColorStop(0, '#ec4899');
+      eyeGrad.addColorStop(1, '#8b5cf6');
+      ctx.fillStyle = eyeGrad;
+      ctx.beginPath();
+      ctx.ellipse(180, 235, 28, 42, 0, 0, Math.PI * 2);
+      ctx.ellipse(332, 235, 28, 42, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Sparkle Highlights
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(170, 215, 10, 0, Math.PI * 2);
+      ctx.arc(322, 215, 10, 0, Math.PI * 2);
+      ctx.arc(190, 250, 6, 0, Math.PI * 2);
+      ctx.arc(342, 250, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Eyelashes
+      ctx.strokeStyle = '#1e1b4b';
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.arc(180, 210, 42, Math.PI * 1.1, Math.PI * 1.9);
+      ctx.arc(332, 210, 42, Math.PI * 1.1, Math.PI * 1.9);
+      ctx.stroke();
+
+      // Cute Smile
+      ctx.strokeStyle = '#e11d48';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(256, 310, 20, 0.2, Math.PI - 0.2);
+      ctx.stroke();
+
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    function createProceduralFabricTexture(patternType) {
+      if (fabricTextureMap[patternType]) return fabricTextureMap[patternType];
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 256, 256);
+
+      if (patternType === 'sakura') {
+        ctx.fillStyle = 'rgba(244, 114, 182, 0.4)';
+        for (let i = 0; i < 25; i++) {
+          const x = Math.random() * 256;
+          const y = Math.random() * 256;
+          ctx.beginPath();
+          ctx.arc(x, y, 7, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else if (patternType === 'glitter') {
+        ctx.fillStyle = 'rgba(253, 224, 71, 0.6)';
+        for (let i = 0; i < 50; i++) {
+          const x = Math.random() * 256;
+          const y = Math.random() * 256;
+          ctx.fillRect(x, y, 3.5, 3.5);
+        }
+      }
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(2, 2);
+
+      fabricTextureMap[patternType] = texture;
+      return texture;
+    }
+
+    function buildBaseAnimeBody() {
+      const skinMat = new THREE.MeshStandardMaterial({
+        color: 0xffe4d6,
+        roughness: 0.5,
+        metalness: 0.05
+      });
+
+      // Head
+      const headGeo = new THREE.SphereGeometry(0.32, 32, 32);
+      headGeo.scale(1, 1.15, 0.95);
+      const faceTex = createAnimeFaceTexture();
+      const faceMat = new THREE.MeshStandardMaterial({
+        map: faceTex,
+        roughness: 0.4,
+        metalness: 0.0
+      });
+
+      const headMesh = new THREE.Mesh(headGeo, faceMat);
+      headMesh.position.y = 1.95;
+      headMesh.rotation.y = -Math.PI / 2;
+      headMesh.castShadow = true;
+      characterGroup.add(headMesh);
+
+      // Torso Base
+      const torsoGeo = new THREE.CylinderGeometry(0.18, 0.14, 0.6, 16);
+      const torsoMesh = new THREE.Mesh(torsoGeo, skinMat);
+      torsoMesh.position.y = 1.35;
+      torsoMesh.castShadow = true;
+      characterGroup.add(torsoMesh);
+
+      // Neck
+      const neckGeo = new THREE.CylinderGeometry(0.07, 0.08, 0.12, 16);
+      const neckMesh = new THREE.Mesh(neckGeo, skinMat);
+      neckMesh.position.y = 1.68;
+      characterGroup.add(neckMesh);
+
+      // Legs
+      const legGeo = new THREE.CylinderGeometry(0.08, 0.06, 0.85, 16);
+      const legLeft = new THREE.Mesh(legGeo, skinMat);
+      legLeft.position.set(-0.11, 0.6, 0);
+      legLeft.castShadow = true;
+      characterGroup.add(legLeft);
+
+      const legRight = new THREE.Mesh(legGeo, skinMat);
+      legRight.position.set(0.11, 0.6, 0);
+      legRight.castShadow = true;
+      characterGroup.add(legRight);
+
+      // Arms
+      const armGeo = new THREE.CylinderGeometry(0.05, 0.04, 0.65, 16);
+      const armLeft = new THREE.Mesh(armGeo, skinMat);
+      armLeft.position.set(-0.25, 1.32, 0);
+      armLeft.rotation.z = Math.PI / 12;
+      armLeft.castShadow = true;
+      characterGroup.add(armLeft);
+
+      const armRight = new THREE.Mesh(armGeo, skinMat);
+      armRight.position.set(0.25, 1.32, 0);
+      armRight.rotation.z = -Math.PI / 12;
+      armRight.castShadow = true;
+      characterGroup.add(armRight);
+    }
+
+    function rebuild3DCharacterParts() {
+      if (outfitGroup) characterGroup.remove(outfitGroup);
+      if (hairGroup) characterGroup.remove(hairGroup);
+      if (accGroup) characterGroup.remove(accGroup);
+      if (wingsGroup) characterGroup.remove(wingsGroup);
+      if (shoesGroup) characterGroup.remove(shoesGroup);
+
+      outfitGroup = new THREE.Group();
+      hairGroup = new THREE.Group();
+      accGroup = new THREE.Group();
+      wingsGroup = new THREE.Group();
+      shoesGroup = new THREE.Group();
+
+      characterGroup.add(outfitGroup);
+      characterGroup.add(hairGroup);
+      characterGroup.add(accGroup);
+      characterGroup.add(wingsGroup);
+      characterGroup.add(shoesGroup);
+
+      const primaryMat = getPrimaryMaterial();
+      const secondaryMat = getSecondaryMaterial();
+      const hairMat = getHairMaterial();
+
+      // 1. OUTFIT GEOMETRY
+      const style = gameState.design.outfit;
+      if (style === 'magical') {
+        const skirtGeo = new THREE.ConeGeometry(0.55, 0.5, 32, 1, true);
+        const skirtMesh = new THREE.Mesh(skirtGeo, primaryMat);
+        skirtMesh.position.y = 0.95;
+        skirtMesh.castShadow = true;
+        outfitGroup.add(skirtMesh);
+
+        const corsetGeo = new THREE.CylinderGeometry(0.19, 0.17, 0.35, 16);
+        const corsetMesh = new THREE.Mesh(corsetGeo, secondaryMat);
+        corsetMesh.position.y = 1.32;
+        corsetMesh.castShadow = true;
+        outfitGroup.add(corsetMesh);
+
+      } else if (style === 'cyber') {
+        const bodySuitGeo = new THREE.CylinderGeometry(0.2, 0.16, 0.65, 16);
+        const bodySuitMesh = new THREE.Mesh(bodySuitGeo, primaryMat);
+        bodySuitMesh.position.y = 1.3;
+        outfitGroup.add(bodySuitMesh);
+
+        const padGeo = new THREE.BoxGeometry(0.15, 0.08, 0.18);
+        const padL = new THREE.Mesh(padGeo, secondaryMat);
+        padL.position.set(-0.28, 1.55, 0);
+        const padR = new THREE.Mesh(padGeo, secondaryMat);
+        padR.position.set(0.28, 1.55, 0);
+        outfitGroup.add(padL);
+        outfitGroup.add(padR);
+
+      } else if (style === 'gala') {
+        const gownGeo = new THREE.ConeGeometry(0.85, 0.9, 32);
+        const gownMesh = new THREE.Mesh(gownGeo, primaryMat);
+        gownMesh.position.y = 0.65;
+        gownMesh.castShadow = true;
+        outfitGroup.add(gownMesh);
+
+        const bodiceGeo = new THREE.CylinderGeometry(0.19, 0.16, 0.38, 16);
+        const bodiceMesh = new THREE.Mesh(bodiceGeo, secondaryMat);
+        bodiceMesh.position.y = 1.35;
+        outfitGroup.add(bodiceMesh);
+
+      } else {
+        const skirtGeo = new THREE.CylinderGeometry(0.22, 0.42, 0.7, 16);
+        const skirtMesh = new THREE.Mesh(skirtGeo, primaryMat);
+        skirtMesh.position.y = 0.85;
+        outfitGroup.add(skirtMesh);
+
+        const topGeo = new THREE.CylinderGeometry(0.19, 0.18, 0.35, 16);
+        const topMesh = new THREE.Mesh(topGeo, secondaryMat);
+        topMesh.position.y = 1.35;
+        outfitGroup.add(topMesh);
+      }
+
+      // 2. HAIR GEOMETRY
+      const hairStyle = gameState.design.hair;
+      const bangGeo = new THREE.SphereGeometry(0.35, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+      const bangMesh = new THREE.Mesh(bangGeo, hairMat);
+      bangMesh.position.y = 1.95;
+      bangMesh.rotation.x = -Math.PI / 6;
+      hairGroup.add(bangMesh);
+
+      if (hairStyle === 'twintails') {
+        const tailGeo = new THREE.ConeGeometry(0.12, 0.9, 16);
+        const tailL = new THREE.Mesh(tailGeo, hairMat);
+        tailL.position.set(-0.35, 1.6, -0.1);
+        tailL.rotation.z = -Math.PI / 8;
+
+        const tailR = new THREE.Mesh(tailGeo, hairMat);
+        tailR.position.set(0.35, 1.6, -0.1);
+        tailR.rotation.z = Math.PI / 8;
+
+        hairGroup.add(tailL);
+        hairGroup.add(tailR);
+
+      } else if (hairStyle === 'buns') {
+        const bunGeo = new THREE.SphereGeometry(0.12, 16, 16);
+        const bunL = new THREE.Mesh(bunGeo, hairMat);
+        bunL.position.set(-0.28, 2.22, 0);
+
+        const bunR = new THREE.Mesh(bunGeo, hairMat);
+        bunR.position.set(0.28, 2.22, 0);
+
+        hairGroup.add(bunL);
+        hairGroup.add(bunR);
+
+      } else if (hairStyle === 'ponytail') {
+        const ponyGeo = new THREE.CylinderGeometry(0.08, 0.16, 0.8, 16);
+        const ponyMesh = new THREE.Mesh(ponyGeo, hairMat);
+        ponyMesh.position.set(0, 1.75, -0.3);
+        ponyMesh.rotation.x = Math.PI / 6;
+        hairGroup.add(ponyMesh);
+      }
+
+      // 3. ACCESSORIES
+      const acc = gameState.design.acc;
+      if (acc === 'nekomimi') {
+        const earGeo = new THREE.ConeGeometry(0.09, 0.22, 4);
+        const earL = new THREE.Mesh(earGeo, secondaryMat);
+        earL.position.set(-0.2, 2.28, 0);
+        earL.rotation.z = -0.3;
+
+        const earR = new THREE.Mesh(earGeo, secondaryMat);
+        earR.position.set(0.2, 2.28, 0);
+        earR.rotation.z = 0.3;
+
+        accGroup.add(earL);
+        accGroup.add(earR);
+
+      } else if (acc === 'tiara') {
+        const tiaraGeo = new THREE.TorusGeometry(0.22, 0.02, 8, 24);
+        const tiaraMat = new THREE.MeshStandardMaterial({ color: 0xfde047, metalness: 0.9, roughness: 0.1 });
+        const tiaraMesh = new THREE.Mesh(tiaraGeo, tiaraMat);
+        tiaraMesh.position.set(0, 2.2, 0);
+        tiaraMesh.rotation.x = Math.PI / 2;
+        accGroup.add(tiaraMesh);
+
+      } else if (acc === 'visor') {
+        const visorGeo = new THREE.BoxGeometry(0.38, 0.08, 0.2);
+        const visorMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4, opacity: 0.85, transparent: true });
+        const visorMesh = new THREE.Mesh(visorGeo, visorMat);
+        visorMesh.position.set(0, 1.98, 0.22);
+        accGroup.add(visorMesh);
+      }
+
+      // 4. WINGS
+      const wingStyle = gameState.design.wings;
+      if (wingStyle === 'angel') {
+        const wingMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
+        const wingGeo = new THREE.BoxGeometry(0.6, 0.35, 0.04);
+
+        const wingL = new THREE.Mesh(wingGeo, wingMat);
+        wingL.position.set(-0.45, 1.45, -0.2);
+        wingL.rotation.y = Math.PI / 6;
+
+        const wingR = new THREE.Mesh(wingGeo, wingMat);
+        wingR.position.set(0.45, 1.45, -0.2);
+        wingR.rotation.y = -Math.PI / 6;
+
+        wingsGroup.add(wingL);
+        wingsGroup.add(wingR);
+
+      } else if (wingStyle === 'halo') {
+        const haloGeo = new THREE.TorusGeometry(0.3, 0.02, 8, 32);
+        const haloMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+        const haloMesh = new THREE.Mesh(haloGeo, haloMat);
+        haloMesh.position.set(0, 2.45, 0);
+        haloMesh.rotation.x = Math.PI / 2;
+        wingsGroup.add(haloMesh);
+      }
+
+      // 5. SHOES
+      const shoeGeo = new THREE.BoxGeometry(0.12, 0.22, 0.18);
+      const shoeL = new THREE.Mesh(shoeGeo, secondaryMat);
+      shoeL.position.set(-0.11, 0.11, 0.02);
+
+      const shoeR = new THREE.Mesh(shoeGeo, secondaryMat);
+      shoeR.position.set(0.11, 0.11, 0.02);
+
+      shoesGroup.add(shoeL);
+      shoesGroup.add(shoeR);
+    }
+
+    function getPrimaryMaterial() {
+      const tex = createProceduralFabricTexture(gameState.design.pattern);
+      return new THREE.MeshStandardMaterial({
+        color: new THREE.Color(gameState.design.colorPrimary),
+        roughness: gameState.design.roughness,
+        metalness: gameState.design.metalness,
+        map: tex
+      });
+    }
+
+    function getSecondaryMaterial() {
+      return new THREE.MeshStandardMaterial({
+        color: new THREE.Color(gameState.design.colorSecondary),
+        roughness: gameState.design.roughness,
+        metalness: gameState.design.metalness
+      });
+    }
+
+    function getHairMaterial() {
+      return new THREE.MeshStandardMaterial({
+        color: new THREE.Color(gameState.design.colorHair),
+        roughness: 0.3,
+        metalness: 0.1
+      });
+    }
+
+    function updateMaterialColors() {
+      if (outfitGroup) rebuild3DCharacterParts();
+    }
+
+    function createParticleSparkles() {
+      const pCount = 80;
+      const geo = new THREE.BufferGeometry();
+      const pos = new Float32Array(pCount * 3);
+
+      for (let i = 0; i < pCount * 3; i += 3) {
+        pos[i] = (Math.random() - 0.5) * 6;
+        pos[i + 1] = Math.random() * 4;
+        pos[i + 2] = (Math.random() - 0.5) * 6;
+      }
+
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const mat = new THREE.PointsMaterial({
+        size: 0.05,
+        color: 0xfc466b,
+        transparent: true,
+        opacity: 0.8
+      });
+
+      particleSystem = new THREE.Points(geo, mat);
+      scene.add(particleSystem);
+    }
+
+    function setTab(tab) {
+      gameState.activeTab = tab;
+      const tabs = ['outfit', 'hair', 'acc', 'shoes', 'wings'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        if (btn) {
+          if (t === tab) {
+            btn.className = "px-3 py-1.5 rounded-xl bg-pink-500 text-white whitespace-nowrap transition font-bold";
+          } else {
+            btn.className = "px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 whitespace-nowrap transition font-bold";
+          }
+        }
+      });
+      renderStyleOptionsGrid();
+    }
+
+    function renderStyleOptionsGrid() {
+      const grid = document.getElementById('styleOptionsGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      const tab = gameState.activeTab;
+
+      let options = [];
+      if (tab === 'outfit') {
+        document.getElementById('sectionOptionTitle').innerText = 'Pilihan Gaun / Busana 3D';
+        options = [
+          { id: 'magical', label: 'Magical Girl' },
+          { id: 'cyber', label: 'Cyber Tech Suit' },
+          { id: 'gala', label: 'Royal Ballgown' },
+          { id: 'kimono', label: 'Matsuri Yukata' }
+        ];
+      } else if (tab === 'hair') {
+        document.getElementById('sectionOptionTitle').innerText = 'Pilihan Rambut Anime';
+        options = [
+          { id: 'twintails', label: 'Twintails' },
+          { id: 'hime', label: 'Hime Cut' },
+          { id: 'buns', label: 'Odango Buns' },
+          { id: 'ponytail', label: 'High Ponytail' }
+        ];
+      } else if (tab === 'acc') {
+        document.getElementById('sectionOptionTitle').innerText = 'Aksesori Kepala';
+        options = [
+          { id: 'nekomimi', label: 'Cat Ears' },
+          { id: 'tiara', label: 'Royal Tiara' },
+          { id: 'visor', label: 'Cyber Visor' },
+          { id: 'none', label: 'Tanpa Aksesori' }
+        ];
+      } else if (tab === 'shoes') {
+        document.getElementById('sectionOptionTitle').innerText = 'Sepatu Anime 3D';
+        options = [
+          { id: 'boots', label: 'High Boots' },
+          { id: 'heels', label: 'Stiletto Heels' },
+          { id: 'sneakers', label: 'Platform' }
+        ];
+      } else if (tab === 'wings') {
+        document.getElementById('sectionOptionTitle').innerText = 'Sayap & Efek';
+        options = [
+          { id: 'angel', label: 'Angel Wings' },
+          { id: 'halo', label: 'Divine Halo' },
+          { id: 'none', label: 'Tanpa Sayap' }
+        ];
+      }
+
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        const isActive = gameState.design[tab] === opt.id;
+        btn.className = `p-2 rounded-xl text-xs font-semibold border transition text-left flex items-center justify-between ${
+          isActive 
+            ? 'bg-pink-500/20 text-pink-300 border-pink-500' 
+            : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-pink-500 hover:bg-slate-800'
+        }`;
+        btn.innerHTML = `<span>${opt.label}</span> <i class="fa-solid fa-chevron-right text-[9px] text-slate-500"></i>`;
+        btn.onclick = () => selectStyle(tab, opt.id);
+        grid.appendChild(btn);
+      });
+    }
+
+    function selectStyle(category, styleId) {
+      gameState.design[category] = styleId;
+      renderStyleOptionsGrid();
+      rebuild3DCharacterParts();
+    }
+
+    function renderColorPalettes() {
+      const renderPalette = (containerId, colorList, activeColor, onClickFn) => {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+        colorList.forEach(hex => {
+          const btn = document.createElement('button');
+          btn.style.backgroundColor = hex;
+          btn.className = `w-6 h-6 rounded-lg transition transform hover:scale-110 ${activeColor === hex ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900 scale-110' : 'opacity-80 hover:opacity-100'}`;
+          btn.onclick = () => onClickFn(hex);
+          container.appendChild(btn);
+        });
+      };
+
+      renderPalette('primaryColorPalette', PALETTE_PRIMARY, gameState.design.colorPrimary, (hex) => {
+        gameState.design.colorPrimary = hex;
+        document.getElementById('colorPrimaryDisplay').innerText = hex;
+        renderColorPalettes();
+        updateMaterialColors();
+      });
+
+      renderPalette('secondaryColorPalette', PALETTE_SECONDARY, gameState.design.colorSecondary, (hex) => {
+        gameState.design.colorSecondary = hex;
+        document.getElementById('colorSecondaryDisplay').innerText = hex;
+        renderColorPalettes();
+        updateMaterialColors();
+      });
+
+      renderPalette('hairColorPalette', PALETTE_HAIR, gameState.design.colorHair, (hex) => {
+        gameState.design.colorHair = hex;
+        document.getElementById('colorHairDisplay').innerText = hex;
+        renderColorPalettes();
+        updateMaterialColors();
+      });
+    }
+
+    function setPattern(pType) {
+      gameState.design.pattern = pType;
+      rebuild3DCharacterParts();
+    }
+
+    function updateMaterialProperties() {
+      gameState.design.roughness = parseFloat(document.getElementById('roughnessSlider').value);
+      gameState.design.metalness = parseFloat(document.getElementById('metalnessSlider').value);
+      updateMaterialColors();
+    }
+
+    function changeThemeCategory(val) {
+      gameState.theme = val;
+      const titles = {
+        magical: 'Magical Girl Fantasy',
+        cyber: 'Akihabara Cyberpunk 2099',
+        gothic: 'Gothic Lolita Tea Party',
+        gala: 'Royal Anime Princess Gala',
+        kimono: 'Matsuri Summer Yukata'
+      };
+      document.getElementById('headerCategoryText').innerText = titles[val];
+      document.getElementById('studioCategoryTitle').innerText = titles[val];
+    }
+
+    function setCameraView(preset) {
+      if (preset === 'face') {
+        camera.position.set(0, 1.95, 1.5);
+        controls.target.set(0, 1.95, 0);
+      } else {
+        camera.position.set(0, 1.4, 4.2);
+        controls.target.set(0, 1.2, 0);
+      }
+    }
+
+    function toggleTurntable() {
+      gameState.autoRotate = !gameState.autoRotate;
+      const btn = document.getElementById('turntableBtn');
+      btn.innerHTML = `<i class="fa-solid fa-rotate"></i> Putar Auto: ${gameState.autoRotate ? 'ON' : 'OFF'}`;
+    }
+
+    function setAnimePose(pose) {
+      gameState.currentPose = pose;
+      ['Idle', 'Catwalk', 'Cute'].forEach(p => {
+        const btn = document.getElementById(`poseBtn${p}`);
+        if (btn) {
+          if (p.toLowerCase() === pose) {
+            btn.className = "px-2.5 py-0.5 rounded-lg bg-pink-500 text-xs text-white font-bold transition";
+          } else {
+            btn.className = "px-2.5 py-0.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-300 font-bold hover:border-pink-500 transition";
+          }
+        }
+      });
+    }
+
+    function goToRunwayView() {
+      document.getElementById('studioView').classList.add('hidden');
+      document.getElementById('studioView').classList.remove('grid');
+      document.getElementById('runwayView').classList.remove('hidden');
+      document.getElementById('runwayView').classList.add('flex');
+
+      document.getElementById('p1WinnerBadge').classList.add('hidden');
+      document.getElementById('p2WinnerBadge').classList.add('hidden');
+
+      document.getElementById('p1TitleText').innerText = "Karyamu: Sakura Stylist";
+      document.getElementById('summaryTheme').innerText = document.getElementById('studioCategoryTitle').innerText;
+      document.getElementById('summaryOutfit').innerText = gameState.design.outfit.toUpperCase();
+      document.getElementById('summaryHair').innerText = gameState.design.hair.toUpperCase();
+      document.getElementById('summaryAcc').innerText = gameState.design.acc.toUpperCase();
+      document.getElementById('summaryMaterial').innerText = gameState.design.pattern.toUpperCase();
+
+      if (gameState.gameMode === 'solo') {
+        document.getElementById('opponentCard').classList.add('hidden');
+        document.getElementById('p1ScoreText').innerText = '--';
+        evaluate3DFashionWithGeminiSolo();
+      } 
+      else if (gameState.gameMode === 'vs_ai') {
+        document.getElementById('opponentCard').classList.remove('hidden');
+        document.getElementById('p2TitleText').innerText = "Lawan: AI Rival Celestia";
+        document.getElementById('p2RoleBadge').innerText = "AI RIVAL";
+        
+        const aiD = gameState.aiRivalDesign || { outfit: 'cyber', hair: 'hime', acc: 'visor', pattern: 'solid' };
+        document.getElementById('p2SummaryTheme').innerText = document.getElementById('studioCategoryTitle').innerText;
+        document.getElementById('p2SummaryOutfit').innerText = aiD.outfit.toUpperCase();
+        document.getElementById('p2SummaryHair').innerText = aiD.hair.toUpperCase();
+        document.getElementById('p2SummaryAcc').innerText = aiD.acc.toUpperCase();
+        document.getElementById('p2SummaryMaterial').innerText = aiD.pattern.toUpperCase();
+
+        evaluate3DFashionWithGeminiVsAi();
+      }
+      else if (gameState.gameMode === 'multiplayer') {
+        document.getElementById('opponentCard').classList.remove('hidden');
+        document.getElementById('p2TitleText').innerText = gameState.isHost ? "Pemain 2 (Guest)" : "Pemain 1 (Host)";
+        document.getElementById('p2RoleBadge').innerText = "ONLINE PLAYER";
+
+        evaluate3DFashionMultiplayer();
+      }
+    }
+
+    async function evaluate3DFashionWithGeminiSolo() {
+      const apiKey = "";
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+      const systemPrompt = `Anda adalah Juri Utama Perancangan Busana 3D Anime Internasional. Berikan skor (80-100) dan kritik apresiatif singkat dalam JSON terstruktur.`;
+      const userPrompt = `Nilai busana 3D: Outfit ${gameState.design.outfit}, Rambut ${gameState.design.hair}, Aksesori ${gameState.design.acc}, Warna ${gameState.design.colorPrimary}.`;
+
+      const payload = {
+        contents: [{ parts: [{ text: userPrompt }] }],
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              score: { type: "INTEGER" },
+              rankBadge: { type: "STRING" },
+              verdictTitle: { type: "STRING" },
+              critique: { type: "STRING" }
+            },
+            propertyOrdering: ["score", "rankBadge", "verdictTitle", "critique"]
+          }
+        }
+      };
+
+      try {
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (jsonText) {
+          const parsed = JSON.parse(jsonText);
+          renderSoloResults(parsed);
+        } else {
+          fallbackSoloEval();
+        }
+      } catch (err) {
+        fallbackSoloEval();
+      }
+    }
+
+    function renderSoloResults(data) {
+      document.getElementById('aiSpinner').classList.add('hidden');
+      document.getElementById('aiResultsContent').classList.remove('hidden');
+
+      document.getElementById('p1ScoreText').innerText = data.score;
+      document.getElementById('verdictTitle').innerText = data.verdictTitle || "Desain S-Rank!";
+      document.getElementById('aiCritiqueText').innerText = `"${data.critique}"`;
+    }
+
+    function fallbackSoloEval() {
+      renderSoloResults({
+        score: 95,
+        verdictTitle: "Desain S-Rank Sangat Memukau!",
+        critique: `Perpaduan warna ${gameState.design.colorPrimary} dan model 3D ${gameState.design.outfit} memberikan impresi visual anime yang futuristik & penuh pesona!`
+      });
+    }
+
+    async function evaluate3DFashionWithGeminiVsAi() {
+      const apiKey = "";
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+      const systemPrompt = `Anda adalah Juri Kontes Busana 3D Anime. Berikan skor (80-100) untuk Player vs AI Rival, tentukan pemenang ('player' atau 'ai'), serta ulasan dalam JSON terstruktur.`;
+      const userPrompt = `Pertandingan Catwalk: Player (${gameState.design.outfit}) VS AI Rival (${gameState.aiRivalDesign.outfit}).`;
+
+      const payload = {
+        contents: [{ parts: [{ text: userPrompt }] }],
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              playerScore: { type: "INTEGER" },
+              aiScore: { type: "INTEGER" },
+              winner: { type: "STRING" },
+              verdictTitle: { type: "STRING" },
+              critique: { type: "STRING" }
+            },
+            propertyOrdering: ["playerScore", "aiScore", "winner", "verdictTitle", "critique"]
+          }
+        }
+      };
+
+      try {
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (jsonText) {
+          const parsed = JSON.parse(jsonText);
+          renderVsResults(parsed.playerScore, parsed.aiScore, parsed.winner, parsed.verdictTitle, parsed.critique);
+        } else {
+          fallbackVsEval();
+        }
+      } catch (err) {
+        fallbackVsEval();
+      }
+    }
+
+    function renderVsResults(pScore, aiScore, winner, title, critique) {
+      document.getElementById('aiSpinner').classList.add('hidden');
+      document.getElementById('aiResultsContent').classList.remove('hidden');
+
+      document.getElementById('p1ScoreText').innerText = pScore;
+      document.getElementById('p2ScoreText').innerText = aiScore;
+
+      if (winner === 'player') {
+        document.getElementById('p1WinnerBadge').classList.remove('hidden');
+      } else {
+        document.getElementById('p2WinnerBadge').classList.remove('hidden');
+      }
+
+      document.getElementById('verdictTitle').innerText = title || "Pertarungan Sengit Runway 3D!";
+      document.getElementById('aiCritiqueText').innerText = `"${critique}"`;
+    }
+
+    function fallbackVsEval() {
+      renderVsResults(96, 89, 'player', "Kemenangan Telak Pemain!", "Pemain menunjukkan kombinasi warna dan ornamen 3D yang jauh lebih harmonis di atas catwalk!");
+    }
+
+    async function evaluate3DFashionMultiplayer() {
+      if (!gameState.currentRoomCode || !window.db) {
+        renderVsResults(92, 90, 'player', "Simulasi Dual Runway", "Pertandingan room multiplayer berhasil dilaksanakan!");
+        return;
+      }
+
+      const roomRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'rooms', gameState.currentRoomCode);
+      const updateObj = {};
+      if (gameState.isHost) {
+        updateObj['host.design'] = gameState.design;
+        updateObj['host.submitted'] = true;
+      } else {
+        updateObj['guest.design'] = gameState.design;
+        updateObj['guest.submitted'] = true;
+      }
+      updateObj['status'] = 'judging';
+
+      await window.updateDoc(roomRef, updateObj);
+
+      if (gameState.isHost) {
+        setTimeout(async () => {
+          const evalResult = {
+            p1Score: 94,
+            p2Score: 89,
+            winner: 'player',
+            title: "Pertandingan Room Selesai!",
+            critique: "Host Stylist memenangkan panggung dengan detail aksesori 3D yang memukau!"
+          };
+          await window.updateDoc(roomRef, { judgingResult: evalResult });
+        }, 2000);
+      }
+    }
+
+    function renderMultiplayerResults(res) {
+      renderVsResults(res.p1Score, res.p2Score, res.winner, res.title, res.critique);
+    }
+
+    function backToStudio() {
+      document.getElementById('runwayView').classList.add('hidden');
+      document.getElementById('runwayView').classList.remove('flex');
+      document.getElementById('aiSpinner').classList.remove('hidden');
+      document.getElementById('aiResultsContent').classList.add('hidden');
+      document.getElementById('studioView').classList.remove('hidden');
+      document.getElementById('studioView').classList.add('grid');
+    }
+
+    function animateLoop() {
+      requestAnimationFrame(animateLoop);
+
+      const delta = animClock.getDelta();
+      const elapsed = animClock.getElapsedTime();
+
+      if (gameState.autoRotate && characterGroup) {
+        characterGroup.rotation.y += delta * 0.4;
+      }
+
+      if (particleSystem) {
+        particleSystem.rotation.y = elapsed * 0.05;
+      }
+
+      if (characterGroup) {
+        if (gameState.currentPose === 'idle') {
+          characterGroup.position.y = Math.sin(elapsed * 2) * 0.03;
+        } else if (gameState.currentPose === 'catwalk') {
+          characterGroup.position.y = Math.sin(elapsed * 6) * 0.04;
+          characterGroup.rotation.z = Math.cos(elapsed * 3) * 0.04;
+        } else if (gameState.currentPose === 'cute') {
+          characterGroup.position.y = Math.sin(elapsed * 3) * 0.02;
+          characterGroup.rotation.z = Math.sin(elapsed * 2) * 0.03;
+        }
+      }
+
+      if (controls && renderer && scene && camera) {
+        controls.update();
+        renderer.render(scene, camera);
+      }
+    }
+
+    function onWindowResize() {
+      const container = document.getElementById('canvas3DContainer');
+      if (!container || !camera || !renderer) return;
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    }
+
+    // Initialize Game & Three.js Canvas when Page Loaded
+    window.addEventListener('DOMContentLoaded', () => {
+      initThreeJS();
+      animateLoop();
+      setTab('outfit');
+      renderColorPalettes();
+      generateAiRivalDesign();
+    });
+  </script>
+</body>
+</html>
