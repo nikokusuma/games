@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Misi Pelatihan Mouse</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .target {
+            transition: all 0.2s ease-in-out;
+        }
+        .target:hover {
+            transform: scale(1.1);
+        }
+        .draggable {
+            cursor: grab;
+        }
+        .dragging {
+            cursor: grabbing;
+            opacity: 0.7;
+            z-index: 1000;
+        }
+        /* Custom styles for the scroll mission */
+        .scroll-container {
+            border: 2px solid #a5f3fc; /* cyan-200 */
+            background-color: #ecfeff; /* cyan-50 */
+        }
+        .scroll-fill {
+            background-color: #22c55e; /* green-500 */
+            transition: height 0.3s ease;
+        }
+        .obstacle {
+            background-color: #94a3b8; /* slate-400 */
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+            20%, 40%, 60%, 80% { transform: translateX(8px); }
+        }
+        .shake-anim {
+            animation: shake 0.4s;
+        }
+    </style>
+</head>
+<body class="bg-sky-100 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg w-full max-w-2xl text-center">
+        
+        <div class="flex justify-between items-center mb-4">
+            <div id="lives-container" class="text-2xl" style="visibility: hidden;"></div>
+            <div id="timer-container" class="text-2xl font-semibold text-slate-600" style="visibility: hidden;">00:00</div>
+        </div>
+        
+        <h1 id="main-title" class="text-3xl font-bold text-slate-800 mb-2">Misi Pelatihan Mouse</h1>
+        <p id="mission-title" class="text-xl font-semibold text-sky-600 mb-4">Selesaikan semua tantangan!</p>
+        
+        <div id="instruction" class="text-gray-600 mb-6 min-h-[40px] flex items-center justify-center">
+            Klik tombol "Mulai" untuk memulai pelatihan.
+        </div>
+
+        <!-- Game area where interactive elements will appear -->
+        <div id="game-area" class="relative w-full h-96 bg-sky-50 border-2 border-dashed border-sky-300 rounded-lg overflow-hidden select-none">
+            <!-- Game elements will be injected here by JavaScript -->
+        </div>
+
+        <div id="feedback" class="mt-4 text-lg font-medium text-green-600 min-h-[28px]"></div>
+        
+        <button id="start-reset-button" class="mt-6 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-orange-300">
+            Mulai
+        </button>
+    </div>
+
+    <script>
+        // DOM Elements
+        const gameArea = document.getElementById('game-area');
+        const instructionEl = document.getElementById('instruction');
+        const missionTitleEl = document.getElementById('mission-title');
+        const mainTitleEl = document.getElementById('main-title');
+        const feedbackEl = document.getElementById('feedback');
+        const startResetButton = document.getElementById('start-reset-button');
+        const livesContainer = document.getElementById('lives-container');
+        const timerContainer = document.getElementById('timer-container');
+
+        // Game State Variables
+        let currentMissionIndex = -1;
+        let missions = [];
+        let lives = 3;
+        const MAX_LIVES = 3;
+        let timerInterval = null;
+        let secondsElapsed = 0;
+
+        // --- MISSION 1: LEFT CLICK ---
+        const leftClickMission = {
+            title: "Misi 1: Klik Kiri",
+            instruction: "Klik target secara berurutan dari 1 sampai 5.",
+            requiredClicks: 5,
+            clicksDone: 0,
+            setup: function() {
+                this.clicksDone = 0;
+                const placedTargets = [];
+                const targetSize = 64; // w-16, h-16
+                const padding = 10;
+                const colors = ['bg-yellow-400', 'bg-cyan-400', 'bg-pink-400', 'bg-lime-400', 'bg-indigo-400'];
+
+                for (let i = 1; i <= this.requiredClicks; i++) {
+                    const target = document.createElement('div');
+                    target.textContent = i;
+                    target.dataset.id = i;
+                    target.className = `target absolute flex items-center justify-center w-16 h-16 ${colors[i-1]} text-white font-bold rounded-full cursor-pointer shadow-md`;
+                    
+                    let newPos;
+                    let isOverlapping;
+                    let attempts = 0;
+
+                    do {
+                        isOverlapping = false;
+                        const randomLeft = Math.random() * (gameArea.clientWidth - targetSize - (padding * 2)) + padding;
+                        const randomTop = Math.random() * (gameArea.clientHeight - targetSize - (padding * 2)) + padding;
+                        
+                        newPos = { x: randomLeft, y: randomTop, width: targetSize, height: targetSize };
+
+                        for (const placed of placedTargets) {
+                            if (newPos.x < placed.x + placed.width + padding && newPos.x + newPos.width + padding > placed.x && newPos.y < placed.y + placed.height + padding && newPos.y + newPos.height + padding > placed.y) {
+                                isOverlapping = true; break;
+                            }
+                        }
+                        attempts++;
+                    } while (isOverlapping && attempts < 100);
+
+                    placedTargets.push(newPos);
+                    target.style.left = `${newPos.x}px`;
+                    target.style.top = `${newPos.y}px`;
+                    gameArea.appendChild(target);
+                }
+                gameArea.addEventListener('click', this.handler);
+            },
+            handler: function(e) {
+                const mission = missions[currentMissionIndex];
+                if (e.target.dataset.id == mission.clicksDone + 1) {
+                    mission.clicksDone++;
+                    e.target.className = e.target.className.replace(/bg-\w+-\d+/, 'bg-green-500');
+                    e.target.style.transform = 'scale(0.9)';
+                    e.target.textContent = '✓';
+                    if (mission.clicksDone === mission.requiredClicks) {
+                        showFeedback("Bagus! Misi Selesai.", true);
+                        setTimeout(nextMission, 1000);
+                    }
+                } else if (e.target.classList.contains('target')) {
+                    handleMistake();
+                    showFeedback("Urutan salah!", false);
+                }
+            },
+            cleanup: function() {
+                gameArea.removeEventListener('click', this.handler);
+            }
+        };
+
+        // --- MISSION 2: RIGHT CLICK ---
+        const rightClickMission = {
+            title: "Misi 2: Klik Kanan",
+            instruction: "Klik kanan pada semua kotak untuk mengubah warnanya.",
+            requiredBoxes: 4,
+            boxesClicked: new Set(),
+            setup: function() {
+                this.boxesClicked.clear();
+                const placedTargets = [];
+                const targetSize = 80;
+                const padding = 5;
+
+                for (let i = 0; i < this.requiredBoxes; i++) {
+                    const box = document.createElement('div');
+                    box.dataset.id = i;
+                    box.className = 'target absolute w-20 h-20 bg-amber-300 rounded-lg shadow-md cursor-context-menu';
+                    
+                    let newPos;
+                    let isOverlapping;
+                    let attempts = 0;
+
+                    do {
+                        isOverlapping = false;
+                        const randomLeft = Math.random() * (gameArea.clientWidth - targetSize - (padding * 2)) + padding;
+                        const randomTop = Math.random() * (gameArea.clientHeight - targetSize - (padding * 2)) + padding;
+
+                        newPos = { x: randomLeft, y: randomTop, width: targetSize, height: targetSize };
+
+                        for (const placed of placedTargets) {
+                            if (newPos.x < placed.x + placed.width + padding && newPos.x + newPos.width + padding > placed.x && newPos.y < placed.y + placed.height + padding && newPos.y + newPos.height + padding > placed.y) {
+                                isOverlapping = true; break;
+                            }
+                        }
+                        attempts++;
+                    } while (isOverlapping && attempts < 100);
+
+                    placedTargets.push(newPos);
+                    box.style.left = `${newPos.x}px`;
+                    box.style.top = `${newPos.y}px`;
+                    gameArea.appendChild(box);
+                }
+                gameArea.addEventListener('contextmenu', this.handler);
+            },
+            handler: function(e) {
+                e.preventDefault();
+                const mission = missions[currentMissionIndex];
+                const target = e.target;
+                if (target.dataset.id && !mission.boxesClicked.has(target.dataset.id)) {
+                    target.style.backgroundColor = '#a78bfa';
+                    target.style.transform = 'rotate(10deg)';
+                    mission.boxesClicked.add(target.dataset.id);
+                    if (mission.boxesClicked.size === mission.requiredBoxes) {
+                        showFeedback("Hebat! Terus lanjutkan.", true);
+                        setTimeout(nextMission, 1000);
+                    }
+                }
+            },
+            cleanup: function() {
+                gameArea.removeEventListener('contextmenu', this.handler);
+            }
+        };
+
+        // --- MISSION 3: SCROLL ---
+        const scrollMission = {
+            title: "Misi 3: Scroll Mouse",
+            instruction: "Gunakan scroll mouse ke atas untuk mengisi daya baterai hingga penuh.",
+            charge: 0,
+            isComplete: false,
+            setup: function() {
+                this.charge = 0;
+                this.isComplete = false;
+                const container = document.createElement('div');
+                container.className = 'scroll-container absolute w-24 h-64 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg p-2';
+                
+                const fill = document.createElement('div');
+                fill.id = 'scroll-fill';
+                fill.className = 'scroll-fill w-full h-0 rounded-md';
+                
+                container.appendChild(fill);
+                gameArea.appendChild(container);
+
+                gameArea.addEventListener('wheel', this.handler);
+            },
+            handler: function(e) {
+                e.preventDefault();
+                const mission = missions[currentMissionIndex];
+                if (mission.isComplete) return;
+
+                if (e.deltaY < 0) {
+                    mission.charge = Math.min(100, mission.charge + 5);
+                }
+                
+                const fillEl = document.getElementById('scroll-fill');
+                if(fillEl) {
+                    fillEl.style.height = `${mission.charge}%`;
+                }
+
+                if (mission.charge >= 100) {
+                    mission.isComplete = true;
+                    showFeedback("Daya penuh! Kerja bagus!", true);
+                    setTimeout(nextMission, 1000);
+                }
+            },
+            cleanup: function() {
+                gameArea.removeEventListener('wheel', this.handler);
+            }
+        };
+
+        // --- MISSION 4: DRAG AND DROP ---
+        const dragDropMission = {
+            title: "Misi 4: Drag & Drop",
+            instruction: "Tarik bentuk ke dalam kerangka yang sesuai.",
+            isDragging: false,
+            dragTarget: null,
+            offsetX: 0,
+            offsetY: 0,
+            setup: function() {
+                const dropZone = document.createElement('div');
+                dropZone.id = 'drop-zone';
+                dropZone.className = 'absolute w-28 h-28 bg-transparent border-4 border-dashed border-teal-500 rounded-2xl';
+                dropZone.style.left = `${gameArea.clientWidth - 140}px`;
+                dropZone.style.top = `${(gameArea.clientHeight - 112) / 2}px`;
+                gameArea.appendChild(dropZone);
+
+                const draggable = document.createElement('div');
+                draggable.id = 'draggable-item';
+                draggable.className = 'draggable absolute w-24 h-24 bg-fuchsia-500 rounded-2xl shadow-lg flex items-center justify-center text-white text-4xl';
+                draggable.innerHTML = '★';
+                draggable.style.left = `20px`;
+                draggable.style.top = `${(gameArea.clientHeight - 96) / 2}px`;
+                gameArea.appendChild(draggable);
+                
+                draggable.addEventListener('mousedown', this.dragStart);
+                document.addEventListener('mousemove', this.dragMove);
+                document.addEventListener('mouseup', this.dragEnd);
+            },
+            dragStart: function(e) {
+                const mission = missions[currentMissionIndex];
+                if (e.target.id === 'draggable-item') {
+                    mission.isDragging = true;
+                    mission.dragTarget = e.target;
+                    mission.dragTarget.classList.add('dragging');
+                    mission.offsetX = e.clientX - mission.dragTarget.getBoundingClientRect().left;
+                    mission.offsetY = e.clientY - mission.dragTarget.getBoundingClientRect().top;
+                }
+            },
+            dragMove: function(e) {
+                const mission = missions[currentMissionIndex];
+                if (!mission.isDragging) return;
+                
+                const gameAreaRect = gameArea.getBoundingClientRect();
+                let newX = e.clientX - gameAreaRect.left - mission.offsetX;
+                let newY = e.clientY - gameAreaRect.top - mission.offsetY;
+
+                newX = Math.max(0, Math.min(newX, gameArea.clientWidth - mission.dragTarget.clientWidth));
+                newY = Math.max(0, Math.min(newY, gameArea.clientHeight - mission.dragTarget.clientHeight));
+
+                mission.dragTarget.style.left = `${newX}px`;
+                mission.dragTarget.style.top = `${newY}px`;
+            },
+            dragEnd: function(e) {
+                const mission = missions[currentMissionIndex];
+                if (!mission.isDragging) return;
+
+                mission.isDragging = false;
+                mission.dragTarget.classList.remove('dragging');
+
+                const dropZone = document.getElementById('drop-zone');
+                const dragRect = mission.dragTarget.getBoundingClientRect();
+                const dropRect = dropZone.getBoundingClientRect();
+
+                if (dragRect.left < dropRect.right && dragRect.right > dropRect.left &&
+                    dragRect.top < dropRect.bottom && dragRect.bottom > dropRect.top) {
+                    
+                    mission.dragTarget.style.left = `${dropZone.offsetLeft + (dropZone.offsetWidth - mission.dragTarget.offsetWidth) / 2}px`;
+                    mission.dragTarget.style.top = `${dropZone.offsetTop + (dropZone.offsetHeight - mission.dragTarget.offsetHeight) / 2}px`;
+                    
+                    showFeedback("Sempurna! Anda berhasil!", true);
+                    setTimeout(nextMission, 1000);
+                }
+            },
+            cleanup: function() {
+                const draggable = document.getElementById('draggable-item');
+                if (draggable) draggable.removeEventListener('mousedown', this.dragStart);
+                document.removeEventListener('mousemove', this.dragMove);
+                document.removeEventListener('mouseup', this.dragEnd);
+            }
+        };
+
+        // --- MISSION 5: SPEED CLICK ---
+        const speedClickMission = {
+            title: "Misi 5: Klik Cepat",
+            instruction: "Klik target sebelum menghilang!",
+            targetsToClick: 5,
+            clicked: 0,
+            timer: null,
+            setup: function() {
+                this.clicked = 0;
+                this.spawnTarget();
+                gameArea.addEventListener('click', this.handler);
+            },
+            spawnTarget: function() {
+                clearTimeout(this.timer);
+                gameArea.innerHTML = '';
+                const target = document.createElement('div');
+                target.id = 'speed-target';
+                target.className = 'target absolute flex items-center justify-center w-16 h-16 bg-teal-500 text-white font-bold rounded-full cursor-pointer shadow-md';
+                const targetSize = 64;
+                const randomLeft = Math.random() * (gameArea.clientWidth - targetSize);
+                const randomTop = Math.random() * (gameArea.clientHeight - targetSize);
+                target.style.left = `${randomLeft}px`;
+                target.style.top = `${randomTop}px`;
+                gameArea.appendChild(target);
+                this.timer = setTimeout(() => {
+                    handleMistake();
+                    showFeedback("Terlalu lambat!", false);
+                    if (lives > 0) this.spawnTarget();
+                }, 2000);
+            },
+            handler: function(e) {
+                const mission = missions[currentMissionIndex];
+                if (e.target.id === 'speed-target') {
+                    mission.clicked++;
+                    if (mission.clicked >= mission.targetsToClick) {
+                        clearTimeout(mission.timer);
+                        gameArea.innerHTML = '';
+                        showFeedback("Refleks yang hebat!", true);
+                        setTimeout(nextMission, 1000);
+                    } else {
+                        showFeedback(`Target ${mission.clicked} dari ${mission.targetsToClick}`, true);
+                        mission.spawnTarget();
+                    }
+                }
+            },
+            cleanup: function() {
+                clearTimeout(this.timer);
+                gameArea.removeEventListener('click', this.handler);
+            }
+        };
+
+        // --- MISSION 6: PRECISE RIGHT CLICK ---
+        const preciseRightClickMission = {
+            title: "Misi 6: Klik Kanan Tepat",
+            instruction: "Klik kanan HANYA pada kotak HIJAU.",
+            colors: [{ name: 'HIJAU', hex: '#84cc16' }, { name: 'ORANYE', hex: '#fb923c' }, { name: 'BIRU', hex: '#38bdf8' }],
+            correctNeeded: 0,
+            correctClicked: 0,
+            setup: function() {
+                this.correctNeeded = 0;
+                this.correctClicked = 0;
+                const placedTargets = [];
+                const targetSize = 72;
+                const padding = 5;
+
+                for (let i = 0; i < 8; i++) {
+                    const colorInfo = this.colors[Math.floor(Math.random() * this.colors.length)];
+                    const box = document.createElement('div');
+                    box.dataset.color = colorInfo.name;
+                    box.className = 'target absolute w-[72px] h-[72px] rounded-lg shadow-md cursor-context-menu';
+                    box.style.backgroundColor = colorInfo.hex;
+                    if(colorInfo.name === 'HIJAU') this.correctNeeded++;
+                    
+                    let newPos;
+                    let isOverlapping;
+                    do {
+                        isOverlapping = false;
+                        const randomLeft = Math.random() * (gameArea.clientWidth - targetSize - padding*2) + padding;
+                        const randomTop = Math.random() * (gameArea.clientHeight - targetSize - padding*2) + padding;
+                        newPos = { x: randomLeft, y: randomTop, width: targetSize, height: targetSize };
+                        for(const p of placedTargets) {
+                            if (newPos.x < p.x + p.width + padding && newPos.x + newPos.width + padding > p.x && newPos.y < p.y + p.height + padding && newPos.y + newPos.height + padding > p.y) {
+                                isOverlapping = true; break;
+                            }
+                        }
+                    } while(isOverlapping);
+                    placedTargets.push(newPos);
+
+                    box.style.left = `${newPos.x}px`;
+                    box.style.top = `${newPos.y}px`;
+                    gameArea.appendChild(box);
+                }
+                gameArea.addEventListener('contextmenu', this.handler);
+            },
+            handler: function(e) {
+                e.preventDefault();
+                const mission = missions[currentMissionIndex];
+                const target = e.target;
+                if(target.dataset.color) {
+                    if(target.dataset.color === 'HIJAU') {
+                        if(!target.hasAttribute('data-clicked')) {
+                            target.setAttribute('data-clicked', 'true');
+                            target.innerHTML = '<span class="text-white text-4xl">✓</span>';
+                            target.classList.add('flex', 'items-center', 'justify-center');
+                            mission.correctClicked++;
+                            if(mission.correctClicked === mission.correctNeeded) {
+                                showFeedback("Penglihatan tajam!", true);
+                                setTimeout(nextMission, 1000);
+                            }
+                        }
+                    } else {
+                        handleMistake();
+                        showFeedback("Bukan yang itu!", false);
+                    }
+                }
+            },
+            cleanup: function() {
+                gameArea.removeEventListener('contextmenu', this.handler);
+            }
+        };
+
+        // --- MISSION 7: DRAG & DODGE ---
+        const dragDodgeMission = {
+            title: "Misi 7: Drag & Hindari",
+            instruction: "Tarik bintang ke tujuan sambil menghindari rintangan.",
+            dragTarget: null, isDragging: false, offsetX: 0, offsetY: 0,
+            obstacles: [], animationFrameId: null,
+            setup: function() {
+                this.isDragging = false; this.obstacles = [];
+                const dropZone = document.createElement('div');
+                dropZone.id = 'drop-zone';
+                dropZone.className = 'absolute w-28 h-28 bg-transparent border-4 border-dashed border-teal-500 rounded-2xl z-0';
+                dropZone.style.right = '20px'; dropZone.style.top = `${(gameArea.clientHeight - 112) / 2}px`;
+                gameArea.appendChild(dropZone);
+
+                const draggable = document.createElement('div');
+                draggable.id = 'draggable-item';
+                draggable.className = 'draggable absolute w-16 h-16 bg-yellow-400 rounded-full shadow-lg flex items-center justify-center text-white text-3xl z-20';
+                draggable.innerHTML = '★';
+                draggable.style.left = `20px`; draggable.style.top = `${(gameArea.clientHeight - 64) / 2}px`;
+                gameArea.appendChild(draggable);
+                
+                for(let i=0; i<3; i++) {
+                    const obs = document.createElement('div');
+                    obs.className = 'obstacle absolute w-6 h-24 rounded-md';
+                    obs.style.left = `${150 + i * 150}px`;
+                    const obsData = { el: obs, y: Math.random() * (gameArea.clientHeight - 96), speed: (Math.random() * 2 + 1) * (Math.random() > 0.5 ? 1 : -1) };
+                    this.obstacles.push(obsData);
+                    gameArea.appendChild(obs);
+                }
+
+                draggable.addEventListener('mousedown', this.dragStart);
+                document.addEventListener('mousemove', this.dragMove);
+                document.addEventListener('mouseup', this.dragEnd);
+                this.animateObstacles();
+            },
+            animateObstacles: function() {
+                const mission = missions[currentMissionIndex];
+                mission.obstacles.forEach(o => {
+                    o.y += o.speed;
+                    if(o.y <= 0 || o.y >= gameArea.clientHeight - o.el.clientHeight) {
+                        o.speed *= -1;
+                    }
+                    o.el.style.top = `${o.y}px`;
+                });
+                mission.animationFrameId = requestAnimationFrame(mission.animateObstacles);
+            },
+            dragStart: dragDropMission.dragStart, 
+            dragMove: function(e) {
+                const mission = missions[currentMissionIndex];
+                if (!mission.isDragging) return;
+                dragDropMission.dragMove(e); 
+                const dragRect = mission.dragTarget.getBoundingClientRect();
+                for(const o of mission.obstacles) {
+                    const obsRect = o.el.getBoundingClientRect();
+                    if (dragRect.left < obsRect.right && dragRect.right > obsRect.left && dragRect.top < obsRect.bottom && dragRect.bottom > obsRect.top) {
+                        handleMistake();
+                        if (lives > 0) {
+                            mission.dragTarget.style.left = `20px`; mission.dragTarget.style.top = `${(gameArea.clientHeight - 64) / 2}px`;
+                            showFeedback("Awas! Coba lagi.", false);
+                        }
+                        mission.isDragging = false;
+                        mission.dragTarget.classList.remove('dragging');
+                        return;
+                    }
+                }
+            },
+            dragEnd: dragDropMission.dragEnd,
+            cleanup: function() {
+                cancelAnimationFrame(this.animationFrameId);
+                const draggable = document.getElementById('draggable-item');
+                if (draggable) draggable.removeEventListener('mousedown', this.dragStart);
+                document.removeEventListener('mousemove', this.dragMove);
+                document.removeEventListener('mouseup', this.dragEnd);
+            }
+        };
+
+        // --- MISSION 8: SCROLL & FIND ---
+        const scrollFindMission = {
+            title: "Misi 8: Scroll & Temukan",
+            instruction: "Scroll ke paling bawah daftar untuk menemukan dan klik tombolnya.",
+            setup: function() {
+                const scrollBox = document.createElement('div');
+                scrollBox.className = 'w-full h-full overflow-y-scroll bg-white p-4';
+                let content = '';
+                for(let i=1; i<=30; i++) content += `<p class="py-2 border-b">Item Daftar #${i}</p>`;
+                scrollBox.innerHTML = content;
+                
+                const finalButton = document.createElement('button');
+                finalButton.id = 'final-button';
+                finalButton.className = 'hidden bg-lime-500 hover:bg-lime-600 text-white font-bold py-2 px-4 rounded-lg mt-4';
+                finalButton.textContent = 'Klik Aku!';
+                scrollBox.appendChild(finalButton);
+
+                gameArea.appendChild(scrollBox);
+                scrollBox.addEventListener('scroll', this.handler);
+                finalButton.addEventListener('click', this.clickHandler);
+            },
+            handler: function(e) {
+                const scrollBox = e.target;
+                if (scrollBox.scrollTop + scrollBox.clientHeight >= scrollBox.scrollHeight - 5) {
+                    document.getElementById('final-button').classList.remove('hidden');
+                }
+            },
+            clickHandler: function() {
+                showFeedback("Kerja bagus!", true);
+                setTimeout(nextMission, 1000);
+            },
+            cleanup: function() {}
+        };
+
+        // --- MISSION 9: MULTI-TASK ---
+        const multiTaskMission = {
+            title: "Misi 9: Klik Multi-Tugas",
+            instruction: "Klik kiri pada lingkaran, klik kanan pada kotak.",
+            score: 0,
+            needed: 10,
+            setup: function() {
+                this.score = 0;
+                this.spawnShape();
+                gameArea.addEventListener('click', this.leftClickHandler);
+                gameArea.addEventListener('contextmenu', this.rightClickHandler);
+            },
+            spawnShape: function() {
+                gameArea.innerHTML = '';
+                const isCircle = Math.random() > 0.5;
+                const shape = document.createElement('div');
+                shape.id = 'multi-task-shape';
+                shape.dataset.type = isCircle ? 'circle' : 'square';
+                const size = 'w-20 h-20';
+                const radius = isCircle ? 'rounded-full' : 'rounded-lg';
+                const color = isCircle ? 'bg-pink-400' : 'bg-amber-400';
+                shape.className = `target absolute ${size} ${radius} ${color} shadow-md`;
+                shape.style.left = `${Math.random() * (gameArea.clientWidth - 80)}px`;
+                shape.style.top = `${Math.random() * (gameArea.clientHeight - 80)}px`;
+                gameArea.appendChild(shape);
+            },
+            leftClickHandler: function(e) {
+                if(e.target.id === 'multi-task-shape') {
+                    if(e.target.dataset.type === 'circle') missions[currentMissionIndex].correct(); else missions[currentMissionIndex].incorrect();
+                }
+            },
+            rightClickHandler: function(e) {
+                e.preventDefault();
+                if(e.target.id === 'multi-task-shape') {
+                    if(e.target.dataset.type === 'square') missions[currentMissionIndex].correct(); else missions[currentMissionIndex].incorrect();
+                }
+            },
+            correct: function() {
+                this.score++;
+                showFeedback(`Benar! Skor: ${this.score}`, true);
+                if(this.score >= this.needed) {
+                    showFeedback("Anda sangat cepat!", true);
+                    setTimeout(nextMission, 1000);
+                } else {
+                    this.spawnShape();
+                }
+            },
+            incorrect: function() {
+                handleMistake();
+                showFeedback("Oops! Salah klik.", false);
+                if (lives > 0) this.spawnShape();
+            },
+            cleanup: function() {
+                gameArea.removeEventListener('click', this.leftClickHandler);
+                gameArea.removeEventListener('contextmenu', this.rightClickHandler);
+            }
+        };
+
+        // --- MISSION 10: FINAL EXAM ---
+        const finalExamMission = {
+            title: "Misi 10: Ujian Akhir",
+            instruction: "Ikuti instruksi dengan cepat!",
+            tasks: [
+                { inst: "Klik KIRI lingkaran merah!", type: 'left-click', targetId: 'exam-circle' },
+                { inst: "Klik KANAN kotak biru!", type: 'right-click', targetId: 'exam-square' },
+                { inst: "DRAG bintang ke target!", type: 'drag', targetId: 'exam-star' },
+                { inst: "SCROLL baterai sampai penuh!", type: 'scroll', targetId: 'exam-battery' }
+            ],
+            currentTaskIndex: 0,
+            taskTimer: null,
+            setup: function() {
+                this.currentTaskIndex = 0;
+                gameArea.innerHTML = `
+                    <div id="exam-circle" class="target absolute w-16 h-16 bg-red-500 rounded-full" style="left: 50px; top: 50px;"></div>
+                    <div id="exam-square" class="target absolute w-16 h-16 bg-blue-500 rounded-lg" style="right: 50px; top: 50px;"></div>
+                    <div id="exam-star" class="draggable absolute w-16 h-16 text-4xl flex items-center justify-center text-yellow-300" style="left: 50px; bottom: 50px;">★</div>
+                    <div id="exam-dropzone" class="absolute w-20 h-20 border-4 border-dashed border-green-500" style="right: 50px; bottom: 50px;"></div>
+                    <div id="exam-battery" class="scroll-container absolute w-16 h-48 rounded-lg p-1" style="left: 50%; top: 50%; transform: translate(-50%, -50%);">
+                        <div id="exam-battery-fill" class="scroll-fill w-full h-0 rounded-sm"></div>
+                    </div>
+                `;
+                this.bindEvents();
+                this.nextTask();
+            },
+            nextTask: function() {
+                const mission = missions[currentMissionIndex];
+                if(mission.currentTaskIndex >= mission.tasks.length) {
+                    showFeedback("Luar biasa! Anda lulus ujian!", true);
+                    setTimeout(nextMission, 1000);
+                    return;
+                }
+                const task = mission.tasks[mission.currentTaskIndex];
+                instructionEl.textContent = task.inst;
+                clearTimeout(this.taskTimer);
+                this.taskTimer = setTimeout(() => {
+                    handleMistake();
+                    showFeedback("Waktu habis! Ulangi tugas.", false);
+                    if (lives > 0) setTimeout(() => loadMission(currentMissionIndex), 1500);
+                }, 5000);
+            },
+            completeTask: function() {
+                this.currentTaskIndex++;
+                this.nextTask();
+            },
+            bindEvents: function() {
+                gameArea.onclick = (e) => {
+                    const task = this.tasks[this.currentTaskIndex];
+                    if (task && task.type === 'left-click' && e.target.id === task.targetId) this.completeTask();
+                };
+                gameArea.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    const task = this.tasks[this.currentTaskIndex];
+                    if (task && task.type === 'right-click' && e.target.id === task.targetId) this.completeTask();
+                };
+                gameArea.onwheel = (e) => {
+                    e.preventDefault();
+                    const task = this.tasks[this.currentTaskIndex];
+                    if (task && task.type === 'scroll') {
+                        const fill = document.getElementById('exam-battery-fill');
+                        let height = parseFloat(fill.style.height) || 0;
+                        if(e.deltaY < 0) height = Math.min(100, height + 10);
+                        fill.style.height = `${height}%`;
+                        if(height >= 100) this.completeTask();
+                    }
+                };
+                const star = document.getElementById('exam-star');
+                star.onmousedown = (e) => {
+                    const task = this.tasks[this.currentTaskIndex];
+                    if (task && task.type === 'drag') {
+                        const dropzone = document.getElementById('exam-dropzone').getBoundingClientRect();
+                        document.onmousemove = (move_e) => {
+                            star.style.left = `${move_e.clientX - gameArea.getBoundingClientRect().left - star.clientWidth/2}px`;
+                            star.style.top = `${move_e.clientY - gameArea.getBoundingClientRect().top - star.clientHeight/2}px`;
+                        };
+                        document.onmouseup = () => {
+                            document.onmousemove = null; document.onmouseup = null;
+                            const starRect = star.getBoundingClientRect();
+                            if (starRect.left < dropzone.right && starRect.right > dropzone.left && starRect.top < dropzone.bottom && starRect.bottom > dropzone.top) {
+                                this.completeTask();
+                            }
+                        };
+                    }
+                };
+            },
+            cleanup: function() {
+                clearTimeout(this.taskTimer);
+                gameArea.onclick = null; gameArea.oncontextmenu = null; gameArea.onwheel = null;
+                const star = document.getElementById('exam-star');
+                if(star) star.onmousedown = null;
+                document.onmousemove = null; document.onmouseup = null;
+            }
+        };
+
+        missions = [leftClickMission, rightClickMission, scrollMission, dragDropMission, speedClickMission, preciseRightClickMission, dragDodgeMission, scrollFindMission, multiTaskMission, finalExamMission];
+
+        // --- GAME HELPER FUNCTIONS ---
+        function updateLivesUI() {
+            livesContainer.innerHTML = '';
+            for(let i = 0; i < lives; i++) livesContainer.innerHTML += '❤️';
+            for(let i = lives; i < MAX_LIVES; i++) livesContainer.innerHTML += '🤍';
+        }
+
+        function updateTimerUI() {
+            const minutes = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+            const seconds = (secondsElapsed % 60).toString().padStart(2, '0');
+            timerContainer.textContent = `${minutes}:${seconds}`;
+        }
+        
+        function handleMistake() {
+            if (lives <= 0) return;
+            lives--;
+            updateLivesUI();
+            
+            gameArea.classList.add('shake-anim');
+            setTimeout(() => gameArea.classList.remove('shake-anim'), 400);
+
+            if (lives <= 0) {
+                gameOver("Nyawa habis!");
+            }
+        }
+        
+        function gameOver(message) {
+            clearInterval(timerInterval);
+            if (currentMissionIndex >= 0 && missions[currentMissionIndex].cleanup) {
+                missions[currentMissionIndex].cleanup();
+            }
+            clearGameArea();
+            mainTitleEl.textContent = "Game Over";
+            missionTitleEl.textContent = message;
+            instructionEl.textContent = `Waktu Anda: ${timerContainer.textContent}. Klik 'Coba Lagi' untuk memulai dari awal.`;
+            startResetButton.textContent = 'Coba Lagi';
+            currentMissionIndex = -1;
+        }
+
+        // --- GAME FLOW LOGIC ---
+        function clearGameArea() {
+            gameArea.innerHTML = '';
+            showFeedback("", false);
+        }
+
+        function showFeedback(message, isSuccess) {
+            feedbackEl.textContent = message;
+            feedbackEl.className = `mt-4 text-lg font-medium min-h-[28px] ${isSuccess ? 'text-green-600' : 'text-red-600'}`;
+        }
+
+        function loadMission(missionIndex) {
+            clearGameArea();
+            if (missionIndex < missions.length) {
+                const mission = missions[missionIndex];
+                missionTitleEl.textContent = mission.title;
+                instructionEl.textContent = mission.instruction;
+                mission.setup();
+            } else {
+                clearInterval(timerInterval);
+                mainTitleEl.textContent = "Selamat!";
+                missionTitleEl.textContent = "Pelatihan Selesai";
+                instructionEl.textContent = `Anda berhasil menyelesaikan semua misi dalam waktu ${timerContainer.textContent}! Klik 'Main Lagi' untuk mengulang.`;
+                startResetButton.textContent = 'Main Lagi';
+                currentMissionIndex = -1;
+            }
+        }
+
+        function nextMission() {
+            if (lives <= 0) return;
+            if (currentMissionIndex >= 0 && missions[currentMissionIndex].cleanup) {
+                missions[currentMissionIndex].cleanup();
+            }
+            currentMissionIndex++;
+            loadMission(currentMissionIndex);
+        }
+
+        function startGame() {
+            mainTitleEl.textContent = "Misi Pelatihan Mouse";
+            lives = MAX_LIVES;
+            secondsElapsed = 0;
+            updateLivesUI();
+            updateTimerUI();
+            
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                updateTimerUI();
+            }, 1000);
+            
+            livesContainer.style.visibility = 'visible';
+            timerContainer.style.visibility = 'visible';
+
+            currentMissionIndex = -1;
+            nextMission();
+            startResetButton.textContent = 'Reset';
+        }
+
+        startResetButton.addEventListener('click', () => {
+            if (currentMissionIndex >= 0 && currentMissionIndex < missions.length && missions[currentMissionIndex].cleanup) {
+                missions[currentMissionIndex].cleanup();
+            }
+            startGame();
+        });
+    </script>
+</body>
+</html>
+
