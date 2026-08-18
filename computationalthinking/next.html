@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan Berpikir Komputasional SD</title>
+    <style>
+        :root {
+            --bg-color: #f0f9ff;
+            --card-bg: #ffffff;
+            --primary: #0284c7;
+            --primary-light: #e0f2fe;
+            --secondary: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --purple: #8b5cf6;
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        h1 {
+            color: var(--primary);
+            font-size: 2rem;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-sub);
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 800px;
+            border-radius: 16px;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            border: 2px solid #bae6fd;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-val {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--secondary);
+        }
+
+        .stat-lbl {
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            font-weight: bold;
+        }
+
+        .progress-container {
+            width: 45%;
+            background: #e2e8f0;
+            height: 14px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 20%;
+            background: linear-gradient(90deg, var(--secondary), var(--success));
+            transition: width 0.4s ease;
+        }
+
+        /* Main Game Board */
+        .game-container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 800px;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            border: 3px solid #e0f2fe;
+            min-height: 480px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .case-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            background: var(--primary-light);
+            color: var(--primary);
+            border: 1px solid #7dd3fc;
+            margin-bottom: 12px;
+        }
+
+        .case-title {
+            font-size: 1.4rem;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .case-story {
+            background: #f8fafc;
+            padding: 12px 15px;
+            border-radius: 12px;
+            border-left: 5px solid var(--secondary);
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .question-text {
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+
+        /* Choices Grid */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .option-btn {
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            padding: 12px 16px;
+            border-radius: 12px;
+            text-align: left;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .option-btn:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .option-btn.selected {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            font-weight: bold;
+        }
+
+        /* Drag & Drop Sequence (Algoritma) */
+        .algo-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .algo-item {
+            background: #f1f5f9;
+            border: 2px dashed #94a3b8;
+            padding: 10px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .algo-item:hover {
+            border-color: var(--primary);
+            background: #e0f2fe;
+        }
+
+        .algo-box-title {
+            font-weight: bold;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            color: var(--text-sub);
+        }
+
+        .algo-flex {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* Footer & Buttons */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 2px solid #f1f5f9;
+            padding-top: 15px;
+        }
+
+        .feedback {
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        .feedback.correct { color: var(--success); }
+        .feedback.wrong { color: var(--danger); }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(2, 132, 199, 0.2);
+            transition: transform 0.1s;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Victory Screen */
+        .victory-card {
+            text-align: center;
+            padding: 20px 10px;
+        }
+
+        .victory-title {
+            font-size: 2rem;
+            color: var(--success);
+            margin-bottom: 10px;
+        }
+
+        .badge-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .badge-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            padding: 12px;
+            border-radius: 12px;
+        }
+
+        .badge-card h4 {
+            color: var(--primary);
+            margin-bottom: 4px;
+            font-size: 0.95rem;
+        }
+
+        .badge-card p {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+        }
+
+        @media (max-width: 650px) {
+            .algo-flex { grid-template-columns: 1fr; }
+            .badge-list { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🎒 Detektif Cilik BK</h1>
+        <p class="subtitle">Selesaikan 5 Kasus Sehari-hari dengan Berpikir Komputasional!</p>
+    </header>
+
+    <div class="status-bar">
+        <div class="stat-item">
+            <span class="stat-lbl">KASUS</span>
+            <span class="stat-val" id="case-num">1 / 5</span>
+        </div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="stat-item">
+            <span class="stat-lbl">BINTANG</span>
+            <span class="stat-val" id="score-val">⭐ 0</span>
+        </div>
+    </div>
+
+    <div class="game-container" id="game-card">
+        <!-- Content JS -->
+    </div>
+
+    <script>
+        const gameState = {
+            currentCase: 1,
+            score: 0,
+            selectedOption: null,
+            selectedMulti: [],
+            algoPool: [],
+            algoSeq: []
+        };
+
+        const casesData = [
+            {
+                id: 1,
+                pillar: "Dekomposisi",
+                title: "Kasus 1: Tas Sekolah Budi Terlalu Berat!",
+                story: "Budi mau berangkat sekolah, tapi tasnya berat sekali sampai punggungnya sakit. Budi ingin merapikan tasnya dengan cara memecah barang-barang ke dalam kategori kecil.",
+                question: "Pilar Dekomposisi: Pilih 3 kategori kelompok barang yang tepat untuk memisahkan isi tas Budi!",
+                type: "multi",
+                targetCount: 3,
+                options: [
+                    { id: 'a', text: "📁 Buku Pelajaran & LKS Hari Ini", correct: true },
+                    { id: 'b', text: "✏️ Alat Tulis (Pensil, Penghapus, Penggaris)", correct: true },
+                    { id: 'c', text: "🧸 Seluruh Koleksi Mainan Robot di Rumah", correct: false },
+                    { id: 'd', text: "🍱 Bekal Makanan & Botol Minum", correct: true },
+                    { id: 'e', text: "🧱 Baju Tidur & Bantal", correct: false }
+                ]
+            },
+            {
+                id: 2,
+                name: "Pengenalan Pola",
+                pillar: "Pengenalan Pola",
+                title: "Kasus 2: Misteri Jadwal Piket Kebersihan",
+                story: "Siti melihat jadwal piket di papan tulis: <br>• Senin: Membuang Sampah & Menyapu<br>• Selasa: Menyapu & Mengepel<br>• Rabu: Membuang Sampah & Menyapu<br>• Kamis: Menyapu & Mengepel",
+                question: "Pilar Pengenalan Pola: Berdasarkan pola berulang di atas, tugas apa yang harus dilakukan Siti pada hari JUMAT?",
+                type: "single",
+                options: [
+                    { id: 'opt1', text: "Menyapu & Mengepel", correct: false },
+                    { id: 'opt2', text: "Membuang Sampah & Menyapu", correct: true },
+                    { id: 'opt3', text: "Mengecet Tembok Kelas", correct: false }
+                ]
+            },
+            {
+                id: 3,
+                pillar: "Abstraksi",
+                title: "Kasus 3: Membeli Pensil di Koperasi Sekolah",
+                story: "Deni berada di koperasi sekolah yang sangat ramai. Ada banyak barang: buku gambar, es krim, mainan, pensil 2B, penghapus, dan spidol warna-warni. Deni HANYA butuh pensil untuk ujian.",
+                question: "Pilar Abstraksi (Fokus pada yang penting): Centang 2 informasi/barang penting yang harus Deni perhatikan saat ini!",
+                type: "multi",
+                targetCount: 2,
+                options: [
+                    { id: 'abs1', text: "Harga dan jenis Pensil 2B untuk Ujian", correct: true },
+                    { id: 'abs2', text: "Warna bungkus es krim di dalam kulkas", correct: false },
+                    { id: 'abs3', text: "Sisa uang saku Deni yang dibawa", correct: true },
+                    { id: 'abs4', text: "Merk mainan yang dibeli teman sebelah", correct: false }
+                ]
+            },
+            {
+                id: 4,
+                pillar: "Algoritma",
+                title: "Kasus 4: Urutan Mencuci Tangan Sebelum Makan",
+                story: "Sebelum makan siang bersama di sekolah, Edo harus mencuci tangan dengan bersih. Bantu Edo menyusun langkah-langkahnya secara urut dan logis!",
+                question: "Pilar Algoritma: Klik langkah di kiri untuk menyusun urutan yang benar (1 sampai 4):",
+                type: "algo",
+                steps: [
+                    { id: 's1', text: "Basahi tangan dengan air mengalir" },
+                    { id: 's2', text: "Gunakan sabun dan gosok sela-sela jari" },
+                    { id: 's3', text: "Bilas tangan dengan air bersih" },
+                    { id: 's4', text: "Keringkan tangan dengan lap bersih / tisu" }
+                ]
+            },
+            {
+                id: 5,
+                pillar: "Integrasi 4 Pilar BK",
+                title: "Kasus 5: Menyiapkan Sarapan Roti Tawar",
+                story: "Setiap pagi, Rani membuat sarapan roti tawar sendiri sebelum berangkat sekolah. Rani ingin prosesnya cepat dan rapi.",
+                question: "Manakah tindakan di bawah ini yang mencerminkan pemakaian **ALGORITMA**?",
+                type: "single",
+                options: [
+                    { id: 'fin1', text: "Mengambil roti -> Mengoles mentega -> Menambah selai -> Menutup roti.", correct: true },
+                    { id: 'fin2', text: "Memisahkan antara roti, piring, dan selai di meja.", correct: false },
+                    { id: 'fin3', text: "Mengingat bahwa setiap pagi ibu selalu memakai selai cokelat.", correct: false },
+                    { id: 'fin4', text: "Mengabaikan bungkus plastik roti yang ada di tempat sampah.", correct: false }
+                ]
+            }
+        ];
+
+        function renderCase() {
+            const card = document.getElementById('game-card');
+            const c = casesData[gameState.currentCase - 1];
+
+            document.getElementById('case-num').innerText = `${gameState.currentCase} / 5`;
+            document.getElementById('progress-bar').style.width = `${(gameState.currentCase / 5) * 100}%`;
+            document.getElementById('score-val').innerText = `⭐ ${gameState.score}`;
+
+            if (gameState.currentCase > 5) {
+                renderVictory();
+                return;
+            }
+
+            let html = `
+                <div>
+                    <span class="case-badge">🎯 Pilar: ${c.pillar}</span>
+                    <h2 class="case-title">${c.title}</h2>
+                    <div class="case-story">${c.story}</div>
+                    <p class="question-text">${c.question}</p>
+                    <div class="stage-content">
+            `;
+
+            if (c.type === 'single') {
+                html += `<div class="options-grid">`;
+                c.options.forEach(opt => {
+                    const selected = gameState.selectedOption === opt.id;
+                    html += `
+                        <button class="option-btn ${selected ? 'selected' : ''}" onclick="selectSingle('${opt.id}')">
+                            <span>${selected ? '🔘' : '⚪'}</span> ${opt.text}
+                        </button>
+                    `;
+                });
+                html += `</div>`;
+            } else if (c.type === 'multi') {
+                html += `<div class="options-grid">`;
+                c.options.forEach(opt => {
+                    const selected = gameState.selectedMulti.includes(opt.id);
+                    html += `
+                        <button class="option-btn ${selected ? 'selected' : ''}" onclick="toggleMulti('${opt.id}')">
+                            <span>${selected ? '☑️' : '⬜'}</span> ${opt.text}
+                        </button>
+                    `;
+                });
+                html += `</div>`;
+            } else if (c.type === 'algo') {
+                if (gameState.algoPool.length === 0 && gameState.algoSeq.length === 0) {
+                    gameState.algoPool = [...c.steps].sort(() => Math.random() - 0.5);
+                }
+
+                html += `
+                    <div class="algo-flex">
+                        <div>
+                            <div class="algo-box-title">Pilihan Langkah (Klik):</div>
+                            <div class="algo-list">
+                                ${gameState.algoPool.map(item => `
+                                    <div class="algo-item" onclick="algoToSeq('${item.id}')">
+                                        <span>${item.text}</span> <span>➡️</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div>
+                            <div class="algo-box-title">Urutan Kamu:</div>
+                            <div class="algo-list">
+                                ${gameState.algoSeq.map((item, idx) => `
+                                    <div class="algo-item" style="border-color:var(--success); background:#f0fdf4;" onclick="algoToPool('${item.id}')">
+                                        <span><b>${idx + 1}.</b> ${item.text}</span> <span>↩️</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `
+                    </div>
+                </div>
+                <div class="controls">
+                    <div id="feedback-msg" class="feedback"></div>
+                    <button class="btn" onclick="validateAnswer()">Jawab 🚀</button>
+                </div>
+            `;
+
+            card.innerHTML = html;
+        }
+
+        function selectSingle(id) {
+            gameState.selectedOption = id;
+            renderCase();
+        }
+
+        function toggleMulti(id) {
+            const idx = gameState.selectedMulti.indexOf(id);
+            if (idx > -1) {
+                gameState.selectedMulti.splice(idx, 1);
+            } else {
+                gameState.selectedMulti.push(id);
+            }
+            renderCase();
+        }
+
+        function algoToSeq(id) {
+            const idx = gameState.algoPool.findIndex(i => i.id === id);
+            if (idx > -1) {
+                const item = gameState.algoPool.splice(idx, 1)[0];
+                gameState.algoSeq.push(item);
+                renderCase();
+            }
+        }
+
+        function algoToPool(id) {
+            const idx = gameState.algoSeq.findIndex(i => i.id === id);
+            if (idx > -1) {
+                const item = gameState.algoSeq.splice(idx, 1)[0];
+                gameState.algoPool.push(item);
+                renderCase();
+            }
+        }
+
+        function validateAnswer() {
+            const fb = document.getElementById('feedback-msg');
+            const c = casesData[gameState.currentCase - 1];
+
+            if (c.type === 'single') {
+                const chosen = c.options.find(o => o.id === gameState.selectedOption);
+                if (chosen && chosen.correct) {
+                    gameState.score += 20;
+                    nextCase();
+                } else {
+                    fb.className = 'feedback wrong';
+                    fb.innerText = '❌ Jawaban belum tepat, coba pikirkan lagi ya!';
+                }
+            } else if (c.type === 'multi') {
+                const correctIds = c.options.filter(o => o.correct).map(o => o.id);
+                const isCorrect = gameState.selectedMulti.length === c.targetCount &&
+                    gameState.selectedMulti.every(id => correctIds.includes(id));
+
+                if (isCorrect) {
+                    gameState.score += 20;
+                    nextCase();
+                } else {
+                    fb.className = 'feedback wrong';
+                    fb.innerText = `❌ Pilih tepat ${c.targetCount} jawaban yang paling benar!`;
+                }
+            } else if (c.type === 'algo') {
+                const correctSeq = ['s1', 's2', 's3', 's4'];
+                const userSeq = gameState.algoSeq.map(i => i.id);
+                if (JSON.stringify(correctSeq) === JSON.stringify(userSeq)) {
+                    gameState.score += 20;
+                    nextCase();
+                } else {
+                    fb.className = 'feedback wrong';
+                    fb.innerText = '❌ Urutan cuci tangan belum tepat! Ingat: Basahi -> Sabun -> Bilas -> Keringkan.';
+                }
+            }
+        }
+
+        function nextCase() {
+            gameState.currentCase++;
+            gameState.selectedOption = null;
+            gameState.selectedMulti = [];
+            gameState.algoPool = [];
+            gameState.algoSeq = [];
+            renderCase();
+        }
+
+        function renderVictory() {
+            const card = document.getElementById('game-card');
+            document.getElementById('case-num').innerText = `5 / 5`;
+            document.getElementById('progress-bar').style.width = `100%`;
+            document.getElementById('score-val').innerText = `⭐ ${gameState.score}`;
+
+            card.innerHTML = `
+                <div class="victory-card">
+                    <h2 class="victory-title">🎉 HEBAT! KAMU DETEKTIF CILIK BK!</h2>
+                    <p>Kamu berhasil menyelesaikan 5 masalah sehari-hari dengan Berpikir Komputasional!</p>
+                    
+                    <div class="badge-list">
+                        <div class="badge-card">
+                            <h4>🧩 Dekomposisi</h4>
+                            <p>Membantu Budi memilah barang tas jadi 3 kelompok kecil.</p>
+                        </div>
+                        <div class="badge-card">
+                            <h4>🔍 Pengenalan Pola</h4>
+                            <p>Menebak jadwal piket Siti hari Jumat berdasarkan pola berulang.</p>
+                        </div>
+                        <div class="badge-card">
+                            <h4>🎯 Abstraksi</h4>
+                            <p>Membantu Deni fokus hanya pada pensil & uang saku di koperasi.</p>
+                        </div>
+                        <div class="badge-card">
+                            <h4>🪜 Algoritma</h4>
+                            <p>Menyusun langkah urut cuci tangan & langkah membuat roti tawar.</p>
+                        </div>
+                    </div>
+
+                    <button class="btn" onclick="resetGame()">Main Lagi 🔄</button>
+                </div>
+            `;
+        }
+
+        function resetGame() {
+            gameState.currentCase = 1;
+            gameState.score = 0;
+            gameState.selectedOption = null;
+            gameState.selectedMulti = [];
+            gameState.algoPool = [];
+            gameState.algoSeq = [];
+            renderCase();
+        }
+
+        renderCase();
+    </script>
+</body>
+</html>
