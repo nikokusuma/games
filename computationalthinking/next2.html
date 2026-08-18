@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Petualangan Detektif Cilik: Berpikir Komputasional SD</title>
+    <title>Petualangan Detektif Cilik BK</title>
     <style>
         :root {
             --primary: #0284c7;
@@ -11,6 +11,7 @@
             --secondary: #f59e0b;
             --success: #10b981;
             --danger: #ef4444;
+            --purple: #8b5cf6;
             --bg: #f0f9ff;
             --card-bg: #ffffff;
             --text-dark: #0f172a;
@@ -27,7 +28,7 @@
         body {
             background-color: var(--bg);
             color: var(--text-dark);
-            padding: 20px 10px;
+            padding: 15px 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -36,34 +37,34 @@
 
         header {
             text-align: center;
-            margin-bottom: 20px;
-            max-width: 800px;
+            margin-bottom: 15px;
+            max-width: 850px;
             width: 100%;
         }
 
         h1 {
             color: var(--primary);
-            font-size: 2rem;
+            font-size: 1.8rem;
             margin-bottom: 5px;
         }
 
         .subtitle {
             color: var(--text-muted);
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
         }
 
-        /* Top Status Bar */
+        /* Status Bar */
         .status-bar {
             background: var(--card-bg);
             width: 100%;
             max-width: 850px;
             border-radius: 16px;
-            padding: 12px 24px;
+            padding: 10px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             border: 2px solid #bae6fd;
         }
@@ -75,20 +76,21 @@
         }
 
         .stat-value {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             font-weight: bold;
             color: var(--secondary);
         }
 
         .stat-label {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text-muted);
             text-transform: uppercase;
+            font-weight: bold;
         }
 
         .progress-bar-bg {
             width: 40%;
-            height: 14px;
+            height: 12px;
             background: #e2e8f0;
             border-radius: 10px;
             overflow: hidden;
@@ -101,23 +103,19 @@
             transition: width 0.4s ease;
         }
 
-        /* Game Main Container */
+        /* Container Kasus */
         .game-container {
             background: var(--card-bg);
             width: 100%;
             max-width: 850px;
             border-radius: 20px;
-            padding: 25px;
+            padding: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.08);
             border: 3px solid #e0f2fe;
-            min-height: 520px;
+            min-height: 500px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-        }
-
-        .case-header {
-            margin-bottom: 15px;
         }
 
         .case-badge {
@@ -134,26 +132,26 @@
 
         .case-title {
             color: var(--primary);
-            font-size: 1.4rem;
-            margin-bottom: 8px;
+            font-size: 1.3rem;
+            margin-bottom: 6px;
         }
 
         .case-story {
             background: #f8fafc;
             border-left: 5px solid var(--secondary);
-            padding: 12px 16px;
+            padding: 10px 14px;
             border-radius: 8px;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            margin-bottom: 20px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin-bottom: 15px;
         }
 
-        /* 4 Pillars Interactive Layout */
+        /* Layout 4 Pilar */
         .pillars-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 15px;
         }
 
         .pillar-card {
@@ -161,16 +159,15 @@
             border: 2px solid #e2e8f0;
             border-radius: 12px;
             padding: 12px;
-            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
         .pillar-title {
             font-weight: bold;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             margin-bottom: 6px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
         }
 
         .pillar-card.p1 .pillar-title { color: #2563eb; }
@@ -180,54 +177,83 @@
 
         .pillar-desc {
             font-size: 0.8rem;
-            color: var(--text-muted);
+            color: var(--text-dark);
             margin-bottom: 8px;
+            font-weight: 600;
         }
 
-        select, input[type="text"] {
+        select {
             width: 100%;
             padding: 8px 10px;
             border: 2px solid #cbd5e1;
             border-radius: 8px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             outline: none;
             background: white;
+            cursor: pointer;
         }
 
-        select:focus, input[type="text"]:focus {
+        select:focus {
             border-color: var(--primary);
         }
 
-        /* Sequence List for Algorithm */
-        .seq-item {
+        /* Area Algoritma yang Dapat Diurutkan */
+        .algo-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        .algo-box-title {
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .algo-list {
             background: white;
-            border: 1px dashed #94a3b8;
-            padding: 6px 10px;
-            margin-top: 4px;
+            border: 1px dashed #cbd5e1;
+            padding: 5px;
+            border-radius: 8px;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .algo-item {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            padding: 5px 8px;
             border-radius: 6px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
         }
 
-        .seq-item:hover {
+        .algo-item:hover {
             background: var(--primary-light);
+            border-color: var(--primary);
         }
 
-        /* Bottom Controls */
+        /* Controls */
         .controls {
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-top: 2px solid #f1f5f9;
-            padding-top: 15px;
-            margin-top: 10px;
+            padding-top: 12px;
+            margin-top: 5px;
         }
 
         .feedback {
             font-weight: bold;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
         }
 
         .feedback.correct { color: var(--success); }
@@ -237,10 +263,10 @@
             background: var(--primary);
             color: white;
             border: none;
-            padding: 12px 28px;
-            font-size: 1rem;
+            padding: 10px 22px;
+            font-size: 0.95rem;
             font-weight: bold;
-            border-radius: 12px;
+            border-radius: 10px;
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(2, 132, 199, 0.2);
             transition: transform 0.1s, background-color 0.2s;
@@ -257,31 +283,34 @@
         /* Victory Screen */
         .victory-box {
             text-align: center;
-            padding: 30px 10px;
+            padding: 20px 10px;
         }
 
         .victory-title {
             color: var(--success);
-            font-size: 2.2rem;
+            font-size: 1.8rem;
             margin-bottom: 10px;
         }
 
         .summary-list {
             text-align: left;
-            margin: 20px 0;
+            margin: 15px 0;
             background: #f8fafc;
-            padding: 15px;
+            padding: 12px;
             border-radius: 12px;
             border: 1px solid #e2e8f0;
         }
 
         .summary-item {
-            margin-bottom: 10px;
-            font-size: 0.9rem;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
         }
 
         @media (max-width: 700px) {
             .pillars-grid {
+                grid-template-columns: 1fr;
+            }
+            .algo-container {
                 grid-template-columns: 1fr;
             }
         }
@@ -291,7 +320,7 @@
 
     <header>
         <h1>🔍 Detektif Cilik BK</h1>
-        <p class="subtitle">Selesaikan 5 Masalah Sehari-hari Menggunakan 4 Pilar Berpikir Komputasional!</p>
+        <p class="subtitle">Selesaikan 5 Kasus Sehari-hari dengan 4 Pilar Berpikir Komputasional!</p>
     </header>
 
     <div class="status-bar">
@@ -312,150 +341,193 @@
         </div>
 
     <script>
+        // Data 5 Kasus SD
         const casesData = [
             {
                 id: 1,
                 title: "Kasus 1: Tas Sekolah Budi Terlalu Berat",
-                story: "Setiap hari Budi mengeluh punggungnya sakit karena tas sekolahnya sangat berat. Setelah dibuka, ternyata tas Budi berantakan berisi buku, mainan, baju olahraga, alat tulis, dan bekal.",
-                p1_question: "🧩 Dekomposisi: Pilih cara membagi isi tas Budi menjadi kelompok kecil yang rapi!",
-                p1_options: [
-                    { id: 'a', text: "Pisahkan jadi: Buku Hari Ini, Alat Tulis, dan Bekal/Baju", correct: true },
-                    { id: 'b', text: "Masukkan semua barang ke dalam kantong plastik besar", correct: false },
-                    { id: 'c', text: "Membawa dua tas sekaligus ke sekolah", correct: false }
+                story: "Budi mengeluh punggungnya sakit karena tas sekolahnya sangat berat. Tas Budi penuh berantakan berisi buku, mainan, baju olahraga, alat tulis, dan bekal.",
+                p1_q: "🧩 Dekomposisi: Pilih cara memilah isi tas Budi!",
+                p1_opts: [
+                    { id: 'wrong1', text: "Masukkan semua barang ke dalam kantong plastik besar", correct: false },
+                    { id: 'correct', text: "Pisahkan jadi: Buku Pelajaran, Alat Tulis, dan Bekal", correct: true },
+                    { id: 'wrong2', text: "Membawa dua tas sekaligus ke sekolah setiap hari", correct: false }
                 ],
-                p2_question: "🔍 Pengenalan Pola: Pola apa yang bisa membantu Budi merapikan tas setiap hari?",
-                p2_options: [
-                    { id: 'a', text: "Membawa semua buku dari hari Senin sampai Jumat", correct: false },
-                    { id: 'b', text: "Melihat Jadwal Pelajaran harian sebelum menata tas", correct: true },
-                    { id: 'c', text: "Meminta ibu menata tas tanpa melihat jadwal", correct: false }
+                p2_q: "🔍 Pengenalan Pola: Pola apa yang membantu Budi menata tas?",
+                p2_opts: [
+                    { id: 'correct', text: "Melihat Jadwal Pelajaran harian sebelum menata tas", correct: true },
+                    { id: 'wrong1', text: "Membawa semua buku dari Senin sampai Jumat", correct: false },
+                    { id: 'wrong2', text: "Meminta teman menata tas Budi di sekolah", correct: false }
                 ],
-                p3_question: "🎯 Abstraksi: Barang mana yang TIDAK PENTING dan harus DIBUANG dari tas?",
-                p3_options: [
-                    { id: 'a', text: "Buku Teks Pelajaran & Pensil", correct: false },
-                    { id: 'b', text: "Mainan Robot & Koleksi Kartu Game", correct: true },
-                    { id: 'c', text: "Kotak Bekal & Botol Minum", correct: false }
+                p3_q: "🎯 Abstraksi: Barang mana yang TIDAK PENTING dan harus dikeluarkan?",
+                p3_opts: [
+                    { id: 'wrong1', text: "Buku Teks Pelajaran & Tempat Pensil", correct: false },
+                    { id: 'wrong2', text: "Kotak Bekal Makanan & Botol Air Minum", correct: false },
+                    { id: 'correct', text: "Mainan Robot & Koleksi Kartu Game", correct: true }
                 ],
-                p4_question: "🪜 Algoritma: Urutan langkah menata tas Budi setiap malam:",
+                p4_q: "🪜 Algoritma: Klik langkah di kiri untuk menyusun urutan (1-4) di kanan:",
+                p4_correct_seq: ['a1', 'a2', 'a3', 'a4'],
                 p4_steps: [
-                    { id: 's1', text: "1. Cek Jadwal Pelajaran besok" },
-                    { id: 's2', text: "2. Keluarkan buku hari ini & mainan" },
-                    { id: 's3', text: "3. Masukkan buku besok & alat tulis" },
-                    { id: 's4', text: "4. Tutup tas & siap berangkat" }
+                    { id: 'a1', text: "1. Cek Jadwal Pelajaran besok" },
+                    { id: 'a2', text: "2. Keluarkan buku hari ini & mainan" },
+                    { id: 'a3', text: "3. Masukkan buku besok & alat tulis" },
+                    { id: 'a4', text: "4. Tutup tas & siap berangkat" }
                 ]
             },
             {
                 id: 2,
-                title: "Kasus 2: Siti Lupa Jadwal Piket Kebersihan Kelas",
-                story: "Siti sering lupa apa tugas piketnya di kelas. Di papan tulis ada aturan: Senin (Mengepel & Menyapu), Selasa (Buang Sampah & Menyapu), Rabu (Mengepel & Menyapu), Kamis (Buang Sampah & Menyapu). Hari ini hari Jumat!",
-                p1_question: "🧩 Dekomposisi: Pecah tugas piket kelas menjadi bagian terpisah!",
-                p1_options: [
-                    { id: 'a', text: "Tugas Kebersihan Lantai, Sampah, dan Meja Guru", correct: true },
-                    { id: 'b', text: "Mengecat ulang dinding kelas setiap hari", correct: false }
+                title: "Kasus 2: Siti Lupa Tugas Piket Kelas",
+                story: "Siti lupa tugas piketnya hari ini. Di papan tulis tertulis: Senin (Mengepel & Menyapu), Selasa (Buang Sampah & Menyapu), Rabu (Mengepel & Menyapu), Kamis (Buang Sampah & Menyapu). Hari ini hari JUMAT!",
+                p1_q: "🧩 Dekomposisi: Memecah tugas kebersihan kelas menjadi:",
+                p1_opts: [
+                    { id: 'wrong1', text: "Mengecat ulang seluruh dinding kelas", correct: false },
+                    { id: 'correct', text: "Kebersihan Lantai, Tempat Sampah, dan Meja Guru", correct: true },
+                    { id: 'wrong2', text: "Membeli peralatan sapu baru di toko", correct: false }
                 ],
-                p2_question: "🔍 Pengenalan Pola: Berdasarkan pola di papan tulis, apa tugas Siti hari JUMAT?",
-                p2_options: [
-                    { id: 'a', text: "Mengepel & Menyapu (Sama seperti Senin & Rabu)", correct: true },
-                    { id: 'b', text: "Membeli sapu baru di toko", correct: false },
-                    { id: 'c', text: "Tidak ada piket sama sekali", correct: false }
+                p2_q: "🔍 Pengenalan Pola: Berdasarkan pola berulang, tugas Siti hari JUMAT adalah:",
+                p2_opts: [
+                    { id: 'wrong1', text: "Buang Sampah & Menyapu (Pola Selasa/Kamis)", correct: false },
+                    { id: 'wrong2', text: "Libur tidak ada piket kebersihan", correct: false },
+                    { id: 'correct', text: "Mengepel & Menyapu (Sesuai pola Senin/Rabu)", correct: true }
                 ],
-                p3_question: "🎯 Abstraksi: Saat menyapu lantai, hal apa yang HARUS DIFOKUSKAN?",
-                p3_options: [
-                    { id: 'a', text: "Fokus pada debu dan sampah di lantai", correct: true },
-                    { id: 'b', text: "Fokus melihat burung yang terbang di luar jendela", correct: false }
+                p3_q: "🎯 Abstraksi: Saat menyapu kelas, hal yang HARUS DIFOKUSKAN adalah:",
+                p3_opts: [
+                    { id: 'correct', text: "Fokus pada debu dan sampah kertas di lantai", correct: true },
+                    { id: 'wrong1', text: "Fokus melihat burung terbang di luar jendela", correct: false },
+                    { id: 'wrong2', text: "Mendengarkan musik dari luar kelas", correct: false }
                 ],
-                p4_question: "🪜 Algoritma: Urutan menyapu dan mengepel kelas yang benar:",
+                p4_q: "🪜 Algoritma: Susun urutan menyapu dan mengepel kelas yang benar:",
+                p4_correct_seq: ['b1', 'b2', 'b3', 'b4'],
                 p4_steps: [
-                    { id: 's1', text: "1. Geser kursi ke atas meja" },
-                    { id: 's2', text: "2. Sapu kotoran dari belakang ke depan" },
-                    { id: 's3', text: "3. Pel lantai yang sudah bersih dari debu" },
-                    { id: 's4', text: "4. Buang sampah ke tempat sampah luar" }
+                    { id: 'b1', text: "1. Geser kursi ke atas meja" },
+                    { id: 'b2', text: "2. Sapu kotoran dari belakang ke depan" },
+                    { id: 'b3', text: "3. Pel lantai yang sudah disapu" },
+                    { id: 'b4', text: "4. Buang sampah ke tempat sampah" }
                 ]
             },
             {
                 id: 3,
-                title: "Kasus 3: Antrean Pembelian Pensil di Koperasi Sekolah",
-                story: "Deni ingin membeli Pensil 2B untuk ujian di koperasi sekolah. Koperasi sangat ramai dengan barang dagangan: es krim, mainan, buku gambar, spidol, dan makanan ringan.",
-                p1_question: "🧩 Dekomposisi: Pecah proses belanja Deni menjadi 3 bagian!",
-                p1_options: [
-                    { id: 'a', text: "Mencari Pensil -> Membayar ke Kasir -> Mengambil Kembalian", correct: true },
-                    { id: 'b', text: "Melihat mainan -> Membeli es krim -> Bermain di lapangan", correct: false }
+                title: "Kasus 3: Antrean Pembelian Pensil Ujian",
+                story: "Deni ingin membeli Pensil 2B untuk ujian di koperasi sekolah. Koperasi sangat ramai dengan barang dagangan: es krim, mainan, buku gambar, spidol, dan camilan.",
+                p1_q: "🧩 Dekomposisi: Pecah proses belanja Deni menjadi 3 tahap!",
+                p1_opts: [
+                    { id: 'correct', text: "Cari Pensil 2B -> Antre & Bayar -> Terima Kembalian", correct: true },
+                    { id: 'wrong1', text: "Melihat mainan -> Membeli es krim -> Bermain", correct: false },
+                    { id: 'wrong2', text: "Langsung pulang ke rumah tanpa membawa pensil", correct: false }
                 ],
-                p2_question: "🔍 Pengenalan Pola: Apa pola antrean pembayaran kasir koperasi yang benar?",
-                p2_options: [
-                    { id: 'a', text: "Siapa yang datang duluan, dia yang dilayani (FIFO)", correct: true },
-                    { id: 'b', text: "Siapa yang berteriak paling keras, dia dilayani", correct: false }
+                p2_q: "🔍 Pengenalan Pola: Aturan pola antrean kasir koperasi yang benar:",
+                p2_opts: [
+                    { id: 'wrong1', text: "Siapa yang berteriak paling keras dilayani dulu", correct: false },
+                    { id: 'correct', text: "Siapa yang datang duluan, dilayani lebih dulu (FIFO)", correct: true },
+                    { id: 'wrong2', text: "Siapa yang paling tinggi berdiri di depan", correct: false }
                 ],
-                p3_question: "🎯 Abstraksi: Informasi apa yang PALING PENTING diperhatikan Deni?",
-                p3_options: [
-                    { id: 'a', text: "Harga Pensil 2B & Jumlah Uang Saku Deni", correct: true },
-                    { id: 'b', text: "Warna bungkus makanan ringan di rak", correct: false }
+                p3_q: "🎯 Abstraksi: Informasi yang PALING PENTING diperhatikan Deni saat ini:",
+                p3_opts: [
+                    { id: 'wrong1', text: "Warna bungkus makanan ringan di rak", correct: false },
+                    { id: 'correct', text: "Harga Pensil 2B & Uang Saku yang dibawanya", correct: true },
+                    { id: 'wrong2', text: "Merk mainan yang dibeli siswa lain", correct: false }
                 ],
-                p4_question: "🪜 Algoritma: Langkah hemat waktu saat membeli pensil:",
+                p4_q: "🪜 Algoritma: Susun langkah hemat waktu saat membeli pensil:",
+                p4_correct_seq: ['c1', 'c2', 'c3', 'c4'],
                 p4_steps: [
-                    { id: 's1', text: "1. Siapkan uang pas di genggaman" },
-                    { id: 's2', text: "2. Berdiri tertib di dalam jalur antrean" },
-                    { id: 's3', text: "3. Ambil pensil 2B sesuai kebutuhan" },
-                    { id: 's4', text: "4. Serahkan uang ke kasir & terima pensil" }
+                    { id: 'c1', text: "1. Siapkan uang pas di genggaman" },
+                    { id: 'c2', text: "2. Berdiri tertib di dalam antrean" },
+                    { id: 'c3', text: "3. Ambil pensil 2B yang dibutuhkan" },
+                    { id: 'c4', text: "4. Serahkan uang ke kasir & terima pensil" }
                 ]
             },
             {
                 id: 4,
-                title: "Kasus 4: Edo Ingin Memasak Telur Ceplok Sendiri",
-                story: "Edo ingin membantu ibu membuat sarapan telur ceplok. Edo belum pernah memasak dan takut telurnya gosong atau minyaknya memercik.",
-                p1_question: "🧩 Dekomposisi: Masalah memasak dipecah menjadi persiapannya:",
-                p1_options: [
-                    { id: 'a', text: "Bahan (Telur/Minyak/Garam) & Alat (Wajan/Spatula/Kompor)", correct: true },
-                    { id: 'b', text: "Membuat meja makan baru dari kayu", correct: false }
+                title: "Kasus 4: Edo Ingin Memasak Telur Ceplok",
+                story: "Edo ingin membantu ibu membuat sarapan telur ceplok. Edo belum pernah memasak dan khawatir telurnya gosong atau minyaknya memercik.",
+                p1_q: "🧩 Dekomposisi: Pisahkan masalah memasak menjadi 2 kelompok:",
+                p1_opts: [
+                    { id: 'wrong1', text: "Membuat piring baru dari tanah liat", correct: false },
+                    { id: 'wrong2', text: "Membeli ayam petelur baru di pasar", correct: false },
+                    { id: 'correct', text: "Bahan (Telur/Minyak/Garam) & Alat (Wajan/Spatula/Kompor)", correct: true }
                 ],
-                p2_question: "🔍 Pengenalan Pola: Kapan tanda telur sudah matang berdasarkan pola warna?",
-                p2_options: [
-                    { id: 'a', text: "Putih telur memadat & pinggirannya agak kecokelatan", correct: true },
-                    { id: 'b', text: "Telur berwarna hitam pekat dan berasap tebal", correct: false }
+                p2_q: "🔍 Pengenalan Pola: Kapan tanda telur sudah matang berdasarkan warna?",
+                p2_opts: [
+                    { id: 'correct', text: "Putih telur memadat & pinggirannya agak kecokelatan", correct: true },
+                    { id: 'wrong1', text: "Telur berwarna hitam pekat dan berbau gosong", correct: false },
+                    { id: 'wrong2', text: "Telur masih cair sepenuhnya seperti air", correct: false }
                 ],
-                p3_question: "🎯 Abstraksi: Saat menggoreng telur, detail apa yang BISA DIABAIKAN?",
-                p3_options: [
-                    { id: 'a', text: "Bentuk/merek kemasan garam yang dipakai", correct: true },
-                    { id: 'b', text: "Besar kecilnya api kompor yang menyala", correct: false }
+                p3_q: "🎯 Abstraksi: Saat memasak telur, detail yang BISA DIABAIKAN adalah:",
+                p3_opts: [
+                    { id: 'wrong1', text: "Besar kecilnya nyala api kompor", correct: false },
+                    { id: 'correct', text: "Bentuk atau gambar pada kemasan bungkus garam", correct: true },
+                    { id: 'wrong2', text: "Jumlah minyak goreng di dalam wajan", correct: false }
                 ],
-                p4_question: "🪜 Algoritma: Urutan logis memasak telur ceplok:",
+                p4_q: "🪜 Algoritma: Susun urutan memasak telur ceplok yang aman:",
+                p4_correct_seq: ['d1', 'd2', 'd3', 'd4'],
                 p4_steps: [
-                    { id: 's1', text: "1. Panaskan minyak sedikit di wajan" },
-                    { id: 's2', text: "2. Pecahkan telur ke dalam wajan" },
-                    { id: 's3', text: "3. Taburi sedikit garam & tunggu matang" },
-                    { id: 's4', text: "4. Angkat telur dan matikan kompor" }
+                    { id: 'd1', text: "1. Panaskan sedikit minyak di wajan" },
+                    { id: 'd2', text: "2. Pecahkan telur ke dalam wajan" },
+                    { id: 'd3', text: "3. Taburi sedikit garam & tunggu matang" },
+                    { id: 'd4', text: "4. Angkat telur dan matikan kompor" }
                 ]
             },
             {
                 id: 5,
-                title: "Kasus 5: Meniup Balon Dekorasi Ulang Tahun Kelas",
-                story: "Kelas 4 SD ingin mendekorasi ruangan untuk ulang tahun wali kelas. Ada 30 balon berwarna merah, kuning, dan hijau yang harus ditiup dan diikat rapi.",
-                p1_question: "🧩 Dekomposisi: Pembagian tugas kelompok agar cepat selesai:",
-                p1_options: [
-                    { id: 'a', text: "Tim Meniup, Tim Mengikat Tali, & Tim Menempel Balon", correct: true },
-                    { id: 'b', text: "Satu orang meniup semua 30 balon sendirian", correct: false }
+                title: "Kasus 5: Meniup Balon Ulang Tahun Kelas",
+                story: "Kelas 4 SD mau mendekorasi ruangan untuk ulang tahun Wali Kelas. Ada 30 balon berwarna merah, kuning, dan hijau yang harus ditiup dan diikat rapi.",
+                p1_q: "🧩 Dekomposisi: Pembagian tugas kelompok agar cepat selesai:",
+                p1_opts: [
+                    { id: 'correct', text: "Tim Meniup Balon, Tim Mengikat Tali, & Tim Menempel Balon", correct: true },
+                    { id: 'wrong1', text: "Satu siswa meniup semua 30 balon sendirian", correct: false },
+                    { id: 'wrong2', text: "Menunggu balon meniup dirinya sendiri", correct: false }
                 ],
-                p2_question: "🔍 Pengenalan Pola: Pola warna dekorasi diselang-seling:",
-                p2_options: [
-                    { id: 'a', text: "Merah -> Kuning -> Hijau -> Merah -> Kuning -> ...", correct: true },
-                    { id: 'b', text: "Merah semua di kiri, hijau semua di luar sekolah", correct: false }
+                p2_q: "🔍 Pengenalan Pola: Pola warna dekorasi yang berselang-seling rapi:",
+                p2_opts: [
+                    { id: 'wrong1', text: "Merah semua di kiri, hijau semua di luar kelas", correct: false },
+                    { id: 'correct', text: "Merah -> Kuning -> Hijau -> Merah -> Kuning -> Hijau", correct: true },
+                    { id: 'wrong2', text: "Warna diacak tidak beraturan sama sekali", correct: false }
                 ],
-                p3_question: "🎯 Abstraksi: Hal penting yang harus diperhatikan saat meniup balon:",
-                p3_options: [
-                    { id: 'a', text: "Ukuran tiupan balon agar tidak meletus", correct: true },
-                    { id: 'b', text: "Siapa pembuat bahan karet balon tersebut", correct: false }
+                p3_q: "🎯 Abstraksi: Hal penting yang harus diperhatikan saat meniup balon:",
+                p3_opts: [
+                    { id: 'wrong1', text: "Nama pabrik pembuat bahan karet balon", correct: false },
+                    { id: 'correct', text: "Ukuran tiupan balon agar tidak mudah meletus", correct: true },
+                    { id: 'wrong2', text: "Harga per biji pita balon di toko", correct: false }
                 ],
-                p4_question: "🪜 Algoritma: Urutan kerja memasang 1 balon dekorasi:",
+                p4_q: "🪜 Algoritma: Susun urutan memasang 1 balon dekorasi:",
+                p4_correct_seq: ['e1', 'e2', 'e3', 'e4'],
                 p4_steps: [
-                    { id: 's1', text: "1. Ambil 1 balon sesuai pola warna" },
-                    { id: 's2', text: "2. Tiup balon sesuai ukuran pas" },
-                    { id: 's3', text: "3. Ikat ujung balon dengan pita" },
-                    { id: 's4', text: "4. Tempelkan balon di dinding kelas" }
+                    { id: 'e1', text: "1. Ambil 1 balon sesuai pola warna" },
+                    { id: 'e2', text: "2. Tiup balon hingga ukuran pas" },
+                    { id: 'e3', text: "3. Ikat ujung balon dengan pita" },
+                    { id: 'e4', text: "4. Tempelkan balon di dinding kelas" }
                 ]
             }
         ];
 
         let currentCaseIdx = 0;
         let score = 0;
+        let userAlgoPool = [];
+        let userAlgoSeq = [];
+
+        // Fungsi Mengacak Array (Fisher-Yates Shuffle)
+        function shuffleArray(array) {
+            let arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function initCase() {
+            const c = casesData[currentCaseIdx];
+            // Acak opsi untuk pilar 1, 2, 3
+            c.p1_shuffled = shuffleArray(c.p1_opts);
+            c.p2_shuffled = shuffleArray(c.p2_opts);
+            c.p3_shuffled = shuffleArray(c.p3_opts);
+
+            // Acak langkah algoritma untuk pilar 4
+            userAlgoPool = shuffleArray(c.p4_steps);
+            userAlgoSeq = [];
+
+            renderCase();
+        }
 
         function renderCase() {
             const card = document.getElementById('game-card');
@@ -465,61 +537,68 @@
             document.getElementById('progress-bar').style.width = `${(c.id / casesData.length) * 100}%`;
             document.getElementById('score-val').innerText = `⭐ ${score}`;
 
-            if (currentCaseIdx >= casesData.length) {
-                renderVictory();
-                return;
-            }
-
             let html = `
                 <div>
-                    <div class="case-header">
-                        <span class="case-badge">🎮 Kasus Studi SD #${c.id}</span>
-                        <h2 class="case-title">${c.title}</h2>
-                        <div class="case-story">${c.story}</div>
-                    </div>
+                    <span class="case-badge">🎮 Kasus Studi SD #${c.id}</span>
+                    <h2 class="case-title">${c.title}</h2>
+                    <div class="case-story">${c.story}</div>
 
                     <div class="pillars-grid">
                         <div class="pillar-card p1">
                             <div class="pillar-title">🧩 1. Dekomposisi</div>
-                            <div class="pillar-desc">${c.p1_question}</div>
+                            <div class="pillar-desc">${c.p1_q}</div>
                             <select id="ans-p1">
                                 <option value="">-- Pilih Jawaban --</option>
-                                ${c.p1_options.map((o, i) => `<option value="${o.correct}">${o.text}</option>`).join('')}
+                                ${c.p1_shuffled.map(o => `<option value="${o.correct}">${o.text}</option>`).join('')}
                             </select>
                         </div>
 
                         <div class="pillar-card p2">
                             <div class="pillar-title">🔍 2. Pengenalan Pola</div>
-                            <div class="pillar-desc">${c.p2_question}</div>
+                            <div class="pillar-desc">${c.p2_q}</div>
                             <select id="ans-p2">
                                 <option value="">-- Pilih Jawaban --</option>
-                                ${c.p2_options.map((o, i) => `<option value="${o.correct}">${o.text}</option>`).join('')}
+                                ${c.p2_shuffled.map(o => `<option value="${o.correct}">${o.text}</option>`).join('')}
                             </select>
                         </div>
 
                         <div class="pillar-card p3">
                             <div class="pillar-title">🎯 3. Abstraksi</div>
-                            <div class="pillar-desc">${c.p3_question}</div>
+                            <div class="pillar-desc">${c.p3_q}</div>
                             <select id="ans-p3">
                                 <option value="">-- Pilih Jawaban --</option>
-                                ${c.p3_options.map((o, i) => `<option value="${o.correct}">${o.text}</option>`).join('')}
+                                ${c.p3_shuffled.map(o => `<option value="${o.correct}">${o.text}</option>`).join('')}
                             </select>
                         </div>
 
                         <div class="pillar-card p4">
                             <div class="pillar-title">🪜 4. Algoritma</div>
-                            <div class="pillar-desc">${c.p4_question}</div>
-                            <div style="background:white; padding:8px; border-radius:8px; border:1px solid #cbd5e1;">
-                                ${c.p4_steps.map(s => `<div class="seq-item">${s.text}</div>`).join('')}
+                            <div class="pillar-desc">${c.p4_q}</div>
+                            
+                            <div class="algo-container">
+                                <div>
+                                    <div class="algo-box-title">Langkah Acak (Klik):</div>
+                                    <div class="algo-list">
+                                        ${userAlgoPool.map(item => `
+                                            <div class="algo-item" onclick="moveToSeq('${item.id}')">
+                                                <span>${item.text}</span>
+                                                <span style="color:var(--primary)">➡️</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="algo-box-title">Urutan Kamu (1-4):</div>
+                                    <div class="algo-list" style="background:#f0fdf4; border-color:#86efac;">
+                                        ${userAlgoSeq.map((item, index) => `
+                                            <div class="algo-item" style="background:#dcfce7;" onclick="moveToPool('${item.id}')">
+                                                <span><b>${index + 1}.</b> ${item.text.replace(/^\d+\.\s*/, '')}</span>
+                                                <span style="color:var(--danger)">↩️</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
                             </div>
-                            <div style="margin-top:6px; font-size:0.75rem; color:var(--text-muted);">
-                                Apakah urutan langkah di atas sudah logis & benar?
-                            </div>
-                            <select id="ans-p4" style="margin-top:4px;">
-                                <option value="">-- Konfirmasi Urutan --</option>
-                                <option value="true">Ya, urutan langkah sudah logis & benar!</option>
-                                <option value="false">Tidak, urutannya masih acak-acakan.</option>
-                            </select>
                         </div>
                     </div>
                 </div>
@@ -533,35 +612,71 @@
             card.innerHTML = html;
         }
 
+        // Pindah langkah dari Pool ke Urutan Kamu
+        function moveToSeq(id) {
+            const idx = userAlgoPool.findIndex(i => i.id === id);
+            if (idx > -1) {
+                const item = userAlgoPool.splice(idx, 1)[0];
+                userAlgoSeq.push(item);
+                renderCase();
+            }
+        }
+
+        // Pindah langkah dari Urutan Kamu kembali ke Pool
+        function moveToPool(id) {
+            const idx = userAlgoSeq.findIndex(i => i.id === id);
+            if (idx > -1) {
+                const item = userAlgoSeq.splice(idx, 1)[0];
+                userAlgoPool.push(item);
+                renderCase();
+            }
+        }
+
         function checkAnswers() {
             const p1 = document.getElementById('ans-p1').value;
             const p2 = document.getElementById('ans-p2').value;
             const p3 = document.getElementById('ans-p3').value;
-            const p4 = document.getElementById('ans-p4').value;
             const fb = document.getElementById('feedback');
+            const c = casesData[currentCaseIdx];
 
-            if (!p1 || !p2 || !p3 || !p4) {
+            // Validasi Dropdown
+            if (!p1 || !p2 || !p3) {
                 fb.className = 'feedback wrong';
-                fb.innerText = '⚠️ Jawab keempat pilar terlebih dahulu ya!';
+                fb.innerText = '⚠️ Harap pilih jawaban untuk Dekomposisi, Pola, & Abstraksi!';
                 return;
             }
 
-            if (p1 === "true" && p2 === "true" && p3 === "true" && p4 === "true") {
+            // Validasi Algoritma
+            if (userAlgoSeq.length < 4) {
+                fb.className = 'feedback wrong';
+                fb.innerText = '⚠️ Harap susun 4 langkah Algoritma di sebelah kanan sampai lengkap!';
+                return;
+            }
+
+            // Cek kebenaran urutan algoritma
+            const userSeqIds = userAlgoSeq.map(i => i.id);
+            const isAlgoCorrect = JSON.stringify(userSeqIds) === JSON.stringify(c.p4_correct_seq);
+
+            if (p1 === "true" && p2 === "true" && p3 === "true" && isAlgoCorrect) {
                 score += 20;
                 fb.className = 'feedback correct';
-                fb.innerText = '🎉 HEBAT! Semua pilar kamu jawab dengan tepat!';
+                fb.innerText = '🎉 LUAR BIASA! Semua pilar & urutan algoritma kamu BENAR!';
                 
                 setTimeout(() => {
                     currentCaseIdx++;
                     if (currentCaseIdx < casesData.length) {
-                        renderCase();
+                        initCase();
                     } else {
                         renderVictory();
                     }
-                }, 1200);
+                }, 1300);
             } else {
                 fb.className = 'feedback wrong';
-                fb.innerText = '❌ Masih ada pilar yang kurang tepat. Coba periksa lagi!';
+                if (!isAlgoCorrect) {
+                    fb.innerText = '❌ Urutan Algoritma masih belum pas! Coba susun ulang dari langkah awal.';
+                } else {
+                    fb.innerText = '❌ Masih ada jawaban pilar yang kurang tepat. Coba periksa lagi!';
+                }
             }
         }
 
@@ -574,13 +689,13 @@
             card.innerHTML = `
                 <div class="victory-box">
                     <h2 class="victory-title">🏆 SELAMAT! KAMU DETEKTIF BK SEJATI!</h2>
-                    <p>Kamu telah menyelesaikan 5 Kasus Sehari-hari dengan menguasai 4 Pilar Berpikir Komputasional!</p>
+                    <p>Kamu telah menyelesaikan 5 Kasus Sehari-hari dan menguasai 4 Pilar Berpikir Komputasional!</p>
                     
                     <div class="summary-list">
-                        <div class="summary-item">🧩 <b>Dekomposisi:</b> Mampu memecah masalah besar jadi bagian-bagian kecil.</div>
-                        <div class="summary-item">🔍 <b>Pengenalan Pola:</b> Mampu melihat kesamaan & aturan yang berulang.</div>
-                        <div class="summary-item">🎯 <b>Abstraksi:</b> Mampu fokus pada hal penting & mengabaikan yang tak berguna.</div>
-                        <div class="summary-item">🪜 <b>Algoritma:</b> Mampu menyusun langkah penyelesaian secara runtut dan tepat.</div>
+                        <div class="summary-item">🧩 <b>Dekomposisi:</b> Hebat memecah masalah besar jadi bagian-bagian kecil.</div>
+                        <div class="summary-item">🔍 <b>Pengenalan Pola:</b> Jago mengenali aturan & kebiasaan yang berulang.</div>
+                        <div class="summary-item">🎯 <b>Abstraksi:</b> Pintar fokus pada hal penting & mengabaikan yang tak berguna.</div>
+                        <div class="summary-item">🪜 <b>Algoritma:</b> Cermat menyusun urutan langkah-langkah kerja yang logis.</div>
                     </div>
 
                     <button class="btn" onclick="restartGame()">Main Lagi dari Awal 🔄</button>
@@ -591,11 +706,11 @@
         function restartGame() {
             currentCaseIdx = 0;
             score = 0;
-            renderCase();
+            initCase();
         }
 
-        // Render Kasus Pertama saat awal muat
-        renderCase();
+        // Mulai kasus pertama
+        initCase();
     </script>
 </body>
 </html>
