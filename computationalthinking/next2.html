@@ -1,459 +1,601 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<style>
-  @page {
-    size: A4;
-    margin: 15mm 12mm;
-    background-color: #f8fafc;
-  }
-  *, *::before, *::after {
-    box-sizing: border-box;
-  }
-  body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    color: #1e293b;
-    margin: 0;
-    padding: 0;
-    font-size: 10pt;
-    line-height: 1.5;
-  }
-  
-  /* Header Section */
-  .header {
-    background: linear-gradient(135deg, #1e3a8a, #0f172a);
-    color: #ffffff;
-    margin: -15mm -12mm 20px -12mm;
-    padding: 25px 15mm 20px 15mm;
-    border-bottom: 4px solid #3b82f6;
-  }
-  .header h1 {
-    margin: 0 0 6px 0;
-    font-size: 20pt;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-    color: #ffffff;
-  }
-  .header p {
-    margin: 0;
-    font-size: 10.5pt;
-    color: #93c5fd;
-  }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan Detektif Cilik: Berpikir Komputasional SD</title>
+    <style>
+        :root {
+            --primary: #0284c7;
+            --primary-light: #e0f2fe;
+            --secondary: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg: #f0f9ff;
+            --card-bg: #ffffff;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+        }
 
-  .intro {
-    background-color: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin-bottom: 20px;
-    font-size: 9.5pt;
-    color: #475569;
-  }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Segoe UI', sans-serif;
+        }
 
-  /* Case Card */
-  .case-card {
-    background-color: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    margin-bottom: 22px;
-    padding: 16px 18px;
-    page-break-inside: avoid;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  }
+        body {
+            background-color: var(--bg);
+            color: var(--text-dark);
+            padding: 20px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
 
-  .case-header {
-    border-bottom: 2px solid #f1f5f9;
-    padding-bottom: 8px;
-    margin-bottom: 12px;
-  }
-  .case-tag {
-    display: inline-block;
-    font-size: 7.5pt;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    padding: 2px 8px;
-    border-radius: 4px;
-    color: #ffffff;
-    margin-bottom: 4px;
-  }
-  .tag-1 { background-color: #2563eb; }
-  .tag-2 { background-color: #0d9488; }
-  .tag-3 { background-color: #d97706; }
-  .tag-4 { background-color: #e11d48; }
-  .tag-5 { background-color: #4f46e5; }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            max-width: 800px;
+            width: 100%;
+        }
 
-  .case-title {
-    margin: 4px 0 2px 0;
-    font-size: 13pt;
-    color: #0f172a;
-    font-weight: 700;
-  }
-  .case-desc {
-    font-size: 9pt;
-    color: #64748b;
-    margin: 0;
-  }
+        h1 {
+            color: var(--primary);
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
 
-  /* 4 Pillars Grid Table */
-  .pillars-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 8px;
-    margin-top: 8px;
-  }
-  .pillar-cell {
-    width: 25%;
-    vertical-align: top;
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    padding: 10px;
-  }
-  .pillar-num {
-    font-size: 8pt;
-    font-weight: 700;
-    color: #3b82f6;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 2px;
-  }
-  .pillar-title {
-    font-size: 9.5pt;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 6px;
-    border-bottom: 1px solid #cbd5e1;
-    padding-bottom: 4px;
-  }
-  .pillar-content {
-    font-size: 8.5pt;
-    color: #334155;
-    line-height: 1.4;
-  }
-  .pillar-content ul {
-    margin: 0;
-    padding-left: 14px;
-  }
-  .pillar-content li {
-    margin-bottom: 4px;
-  }
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-weight: 600;
+        }
 
-  .footer {
-    text-align: center;
-    font-size: 8pt;
-    color: #94a3b8;
-    margin-top: 15px;
-    border-top: 1px solid #e2e8f0;
-    padding-top: 8px;
-  }
-</style>
+        /* Top Status Bar */
+        .status-bar {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 850px;
+            border-radius: 16px;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 2px solid #bae6fd;
+        }
+
+        .stat-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-value {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--secondary);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .progress-bar-bg {
+            width: 40%;
+            height: 14px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 20%;
+            background: linear-gradient(90deg, var(--secondary), var(--success));
+            transition: width 0.4s ease;
+        }
+
+        /* Game Main Container */
+        .game-container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 850px;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            border: 3px solid #e0f2fe;
+            min-height: 520px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .case-header {
+            margin-bottom: 15px;
+        }
+
+        .case-badge {
+            display: inline-block;
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            border: 1px solid #7dd3fc;
+        }
+
+        .case-title {
+            color: var(--primary);
+            font-size: 1.4rem;
+            margin-bottom: 8px;
+        }
+
+        .case-story {
+            background: #f8fafc;
+            border-left: 5px solid var(--secondary);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        /* 4 Pillars Interactive Layout */
+        .pillars-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .pillar-card {
+            background: #fafafa;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .pillar-title {
+            font-weight: bold;
+            font-size: 0.95rem;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pillar-card.p1 .pillar-title { color: #2563eb; }
+        .pillar-card.p2 .pillar-title { color: #d97706; }
+        .pillar-card.p3 .pillar-title { color: #059669; }
+        .pillar-card.p4 .pillar-title { color: #7c3aed; }
+
+        .pillar-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        select, input[type="text"] {
+            width: 100%;
+            padding: 8px 10px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            outline: none;
+            background: white;
+        }
+
+        select:focus, input[type="text"]:focus {
+            border-color: var(--primary);
+        }
+
+        /* Sequence List for Algorithm */
+        .seq-item {
+            background: white;
+            border: 1px dashed #94a3b8;
+            padding: 6px 10px;
+            margin-top: 4px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .seq-item:hover {
+            background: var(--primary-light);
+        }
+
+        /* Bottom Controls */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 2px solid #f1f5f9;
+            padding-top: 15px;
+            margin-top: 10px;
+        }
+
+        .feedback {
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        .feedback.correct { color: var(--success); }
+        .feedback.wrong { color: var(--danger); }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(2, 132, 199, 0.2);
+            transition: transform 0.1s, background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #0284c7;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Victory Screen */
+        .victory-box {
+            text-align: center;
+            padding: 30px 10px;
+        }
+
+        .victory-title {
+            color: var(--success);
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+
+        .summary-list {
+            text-align: left;
+            margin: 20px 0;
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .summary-item {
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 700px) {
+            .pillars-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
 
-<div class="header">
-  <h1>Analisis Kasus Berbasis 4 Pilar Strategis</h1>
-  <p>Kerangka Kerja Penanganan Studi Kasus Multisektoral</p>
-</div>
+    <header>
+        <h1>🔍 Detektif Cilik BK</h1>
+        <p class="subtitle">Selesaikan 5 Masalah Sehari-hari Menggunakan 4 Pilar Berpikir Komputasional!</p>
+    </header>
 
-<div class="intro">
-  <strong>Ringkasan Eksekutif:</strong> Dokumen ini memetakan 5 kasus strategis dari berbagai bidang (Teknologi, Kesehatan, Lingkungan, Pendidikan, dan Bisnis) ke dalam struktur <strong>4 Pilar Utama</strong>. Metodologi pilar ini digunakan untuk memastikan pendekatan terstruktur, holistik, dan komprehensif dalam menyelesaikan setiap tantangan.
-</div>
+    <div class="status-bar">
+        <div class="stat-box">
+            <span class="stat-label">KASUS</span>
+            <span class="stat-value" id="case-num">1 / 5</span>
+        </div>
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="progress-bar"></div>
+        </div>
+        <div class="stat-box">
+            <span class="stat-label">BINTANG BK</span>
+            <span class="stat-value" id="score-val">⭐ 0</span>
+        </div>
+    </div>
 
-<!-- KASUS 1 -->
-<div class="case-card">
-  <div class="case-header">
-    <span class="case-tag tag-1">Kasus 1 — Bisnis & Transformasi Digital</span>
-    <h2 class="case-title">Penyelamatan & Modernisasi Toko Ritel Konvensional</h2>
-    <p class="case-desc">Menghadapi penurunan omzet akibat persaingan e-commerce dan perubahan perilaku konsumen.</p>
-  </div>
-  
-  <table class="pillars-table">
-    <tr>
-      <td class="pillar-cell">
-        <div class="pillar-num">Pilar I</div>
-        <div class="pillar-title">Infrastruktur Teknologi</div>
-        <div class="pillar-content">
-          <ul>
-            <li>Implementasi sistem POS (Point of Sale) berbasis Cloud.</li>
-            <li>Pengembangan aplikasi e-commerce terintegrasi.</li>
-            <li>Digitalisasi inventaris gudang secara real-time.</li>
-          </ul>
+    <div class="game-container" id="game-card">
         </div>
-      </td>
-      <td class="pillar-cell">
-        <div class="pillar-num">Pilar II</div>
-        <div class="pillar-title">Pengalaman Pelanggan</div>
-        <div class="pillar-content">
-          <ul>
-            <li>Integrasi model belanja <em>Omnichannel</em> (Click & Collect).</li>
-            <li>Program loyalitas berbasis data transaksi.</li>
-            <li>Personalisasi promosi via kanal digital.</li>
-          </ul>
-        </div>
-      </td>
-      <td class="pillar-cell">
-        <div class="pillar-num">Pilar III</div>
-        <div class="pillar-title">Optimasi Operasional</div>
-        <div class="pillar-content">
-          <ul>
-            <li>Efisiensi rantai pasok dengan analisis prediksi permintaan.</li>
-            <li>Restrukturisasi tata letak toko fisik (layouting).</li>
-            <li>Pengurangan biaya logistik pengiriman.</li>
-          </ul>
-        </div>
-      </td>
-      <td class="pillar-cell">
-        <div class="pillar-num">Pilar IV</div>
-        <div class="pillar-title">Kapabilitas SDM</div>
-        <div class="pillar-content">
-          <ul>
-            <li>Pelatihan kecakapan digital untuk staf toko.</li>
-            <li>Penerapan Key Performance Indicators (KPI) baru.</li>
-            <li>Kultur kerja adaptif dan berorientasi layanan.</li>
-          </ul>
-        </div>
-      </td>
-    </tr>
-  </table>
-</div>
 
-<!-- KASUS 2 -->
-<div class="case-card">
-  <div class="case-header">
-    <span class="case-tag tag-2">Kasus 2 — Kesehatan Masyarakat</span>
-    <h2 class="case-title">Penanganan Stunting pada Anak di Wilayah Pedesaan</h2>
-    <p class="case-desc">Upaya percepatan penurunan angka stunting nasional melalui penanganan dari hulu ke hilir.</p>
-  </div>
-  
-  <table class="pillars-table">
-    <tr>
-      <td class="pillar-cell">
-        <div class="pillar-num">Pilar I</div>
-        <div class="pillar-title">Nutrisi & Gizi Ibu/Anak</div>
-        <div class="pillar-content">
-          <ul>
-            <li>Pemberian makanan tambahan (PMT) kaya protein hewani.</li>
-            <li>Suplementasi zat besi untuk ibu hamil.</li>
-            <li>Edukasi ASI eksklusif dan MPASI berkualitas.</li>
-          </ul>
-        </div>
-      </td>
-      <td class="pillar-cell">
-        <div class="pillar-num">Pilar II</div>
-        <div class="pillar-title">Sanitasi & Air Bersih</div>
-        <div class="pillar-content">
-          <ul>
-            <li>Pembangunan jamban sehat dan MCK umum.</li>
-            <li>Penyediaan akses air bersih terjangkau.</li>
-            <li>Kampanye Perilaku Hidup Bersih dan Sehat (PHBS).</li>
-          </ul>
-        </div>
-      </td>
-      <td class="pillar-cell">
-        <div class="pillar-num">Pilar III</div>
-        <div class="pillar-title">Layanan Kesehatan</div>
-        <div class="pillar-content">
-          <ul>
-            <li>Revitalisasi Posyandu dan kader kesehatan desa.</li>
-            <li>Pemantauan berkala tumbuh kembang balita.</li>
-            <li>Imunisasi dasar lengkap dan intervensi medis.</li>
-          </ul>
-        </div>
-      </td>
-      <td class="pillar-cell">
-        <div class="pillar-num">Pilar IV</div>
-        <div class="pillar-title">Ketahanan Pangan</div>
-        <div class="pillar-content">
-          <ul>
-            <li>Pemanfaatan pekarangan rumah untuk pangan lokal.</li>
-            <li>Bantuan sosial pangan tepat sasaran.</li>
-            <li>Pemberdayaan ekonomi keluarga kurang mampu.</li>
-          </ul>
-        </div>
-      </td>
-    </tr>
-  </table>
-</div>
+    <script>
+        const casesData = [
+            {
+                id: 1,
+                title: "Kasus 1: Tas Sekolah Budi Terlalu Berat",
+                story: "Setiap hari Budi mengeluh punggungnya sakit karena tas sekolahnya sangat berat. Setelah dibuka, ternyata tas Budi berantakan berisi buku, mainan, baju olahraga, alat tulis, dan bekal.",
+                p1_question: "🧩 Dekomposisi: Pilih cara membagi isi tas Budi menjadi kelompok kecil yang rapi!",
+                p1_options: [
+                    { id: 'a', text: "Pisahkan jadi: Buku Hari Ini, Alat Tulis, dan Bekal/Baju", correct: true },
+                    { id: 'b', text: "Masukkan semua barang ke dalam kantong plastik besar", correct: false },
+                    { id: 'c', text: "Membawa dua tas sekaligus ke sekolah", correct: false }
+                ],
+                p2_question: "🔍 Pengenalan Pola: Pola apa yang bisa membantu Budi merapikan tas setiap hari?",
+                p2_options: [
+                    { id: 'a', text: "Membawa semua buku dari hari Senin sampai Jumat", correct: false },
+                    { id: 'b', text: "Melihat Jadwal Pelajaran harian sebelum menata tas", correct: true },
+                    { id: 'c', text: "Meminta ibu menata tas tanpa melihat jadwal", correct: false }
+                ],
+                p3_question: "🎯 Abstraksi: Barang mana yang TIDAK PENTING dan harus DIBUANG dari tas?",
+                p3_options: [
+                    { id: 'a', text: "Buku Teks Pelajaran & Pensil", correct: false },
+                    { id: 'b', text: "Mainan Robot & Koleksi Kartu Game", correct: true },
+                    { id: 'c', text: "Kotak Bekal & Botol Minum", correct: false }
+                ],
+                p4_question: "🪜 Algoritma: Urutan langkah menata tas Budi setiap malam:",
+                p4_steps: [
+                    { id: 's1', text: "1. Cek Jadwal Pelajaran besok" },
+                    { id: 's2', text: "2. Keluarkan buku hari ini & mainan" },
+                    { id: 's3', text: "3. Masukkan buku besok & alat tulis" },
+                    { id: 's4', text: "4. Tutup tas & siap berangkat" }
+                ]
+            },
+            {
+                id: 2,
+                title: "Kasus 2: Siti Lupa Jadwal Piket Kebersihan Kelas",
+                story: "Siti sering lupa apa tugas piketnya di kelas. Di papan tulis ada aturan: Senin (Mengepel & Menyapu), Selasa (Buang Sampah & Menyapu), Rabu (Mengepel & Menyapu), Kamis (Buang Sampah & Menyapu). Hari ini hari Jumat!",
+                p1_question: "🧩 Dekomposisi: Pecah tugas piket kelas menjadi bagian terpisah!",
+                p1_options: [
+                    { id: 'a', text: "Tugas Kebersihan Lantai, Sampah, dan Meja Guru", correct: true },
+                    { id: 'b', text: "Mengecat ulang dinding kelas setiap hari", correct: false }
+                ],
+                p2_question: "🔍 Pengenalan Pola: Berdasarkan pola di papan tulis, apa tugas Siti hari JUMAT?",
+                p2_options: [
+                    { id: 'a', text: "Mengepel & Menyapu (Sama seperti Senin & Rabu)", correct: true },
+                    { id: 'b', text: "Membeli sapu baru di toko", correct: false },
+                    { id: 'c', text: "Tidak ada piket sama sekali", correct: false }
+                ],
+                p3_question: "🎯 Abstraksi: Saat menyapu lantai, hal apa yang HARUS DIFOKUSKAN?",
+                p3_options: [
+                    { id: 'a', text: "Fokus pada debu dan sampah di lantai", correct: true },
+                    { id: 'b', text: "Fokus melihat burung yang terbang di luar jendela", correct: false }
+                ],
+                p4_question: "🪜 Algoritma: Urutan menyapu dan mengepel kelas yang benar:",
+                p4_steps: [
+                    { id: 's1', text: "1. Geser kursi ke atas meja" },
+                    { id: 's2', text: "2. Sapu kotoran dari belakang ke depan" },
+                    { id: 's3', text: "3. Pel lantai yang sudah bersih dari debu" },
+                    { id: 's4', text: "4. Buang sampah ke tempat sampah luar" }
+                ]
+            },
+            {
+                id: 3,
+                title: "Kasus 3: Antrean Pembelian Pensil di Koperasi Sekolah",
+                story: "Deni ingin membeli Pensil 2B untuk ujian di koperasi sekolah. Koperasi sangat ramai dengan barang dagangan: es krim, mainan, buku gambar, spidol, dan makanan ringan.",
+                p1_question: "🧩 Dekomposisi: Pecah proses belanja Deni menjadi 3 bagian!",
+                p1_options: [
+                    { id: 'a', text: "Mencari Pensil -> Membayar ke Kasir -> Mengambil Kembalian", correct: true },
+                    { id: 'b', text: "Melihat mainan -> Membeli es krim -> Bermain di lapangan", correct: false }
+                ],
+                p2_question: "🔍 Pengenalan Pola: Apa pola antrean pembayaran kasir koperasi yang benar?",
+                p2_options: [
+                    { id: 'a', text: "Siapa yang datang duluan, dia yang dilayani (FIFO)", correct: true },
+                    { id: 'b', text: "Siapa yang berteriak paling keras, dia dilayani", correct: false }
+                ],
+                p3_question: "🎯 Abstraksi: Informasi apa yang PALING PENTING diperhatikan Deni?",
+                p3_options: [
+                    { id: 'a', text: "Harga Pensil 2B & Jumlah Uang Saku Deni", correct: true },
+                    { id: 'b', text: "Warna bungkus makanan ringan di rak", correct: false }
+                ],
+                p4_question: "🪜 Algoritma: Langkah hemat waktu saat membeli pensil:",
+                p4_steps: [
+                    { id: 's1', text: "1. Siapkan uang pas di genggaman" },
+                    { id: 's2', text: "2. Berdiri tertib di dalam jalur antrean" },
+                    { id: 's3', text: "3. Ambil pensil 2B sesuai kebutuhan" },
+                    { id: 's4', text: "4. Serahkan uang ke kasir & terima pensil" }
+                ]
+            },
+            {
+                id: 4,
+                title: "Kasus 4: Edo Ingin Memasak Telur Ceplok Sendiri",
+                story: "Edo ingin membantu ibu membuat sarapan telur ceplok. Edo belum pernah memasak dan takut telurnya gosong atau minyaknya memercik.",
+                p1_question: "🧩 Dekomposisi: Masalah memasak dipecah menjadi persiapannya:",
+                p1_options: [
+                    { id: 'a', text: "Bahan (Telur/Minyak/Garam) & Alat (Wajan/Spatula/Kompor)", correct: true },
+                    { id: 'b', text: "Membuat meja makan baru dari kayu", correct: false }
+                ],
+                p2_question: "🔍 Pengenalan Pola: Kapan tanda telur sudah matang berdasarkan pola warna?",
+                p2_options: [
+                    { id: 'a', text: "Putih telur memadat & pinggirannya agak kecokelatan", correct: true },
+                    { id: 'b', text: "Telur berwarna hitam pekat dan berasap tebal", correct: false }
+                ],
+                p3_question: "🎯 Abstraksi: Saat menggoreng telur, detail apa yang BISA DIABAIKAN?",
+                p3_options: [
+                    { id: 'a', text: "Bentuk/merek kemasan garam yang dipakai", correct: true },
+                    { id: 'b', text: "Besar kecilnya api kompor yang menyala", correct: false }
+                ],
+                p4_question: "🪜 Algoritma: Urutan logis memasak telur ceplok:",
+                p4_steps: [
+                    { id: 's1', text: "1. Panaskan minyak sedikit di wajan" },
+                    { id: 's2', text: "2. Pecahkan telur ke dalam wajan" },
+                    { id: 's3', text: "3. Taburi sedikit garam & tunggu matang" },
+                    { id: 's4', text: "4. Angkat telur dan matikan kompor" }
+                ]
+            },
+            {
+                id: 5,
+                title: "Kasus 5: Meniup Balon Dekorasi Ulang Tahun Kelas",
+                story: "Kelas 4 SD ingin mendekorasi ruangan untuk ulang tahun wali kelas. Ada 30 balon berwarna merah, kuning, dan hijau yang harus ditiup dan diikat rapi.",
+                p1_question: "🧩 Dekomposisi: Pembagian tugas kelompok agar cepat selesai:",
+                p1_options: [
+                    { id: 'a', text: "Tim Meniup, Tim Mengikat Tali, & Tim Menempel Balon", correct: true },
+                    { id: 'b', text: "Satu orang meniup semua 30 balon sendirian", correct: false }
+                ],
+                p2_question: "🔍 Pengenalan Pola: Pola warna dekorasi diselang-seling:",
+                p2_options: [
+                    { id: 'a', text: "Merah -> Kuning -> Hijau -> Merah -> Kuning -> ...", correct: true },
+                    { id: 'b', text: "Merah semua di kiri, hijau semua di luar sekolah", correct: false }
+                ],
+                p3_question: "🎯 Abstraksi: Hal penting yang harus diperhatikan saat meniup balon:",
+                p3_options: [
+                    { id: 'a', text: "Ukuran tiupan balon agar tidak meletus", correct: true },
+                    { id: 'b', text: "Siapa pembuat bahan karet balon tersebut", correct: false }
+                ],
+                p4_question: "🪜 Algoritma: Urutan kerja memasang 1 balon dekorasi:",
+                p4_steps: [
+                    { id: 's1', text: "1. Ambil 1 balon sesuai pola warna" },
+                    { id: 's2', text: "2. Tiup balon sesuai ukuran pas" },
+                    { id: 's3', text: "3. Ikat ujung balon dengan pita" },
+                    { id: 's4', text: "4. Tempelkan balon di dinding kelas" }
+                ]
+            }
+        ];
 
-<!-- KASUS 3 -->
-<div class="case-card">
-  <div class="case-header">
-    <span class="case-tag tag-3">Kasus 3 — Lingkungan & Tata Kota</span>
-    <h2 class="case-title">Pengelolaan Sampah Terpadu di Kota Metropolitan</h2>
-    <p class="case-desc">Mengatasi krisis darurat sampah dan kebiasaan pembuangan tak terkelola di wilayah perkotaan.</p>
-  </div>
-  
-  <table class="pillars-table">
-    <tr>
-      <td class="pillar-cell">
-        <div class="pillar-num">Pilar I</div>
-        <div class="pillar-title">Pengurangan di Sumber</div>
-        <div class="pillar-content">
-          <ul>
-            <li>Pembatasan penggunaan plastik sekali pakai.</li>
-            <li>Edukasi pemilahan sampah organik & anorganik skala rumah tangga.</li>
-            <li>Insentif pengurangan limbah industri.</li>
-          </ul>
-        </div>
-      </td>
-      <td class="pillar-cell">
-        <div class="pillar-num">Pilar II</div>
-        <div class="pillar-title">Infrastruktur Daur Ulang</div>
-        <div class="pillar-content">
-          <ul>
-            <li>Pembangunan TPS3R di tingkat kecamatan.</li>
-            <li>Pengembangan fasilitas Waste-to-Energy (PLTSa).</li>
-            <li>Pengolahan komposting skala lingkungan.</li>
-          </ul>
-        </div>
-      </td>
-      <td class="pillar-cell">
-        <div class="pillar-num">Pilar III</div>
-        <div class="pillar-title">Regulasi & Penegakan</div>
-        <div class="pillar-content">
-          <ul>
-            <li>Penerapan denda bagi pembuang sampah sembarangan.</li>
-            <li>Skema retribusi sampah berdasarkan volume.</li>
-            <li>Aturan <em>Extended Producer Responsibility</em> (EPR).</li>
-          </ul>
-        </div>
-      </td>
-      <td class="pillar-cell">
-        <div class="pillar-num">Pilar IV</div>
-        <div class="pillar-title">Kemitraan Ekonomi</div>
-        <div class="pillar-content">
-          <ul>
-            <li>Penguatan ekosistem Bank Sampah.</li>
-            <li>Kerja sama dengan sektor swasta daur ulang.</li>
-            <li>Pemberdayaan pekerja informal (pemulung/pengepul).</li>
-          </ul>
-        </div>
-      </td>
-    </tr>
-  </table>
-</div>
+        let currentCaseIdx = 0;
+        let score = 0;
 
-<!-- KASUS 4 -->
-<div class="case-card">
-  <div class="case-header">
-    <span class="case-tag tag-4">Kasus 4 — Pendidikan</span>
-    <h2 class="case-title">Peningkatan Kualitas Pendidikan di Daerah 3T</h2>
-    <p class="case-desc">Pemerataan mutu pendidikan untuk daerah Tertinggal, Terdepan, dan Terluar.</p>
-  </div>
-  
-  <table class="pillars-table">
-    <tr>
-      <td class="pillar-cell">
-        <div class="pillar-num">Pilar I</div>
-        <div class="pillar-title">Sarana & Prasarana</div>
-        <div class="pillar-content">
-          <ul>
-            <li>Rehabilitasi gedung sekolah rusak.</li>
-            <li>Penyediaan listrik dan jaringan internet (VSAT).</li>
-            <li>Pengadaan buku teks dan alat peraga edukatif.</li>
-          </ul>
-        </div>
-      </td>
-      <td class="pillar-cell">
-        <div class="pillar-num">Pilar II</div>
-        <div class="pillar-title">Kualitas & Kesejahteraan Guru</div>
-        <div class="pillar-content">
-          <ul>
-            <li>Pemberian insentif khusus guru di daerah remote.</li>
-            <li>Pelatihan pedagogi dan digitaliasi pengajaran.</li>
-            <li>Pemerataan distribusi pengajar berkualitas.</li>
-          </ul>
-        </div>
-      </td>
-      <td class="pillar-cell">
-        <div class="pillar-num">Pilar III</div>
-        <div class="pillar-title">Kurikulum Adaptif</div>
-        <div class="pillar-content">
-          <ul>
-            <li>Materi berbasis potensi & kearifan lokal.</li>
-            <li>Fokus pada literasi dasar dan numerasi.</li>
-            <li>Fleksibilitas metode pembelajaran mandiri.</li>
-          </ul>
-        </div>
-      </td>
-      <td class="pillar-cell">
-        <div class="pillar-num">Pilar IV</div>
-        <div class="pillar-title">Dukungan Komunitas</div>
-        <div class="pillar-content">
-          <ul>
-            <li>Pelibatan tokoh masyarakat dan orang tua.</li>
-            <li>Program kolaborasi Relawan Pengajar.</li>
-            <li>Beasiswa pendidikan hingga jenjang tinggi.</li>
-          </ul>
-        </div>
-      </td>
-    </tr>
-  </table>
-</div>
+        function renderCase() {
+            const card = document.getElementById('game-card');
+            const c = casesData[currentCaseIdx];
 
-<!-- KASUS 5 -->
-<div class="case-card">
-  <div class="case-header">
-    <span class="case-tag tag-5">Kasus 5 — Keamanan Siber & TI</span>
-    <h2 class="case-title">Perlindungan Data Pribadi Perusahaan FinTech</h2>
-    <p class="case-desc">Membangun ketahanan siber kuat untuk mencegah kebocoran data pengguna layanan keuangan.</p>
-  </div>
-  
-  <table class="pillars-table">
-    <tr>
-      <td class="pillar-cell">
-        <div class="pillar-num">Pilar I</div>
-        <div class="pillar-title">Arsitektur Keamanan</div>
-        <div class="pillar-content">
-          <ul>
-            <li>Penerapan kerangka kerja <em>Zero Trust Architecture</em>.</li>
-            <li>Enkripsi data end-to-end saat disimpan & dikirim.</li>
-            <li>Autentikasi Multi-Faktor (MFA) wajib.</li>
-          </ul>
-        </div>
-      </td>
-      <td class="pillar-cell">
-        <div class="pillar-num">Pilar II</div>
-        <div class="pillar-title">Tata Kelola & Kepatuhan</div>
-        <div class="pillar-content">
-          <ul>
-            <li>Kepatuhan pada undang-undang PDP & regulasi perbankan.</li>
-            <li>Audit keamanan siber internal secara berkala.</li>
-            <li>Penerapan ISO 27001 (ISMS).</li>
-          </ul>
-        </div>
-      </td>
-      <td class="pillar-cell">
-        <div class="pillar-num">Pilar III</div>
-        <div class="pillar-title">Deteksi & Respon Insiden</div>
-        <div class="pillar-content">
-          <ul>
-            <li>Pemantauan lalu lintas data 24/7 (Security Operations Center).</li>
-            <li>Simulasi peretasan berkala (Penetration Testing).</li>
-            <li>Prosedur mitigasi dan pemulihan cepat insiden.</li>
-          </ul>
-        </div>
-      </td>
-      <td class="pillar-cell">
-        <div class="pillar-num">Pilar IV</div>
-        <div class="pillar-title">Budaya Keamanan SDM</div>
-        <div class="pillar-content">
-          <ul>
-            <li>Pelatihan kesadaran anti-phishing karyawan.</li>
-            <li>Manajemen hak akses secara ketat (RBAC).</li>
-            <li>Edukasi keamanan siber bagi nasabah/pengguna.</li>
-          </ul>
-        </div>
-      </td>
-    </tr>
-  </table>
-</div>
+            document.getElementById('case-num').innerText = `${c.id} / ${casesData.length}`;
+            document.getElementById('progress-bar').style.width = `${(c.id / casesData.length) * 100}%`;
+            document.getElementById('score-val').innerText = `⭐ ${score}`;
 
-<div class="footer">
-  Dokumen Kerangka 4 Pilar — Dibuat untuk Analisis Strategis Multisektoral
-</div>
+            if (currentCaseIdx >= casesData.length) {
+                renderVictory();
+                return;
+            }
 
+            let html = `
+                <div>
+                    <div class="case-header">
+                        <span class="case-badge">🎮 Kasus Studi SD #${c.id}</span>
+                        <h2 class="case-title">${c.title}</h2>
+                        <div class="case-story">${c.story}</div>
+                    </div>
+
+                    <div class="pillars-grid">
+                        <div class="pillar-card p1">
+                            <div class="pillar-title">🧩 1. Dekomposisi</div>
+                            <div class="pillar-desc">${c.p1_question}</div>
+                            <select id="ans-p1">
+                                <option value="">-- Pilih Jawaban --</option>
+                                ${c.p1_options.map((o, i) => `<option value="${o.correct}">${o.text}</option>`).join('')}
+                            </select>
+                        </div>
+
+                        <div class="pillar-card p2">
+                            <div class="pillar-title">🔍 2. Pengenalan Pola</div>
+                            <div class="pillar-desc">${c.p2_question}</div>
+                            <select id="ans-p2">
+                                <option value="">-- Pilih Jawaban --</option>
+                                ${c.p2_options.map((o, i) => `<option value="${o.correct}">${o.text}</option>`).join('')}
+                            </select>
+                        </div>
+
+                        <div class="pillar-card p3">
+                            <div class="pillar-title">🎯 3. Abstraksi</div>
+                            <div class="pillar-desc">${c.p3_question}</div>
+                            <select id="ans-p3">
+                                <option value="">-- Pilih Jawaban --</option>
+                                ${c.p3_options.map((o, i) => `<option value="${o.correct}">${o.text}</option>`).join('')}
+                            </select>
+                        </div>
+
+                        <div class="pillar-card p4">
+                            <div class="pillar-title">🪜 4. Algoritma</div>
+                            <div class="pillar-desc">${c.p4_question}</div>
+                            <div style="background:white; padding:8px; border-radius:8px; border:1px solid #cbd5e1;">
+                                ${c.p4_steps.map(s => `<div class="seq-item">${s.text}</div>`).join('')}
+                            </div>
+                            <div style="margin-top:6px; font-size:0.75rem; color:var(--text-muted);">
+                                Apakah urutan langkah di atas sudah logis & benar?
+                            </div>
+                            <select id="ans-p4" style="margin-top:4px;">
+                                <option value="">-- Konfirmasi Urutan --</option>
+                                <option value="true">Ya, urutan langkah sudah logis & benar!</option>
+                                <option value="false">Tidak, urutannya masih acak-acakan.</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <div id="feedback" class="feedback"></div>
+                    <button class="btn" onclick="checkAnswers()">Periksa Jawaban 🚀</button>
+                </div>
+            `;
+
+            card.innerHTML = html;
+        }
+
+        function checkAnswers() {
+            const p1 = document.getElementById('ans-p1').value;
+            const p2 = document.getElementById('ans-p2').value;
+            const p3 = document.getElementById('ans-p3').value;
+            const p4 = document.getElementById('ans-p4').value;
+            const fb = document.getElementById('feedback');
+
+            if (!p1 || !p2 || !p3 || !p4) {
+                fb.className = 'feedback wrong';
+                fb.innerText = '⚠️ Jawab keempat pilar terlebih dahulu ya!';
+                return;
+            }
+
+            if (p1 === "true" && p2 === "true" && p3 === "true" && p4 === "true") {
+                score += 20;
+                fb.className = 'feedback correct';
+                fb.innerText = '🎉 HEBAT! Semua pilar kamu jawab dengan tepat!';
+                
+                setTimeout(() => {
+                    currentCaseIdx++;
+                    if (currentCaseIdx < casesData.length) {
+                        renderCase();
+                    } else {
+                        renderVictory();
+                    }
+                }, 1200);
+            } else {
+                fb.className = 'feedback wrong';
+                fb.innerText = '❌ Masih ada pilar yang kurang tepat. Coba periksa lagi!';
+            }
+        }
+
+        function renderVictory() {
+            const card = document.getElementById('game-card');
+            document.getElementById('case-num').innerText = `5 / 5`;
+            document.getElementById('progress-bar').style.width = `100%`;
+            document.getElementById('score-val').innerText = `⭐ ${score}`;
+
+            card.innerHTML = `
+                <div class="victory-box">
+                    <h2 class="victory-title">🏆 SELAMAT! KAMU DETEKTIF BK SEJATI!</h2>
+                    <p>Kamu telah menyelesaikan 5 Kasus Sehari-hari dengan menguasai 4 Pilar Berpikir Komputasional!</p>
+                    
+                    <div class="summary-list">
+                        <div class="summary-item">🧩 <b>Dekomposisi:</b> Mampu memecah masalah besar jadi bagian-bagian kecil.</div>
+                        <div class="summary-item">🔍 <b>Pengenalan Pola:</b> Mampu melihat kesamaan & aturan yang berulang.</div>
+                        <div class="summary-item">🎯 <b>Abstraksi:</b> Mampu fokus pada hal penting & mengabaikan yang tak berguna.</div>
+                        <div class="summary-item">🪜 <b>Algoritma:</b> Mampu menyusun langkah penyelesaian secara runtut dan tepat.</div>
+                    </div>
+
+                    <button class="btn" onclick="restartGame()">Main Lagi dari Awal 🔄</button>
+                </div>
+            `;
+        }
+
+        function restartGame() {
+            currentCaseIdx = 0;
+            score = 0;
+            renderCase();
+        }
+
+        // Render Kasus Pertama saat awal muat
+        renderCase();
+    </script>
 </body>
 </html>
