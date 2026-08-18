@@ -1,0 +1,722 @@
+!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Detective: Misi Berpikir Komputasional</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent-blue: #38bdf8;
+            --accent-green: #4ade80;
+            --accent-purple: #c084fc;
+            --accent-amber: #fbbf24;
+            --accent-red: #f87171;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        h1 {
+            color: var(--accent-blue);
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-sub);
+            font-size: 1rem;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 900px;
+            border-radius: 12px;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            border: 1px solid #334155;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-val {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--accent-amber);
+        }
+
+        .stat-lbl {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .progress-container {
+            width: 40%;
+            background: #0f172a;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #334155;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 25%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+            transition: width 0.4s ease;
+        }
+
+        /* Main Game Board */
+        .game-container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 900px;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+            border: 1px solid #334155;
+            min-height: 480px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .stage-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            width: fit-content;
+        }
+
+        .badge-1 { background: rgba(56, 189, 248, 0.2); color: var(--accent-blue); border: 1px solid var(--accent-blue); }
+        .badge-2 { background: rgba(192, 132, 252, 0.2); color: var(--accent-purple); border: 1px solid var(--accent-purple); }
+        .badge-3 { background: rgba(251, 191, 36, 0.2); color: var(--accent-amber); border: 1px solid var(--accent-amber); }
+        .badge-4 { background: rgba(74, 222, 128, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
+
+        .stage-title {
+            font-size: 1.6rem;
+            margin-bottom: 10px;
+        }
+
+        .stage-desc {
+            color: var(--text-sub);
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        /* Stage Content Layouts */
+        .stage-content {
+            flex-grow: 1;
+            margin-bottom: 25px;
+        }
+
+        /* Stage 1: Dekomposisi */
+        .grid-decomp {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .decomp-card {
+            background: #0f172a;
+            border: 2px dashed #334155;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .decomp-card:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+
+        .decomp-card.selected {
+            border-style: solid;
+            border-color: var(--accent-blue);
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        .decomp-card.correct {
+            border-style: solid;
+            border-color: var(--accent-green);
+            background: rgba(74, 222, 128, 0.1);
+        }
+
+        /* Stage 2: Pengenalan Pola */
+        .pattern-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .log-box {
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            border: 1px solid #334155;
+        }
+
+        .pattern-options {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .pattern-opt-btn {
+            flex: 1;
+            padding: 12px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: var(--text-main);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .pattern-opt-btn:hover {
+            border-color: var(--accent-purple);
+            background: rgba(192, 132, 252, 0.1);
+        }
+
+        /* Stage 3: Abstraksi */
+        .data-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .data-item {
+            background: #0f172a;
+            padding: 12px 18px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #334155;
+        }
+
+        .filter-toggle {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--text-sub);
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .filter-toggle:checked {
+            background-color: var(--accent-amber);
+            border-color: var(--accent-amber);
+        }
+
+        .filter-toggle:checked::after {
+            content: '✓';
+            position: absolute;
+            color: #0f172a;
+            font-weight: bold;
+            font-size: 14px;
+            top: -2px;
+            left: 3px;
+        }
+
+        /* Stage 4: Algoritma */
+        .algo-container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .algo-pool, .algo-sequence {
+            flex: 1;
+            background: #0f172a;
+            border-radius: 10px;
+            padding: 15px;
+            min-height: 200px;
+            border: 1px solid #334155;
+        }
+
+        .algo-item {
+            background: #1e293b;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1px solid #475569;
+            font-size: 0.9rem;
+            user-select: none;
+        }
+
+        .algo-item:hover {
+            border-color: var(--accent-green);
+        }
+
+        /* Controls / Footer */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #334155;
+            padding-top: 20px;
+        }
+
+        .feedback {
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .feedback.correct { color: var(--accent-green); }
+        .feedback.wrong { color: var(--accent-red); }
+
+        .btn {
+            background: var(--accent-blue);
+            color: #0f172a;
+            border: none;
+            padding: 12px 24px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn:disabled {
+            background: #475569;
+            cursor: not-allowed;
+        }
+
+        /* Victory Screen */
+        .victory-screen {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .victory-title {
+            font-size: 2.2rem;
+            color: var(--accent-green);
+            margin-bottom: 15px;
+        }
+
+        .summary-card {
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+            border: 1px solid #334155;
+        }
+
+        .summary-card ul {
+            list-style-position: inside;
+            margin-top: 10px;
+            color: var(--text-sub);
+            line-height: 1.8;
+        }
+
+        @media (max-width: 600px) {
+            .grid-decomp { grid-template-columns: 1fr; }
+            .pattern-grid { grid-template-columns: 1fr; }
+            .algo-container { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🔍 Cyber Detective</h1>
+        <p class="subtitle">Simulasi Pelatihan Berpikir Komputasional (KKA)</p>
+    </header>
+
+    <div class="status-bar">
+        <div class="stat-item">
+            <span class="stat-lbl">Tahap</span>
+            <span class="stat-val" id="stage-num">1 / 4</span>
+        </div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="stat-item">
+            <span class="stat-lbl">Skor BK</span>
+            <span class="stat-val" id="score-val">0</span>
+        </div>
+    </div>
+
+    <div class="game-container" id="game-card">
+        <!-- Dynamic Stage Content inserted here by JavaScript -->
+    </div>
+
+    <script>
+        const gameState = {
+            currentStage: 1,
+            score: 0,
+            decompSelected: [],
+            patternSelected: null,
+            abstractionSelected: [],
+            algoSequence: [],
+            algoPool: []
+        };
+
+        const stageData = [
+            {
+                id: 1,
+                name: "Dekomposisi",
+                badgeClass: "badge-1",
+                title: "Tahap 1: Dekomposisi Sistem Bermasalah",
+                desc: "Sistem pusat sekolah mengalami <b>Crash Total</b>. Jangan panik! Dekomposisi berarti memecah masalah besar menjadi sub-masalah yang lebih kecil. Pilih <b>3 sub-komponen utama</b> yang paling relevan untuk dianalisis terlebih dahulu:",
+                items: [
+                    { id: 'a', text: "1. Jalur Daya & Listrik (Power Supply)", correct: true },
+                    { id: 'b', text: "2. Penyimpanan Data & Memory (RAM/SSD)", correct: true },
+                    { id: 'c', text: "3. Kebersihan Warna Casing Komputer", correct: false },
+                    { id: 'd', text: "4. Sistem Operasi & Driver Utama", correct: true },
+                    { id: 'e', text: "5. Merk Stiker pada Keyboard", correct: false }
+                ]
+            },
+            {
+                id: 2,
+                name: "Pengenalan Pola",
+                badgeClass: "badge-2",
+                title: "Tahap 2: Analysis Log & Pengenalan Pola",
+                desc: "Pengenalan pola berarti mencari kesamaan atau tren berulang dari data. Analisis log sistem di bawah ini dan tentukan kode pola eror mana yang paling sering muncul:",
+                logs: [
+                    "LOG 08:01 -> ERR_MEM_0x88 (RAM Failure)",
+                    "LOG 08:03 -> SYS_OK_IDLE",
+                    "LOG 08:05 -> ERR_MEM_0x88 (RAM Failure)",
+                    "LOG 08:10 -> DISK_READ_SUCCESS",
+                    "LOG 08:12 -> ERR_MEM_0x88 (RAM Failure)",
+                    "LOG 08:15 -> ERR_NET_TIMEOUT"
+                ],
+                options: [
+                    { id: 'opt1', text: "ERR_NET_TIMEOUT", correct: false },
+                    { id: 'opt2', text: "ERR_MEM_0x88 (RAM Leak)", correct: true },
+                    { id: 'opt3', text: "DISK_READ_SUCCESS", correct: false }
+                ]
+            },
+            {
+                id: 3,
+                name: "Abstraksi",
+                badgeClass: "badge-3",
+                title: "Tahap 3: Abstraksi Data Diagnostic",
+                desc: "Abstraksi berarti berfokus HANYA pada informasi penting dan mengabaikan detail yang tidak relevan. Centang <b>hanya 2 data mendesak</b> yang dibutuhkan untuk memperbaiki masalah RAM:",
+                dataItems: [
+                    { id: 'abs1', label: "Kapasitas & Frekuensi RAM yang Digunakan", correct: true },
+                    { id: 'abs2', label: "Tanggal Pembuatan Pabrik Casing PC", correct: false },
+                    { id: 'abs3', label: "Laporan Crash Dump Memori Terakhir", correct: true },
+                    { id: 'abs4', label: "Daftar Lagu Favorit Pengguna Komputer", correct: false }
+                ]
+            },
+            {
+                id: 4,
+                name: "Algoritma",
+                badgeClass: "badge-4",
+                title: "Tahap 4: Perancangan Algoritma Perbaikan",
+                desc: "Algoritma adalah menyusun langkah-langkah logis berurutan secara sistematis. Klik item di kiri untuk memasukkannya ke dalam urutan perbaikan yang benar (1 - 4):",
+                steps: [
+                    { id: 'st1', text: "Matikan daya listrik total (Shutdown/Unplug)" },
+                    { id: 'st2', text: "Buka casing dan lepas modul RAM bermasalah" },
+                    { id: 'st3', text: "Pasang RAM pengganti baru yang kompatibel" },
+                    { id: 'st4', text: "Nyalakan sistem dan jalankan pengujian diagnostic" }
+                ]
+            }
+        ];
+
+        function renderStage() {
+            const card = document.getElementById('game-card');
+            const stage = stageData[gameState.currentStage - 1];
+
+            // Update Header Status
+            document.getElementById('stage-num').innerText = `${gameState.currentStage} / 4`;
+            document.getElementById('progress-bar').style.width = `${(gameState.currentStage / 4) * 100}%`;
+            document.getElementById('score-val').innerText = gameState.score;
+
+            if (gameState.currentStage > 4) {
+                renderVictory();
+                return;
+            }
+
+            let contentHTML = `
+                <div>
+                    <span class="stage-badge ${stage.badgeClass}">Pilar ${stage.id}: ${stage.name}</span>
+                    <h2 class="stage-title">${stage.title}</h2>
+                    <p class="stage-desc">${stage.desc}</p>
+                    <div class="stage-content">
+            `;
+
+            if (stage.id === 1) {
+                contentHTML += `<div class="grid-decomp">`;
+                stage.items.forEach(item => {
+                    const isSelected = gameState.decompSelected.includes(item.id);
+                    contentHTML += `
+                        <div class="decomp-card ${isSelected ? 'selected' : ''}" onclick="toggleDecomp('${item.id}')">
+                            ${item.text}
+                        </div>
+                    `;
+                });
+                contentHTML += `</div>`;
+            } else if (stage.id === 2) {
+                contentHTML += `<div class="pattern-grid">`;
+                stage.logs.forEach(log => {
+                    contentHTML += `<div class="log-box">${log}</div>`;
+                });
+                contentHTML += `</div><div class="pattern-options">`;
+                stage.options.forEach(opt => {
+                    const isSelected = gameState.patternSelected === opt.id;
+                    contentHTML += `
+                        <button class="pattern-opt-btn" style="${isSelected ? 'border-color: var(--accent-purple); background: rgba(192, 132, 252, 0.2);' : ''}" onclick="selectPattern('${opt.id}')">
+                            ${opt.text}
+                        </button>
+                    `;
+                });
+                contentHTML += `</div>`;
+            } else if (stage.id === 3) {
+                contentHTML += `<div class="data-list">`;
+                stage.dataItems.forEach(item => {
+                    const isChecked = gameState.abstractionSelected.includes(item.id);
+                    contentHTML += `
+                        <label class="data-item">
+                            <span>${item.label}</span>
+                            <input type="checkbox" class="filter-toggle" ${isChecked ? 'checked' : ''} onchange="toggleAbstraction('${item.id}')">
+                        </label>
+                    `;
+                });
+                contentHTML += `</div>`;
+            } else if (stage.id === 4) {
+                if (gameState.algoPool.length === 0 && gameState.algoSequence.length === 0) {
+                    gameState.algoPool = [...stage.steps].sort(() => Math.random() - 0.5);
+                }
+                
+                contentHTML += `
+                    <div class="algo-container">
+                        <div class="algo-pool">
+                            <h4 style="margin-bottom:10px; color:var(--text-sub);">Pilihan Langkah:</h4>
+                            ${gameState.algoPool.map(item => `
+                                <div class="algo-item" onclick="moveToSeq('${item.id}')">${item.text}</div>
+                            `).join('')}
+                        </div>
+                        <div class="algo-sequence">
+                            <h4 style="margin-bottom:10px; color:var(--accent-green);">Urutan Eksekusi:</h4>
+                            ${gameState.algoSequence.map((item, idx) => `
+                                <div class="algo-item" onclick="moveToPool('${item.id}')">${idx + 1}. ${item.text}</div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            contentHTML += `
+                    </div>
+                </div>
+                <div class="controls">
+                    <div id="feedback-msg" class="feedback"></div>
+                    <button class="btn" onclick="validateStage()">Verifikasi Solusi ➔</button>
+                </div>
+            `;
+
+            card.innerHTML = contentHTML;
+        }
+
+        // Logic Stage 1
+        function toggleDecomp(id) {
+            const idx = gameState.decompSelected.indexOf(id);
+            if (idx > -1) {
+                gameState.decompSelected.splice(idx, 1);
+            } else {
+                if (gameState.decompSelected.length < 3) {
+                    gameState.decompSelected.push(id);
+                }
+            }
+            renderStage();
+        }
+
+        // Logic Stage 2
+        function selectPattern(id) {
+            gameState.patternSelected = id;
+            renderStage();
+        }
+
+        // Logic Stage 3
+        function toggleAbstraction(id) {
+            const idx = gameState.abstractionSelected.indexOf(id);
+            if (idx > -1) {
+                gameState.abstractionSelected.splice(idx, 1);
+            } else {
+                gameState.abstractionSelected.push(id);
+            }
+            renderStage();
+        }
+
+        // Logic Stage 4
+        function moveToSeq(id) {
+            const itemIdx = gameState.algoPool.findIndex(i => i.id === id);
+            if (itemIdx > -1) {
+                const item = gameState.algoPool.splice(itemIdx, 1)[0];
+                gameState.algoSequence.push(item);
+                renderStage();
+            }
+        }
+
+        function moveToPool(id) {
+            const itemIdx = gameState.algoSequence.findIndex(i => i.id === id);
+            if (itemIdx > -1) {
+                const item = gameState.algoSequence.splice(itemIdx, 1)[0];
+                gameState.algoPool.push(item);
+                renderStage();
+            }
+        }
+
+        // Validation Handler
+        function validateStage() {
+            const feedback = document.getElementById('feedback-msg');
+            
+            if (gameState.currentStage === 1) {
+                const correct = ['a', 'b', 'd'];
+                const isCorrect = gameState.decompSelected.length === 3 && 
+                    gameState.decompSelected.every(id => correct.includes(id));
+
+                if (isCorrect) {
+                    gameState.score += 25;
+                    gameState.currentStage++;
+                    renderStage();
+                } else {
+                    feedback.className = 'feedback wrong';
+                    feedback.innerText = '❌ Pilih 3 sub-masalah utama yang relevan dengan kerusakan sistem.';
+                }
+            } else if (gameState.currentStage === 2) {
+                if (gameState.patternSelected === 'opt2') {
+                    gameState.score += 25;
+                    gameState.currentStage++;
+                    renderStage();
+                } else {
+                    feedback.className = 'feedback wrong';
+                    feedback.innerText = '❌ Perhatikan kode log yang paling banyak berulang di daftar.';
+                }
+            } else if (gameState.currentStage === 3) {
+                const correct = ['abs1', 'abs3'];
+                const isCorrect = gameState.abstractionSelected.length === 2 && 
+                    gameState.abstractionSelected.every(id => correct.includes(id));
+
+                if (isCorrect) {
+                    gameState.score += 25;
+                    gameState.currentStage++;
+                    renderStage();
+                } else {
+                    feedback.className = 'feedback wrong';
+                    feedback.innerText = '❌ Centang 2 data mendasar yang berpengaruh langsung pada perbaikan RAM.';
+                }
+            } else if (gameState.currentStage === 4) {
+                const correctOrder = ['st1', 'st2', 'st3', 'st4'];
+                const currentOrder = gameState.algoSequence.map(i => i.id);
+                const isCorrect = JSON.stringify(correctOrder) === JSON.stringify(currentOrder);
+
+                if (isCorrect) {
+                    gameState.score += 25;
+                    gameState.currentStage++;
+                    renderStage();
+                } else {
+                    feedback.className = 'feedback wrong';
+                    feedback.innerText = '❌ Urutan langkah belum tepat. Pastikan urutan kerja aman dan logis.';
+                }
+            }
+        }
+
+        function renderVictory() {
+            const card = document.getElementById('game-card');
+            document.getElementById('stage-num').innerText = `4 / 4`;
+            document.getElementById('progress-bar').style.width = `100%`;
+            document.getElementById('score-val').innerText = gameState.score;
+
+            card.innerHTML = `
+                <div class="victory-screen">
+                    <h2 class="victory-title">🎉 Misi Berhasil Ditingkatkan!</h2>
+                    <p>Sistem Komputer Berhasil Dipulihkan Menggunakan Berpikir Komputasional.</p>
+                    
+                    <div class="summary-card">
+                        <h3>Refleksi 4 Pilar Berpikir Komputasional (KKA):</h3>
+                        <ul>
+                            <li><b>Dekomposisi:</b> Memecah crash sistem menjadi analisis daya, memori, dan OS.</li>
+                            <li><b>Pengenalan Pola:</b> Menemukan kecenderungan eror berulang pada RAM (ERR_MEM_0x88).</li>
+                            <li><b>Abstraksi:</b> Mengabaikan detail aksesoris & memfokuskan data pada spesifikasi RAM.</li>
+                            <li><b>Algoritma:</b> Menyusun prosedur perbaikan teknis secara terstruktur dan aman.</li>
+                        </ul>
+                    </div>
+                    
+                    <button class="btn" onclick="resetGame()">Main Lagi 🔄</button>
+                </div>
+            `;
+        }
+
+        function resetGame() {
+            gameState.currentStage = 1;
+            gameState.score = 0;
+            gameState.decompSelected = [];
+            gameState.patternSelected = null;
+            gameState.abstractionSelected = [];
+            gameState.algoSequence = [];
+            gameState.algoPool = [];
+            renderStage();
+        }
+
+        // Initialize Game
+        renderStage();
+    </script>
+</body>
+</html>
+"""
+
+with open("game_berpikir_komputasional.html", "w", encoding="utf-8") as f:
+    f.write(html_code)
+
+print("FILE_GENERATED: game_berpikir_komputasional.html")
