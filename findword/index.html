@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Game Cari Kata - Koding & Kecerdasan Artifisial (KKA)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter & Outfit -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti for victory celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+        
+        .font-heading {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* Responsive cell grid styles */
+        .word-grid-container {
+            display: grid;
+            grid-template-columns: repeat(15, minmax(0, 1fr));
+            gap: 2px;
+            aspect-ratio: 1 / 1;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .grid-cell {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: clamp(0.7rem, 2.5vw, 1.1rem);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.1s ease, background-color 0.15s ease;
+        }
+
+        .grid-cell:hover {
+            transform: scale(1.05);
+        }
+
+        .grid-cell.selected {
+            background-color: #3b82f6 !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
+        }
+
+        .grid-cell.found {
+            animation: pulse-found 0.4s ease-out;
+        }
+
+        @keyframes pulse-found {
+            0% { transform: scale(0.8); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        .hint-pulse {
+            animation: hint-glow 1.2s infinite alternate;
+        }
+
+        @keyframes hint-glow {
+            from { box-shadow: 0 0 4px #eab308; background-color: #fef08a; color: #854d0e; }
+            to { box-shadow: 0 0 16px #eab308; background-color: #eab308; color: #ffffff; }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.5);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.8);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between overflow-x-hidden selection:bg-indigo-500 selection:text-white">
+
+    <!-- Header Navbar -->
+    <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-30 px-4 py-3">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-code text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-heading font-extrabold text-lg md:text-xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400">
+                        CARI KATA KKA 15x15
+                    </h1>
+                    <p class="text-xs text-slate-400 font-medium hidden sm:block">Koding & Kecerdasan Artifisial</p>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="flex items-center gap-2 md:gap-4">
+                <div class="bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-1.5 flex items-center gap-2">
+                    <i class="fa-regular fa-clock text-indigo-400"></i>
+                    <span id="timer-display" class="font-mono text-sm md:text-base font-bold text-slate-200">00:00</span>
+                </div>
+                <div class="bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-1.5 flex items-center gap-2">
+                    <i class="fa-solid fa-trophy text-amber-400"></i>
+                    <span id="score-display" class="text-sm md:text-base font-bold text-amber-300">0/10</span>
+                </div>
+                <button id="sound-toggle-btn" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 flex items-center justify-center transition">
+                    <i class="fa-solid fa-volume-high text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="max-w-6xl mx-auto w-full px-3 md:px-6 py-4 md:py-6 flex-1 flex flex-col lg:flex-row gap-6 items-start justify-center">
+        
+        <!-- Left Side: Word Search Grid -->
+        <div class="w-full lg:w-auto flex-1 flex flex-col items-center">
+            
+            <!-- Controls & Instructions Header -->
+            <div class="w-full max-w-[600px] flex justify-between items-center mb-3">
+                <div class="text-xs md:text-sm text-slate-400 flex items-center gap-1.5">
+                    <i class="fa-solid fa-hand-pointer text-indigo-400 animate-bounce"></i>
+                    <span>Tarik / klik huruf berurutan untuk menebak</span>
+                </div>
+                <div class="flex gap-2">
+                    <button id="hint-btn" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 transition active:scale-95">
+                        <i class="fa-solid fa-lightbulb"></i>
+                        <span>Petunjuk (<span id="hint-count">3</span>)</span>
+                    </button>
+                    <button id="reset-btn" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 flex items-center gap-1.5 transition active:scale-95">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        <span>Acak Ulang</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- The Grid Container -->
+            <div class="w-full max-w-[600px] bg-slate-900 border-2 border-indigo-500/30 rounded-2xl p-2 md:p-3 shadow-2xl shadow-indigo-950/50 relative overflow-hidden">
+                <div id="word-grid" class="word-grid-container select-none">
+                    <!-- Dynamic Grid 15x15 generated by JS -->
+                </div>
+            </div>
+
+            <!-- Current Selection Bar -->
+            <div class="w-full max-w-[600px] mt-3 bg-slate-900/90 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between min-h-[48px]">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Kata Dipilih:</span>
+                <span id="selected-word-preview" class="font-heading font-extrabold text-lg md:text-xl tracking-widest text-indigo-300">--</span>
+                <span id="selection-status-badge" class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">Siap</span>
+            </div>
+        </div>
+
+        <!-- Right Side: Target Word List & Glossary -->
+        <div class="w-full lg:w-80 flex flex-col gap-4">
+            
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
+                    <h2 class="font-heading font-bold text-slate-200 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-indigo-400"></i>
+                        Daftar Kata (10)
+                    </h2>
+                    <span id="words-remaining-badge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                        10 Tersisa
+                    </span>
+                </div>
+
+                <p class="text-xs text-slate-400 mb-3">Temukan kata mendatar, menurun, atau diagonal (maju/mundur):</p>
+
+                <!-- Word List Grid -->
+                <div id="words-container" class="grid grid-cols-2 lg:grid-cols-1 gap-2 max-h-[380px] overflow-y-auto pr-1">
+                    <!-- Dynamically populated word chips -->
+                </div>
+            </div>
+
+            <!-- Educational Info Card -->
+            <div class="bg-gradient-to-br from-indigo-950/40 to-purple-950/30 border border-indigo-800/40 rounded-2xl p-4">
+                <div class="flex items-center gap-2 mb-2 text-indigo-300 font-semibold text-sm">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <span>Info Berpikir Komputasional</span>
+                </div>
+                <p class="text-xs text-slate-300 leading-relaxed" id="educational-tip">
+                    Klik atau tekan tombol info <i class="fa-solid fa-circle-info text-indigo-400"></i> di samping setiap kata untuk melihat penjelasannya!
+                </p>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 border-t border-slate-900 py-3 text-center text-xs text-slate-500">
+        <p>Game Edukasi KKA • Modul Koding & Kecerdasan Artifisial • Matriks 15x15</p>
+    </footer>
+
+    <!-- Victory Modal -->
+    <div id="victory-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-indigo-500/40 rounded-3xl p-6 md:p-8 max-w-md w-full text-center shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div class="w-20 h-20 bg-gradient-to-tr from-amber-400 to-yellow-200 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-900 text-3xl shadow-lg shadow-amber-500/30">
+                <i class="fa-solid fa-crown"></i>
+            </div>
+            
+            <h2 class="font-heading font-extrabold text-2xl md:text-3xl text-slate-100 mb-2">Luar Biasa! 🎉</h2>
+            <p class="text-slate-300 text-sm mb-6">Kamu berhasil menemukan semua kata KKA dalam matriks 15x15!</p>
+
+            <div class="grid grid-cols-2 gap-3 mb-6 bg-slate-950/60 p-4 rounded-2xl border border-slate-800">
+                <div class="text-center">
+                    <span class="block text-xs text-slate-400">Waktu Tempuh</span>
+                    <span id="final-time" class="font-mono font-bold text-lg text-indigo-400">00:00</span>
+                </div>
+                <div class="text-center">
+                    <span class="block text-xs text-slate-400">Sisa Petunjuk</span>
+                    <span id="final-hints" class="font-bold text-lg text-amber-400">3x</span>
+                </div>
+            </div>
+
+            <button id="play-again-btn" class="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 font-bold text-white shadow-lg shadow-indigo-600/30 transition transform active:scale-95 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-play"></i>
+                <span>Main Lagi (Acak Baru)</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Term Explanation Modal -->
+    <div id="info-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl relative">
+            <button id="close-info-btn" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/40 text-indigo-400 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-book-open"></i>
+                </div>
+                <div>
+                    <h3 id="modal-term-title" class="font-heading font-bold text-xl text-slate-100">Term</h3>
+                    <span class="text-xs text-indigo-400 font-semibold uppercase tracking-wider">Materi KKA</span>
+                </div>
+            </div>
+            <p id="modal-term-desc" class="text-sm text-slate-300 leading-relaxed bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+                Penjelasan...
+            </p>
+            <div class="mt-5 text-right">
+                <button id="modal-ok-btn" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition">
+                    Paham!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Word Vocabulary list with descriptions
+        const WORD_LIST = [
+            { word: "DEKOMPOSISI", desc: "Memecah masalah kompleks menjadi bagian-bagian yang lebih kecil dan sederhana agar mudah diselesaikan." },
+            { word: "ABSTRAKSI", desc: "Menyaring dan berfokus pada informasi penting saja, serta mengabaikan detail yang tidak relevan." },
+            { word: "POLA", desc: "Mengidentifikasi kesamaan atau keteraturan dalam masalah untuk menemukan solusi yang efisien." },
+            { word: "ALGORITMA", desc: "Langkah-langkah logis, terstruktur, dan urut untuk memecahkan suatu masalah atau menyelesaikan tugas." },
+            { word: "KODING", desc: "Proses menulis instruksi dalam bahasa pemrograman agar komputer dapat menjalankan tugas tertentu." },
+            { word: "ARTIFISIAL", desc: "Kecerdasan Buatan (Artificial Intelligence) yang memungkinkan komputer meniru kemampuan berpikir manusia." },
+            { word: "DATA", desc: "Kumpulan fakta, angka, teks, atau simbol yang diolah oleh komputer menjadi informasi berguna." },
+            { word: "INPUT", desc: "Data atau perintah yang dimasukkan oleh pengguna ke dalam perangkat komputer untuk diproses." },
+            { word: "OUTPUT", desc: "Hasil akhir pemrosesan data oleh komputer yang ditampilkan kepada pengguna (layar, cetakan, suara)." },
+            { word: "LOGIKA", desc: "Penalaran yang sistematis dan benar dalam membuat keputusan atau merancang alur program." }
+        ];
+
+        const GRID_SIZE = 15;
+        let grid = [];
+        let wordPlacements = []; // Stores target coordinates for each word
+        let foundWords = new Set();
+        let selectedCells = []; // Array of {r, c}
+        let isSelecting = false;
+        let selectionStartCell = null;
+        
+        let timerSeconds = 0;
+        let timerInterval = null;
+        let hintCount = 3;
+        let soundEnabled = true;
+
+        // Palette of distinct bright colors for highlighting found words
+        const HIGHLIGHT_COLORS = [
+            { bg: '#059669', text: '#ffffff' }, // Emerald
+            { bg: '#7c3aed', text: '#ffffff' }, // Violet
+            { bg: '#d97706', text: '#ffffff' }, // Amber
+            { bg: '#2563eb', text: '#ffffff' }, // Blue
+            { bg: '#db2777', text: '#ffffff' }, // Pink
+            { bg: '#0891b2', text: '#ffffff' }, // Cyan
+            { bg: '#c026d3', text: '#ffffff' }, // Fuchsia
+            { bg: '#16a34a', text: '#ffffff' }, // Green
+            { bg: '#ea580c', text: '#ffffff' }, // Orange
+            { bg: '#4f46e5', text: '#ffffff' }  // Indigo
+        ];
+
+        // Web Audio Synthesizer for sound effects
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'select') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, now);
+                    gain.gain.setValueAtTime(0.05, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'found') {
+                    // Happy chord arpeggio
+                    [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.type = 'triangle';
+                        o.frequency.setValueAtTime(freq, now + idx * 0.06);
+                        g.gain.setValueAtTime(0.12, now + idx * 0.06);
+                        g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.25);
+                        o.connect(g);
+                        g.connect(audioCtx.destination);
+                        o.start(now + idx * 0.06);
+                        o.stop(now + idx * 0.06 + 0.25);
+                    });
+                } else if (type === 'victory') {
+                    // Fanfare melody
+                    const notes = [523.25, 659.25, 783.99, 1046.50, 880, 1046.50];
+                    notes.forEach((freq, idx) => {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.type = 'sine';
+                        o.frequency.setValueAtTime(freq, now + idx * 0.12);
+                        g.gain.setValueAtTime(0.15, now + idx * 0.12);
+                        g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.3);
+                        o.connect(g);
+                        g.connect(audioCtx.destination);
+                        o.start(now + idx * 0.12);
+                        o.stop(now + idx * 0.12 + 0.3);
+                    });
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.exponentialRampToValueAtTime(120, now + 0.15);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                }
+            } catch (e) {
+                console.log("Audio not allowed yet");
+            }
+        }
+
+        // Directions: [dRow, dCol]
+        const DIRECTIONS = [
+            [0, 1],   // Right
+            [0, -1],  // Left
+            [1, 0],   // Down
+            [-1, 0],  // Up
+            [1, 1],   // Down-Right
+            [1, -1],  // Down-Left
+            [-1, 1],  // Up-Right
+            [-1, -1]  // Up-Left
+        ];
+
+        function generateGrid() {
+            let placedAll = false;
+            let attempts = 0;
+
+            while (!placedAll && attempts < 100) {
+                attempts++;
+                grid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(''));
+                wordPlacements = [];
+                placedAll = true;
+
+                // Sort words from longest to shortest for easier fitting
+                const sortedWords = [...WORD_LIST].sort((a, b) => b.word.length - a.word.length);
+
+                for (let wordObj of sortedWords) {
+                    const word = wordObj.word;
+                    let placed = false;
+                    let wordAttempts = 0;
+
+                    while (!placed && wordAttempts < 200) {
+                        wordAttempts++;
+                        const dir = DIRECTIONS[Math.floor(Math.random() * DIRECTIONS.length)];
+                        const startR = Math.floor(Math.random() * GRID_SIZE);
+                        const startC = Math.floor(Math.random() * GRID_SIZE);
+
+                        // Check if word fits in direction
+                        const endR = startR + dir[0] * (word.length - 1);
+                        const endC = startC + dir[1] * (word.length - 1);
+
+                        if (endR >= 0 && endR < GRID_SIZE && endC >= 0 && endC < GRID_SIZE) {
+                            let canPlace = true;
+                            let coords = [];
+
+                            for (let i = 0; i < word.length; i++) {
+                                const r = startR + dir[0] * i;
+                                const c = startC + dir[1] * i;
+                                const currentChar = grid[r][c];
+
+                                if (currentChar !== '' && currentChar !== word[i]) {
+                                    canPlace = false;
+                                    break;
+                                }
+                                coords.push({ r, c });
+                            }
+
+                            if (canPlace) {
+                                for (let i = 0; i < word.length; i++) {
+                                    const { r, c } = coords[i];
+                                    grid[r][c] = word[i];
+                                }
+                                wordPlacements.push({
+                                    word: word,
+                                    coords: coords,
+                                    color: HIGHLIGHT_COLORS[wordPlacements.length % HIGHLIGHT_COLORS.length]
+                                });
+                                placed = true;
+                            }
+                        }
+                    }
+
+                    if (!placed) {
+                        placedAll = false;
+                        break;
+                    }
+                }
+            }
+
+            // Fill remaining empty cells with random letters
+            const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    if (grid[r][c] === '') {
+                        grid[r][c] = alphabet[Math.floor(Math.random() * alphabet.length)];
+                    }
+                }
+            }
+        }
+
+        function renderBoard() {
+            const gridEl = document.getElementById('word-grid');
+            gridEl.innerHTML = '';
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell bg-slate-800/80 text-slate-200 hover:bg-slate-700/80 border border-slate-800/80 select-none';
+                    cell.dataset.r = r;
+                    cell.dataset.c = c;
+                    cell.innerText = grid[r][c];
+                    gridEl.appendChild(cell);
+                }
+            }
+
+            renderWordList();
+        }
+
+        function renderWordList() {
+            const container = document.getElementById('words-container');
+            container.innerHTML = '';
+
+            WORD_LIST.forEach((item, index) => {
+                const isFound = foundWords.has(item.word);
+                const placement = wordPlacements.find(p => p.word === item.word);
+
+                const chip = document.createElement('div');
+                chip.className = `flex items-center justify-between p-2.5 rounded-xl border text-xs font-semibold transition ${
+                    isFound 
+                        ? 'bg-slate-900 border-slate-800 text-slate-500 line-through opacity-70' 
+                        : 'bg-slate-800/60 border-slate-700/60 text-slate-200 hover:border-indigo-500/50'
+                }`;
+
+                chip.innerHTML = `
+                    <div class="flex items-center gap-2 overflow-hidden">
+                        <i class="fa-solid ${isFound ? 'fa-circle-check text-emerald-400' : 'fa-circle text-slate-600'} text-sm shrink-0"></i>
+                        <span class="font-bold tracking-wider truncate" style="${isFound ? `color:${placement.color.bg}; text-decoration: line-through;` : ''}">
+                            ${item.word}
+                        </span>
+                    </div>
+                    <button class="info-term-btn text-slate-400 hover:text-indigo-300 ml-1 p-1 shrink-0" data-index="${index}" title="Lihat Penjelasan">
+                        <i class="fa-solid fa-circle-info"></i>
+                    </button>
+                `;
+
+                container.appendChild(chip);
+            });
+
+            // Attach event listeners for info buttons
+            document.querySelectorAll('.info-term-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const idx = parseInt(btn.dataset.index);
+                    showTermInfo(WORD_LIST[idx]);
+                });
+            });
+
+            // Update remaining counter
+            const remaining = WORD_LIST.length - foundWords.size;
+            document.getElementById('words-remaining-badge').innerText = `${remaining} Tersisa`;
+            document.getElementById('score-display').innerText = `${foundWords.size}/10`;
+        }
+
+        function showTermInfo(termObj) {
+            document.getElementById('modal-term-title').innerText = termObj.word;
+            document.getElementById('modal-term-desc').innerText = termObj.desc;
+            document.getElementById('info-modal').classList.remove('hidden');
+        }
+
+        function getCellFromEvent(e) {
+            let clientX, clientY;
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            const el = document.elementFromPoint(clientX, clientY);
+            if (el && el.classList.contains('grid-cell')) {
+                return {
+                    r: parseInt(el.dataset.r),
+                    c: parseInt(el.dataset.c),
+                    el: el
+                };
+            }
+            return null;
+        }
+
+        function calculateLineCells(start, end) {
+            const dr = end.r - start.r;
+            const dc = end.c - start.c;
+
+            // Determine straight or diagonal direction
+            const stepR = dr === 0 ? 0 : (dr > 0 ? 1 : -1);
+            const stepC = dc === 0 ? 0 : (dc > 0 ? 1 : -1);
+
+            // Valid if horizontal, vertical, or perfectly diagonal
+            const isHorizontal = dr === 0 && dc !== 0;
+            const isVertical = dc === 0 && dr !== 0;
+            const isDiagonal = Math.abs(dr) === Math.abs(dc) && dr !== 0;
+
+            if (!isHorizontal && !isVertical && !isDiagonal) {
+                return [start]; // Just return start cell if not aligned
+            }
+
+            const steps = Math.max(Math.abs(dr), Math.abs(dc));
+            const cells = [];
+
+            for (let i = 0; i <= steps; i++) {
+                cells.push({
+                    r: start.r + stepR * i,
+                    c: start.c + stepC * i
+                });
+            }
+
+            return cells;
+        }
+
+        function updateSelectionHighlight() {
+            // Reset all non-found highlights
+            document.querySelectorAll('.grid-cell').forEach(cell => {
+                const r = parseInt(cell.dataset.r);
+                const c = parseInt(cell.dataset.c);
+                
+                // Check if this cell belongs to a found word
+                let isCellInFound = false;
+                let foundColor = null;
+
+                for (let item of wordPlacements) {
+                    if (foundWords.has(item.word)) {
+                        if (item.coords.some(coord => coord.r === r && coord.c === c)) {
+                            isCellInFound = true;
+                            foundColor = item.color;
+                            break;
+                        }
+                    }
+                }
+
+                if (isCellInFound) {
+                    cell.style.backgroundColor = foundColor.bg;
+                    cell.style.color = foundColor.text;
+                    cell.classList.remove('selected');
+                } else {
+                    cell.style.backgroundColor = '';
+                    cell.style.color = '';
+                    cell.classList.remove('selected');
+                }
+            });
+
+            // Highlight currently selected cells
+            let wordStr = "";
+            selectedCells.forEach(({ r, c }) => {
+                const cellEl = document.querySelector(`.grid-cell[data-r="${r}"][data-c="${c}"]`);
+                if (cellEl) {
+                    cellEl.classList.add('selected');
+                    wordStr += cellEl.innerText;
+                }
+            });
+
+            const previewEl = document.getElementById('selected-word-preview');
+            const statusBadge = document.getElementById('selection-status-badge');
+
+            if (wordStr.length > 0) {
+                previewEl.innerText = wordStr;
+                statusBadge.innerText = `${wordStr.length} Huruf`;
+                statusBadge.className = "text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-semibold";
+            } else {
+                previewEl.innerText = "--";
+                statusBadge.innerText = "Siap";
+                statusBadge.className = "text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400";
+            }
+        }
+
+        function startSelection(cell) {
+            if (!cell) return;
+            isSelecting = true;
+            selectionStartCell = cell;
+            selectedCells = [cell];
+            playSound('select');
+            updateSelectionHighlight();
+        }
+
+        function moveSelection(cell) {
+            if (!isSelecting || !selectionStartCell || !cell) return;
+            const newSelected = calculateLineCells(selectionStartCell, cell);
+            
+            // Only update if selection changed length/direction
+            if (JSON.stringify(newSelected) !== JSON.stringify(selectedCells)) {
+                selectedCells = newSelected;
+                playSound('select');
+                updateSelectionHighlight();
+            }
+        }
+
+        function endSelection() {
+            if (!isSelecting) return;
+            isSelecting = false;
+
+            const selectedWord = selectedCells.map(({ r, c }) => grid[r][c]).join('');
+            const reversedWord = selectedWord.split('').reverse().join('');
+
+            let matchedWordObj = WORD_LIST.find(item => item.word === selectedWord || item.word === reversedWord);
+
+            if (matchedWordObj && !foundWords.has(matchedWordObj.word)) {
+                // Word Found!
+                foundWords.add(matchedWordObj.word);
+                playSound('found');
+
+                // Apply pulse effect on found cells
+                selectedCells.forEach(({ r, c }) => {
+                    const el = document.querySelector(`.grid-cell[data-r="${r}"][data-c="${c}"]`);
+                    if (el) el.classList.add('found');
+                });
+
+                // Update educational tip sidebar
+                document.getElementById('educational-tip').innerHTML = `
+                    <strong class="text-indigo-300">${matchedWordObj.word}:</strong> ${matchedWordObj.desc}
+                `;
+
+                // Check victory condition
+                if (foundWords.size === WORD_LIST.length) {
+                    setTimeout(triggerVictory, 400);
+                }
+            } else {
+                if (selectedCells.length > 1) {
+                    playSound('wrong');
+                }
+            }
+
+            selectedCells = [];
+            selectionStartCell = null;
+            updateSelectionHighlight();
+            renderWordList();
+        }
+
+        // Setup interaction handlers
+        function setupInteractionListeners() {
+            const gridEl = document.getElementById('word-grid');
+
+            // Mouse Events
+            gridEl.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                const cell = getCellFromEvent(e);
+                startSelection(cell);
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (isSelecting) {
+                    e.preventDefault();
+                    const cell = getCellFromEvent(e);
+                    moveSelection(cell);
+                }
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (isSelecting) {
+                    endSelection();
+                }
+            });
+
+            // Touch Events
+            gridEl.addEventListener('touchstart', (e) => {
+                const cell = getCellFromEvent(e);
+                startSelection(cell);
+            }, { passive: true });
+
+            window.addEventListener('touchmove', (e) => {
+                if (isSelecting) {
+                    const cell = getCellFromEvent(e);
+                    moveSelection(cell);
+                }
+            }, { passive: true });
+
+            window.addEventListener('touchend', () => {
+                if (isSelecting) {
+                    endSelection();
+                }
+            });
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerSeconds = 0;
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                timerSeconds++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
+            const secs = (timerSeconds % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').innerText = `${mins}:${secs}`;
+        }
+
+        function useHint() {
+            if (hintCount <= 0) {
+                alert("Kesempatan petunjuk kamu sudah habis!");
+                return;
+            }
+
+            // Find an unfound word
+            const unfoundWords = WORD_LIST.filter(item => !foundWords.has(item.word));
+            if (unfoundWords.length === 0) return;
+
+            const targetWord = unfoundWords[Math.floor(Math.random() * unfoundWords.length)].word;
+            const placement = wordPlacements.find(p => p.word === targetWord);
+
+            if (placement) {
+                hintCount--;
+                document.getElementById('hint-count').innerText = hintCount;
+                playSound('select');
+
+                // Highlight starting cell with pulse animation
+                const startCoord = placement.coords[0];
+                const startCellEl = document.querySelector(`.grid-cell[data-r="${startCoord.r}"][data-c="${startCoord.c}"]`);
+
+                if (startCellEl) {
+                    startCellEl.classList.add('hint-pulse');
+                    setTimeout(() => {
+                        startCellEl.classList.remove('hint-pulse');
+                    }, 3000);
+                }
+
+                document.getElementById('educational-tip').innerHTML = `
+                    <i class="fa-solid fa-lightbulb text-amber-400"></i>
+                    <strong>Petunjuk:</strong> Huruf pertama kata <span class="text-amber-300 font-bold">${targetWord}</span> disorot warna kuning!
+                `;
+            }
+        }
+
+        function triggerVictory() {
+            clearInterval(timerInterval);
+            playSound('victory');
+
+            // Trigger confetti
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 120,
+                    spread: 80,
+                    origin: { y: 0.6 }
+                });
+            }
+
+            document.getElementById('final-time').innerText = document.getElementById('timer-display').innerText;
+            document.getElementById('final-hints').innerText = `${hintCount}x`;
+            document.getElementById('victory-modal').classList.remove('hidden');
+        }
+
+        function initGame() {
+            foundWords.clear();
+            selectedCells = [];
+            isSelecting = false;
+            hintCount = 3;
+            document.getElementById('hint-count').innerText = hintCount;
+            document.getElementById('victory-modal').classList.add('hidden');
+            
+            generateGrid();
+            renderBoard();
+            startTimer();
+        }
+
+        // Attach UI Event Listeners
+        window.onload = function() {
+            setupInteractionListeners();
+
+            document.getElementById('hint-btn').addEventListener('click', useHint);
+            document.getElementById('reset-btn').addEventListener('click', () => {
+                if (confirm("Apakah kamu ingin mengacak ulang papan permainan?")) {
+                    initGame();
+                }
+            });
+
+            document.getElementById('play-again-btn').addEventListener('click', initGame);
+
+            document.getElementById('close-info-btn').addEventListener('click', () => {
+                document.getElementById('info-modal').classList.add('hidden');
+            });
+            document.getElementById('modal-ok-btn').addEventListener('click', () => {
+                document.getElementById('info-modal').classList.add('hidden');
+            });
+
+            document.getElementById('sound-toggle-btn').addEventListener('click', function() {
+                soundEnabled = !soundEnabled;
+                this.innerHTML = soundEnabled 
+                    ? '<i class="fa-solid fa-volume-high text-sm"></i>' 
+                    : '<i class="fa-solid fa-volume-xmark text-sm text-red-400"></i>';
+            });
+
+            initGame();
+        };
+    </script>
+</body>
+</html>
