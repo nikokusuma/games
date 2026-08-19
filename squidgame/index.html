@@ -4,10 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Squid Game Online - 30 Player Survival</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tone.js for Sound Effects -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Canvas Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- PeerJS for Direct P2P Multiplayer on GitHub Pages -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    
     <script>
         tailwind.config = {
             theme: {
@@ -58,7 +65,6 @@
             box-shadow: 0 0 20px rgba(0, 240, 255, 0.35);
         }
 
-        /* Custom Scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
         }
@@ -79,7 +85,6 @@
             animation: pulse-fast 1.2s infinite;
         }
 
-        /* Target target clicker styling */
         .target-node {
             transition: transform 0.1s ease, opacity 0.15s ease;
         }
@@ -90,7 +95,6 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between bg-squidDark text-gray-100">
 
-    <!-- Top HUD Navigation -->
     <header class="bg-squidCard/80 backdrop-blur border-b border-squidPink/30 sticky top-0 z-50 px-4 py-3">
         <div class="max-w-6xl mx-auto flex flex-wrap justify-between items-center gap-2">
             <!-- Game Title & Icons -->
@@ -105,8 +109,12 @@
                 </h1>
             </div>
 
-            <!-- Global Stats / Room Info -->
-            <div id="hudStats" class="hidden flex items-center space-x-4 text-sm font-semibold">
+            <!-- Online Connection & Room Stats -->
+            <div id="hudStats" class="hidden flex items-center space-x-3 text-sm font-semibold flex-wrap gap-y-1">
+                <div class="bg-squidDark px-3 py-1 rounded-full border border-emerald-500/50 flex items-center space-x-1.5 text-xs text-emerald-400">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="hudConnectionStatus">P2P ONLINE</span>
+                </div>
                 <div class="bg-squidDark px-3 py-1 rounded-full border border-squidPink/40 flex items-center space-x-2">
                     <span class="text-gray-400">ROOM:</span>
                     <span id="hudRoomCode" class="squid-font text-squidTeal font-bold tracking-widest">------</span>
@@ -121,7 +129,7 @@
                 </div>
             </div>
 
-            <!-- Audio & Help Button -->
+            <!-- Audio Control Button -->
             <div class="flex items-center space-x-2">
                 <button id="btnSound" onclick="toggleAudio()" class="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 transition">
                     <i class="fa-solid fa-volume-high" id="soundIcon"></i>
@@ -130,20 +138,19 @@
         </div>
     </header>
 
-    <!-- Main Interactive Container -->
     <main class="flex-grow flex items-center justify-center p-4 max-w-5xl mx-auto w-full">
 
-        <!-- 1. USER LOGIN / ENTRY SCREEN -->
+        <!-- 1. USER LOGIN / ROOM ENTRY SCREEN -->
         <section id="screenLogin" class="w-full max-w-md bg-squidCard border border-squidPink/40 p-6 md:p-8 rounded-2xl box-glow-pink text-center">
             <div class="mb-6">
                 <div class="w-20 h-20 mx-auto mb-3 bg-squidPink/10 rounded-full flex items-center justify-center border-2 border-squidPink">
                     <i class="fa-solid fa-masks-theater text-4xl text-squidPink"></i>
                 </div>
                 <h2 class="squid-font text-2xl font-bold tracking-wide text-white">SELAMAT DATANG</h2>
-                <p class="text-xs text-gray-400 mt-1">Masukkan nama pemain untuk bergabung dalam permainan kematian.</p>
+                <p class="text-xs text-gray-400 mt-1">Masukkan nama pemain untuk bergabung dalam permainan kematian multiplayer.</p>
             </div>
 
-            <!-- Player Lock Warning Modal Banner -->
+            <!-- Room Lock Warning Banner -->
             <div id="lockWarning" class="hidden mb-4 p-3 bg-red-900/50 border border-red-500/80 rounded-xl text-left text-xs text-red-200">
                 <div class="flex items-start space-x-2">
                     <i class="fa-solid fa-lock text-red-400 text-base mt-0.5"></i>
@@ -164,7 +171,7 @@
                 <div class="pt-2 grid grid-cols-1 gap-3">
                     <button onclick="handleCreateRoom()" class="w-full bg-gradient-to-r from-squidPink to-pink-700 hover:from-pink-600 hover:to-pink-800 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition duration-200 flex items-center justify-center space-x-2 squid-font">
                         <i class="fa-solid fa-plus-circle"></i>
-                        <span>BUAT ROOM BARU (MAX 30)</span>
+                        <span>BUAT ROOM BARU (ONLINE)</span>
                     </button>
 
                     <div class="relative flex py-1 items-center">
@@ -195,31 +202,34 @@
                             <i class="fa-solid fa-copy"></i>
                         </button>
                     </div>
-                    <p class="text-xs text-gray-400 mt-1">Tunggu hingga pemain terkumpul (Maksimal 30 pemain). Host akan memulai permainan.</p>
+                    <p class="text-xs text-gray-400 mt-1">Tunggu pemain bergabung (Maks 30). Host dapat menambahkan bot AI jika kekurangan pemain.</p>
                 </div>
-                <div class="flex items-center space-x-3">
+                <div class="flex flex-wrap items-center gap-3">
                     <div class="text-right">
                         <span class="text-xs text-gray-400 block">Total Pemain</span>
                         <span id="lobbyPlayerCount" class="squid-font text-xl font-bold text-white">1 / 30</span>
                     </div>
+                    <button id="btnAddBots" onclick="fillWithBots()" class="hidden bg-gray-800 hover:bg-gray-700 text-squidTeal border border-squidTeal/40 squid-font font-bold px-4 py-3 rounded-xl transition duration-200 text-xs">
+                        <i class="fa-solid fa-robot mr-1"></i> + TAMBAH BOT
+                    </button>
                     <button id="btnStartGame" onclick="hostStartGame()" class="hidden bg-squidPink hover:bg-pink-600 text-white squid-font font-bold px-6 py-3 rounded-xl box-glow-pink transition duration-200 animate-pulse-fast">
                         MULAI GAME!
                     </button>
                 </div>
             </div>
 
-            <!-- Player Grid (Up to 30 Cards) -->
+            <!-- Player Grid -->
             <div class="mt-6">
                 <h3 class="text-xs uppercase font-bold text-gray-400 mb-3 flex items-center justify-between">
                     <span>Daftar Pemain Terhubung</span>
-                    <span class="text-squidTeal"><i class="fa-solid fa-wifi text-xs mr-1"></i> Sync Realtime</span>
+                    <span class="text-squidTeal"><i class="fa-solid fa-wifi text-xs mr-1"></i> Sync Realtime P2P</span>
                 </h3>
                 <div id="lobbyPlayerGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 max-h-[50vh] overflow-y-auto p-1">
-                    <!-- Dynamic Player Cards inserted here -->
+                    <!-- Dynamic Player Cards -->
                 </div>
             </div>
 
-            <!-- Lock Banner in Lobby -->
+            <!-- Lock Banner -->
             <div class="mt-6 p-3 bg-gray-900/80 border border-gray-800 rounded-xl flex items-center justify-between text-xs text-gray-400">
                 <span class="flex items-center space-x-2">
                     <i class="fa-solid fa-shield-halved text-squidPink"></i>
@@ -229,12 +239,12 @@
             </div>
         </section>
 
-        <!-- 3. STAGE TRANSITION / INTERMISSION SCREEN -->
+        <!-- 3. STAGE TRANSITION SCREEN -->
         <section id="screenTransition" class="hidden w-full max-w-xl bg-squidCard border border-squidPink/60 p-8 rounded-2xl text-center box-glow-pink">
             <div class="w-24 h-24 mx-auto mb-4 bg-squidPink/20 border-2 border-squidPink rounded-full flex items-center justify-center animate-bounce">
                 <span id="stageBadgeIcon" class="text-4xl text-squidPink font-black">1</span>
             </div>
-            <h3 id="stageNumberTitle" class="squid-font text-xs font-bold text-squidPink tracking-widest uppercase">STAGE 1 DARIN 5</h3>
+            <h3 id="stageNumberTitle" class="squid-font text-xs font-bold text-squidPink tracking-widest uppercase">STAGE 1 DARI 5</h3>
             <h2 id="stageNameTitle" class="squid-font text-3xl font-black text-white mt-1 mb-3">TEBAK POLA</h2>
             <p id="stageDescription" class="text-sm text-gray-300 max-w-md mx-auto leading-relaxed">
                 Perhatikan urutan simbol dan tebak pola yang berikutnya muncul. 5 Pertanyaan menentukan hidup atau mati!
@@ -245,7 +255,7 @@
             </div>
         </section>
 
-        <!-- 4. GAME STAGE 1: TEBAK POLA -->
+        <!-- 4. STAGE 1: TEBAK POLA -->
         <section id="stage1Screen" class="hidden w-full max-w-2xl bg-squidCard border border-squidPink/40 p-6 md:p-8 rounded-2xl text-center">
             <div class="flex justify-between items-center mb-6 pb-3 border-b border-gray-800">
                 <span class="text-xs squid-font font-bold text-squidPink">PERMAINAN 1: TEBAK POLA</span>
@@ -254,24 +264,22 @@
 
             <div class="my-6">
                 <p class="text-xs text-gray-400 mb-3 uppercase tracking-wider">Simbol Manakah Yang Muncul Berikutnya?</p>
-                <!-- Pattern Display Box -->
                 <div id="stg1PatternBox" class="flex justify-center items-center space-x-3 bg-squidDark p-6 rounded-2xl border border-gray-800 min-h-[100px]">
-                    <!-- Symbol items rendered here -->
+                    <!-- Symbol items -->
                 </div>
             </div>
 
-            <!-- Pattern Answer Choices -->
             <div id="stg1Choices" class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                <!-- Choice buttons injected via JS -->
+                <!-- Choice buttons -->
             </div>
 
             <div id="stg1StatusMsg" class="mt-6 text-sm font-bold text-gray-400 min-h-[24px]"></div>
         </section>
 
-        <!-- 5. GAME STAGE 2: PILIHAN JALUR CERITA -->
+        <!-- 5. STAGE 2: JEMBATAN KACA -->
         <section id="stage2Screen" class="hidden w-full max-w-2xl bg-squidCard border border-squidPink/40 p-6 md:p-8 rounded-2xl text-center">
             <div class="flex justify-between items-center mb-6 pb-3 border-b border-gray-800">
-                <span class="text-xs squid-font font-bold text-squidPink">PERMAINAN 2: JEMBATAN KACA & ALUR LANGKAH</span>
+                <span class="text-xs squid-font font-bold text-squidPink">PERMAINAN 2: JEMBATAN KACA</span>
                 <span id="stg2StepProgress" class="text-xs font-bold text-squidTeal bg-squidTeal/10 px-3 py-1 rounded-full border border-squidTeal/30">Langkah 1 / 5</span>
             </div>
 
@@ -287,7 +295,7 @@
                         <span class="squid-font font-black text-xl text-squidPink">OPSI A</span>
                         <i class="fa-solid fa-shoe-prints text-gray-500 group-hover:text-squidPink"></i>
                     </div>
-                    <span id="stg2LabelA" class="text-sm text-gray-300 font-semibold block">Langkah Kiri (Panel A)</span>
+                    <span class="text-sm text-gray-300 font-semibold block">Langkah Kiri (Panel A)</span>
                 </button>
 
                 <button onclick="submitStage2Choice('B')" class="group relative bg-gradient-to-br from-gray-800 to-gray-900 hover:from-squidTeal/30 hover:to-cyan-900/40 border border-gray-700 hover:border-squidTeal p-5 rounded-2xl transition duration-200 text-left">
@@ -295,41 +303,37 @@
                         <span class="squid-font font-black text-xl text-squidTeal">OPSI B</span>
                         <i class="fa-solid fa-shoe-prints text-gray-500 group-hover:text-squidTeal"></i>
                     </div>
-                    <span id="stg2LabelB" class="text-sm text-gray-300 font-semibold block">Langkah Kanan (Panel B)</span>
+                    <span class="text-sm text-gray-300 font-semibold block">Langkah Kanan (Panel B)</span>
                 </button>
             </div>
 
             <div id="stg2StatusMsg" class="mt-6 text-sm font-bold text-gray-400 min-h-[24px]"></div>
         </section>
 
-        <!-- 6. GAME STAGE 3: KETANGKASAN MOUSE -->
+        <!-- 6. STAGE 3: KETANGKASAN MOUSE -->
         <section id="stage3Screen" class="hidden w-full max-w-3xl bg-squidCard border border-squidPink/40 p-6 rounded-2xl text-center">
             <div class="flex flex-col sm:flex-row justify-between items-center mb-4 pb-3 border-b border-gray-800 gap-2">
                 <div>
                     <span class="text-xs squid-font font-bold text-squidPink block text-left">PERMAINAN 3: KETANGKASAN MOUSE</span>
                     <span class="text-xs text-gray-400 text-left block">10 Pemain Pertama Mencapai Skor 10 LOLOS, Sisanya ELIMINASI!</span>
                 </div>
-                <div class="flex items-center space-x-3">
-                    <div class="bg-squidDark px-4 py-1.5 rounded-xl border border-squidTeal/40">
-                        <span class="text-xs text-gray-400 mr-2">SKOR KAMU:</span>
-                        <span id="stg3MyScore" class="squid-font text-xl font-bold text-squidTeal">0 / 10</span>
-                    </div>
+                <div class="bg-squidDark px-4 py-1.5 rounded-xl border border-squidTeal/40">
+                    <span class="text-xs text-gray-400 mr-2">SKOR KAMU:</span>
+                    <span id="stg3MyScore" class="squid-font text-xl font-bold text-squidTeal">0 / 10</span>
                 </div>
             </div>
 
-            <!-- Interactive Target Arena -->
             <div id="stg3Arena" class="relative w-full h-[320px] sm:h-[380px] bg-squidDark rounded-2xl border border-gray-800 overflow-hidden cursor-crosshair flex items-center justify-center">
                 <span id="stg3ArenaHint" class="text-xs text-gray-600 uppercase font-bold tracking-widest pointer-events-none">Klik Lingkaran Pengawal Merah Secepat Mungkin!</span>
             </div>
 
-            <!-- Live Qualifier Ticker -->
             <div class="mt-4 p-3 bg-squidDark rounded-xl border border-gray-800 text-xs flex items-center justify-between">
                 <span class="text-gray-400 font-semibold">Lolos Saat Ini:</span>
                 <span id="stg3QualifiersList" class="text-squidGold font-bold">Belum ada pemain lolos...</span>
             </div>
         </section>
 
-        <!-- 7. GAME STAGE 4: KECEPATAN MENGETIK -->
+        <!-- 7. STAGE 4: KECEPATAN MENGETIK -->
         <section id="stage4Screen" class="hidden w-full max-w-2xl bg-squidCard border border-squidPink/40 p-6 md:p-8 rounded-2xl text-center">
             <div class="flex flex-col sm:flex-row justify-between items-center mb-6 pb-3 border-b border-gray-800 gap-2">
                 <div>
@@ -363,7 +367,7 @@
             </div>
         </section>
 
-        <!-- 8. GAME STAGE 5: KUIS MATEMATIKA FINAL -->
+        <!-- 8. STAGE 5: KUIS MATEMATIKA FINAL -->
         <section id="stage5Screen" class="hidden w-full max-w-xl bg-squidCard border-2 border-squidGold p-6 md:p-8 rounded-2xl text-center box-glow-pink">
             <div class="w-16 h-16 mx-auto mb-3 bg-squidGold/20 rounded-full flex items-center justify-center border border-squidGold">
                 <i class="fa-solid fa-crown text-3xl text-squidGold"></i>
@@ -401,7 +405,7 @@
                 <p class="font-bold text-red-400 mb-1">CATATAN PENTING:</p>
                 <p>Kamu dapat menonton sisa permainan sebagai penonton, atau menunggu hingga ronde room ini selesai secara keseluruhan untuk dapat bermain kembali.</p>
             </div>
-            <button onclick="leaveRoomIfAllowed()" class="w-full bg-gray-800 hover:bg-gray-700 text-white font-bold py-3 rounded-xl text-xs uppercase squid-font">
+            <button onclick="leaveRoomIfAllowed(true)" class="w-full bg-gray-800 hover:bg-gray-700 text-white font-bold py-3 rounded-xl text-xs uppercase squid-font">
                 Keluar Ke Menu Utama
             </button>
         </section>
@@ -420,7 +424,7 @@
                 <span id="winnerPrizeText" class="squid-font text-3xl font-black text-squidGold">₩45,600,000,000</span>
             </div>
 
-            <button onclick="leaveRoomIfAllowed()" class="w-full bg-squidGold hover:bg-amber-500 text-squidDark font-black py-3.5 rounded-xl squid-font text-base shadow-xl">
+            <button onclick="leaveRoomIfAllowed(true)" class="w-full bg-squidGold hover:bg-amber-500 text-squidDark font-black py-3.5 rounded-xl squid-font text-base shadow-xl">
                 KEMBALI KE LOBBY UTAMA
             </button>
         </section>
@@ -431,33 +435,48 @@
         Squid Game Online Multiplayer &copy; 2026 - Interactive 30-Player Web App
     </footer>
 
-    <!-- FIREBASE MODULE & GAME SCRIPT -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Setup & Initialization
+        // Firebase Optional Config Setup
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'squid-game-30p-v1';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' 
-            ? JSON.parse(__firebase_config) 
-            : { apiKey: "demo", authDomain: "demo.firebaseapp.com", projectId: "demo" };
+        let firebaseApp = null;
+        let db = null;
+        let auth = null;
+        let useFirebase = false;
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+            try {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                firebaseApp = initializeApp(firebaseConfig);
+                auth = getAuth(firebaseApp);
+                db = getFirestore(firebaseApp);
+                useFirebase = true;
+            } catch (e) {
+                console.log("Firebase config fallback to PeerJS", e);
+            }
+        }
 
-        // Global Game State Variables
-        let currentUser = null;
-        let currentUserId = null;
+        // Global State
+        let currentUserId = localStorage.getItem('squid_uid') || 'uid_' + Math.random().toString(36).substring(2, 9);
+        localStorage.setItem('squid_uid', currentUserId);
+
         let activeRoomId = null;
-        let roomUnsubscribe = null;
-        let isAudioMuted = false;
+        let isHost = false;
         let localPlayerName = "";
 
-        // Tone.js Audio Synthesizers
+        // PeerJS Networking Variables
+        let peer = null;
+        let hostConnection = null; // Guest -> Host connection
+        let guestConnections = {}; // Host -> Guests map
+        let roomState = null;
+
+        // Sound Synthesizers
         let synth = null;
         let buzzerSynth = null;
+        let isAudioMuted = false;
 
         function initAudio() {
             if (!synth) {
@@ -472,11 +491,7 @@
         window.toggleAudio = function() {
             isAudioMuted = !isAudioMuted;
             const icon = document.getElementById('soundIcon');
-            if (isAudioMuted) {
-                icon.className = "fa-solid fa-volume-xmark text-red-400";
-            } else {
-                icon.className = "fa-solid fa-volume-high text-gray-300";
-            }
+            icon.className = isAudioMuted ? "fa-solid fa-volume-xmark text-red-400" : "fa-solid fa-volume-high text-gray-300";
         };
 
         function playSound(type) {
@@ -492,52 +507,33 @@
                     synth.triggerAttackRelease('E5', '8n', now + 0.15);
                     synth.triggerAttackRelease('G5', '8n', now + 0.3);
                 }
-            } catch (e) {
-                console.log("Audio play suppressed", e);
-            }
+            } catch (e) {}
         }
 
-        // RULE 1 - Strict Firestore Path helper
-        function getRoomsCollectionRef() {
-            return collection(db, 'artifacts', appId, 'public', 'data', 'squid_rooms');
-        }
-        function getRoomDocRef(roomId) {
-            return doc(db, 'artifacts', appId, 'public', 'data', 'squid_rooms', roomId);
+        function getPeerRoomId(code) {
+            return `squid30p-room-${code}`;
         }
 
-        // RULE 3 - Mandatory Auth Initialization First
-        async function initGameAuth() {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
+        function broadcastStateToGuests() {
+            if (!isHost) return;
+            Object.values(guestConnections).forEach(conn => {
+                if (conn && conn.open) {
+                    conn.send({ type: 'SYNC_STATE', state: roomState });
                 }
-            } catch (err) {
-                console.warn("Auth fallback anonymously", err);
-                await signInAnonymously(auth);
+            });
+            renderRoomState(roomState);
+        }
+
+        function sendToHost(data) {
+            if (isHost) {
+                handleHostIncomingMessage(currentUserId, data);
+            } else if (hostConnection && hostConnection.open) {
+                hostConnection.send(data);
             }
         }
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user;
-                currentUserId = user.uid;
-                // Default saved name
-                const savedName = localStorage.getItem('squid_player_name');
-                if (savedName) {
-                    document.getElementById('inputPlayerName').value = savedName;
-                    localPlayerName = savedName;
-                }
-            }
-        });
-
-        // Initialize Auth on window load
-        window.addEventListener('DOMContentLoaded', () => {
-            initGameAuth();
-        });
-
-        window.handleCreateRoom = async function() {
+        // CREATE ROOM FUNCTION
+        window.handleCreateRoom = function() {
             const nameInput = document.getElementById('inputPlayerName').value.trim();
             if (!nameInput) {
                 alertModal("Silakan masukkan nama pemain terlebih dahulu!");
@@ -546,47 +542,67 @@
             localPlayerName = nameInput;
             localStorage.setItem('squid_player_name', nameInput);
 
-            // Check if player is already locked in an existing active room
             if (activeRoomId) {
                 showLockWarning("Kamu sedang berada di room " + activeRoomId + ". Selesaikan game tersebut lebih dahulu!");
                 return;
             }
 
-            const newRoomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-            const roomRef = getRoomDocRef(newRoomCode);
+            const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            const peerId = getPeerRoomId(roomCode);
 
-            // Initial Room State
-            const roomData = {
-                roomCode: newRoomCode,
-                hostUid: currentUserId,
-                status: 'waiting', // waiting, stage_trans, stage1, stage2, stage3, stage4, stage5, finished
-                currentStage: 0,
-                players: {
-                    [currentUserId]: {
-                        uid: currentUserId,
-                        name: localPlayerName,
-                        alive: true,
-                        score: 0,
-                        isHost: true,
-                        joinedAt: Date.now()
-                    }
-                },
-                stage3Qualifiers: [],
-                stage4Qualifiers: [],
-                winnerUid: null,
-                createdAt: Date.now()
-            };
+            peer = new Peer(peerId);
 
-            try {
-                await setDoc(roomRef, roomData);
-                joinRoomSession(newRoomCode);
-            } catch (err) {
-                console.error("Error creating room:", err);
-                alertModal("Gagal membuat room. Coba lagi!");
-            }
+            peer.on('open', (id) => {
+                activeRoomId = roomCode;
+                isHost = true;
+
+                roomState = {
+                    roomCode: roomCode,
+                    hostUid: currentUserId,
+                    status: 'waiting',
+                    currentStage: 0,
+                    players: {
+                        [currentUserId]: {
+                            uid: currentUserId,
+                            name: localPlayerName,
+                            alive: true,
+                            score: 0,
+                            isHost: true,
+                            isBot: false
+                        }
+                    },
+                    stage3Qualifiers: [],
+                    stage4Qualifiers: [],
+                    winnerUid: null
+                };
+
+                document.getElementById('hudStats').classList.remove('hidden');
+                document.getElementById('hudRoomCode').innerText = roomCode;
+                renderRoomState(roomState);
+            });
+
+            peer.on('connection', (conn) => {
+                conn.on('open', () => {
+                    guestConnections[conn.peer] = conn;
+                });
+
+                conn.on('data', (data) => {
+                    handleHostIncomingMessage(conn.peer, data);
+                });
+
+                conn.on('close', () => {
+                    delete guestConnections[conn.peer];
+                });
+            });
+
+            peer.on('error', (err) => {
+                console.error("PeerJS Host Error:", err);
+                alertModal("Gagal membuat room. Coba beberapa saat lagi.");
+            });
         };
 
-        window.handleJoinRoom = async function() {
+        // JOIN ROOM FUNCTION
+        window.handleJoinRoom = function() {
             const nameInput = document.getElementById('inputPlayerName').value.trim();
             const codeInput = document.getElementById('inputRoomCode').value.trim().toUpperCase();
 
@@ -602,72 +618,208 @@
             localPlayerName = nameInput;
             localStorage.setItem('squid_player_name', nameInput);
 
-            // Room Lock Rule check
             if (activeRoomId && activeRoomId !== codeInput) {
-                showLockWarning("Kamu sedang terkunci di room " + activeRoomId + ". Kamu tidak dapat join ke room lain!");
+                showLockWarning("Kamu sedang terkunci di room " + activeRoomId + "!");
                 return;
             }
 
-            const roomRef = getRoomDocRef(codeInput);
-            try {
-                const docSnap = await getDoc(roomRef);
-                if (!docSnap.exists()) {
-                    alertModal("Room tidak ditemukan!");
-                    return;
-                }
+            const hostPeerId = getPeerRoomId(codeInput);
+            peer = new Peer();
 
-                const data = docSnap.data();
-                if (data.status !== 'waiting' && !data.players[currentUserId]) {
-                    alertModal("Game di room ini sudah dimulai atau selesai! Kamu tidak dapat bergabung.");
-                    return;
-                }
+            peer.on('open', () => {
+                hostConnection = peer.connect(hostPeerId);
 
-                const playerKeys = Object.keys(data.players || {});
-                if (playerKeys.length >= 30 && !data.players[currentUserId]) {
-                    alertModal("Room sudah penuh (Maksimal 30 pemain)!");
-                    return;
-                }
+                hostConnection.on('open', () => {
+                    activeRoomId = codeInput;
+                    isHost = false;
+                    document.getElementById('hudStats').classList.remove('hidden');
+                    document.getElementById('hudRoomCode').innerText = codeInput;
 
-                // Add or update player in room doc
-                const updatedPlayers = { ...data.players };
-                updatedPlayers[currentUserId] = {
-                    uid: currentUserId,
-                    name: localPlayerName,
-                    alive: updatedPlayers[currentUserId] ? updatedPlayers[currentUserId].alive : true,
-                    score: updatedPlayers[currentUserId] ? updatedPlayers[currentUserId].score : 0,
-                    isHost: data.hostUid === currentUserId,
-                    joinedAt: Date.now()
-                };
+                    // Send Join Request
+                    sendToHost({
+                        type: 'JOIN_REQ',
+                        uid: currentUserId,
+                        name: localPlayerName
+                    });
+                });
 
-                await updateDoc(roomRef, { players: updatedPlayers });
-                joinRoomSession(codeInput);
+                hostConnection.on('data', (data) => {
+                    if (data.type === 'SYNC_STATE') {
+                        roomState = data.state;
+                        renderRoomState(roomState);
+                    } else if (data.type === 'REJECT_JOIN') {
+                        alertModal(data.reason || "Tidak dapat bergabung ke room.");
+                        leaveRoomIfAllowed(true);
+                    }
+                });
 
-            } catch (err) {
-                console.error("Error joining room:", err);
-                alertModal("Gagal me-load room.");
-            }
+                hostConnection.on('close', () => {
+                    alertModal("Koneksi ke Host terputus.");
+                    leaveRoomIfAllowed(true);
+                });
+            });
+
+            peer.on('error', (err) => {
+                console.error("PeerJS Guest Error:", err);
+                alertModal("Gagal terhubung ke room. Pastikan Kode Room benar dan Host online!");
+            });
         };
 
-        function joinRoomSession(roomId) {
-            activeRoomId = roomId;
-            document.getElementById('hudStats').classList.remove('hidden');
-            document.getElementById('hudRoomCode').innerText = roomId;
+        function handleHostIncomingMessage(senderId, data) {
+            if (!isHost || !roomState) return;
 
-            if (roomUnsubscribe) roomUnsubscribe();
-
-            const roomRef = getRoomDocRef(roomId);
-            roomUnsubscribe = onSnapshot(roomRef, (snapshot) => {
-                if (!snapshot.exists()) {
-                    alertModal("Room telah ditutup!");
-                    leaveRoomIfAllowed(true);
+            if (data.type === 'JOIN_REQ') {
+                const playerList = Object.values(roomState.players);
+                if (roomState.status !== 'waiting' && !roomState.players[data.uid]) {
+                    if (guestConnections[senderId]) {
+                        guestConnections[senderId].send({ type: 'REJECT_JOIN', reason: 'Permainan sudah berlangsung!' });
+                    }
+                    return;
+                }
+                if (playerList.length >= 30 && !roomState.players[data.uid]) {
+                    if (guestConnections[senderId]) {
+                        guestConnections[senderId].send({ type: 'REJECT_JOIN', reason: 'Room sudah penuh (30 Pemain)!' });
+                    }
                     return;
                 }
 
-                const roomState = snapshot.data();
-                renderRoomState(roomState);
-            }, (error) => {
-                console.error("Firestore listener error:", error);
-            });
+                roomState.players[data.uid] = {
+                    uid: data.uid,
+                    name: data.name,
+                    alive: roomState.players[data.uid] ? roomState.players[data.uid].alive : true,
+                    score: 0,
+                    isHost: false,
+                    isBot: false
+                };
+                broadcastStateToGuests();
+            } 
+            else if (data.type === 'PLAYER_ELIMINATED') {
+                if (roomState.players[data.uid]) {
+                    roomState.players[data.uid].alive = false;
+                    broadcastStateToGuests();
+                }
+            }
+            else if (data.type === 'STAGE3_QUALIFIED') {
+                if (!roomState.stage3Qualifiers.includes(data.uid) && roomState.stage3Qualifiers.length < 10) {
+                    roomState.stage3Qualifiers.push(data.uid);
+                    broadcastStateToGuests();
+                    
+                    const aliveCount = Object.values(roomState.players).filter(p => p.alive).length;
+                    if (roomState.stage3Qualifiers.length >= 10 || roomState.stage3Qualifiers.length >= aliveCount) {
+                        advanceStageFromHost(4, roomState.stage3Qualifiers);
+                    }
+                }
+            }
+            else if (data.type === 'STAGE4_QUALIFIED') {
+                if (!roomState.stage4Qualifiers.includes(data.uid) && roomState.stage4Qualifiers.length < 3) {
+                    roomState.stage4Qualifiers.push(data.uid);
+                    broadcastStateToGuests();
+
+                    const aliveCount = Object.values(roomState.players).filter(p => p.alive).length;
+                    if (roomState.stage4Qualifiers.length >= 3 || roomState.stage4Qualifiers.length >= aliveCount) {
+                        advanceStageFromHost(5, roomState.stage4Qualifiers);
+                    }
+                }
+            }
+            else if (data.type === 'STAGE5_WINNER') {
+                roomState.status = 'finished';
+                roomState.winnerUid = data.uid;
+                broadcastStateToGuests();
+            }
+        }
+
+        // Fill empty slots with AI bots for full 30 player experience
+        window.fillWithBots = function() {
+            if (!isHost || !roomState) return;
+            const currentCount = Object.keys(roomState.players).length;
+            const needed = 30 - currentCount;
+            if (needed <= 0) return;
+
+            for (let i = 1; i <= needed; i++) {
+                const botId = `bot_${Math.random().toString(36).substring(2, 7)}`;
+                const botNum = String(currentCount + i).padStart(3, '0');
+                roomState.players[botId] = {
+                    uid: botId,
+                    name: `Pemain ${botNum}`,
+                    alive: true,
+                    score: 0,
+                    isHost: false,
+                    isBot: true
+                };
+            }
+            broadcastStateToGuests();
+        };
+
+        window.hostStartGame = function() {
+            if (!isHost || !roomState) return;
+            advanceStageFromHost(1);
+        };
+
+        function advanceStageFromHost(nextStageNum, qualifiersList = null) {
+            if (!isHost || !roomState) return;
+
+            if (qualifiersList) {
+                Object.keys(roomState.players).forEach(uid => {
+                    if (roomState.players[uid].alive && !qualifiersList.includes(uid)) {
+                        roomState.players[uid].alive = false;
+                    }
+                });
+            }
+
+            roomState.status = 'stage_trans';
+            roomState.currentStage = nextStageNum;
+            broadcastStateToGuests();
+
+            setTimeout(() => {
+                if (roomState) {
+                    roomState.status = `stage${nextStageNum}`;
+                    broadcastStateToGuests();
+                    triggerBotStageSimulation(nextStageNum);
+                }
+            }, 5000);
+        }
+
+        // Simulate AI Bot Behavior for dynamic multiplayer experience
+        function triggerBotStageSimulation(stageNum) {
+            if (!isHost || !roomState) return;
+            const bots = Object.values(roomState.players).filter(p => p.isBot && p.alive);
+
+            if (stageNum === 1) {
+                bots.forEach(bot => {
+                    if (Math.random() < 0.25) bot.alive = false; // 25% bot failure rate
+                });
+                broadcastStateToGuests();
+                setTimeout(() => checkHostAdvanceStage1(), 6000);
+            } else if (stageNum === 2) {
+                bots.forEach(bot => {
+                    if (Math.random() < 0.4) bot.alive = false; // 40% glass break rate
+                });
+                broadcastStateToGuests();
+                setTimeout(() => advanceStageFromHost(3), 6000);
+            } else if (stageNum === 3) {
+                // Bots qualify gradually
+                let count = 0;
+                bots.forEach((bot, idx) => {
+                    setTimeout(() => {
+                        if (roomState && roomState.status === 'stage3' && bot.alive && roomState.stage3Qualifiers.length < 10) {
+                            handleHostIncomingMessage(currentUserId, { type: 'STAGE3_QUALIFIED', uid: bot.uid });
+                        }
+                    }, (idx + 1) * 800);
+                });
+            } else if (stageNum === 4) {
+                bots.forEach((bot, idx) => {
+                    setTimeout(() => {
+                        if (roomState && roomState.status === 'stage4' && bot.alive && roomState.stage4Qualifiers.length < 3) {
+                            handleHostIncomingMessage(currentUserId, { type: 'STAGE4_QUALIFIED', uid: bot.uid });
+                        }
+                    }, (idx + 1) * 1200);
+                });
+            }
+        }
+
+        function checkHostAdvanceStage1() {
+            if (!isHost || roomState.status !== 'stage1') return;
+            advanceStageFromHost(2);
         }
 
         let currentRenderedStage = null;
@@ -675,18 +827,14 @@
         function renderRoomState(room) {
             const players = room.players || {};
             const playerList = Object.values(players);
-            const totalPlayers = playerList.length;
             const alivePlayers = playerList.filter(p => p.alive);
-            const aliveCount = alivePlayers.length;
 
-            // HUD Updates
-            document.getElementById('hudAliveCount').innerText = `${aliveCount} / ${totalPlayers}`;
-            document.getElementById('hudPrizePool').innerText = `₩${(aliveCount * 1.52).toFixed(1)} B`;
+            document.getElementById('hudAliveCount').innerText = `${alivePlayers.length} / ${playerList.length}`;
+            document.getElementById('hudPrizePool').innerText = `₩${(alivePlayers.length * 1.52).toFixed(1)} B`;
 
             const me = players[currentUserId];
             const isMeAlive = me ? me.alive : true;
 
-            // Handle Screen Display depending on Status & Alive State
             if (room.status === 'waiting') {
                 showScreen('screenLobby');
                 renderLobbyList(playerList, room.hostUid);
@@ -708,12 +856,12 @@
                         break;
                     case 'stage3':
                         showScreen('stage3Screen');
-                        if (currentRenderedStage !== 'stage3') initStage3(room);
+                        if (currentRenderedStage !== 'stage3') initStage3();
                         updateStage3QualifiersUI(room.stage3Qualifiers || []);
                         break;
                     case 'stage4':
                         showScreen('stage4Screen');
-                        if (currentRenderedStage !== 'stage4') initStage4(room);
+                        if (currentRenderedStage !== 'stage4') initStage4();
                         updateStage4QualifiersUI(room.stage4Qualifiers || []);
                         break;
                     case 'stage5':
@@ -738,11 +886,8 @@
             ];
             screens.forEach(id => {
                 const el = document.getElementById(id);
-                if (id === screenId) {
-                    el.classList.remove('hidden');
-                } else {
-                    el.classList.add('hidden');
-                }
+                if (id === screenId) el.classList.remove('hidden');
+                else el.classList.add('hidden');
             });
         }
 
@@ -755,7 +900,7 @@
 
             playerList.forEach((p, idx) => {
                 const card = document.createElement('div');
-                const isHost = p.uid === hostUid;
+                const isHostPlayer = p.uid === hostUid;
                 const isMe = p.uid === currentUserId;
 
                 card.className = `p-3 rounded-xl border text-center transition ${
@@ -763,49 +908,28 @@
                 }`;
 
                 card.innerHTML = `
-                    <div class="w-10 h-10 mx-auto mb-2 rounded-full ${isHost ? 'bg-squidGold/20 border-squidGold' : 'bg-gray-800 border-gray-700'} border flex items-center justify-center font-bold text-xs">
-                        ${isHost ? '<i class="fa-solid fa-crown text-squidGold"></i>' : `#${idx + 1}`}
+                    <div class="w-10 h-10 mx-auto mb-2 rounded-full ${isHostPlayer ? 'bg-squidGold/20 border-squidGold' : 'bg-gray-800 border-gray-700'} border flex items-center justify-center font-bold text-xs">
+                        ${isHostPlayer ? '<i class="fa-solid fa-crown text-squidGold"></i>' : `#${idx + 1}`}
                     </div>
                     <div class="font-bold text-xs truncate ${isMe ? 'text-squidPink' : 'text-white'}">${p.name}</div>
-                    <div class="text-[10px] text-gray-500 mt-0.5">${isHost ? 'HOST' : 'PEMAIN'}</div>
+                    <div class="text-[10px] text-gray-500 mt-0.5">${isHostPlayer ? 'HOST' : (p.isBot ? 'BOT' : 'PEMAIN')}</div>
                 `;
                 grid.appendChild(card);
             });
 
-            // Show Start Button only for Host
             const btnStart = document.getElementById('btnStartGame');
-            if (hostUid === currentUserId) {
+            const btnBots = document.getElementById('btnAddBots');
+            if (isHost) {
                 btnStart.classList.remove('hidden');
+                btnBots.classList.remove('hidden');
             } else {
                 btnStart.classList.add('hidden');
+                btnBots.classList.add('hidden');
             }
         }
 
-        window.hostStartGame = async function() {
-            if (!activeRoomId) return;
-            const roomRef = getRoomDocRef(activeRoomId);
-            
-            // Advance to Stage 1 Intermission
-            await updateDoc(roomRef, {
-                status: 'stage_trans',
-                currentStage: 1
-            });
-
-            // Countdown timer for Stage 1
-            setTimeout(async () => {
-                await updateDoc(roomRef, { status: 'stage1' });
-            }, 5000);
-        };
-
         function renderTransitionInfo(stageNum) {
-            const stageTitles = [
-                "",
-                "TEBAK POLA",
-                "JEMBATAN KACA & JALUR CERITA",
-                "KETANGKASAN MOUSE",
-                "KECEPATAN MENGETIK",
-                "KUIS MATEMATIKA FINAL"
-            ];
+            const stageTitles = ["", "TEBAK POLA", "JEMBATAN KACA", "KETANGKASAN MOUSE", "KECEPATAN MENGETIK", "KUIS MATEMATIKA FINAL"];
             const stageDescs = [
                 "",
                 "Perhatikan urutan simbol dan tebak pola yang berikutnya muncul! 5 Soal hidup atau mati.",
@@ -826,14 +950,12 @@
             
             const interval = setInterval(() => {
                 count--;
-                if (count > 0) {
-                    timerEl.innerText = `Bersiap dalam ${count} detik...`;
-                } else {
-                    clearInterval(interval);
-                }
+                if (count > 0) timerEl.innerText = `Bersiap dalam ${count} detik...`;
+                else clearInterval(interval);
             }, 1000);
         }
 
+        // STAGE 1 LOGIC
         let stg1CurrentQ = 0;
         let stg1Score = 0;
         const stg1Questions = [
@@ -852,7 +974,6 @@
 
         function renderStage1Question() {
             if (stg1CurrentQ >= stg1Questions.length) {
-                // Stage 1 Complete
                 evalStage1Result();
                 return;
             }
@@ -871,13 +992,11 @@
                 patternBox.appendChild(item);
             });
 
-            // Question mark placeholder
             const qItem = document.createElement('div');
             qItem.className = "w-12 h-12 bg-squidTeal/20 border-2 border-dashed border-squidTeal text-squidTeal rounded-xl flex items-center justify-center font-black text-2xl squid-font animate-pulse";
             qItem.innerText = '?';
             patternBox.appendChild(qItem);
 
-            // Choices
             const choiceBox = document.getElementById('stg1Choices');
             choiceBox.innerHTML = '';
             q.choices.forEach(ch => {
@@ -898,27 +1017,25 @@
             } else {
                 playSound('wrong');
             }
-
             stg1CurrentQ++;
             renderStage1Question();
         }
 
-        async function evalStage1Result() {
+        function evalStage1Result() {
             const msg = document.getElementById('stg1StatusMsg');
             if (stg1Score >= 3) {
                 msg.className = "mt-6 text-sm font-bold text-emerald-400";
                 msg.innerText = `SELAMAT! Kamu menjawab ${stg1Score}/5 benar dan LOLOS ke babak berikutnya!`;
-                // Host will trigger stage transition after delay
-                checkHostAdvanceStage(2);
             } else {
                 msg.className = "mt-6 text-sm font-bold text-red-500";
                 msg.innerText = `GAGAL! Kamu hanya menjawab ${stg1Score}/5. Tereliminasi!`;
-                await eliminateSelf();
+                eliminateSelf();
             }
         }
 
+        // STAGE 2 LOGIC
         let stg2Step = 0;
-        const stg2Path = ['A', 'B', 'A', 'A', 'B']; // Winning sequence
+        const stg2Path = ['A', 'B', 'A', 'A', 'B'];
         const stg2Stories = [
             "Langkah 1: Kamu melangkah ke panel pertama jembatan kaca tinggi di atas jurang...",
             "Langkah 2: Angin kencang bertiup. Panel berikutnya berada di depanmu...",
@@ -936,7 +1053,6 @@
             if (stg2Step >= stg2Path.length) {
                 document.getElementById('stg2StatusMsg').className = "mt-6 text-sm font-bold text-emerald-400";
                 document.getElementById('stg2StatusMsg').innerText = "SELAMAT! Kamu berhasil menyeberangi Jembatan Kaca!";
-                checkHostAdvanceStage(3);
                 return;
             }
 
@@ -945,11 +1061,9 @@
             document.getElementById('stg2StatusMsg').innerText = '';
         }
 
-        window.submitStage2Choice = async function(choice) {
+        window.submitStage2Choice = function(choice) {
             playSound('click');
-            const correctChoice = stg2Path[stg2Step];
-
-            if (choice === correctChoice) {
+            if (choice === stg2Path[stg2Step]) {
                 playSound('correct');
                 stg2Step++;
                 renderStage2Step();
@@ -957,14 +1071,15 @@
                 playSound('wrong');
                 document.getElementById('stg2StatusMsg').className = "mt-6 text-sm font-bold text-red-500";
                 document.getElementById('stg2StatusMsg').innerText = "KACA PECAH! Kamu jatuh dan TERELIMINASI!";
-                await eliminateSelf();
+                eliminateSelf();
             }
         };
 
+        // STAGE 3 LOGIC
         let stg3Score = 0;
         let stg3Active = false;
 
-        function initStage3(room) {
+        function initStage3() {
             stg3Score = 0;
             stg3Active = true;
             document.getElementById('stg3MyScore').innerText = `0 / 10`;
@@ -978,7 +1093,6 @@
             const hint = document.getElementById('stg3ArenaHint');
             if (hint) hint.remove();
 
-            // Clear previous target
             const oldTarget = document.getElementById('stg3TargetBtn');
             if (oldTarget) oldTarget.remove();
 
@@ -986,7 +1100,6 @@
             target.id = 'stg3TargetBtn';
             target.className = "target-node absolute w-14 h-14 bg-squidPink hover:bg-pink-400 text-white font-black rounded-full border-2 border-white box-glow-pink flex items-center justify-center text-xl cursor-pointer shadow-2xl";
             
-            // Random position inside arena
             const maxX = arena.clientWidth - 70;
             const maxY = arena.clientHeight - 70;
             const posX = Math.max(10, Math.floor(Math.random() * maxX));
@@ -1006,7 +1119,7 @@
                     stg3Active = false;
                     target.remove();
                     playSound('correct');
-                    handleStage3Qualified();
+                    sendToHost({ type: 'STAGE3_QUALIFIED', uid: currentUserId });
                 } else {
                     spawnStage3Target();
                 }
@@ -1015,58 +1128,33 @@
             arena.appendChild(target);
         }
 
-        async function handleStage3Qualified() {
-            if (!activeRoomId) return;
-            const roomRef = getRoomDocRef(activeRoomId);
-            const docSnap = await getDoc(roomRef);
-            if (!docSnap.exists()) return;
-
-            const room = docSnap.data();
-            const currentQualifiers = room.stage3Qualifiers || [];
-
-            if (!currentQualifiers.includes(currentUserId) && currentQualifiers.length < 10) {
-                currentQualifiers.push(currentUserId);
-                await updateDoc(roomRef, { stage3Qualifiers: currentQualifiers });
-
-                // If 10 players qualified or remaining alive players all finished, eliminate others & advance
-                if (currentQualifiers.length >= 10 || currentQualifiers.length >= Object.values(room.players).filter(p => p.alive).length) {
-                    checkHostAdvanceStage(4, currentQualifiers);
-                }
-            }
-        }
-
         function updateStage3QualifiersUI(qualifiers) {
             const listEl = document.getElementById('stg3QualifiersList');
             listEl.innerText = `${qualifiers.length} / 10 Pemain Lolos`;
 
-            // If player didn't reach top 10 and stage full, eliminate self
             if (qualifiers.length >= 10 && !qualifiers.includes(currentUserId) && stg3Active) {
                 stg3Active = false;
                 eliminateSelf();
             }
         }
 
+        // STAGE 4 LOGIC
         let stg4Score = 0;
-        const stg4Words = [
-            "MUGUNGHWA", "SQUID GAME", "RED LIGHT", "GREEN LIGHT", 
-            "LAMPU MERAH", "BINTANG KACA", "PERMAINAN SQUID", 
-            "PAYUNG", "SEGITIGA", "LINGKARAN", "HADIAH UTAMA"
-        ];
+        const stg4Words = ["MUGUNGHWA", "SQUID GAME", "RED LIGHT", "GREEN LIGHT", "LAMPU MERAH", "BINTANG KACA", "PERMAINAN SQUID", "PAYUNG", "SEGITIGA", "LINGKARAN", "HADIAH UTAMA"];
 
-        function initStage4(room) {
+        function initStage4() {
             stg4Score = 0;
             document.getElementById('stg4MyScore').innerText = `0 / 10`;
             renderStage4Word();
         }
 
         function renderStage4Word() {
-            const wordTarget = document.getElementById('stg4WordTarget');
-            wordTarget.innerText = stg4Words[stg4Score % stg4Words.length];
+            document.getElementById('stg4WordTarget').innerText = stg4Words[stg4Score % stg4Words.length];
             document.getElementById('stg4Input').value = '';
             document.getElementById('stg4Input').focus();
         }
 
-        window.handleTypingSubmit = async function(e) {
+        window.handleTypingSubmit = function(e) {
             e.preventDefault();
             const input = document.getElementById('stg4Input').value.trim().toUpperCase();
             const target = stg4Words[stg4Score % stg4Words.length];
@@ -1078,7 +1166,7 @@
 
                 if (stg4Score >= 10) {
                     playSound('win');
-                    handleStage4Qualified();
+                    sendToHost({ type: 'STAGE4_QUALIFIED', uid: currentUserId });
                 } else {
                     renderStage4Word();
                 }
@@ -1087,25 +1175,6 @@
                 document.getElementById('stg4Input').value = '';
             }
         };
-
-        async function handleStage4Qualified() {
-            if (!activeRoomId) return;
-            const roomRef = getRoomDocRef(activeRoomId);
-            const docSnap = await getDoc(roomRef);
-            if (!docSnap.exists()) return;
-
-            const room = docSnap.data();
-            const currentQualifiers = room.stage4Qualifiers || [];
-
-            if (!currentQualifiers.includes(currentUserId) && currentQualifiers.length < 3) {
-                currentQualifiers.push(currentUserId);
-                await updateDoc(roomRef, { stage4Qualifiers: currentQualifiers });
-
-                if (currentQualifiers.length >= 3 || currentQualifiers.length >= Object.values(room.players).filter(p => p.alive).length) {
-                    checkHostAdvanceStage(5, currentQualifiers);
-                }
-            }
-        }
 
         function updateStage4QualifiersUI(qualifiers) {
             const listEl = document.getElementById('stg4QualifiersList');
@@ -1116,7 +1185,8 @@
             }
         }
 
-        const stg5Answer = 422; // 456 - 123 + 89
+        // STAGE 5 LOGIC
+        const stg5Answer = 422;
 
         function initStage5() {
             document.getElementById('stg5MathProblem').innerText = "456 - 123 + 89 = ?";
@@ -1124,18 +1194,13 @@
             document.getElementById('stg5Input').focus();
         }
 
-        window.handleMathSubmit = async function(e) {
+        window.handleMathSubmit = function(e) {
             e.preventDefault();
             const ans = parseInt(document.getElementById('stg5Input').value.trim(), 10);
 
             if (ans === stg5Answer) {
                 playSound('win');
-                // Claim Final Victory!
-                const roomRef = getRoomDocRef(activeRoomId);
-                await updateDoc(roomRef, {
-                    status: 'finished',
-                    winnerUid: currentUserId
-                });
+                sendToHost({ type: 'STAGE5_WINNER', uid: currentUserId });
             } else {
                 playSound('wrong');
                 document.getElementById('stg5Input').value = '';
@@ -1144,67 +1209,19 @@
         };
 
         function renderWinnerScreen(room) {
-            const winner = room.players[room.winnerUid];
+            const winner = room.players ? room.players[room.winnerUid] : null;
             const nameText = winner ? winner.name : 'Pemain Rahasia';
             document.getElementById('winnerNameText').innerText = nameText;
 
-            // Trigger Victory Confetti
             if (typeof confetti === 'function') {
-                confetti({
-                    particleCount: 150,
-                    spread: 80,
-                    origin: { y: 0.6 }
-                });
+                confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
             }
         }
 
-        async function eliminateSelf() {
-            if (!activeRoomId || !currentUserId) return;
+        function eliminateSelf() {
             playSound('wrong');
-            const roomRef = getRoomDocRef(activeRoomId);
-            const docSnap = await getDoc(roomRef);
-            if (docSnap.exists()) {
-                const room = docSnap.data();
-                const players = { ...room.players };
-                if (players[currentUserId]) {
-                    players[currentUserId].alive = false;
-                    await updateDoc(roomRef, { players });
-                }
-            }
-        }
-
-        async function checkHostAdvanceStage(nextStageNum, qualifiersList = null) {
-            if (!activeRoomId) return;
-            const roomRef = getRoomDocRef(activeRoomId);
-            const docSnap = await getDoc(roomRef);
-            if (!docSnap.exists()) return;
-
-            const room = docSnap.data();
-            if (room.hostUid !== currentUserId) return; // Only host updates global state
-
-            let updatedPlayers = { ...room.players };
-
-            // If qualifiers list provided (e.g. Stage 3 or 4), eliminate non-qualifiers
-            if (qualifiersList) {
-                Object.keys(updatedPlayers).forEach(uid => {
-                    if (updatedPlayers[uid].alive && !qualifiersList.includes(uid)) {
-                        updatedPlayers[uid].alive = false;
-                    }
-                });
-            }
-
-            // Transition to intermission then stage
-            await updateDoc(roomRef, {
-                status: 'stage_trans',
-                currentStage: nextStageNum,
-                players: updatedPlayers
-            });
-
-            setTimeout(async () => {
-                await updateDoc(roomRef, {
-                    status: `stage${nextStageNum}`
-                });
-            }, 5000);
+            sendToHost({ type: 'PLAYER_ELIMINATED', uid: currentUserId });
+            showScreen('screenEliminated');
         }
 
         function showLockWarning(msg) {
@@ -1213,24 +1230,19 @@
             banner.classList.remove('hidden');
         }
 
-        window.leaveRoomIfAllowed = async function(force = false) {
-            if (!activeRoomId) return;
-
-            if (!force) {
-                const roomSnap = await getDoc(getRoomDocRef(activeRoomId));
-                if (roomSnap.exists()) {
-                    const data = roomSnap.data();
-                    // Prevent leaving during ongoing game unless finished
-                    if (data.status !== 'waiting' && data.status !== 'finished' && data.players[currentUserId]?.alive) {
-                        alertModal("Kamu tidak bisa keluar dari arena permainan saat masih hidup!");
-                        return;
-                    }
-                }
+        window.leaveRoomIfAllowed = function(force = false) {
+            if (!force && roomState && roomState.status !== 'waiting' && roomState.status !== 'finished' && roomState.players[currentUserId]?.alive) {
+                alertModal("Kamu tidak bisa keluar dari arena permainan saat masih hidup!");
+                return;
             }
 
-            // Reset Room state
-            if (roomUnsubscribe) roomUnsubscribe();
+            if (peer) {
+                peer.destroy();
+                peer = null;
+            }
             activeRoomId = null;
+            isHost = false;
+            roomState = null;
             document.getElementById('hudStats').classList.add('hidden');
             document.getElementById('lockWarning').classList.add('hidden');
             showScreen('screenLogin');
@@ -1238,12 +1250,16 @@
 
         window.copyRoomCode = function() {
             if (!activeRoomId) return;
-            navigator.clipboard.writeText(activeRoomId);
+            const tempInput = document.createElement('input');
+            tempInput.value = activeRoomId;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
             alertModal("Kode Room disalin: " + activeRoomId);
         };
 
         function alertModal(msg) {
-            // Custom modal replacement for alert()
             const modal = document.createElement('div');
             modal.className = "fixed inset-0 bg-black/80 backdrop-blur z-50 flex items-center justify-center p-4";
             modal.innerHTML = `
@@ -1251,12 +1267,20 @@
                     <i class="fa-solid fa-triangle-exclamation text-squidPink text-3xl mb-3"></i>
                     <p class="text-sm font-bold text-white mb-5">${msg}</p>
                     <button onclick="this.parentElement.parentElement.remove()" class="bg-squidPink hover:bg-pink-600 text-white font-bold py-2.5 px-6 rounded-xl text-xs squid-font">
-                        L ANJUTKAN
+                        LANJUTKAN
                     </button>
                 </div>
             `;
             document.body.appendChild(modal);
         }
+
+        // Default Name Restore
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedName = localStorage.getItem('squid_player_name');
+            if (savedName) {
+                document.getElementById('inputPlayerName').value = savedName;
+            }
+        });
     </script>
 </body>
 </html>
