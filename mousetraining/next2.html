@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Pilah Cepat Pabrik Robot - 4 Level</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: #1a1a24;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 4px solid #33334d;
+        }
+
+        canvas {
+            display: block;
+            background: #232331;
+        }
+
+        /* Modal Overlay untuk Start, Level Up & Game Over */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 15, 23, 0.92);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .overlay h1 {
+            font-size: 32px;
+            color: #4da6ff;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(77, 166, 255, 0.5);
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            max-width: 80%;
+            font-size: 14px;
+            line-height: 1.6;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .instructions span {
+            font-weight: bold;
+        }
+
+        .btn-start {
+            padding: 12px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(45deg, #00b894, #00cec9);
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(0, 206, 201, 0.4);
+        }
+
+        .btn-start:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 206, 201, 0.6);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="500"></canvas>
+
+        <!-- Layar Mulai -->
+        <div id="start-overlay" class="overlay">
+            <h1>🤖 Pilah Cepat Pabrik Robot</h1>
+            <div class="instructions">
+                <p><strong>Aturan Permainan (4 Level):</strong></p>
+                <p>• <span style="color: #55efc4;">KLIK KIRI</span> : Pilih Robot <strong>Pola Cocok</strong> (Warna Dada = Warna Tubuh).</p>
+                <p>• <span style="color: #ff7675;">KLIK KANAN</span> : Pilih Robot <strong>Pola Cacat</strong> (Warna Dada ≠ Warna Tubuh).</p>
+                <p>• <strong>Level 1</strong> (Skor 100): Kecepatan Normal.</p>
+                <p>• <strong>Level 2</strong> (Skor 250): Ban Berjalan Lebih Cepat!</p>
+                <p>• <strong>Level 3</strong> (Skor 400): <span style="color: #ffeaa7;">Latihan Scroll Wheel</span> (Tanpa Ban Berjalan, 1 per 1).</p>
+                <p>• <strong>Level 4</strong> (Skor 500): <span style="color: #ff7675;">Ujian Akhir!</span> (Ban Berjalan + Scroll Wheel Active).</p>
+            </div>
+            <button class="btn-start" onclick="startGame()">MULAI GAME</button>
+        </div>
+
+        <!-- Layar Level Transition -->
+        <div id="level-overlay" class="overlay hidden">
+            <h1 id="level-title" style="color: #ffeaa7;">LEVEL UP!</h1>
+            <div class="instructions" id="level-desc">
+                <!-- Deskripsi Level diisi via JavaScript -->
+            </div>
+            <button class="btn-start" onclick="continueNextLevel()">LANJUTKAN</button>
+        </div>
+
+        <!-- Layar Game Over -->
+        <div id="gameover-overlay" class="overlay hidden">
+            <h1 id="gameover-title" style="color: #ff7675;">GAME OVER</h1>
+            <p style="font-size: 18px; margin-bottom: 10px;" id="gameover-msg">Pabrik Kena Henti Produksi!</p>
+            <p style="font-size: 24px; color: #ffeaa7; margin-bottom: 20px;">Skor Akhir: <span id="final-score">0</span></p>
+            <button class="btn-start" onclick="startGame()">MAIN LAGI</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Menghentikan menu konteks bawaan browser pada Klik Kanan
+        canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+        // State & Parameter Game
+        let score = 0;
+        let lives = 3;
+        let currentLevel = 1;
+        let gameActive = false;
+        let isPaused = false;
+        let robots = [];
+        let spawnTimer = 0;
+        let spawnInterval = 100; 
+        let conveyorSpeed = 2;
+        let animationFrameId;
+
+        // Target Skor untuk tiap level
+        const LEVEL_TARGETS = {
+            1: 100,
+            2: 250,
+            3: 400,
+            4: 500
+        };
+
+        // Definisi Warna
+        const COLOR_PALETTE = [
+            { name: 'Red', hex: '#ff4757' },
+            { name: 'Blue', hex: '#1e90ff' },
+            { name: 'Green', hex: '#2ed573' },
+            { name: 'Yellow', hex: '#ffa502' }
+        ];
+
+        // Teks Mengapung (Score Feedback)
+        let floatingTexts = [];
+
+        class FloatingText {
+            constructor(text, x, y, color) {
+                this.text = text;
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.opacity = 1;
+            }
+            update() {
+                this.y -= 1;
+                this.opacity -= 0.02;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.opacity);
+                ctx.font = 'bold 20px Segoe UI';
+                ctx.fillStyle = this.color;
+                ctx.fillText(this.text, this.x, this.y);
+                ctx.restore();
+            }
+        }
+
+        // Kelas Robot
+        class Robot {
+            constructor(level) {
+                this.width = 60;
+                this.height = 80;
+
+                // Pada Level 3 (Mode Latihan), robot ditempatkan tepat di tengah meja uji
+                if (level === 3) {
+                    this.x = canvas.width / 2 - this.width / 2;
+                    this.y = 230;
+                } else {
+                    this.x = -this.width;
+                    this.y = 250;
+                }
+
+                // Penentuan Pola Warna Tubuh & Pola Dada
+                const bodyColorIndex = Math.floor(Math.random() * COLOR_PALETTE.length);
+                this.bodyColor = COLOR_PALETTE[bodyColorIndex];
+
+                // 50% Kemungkinan Pola Normal (Cocok), 50% Cacat (Beda Warna)
+                this.isCorrectPattern = Math.random() < 0.5;
+                if (this.isCorrectPattern) {
+                    this.chestColor = this.bodyColor;
+                } else {
+                    let otherColors = COLOR_PALETTE.filter((_, idx) => idx !== bodyColorIndex);
+                    this.chestColor = otherColors[Math.floor(Math.random() * otherColors.length)];
+                }
+
+                // Rotasi: Di Level 3 & 4 muncul miring/terbalik
+                if (level >= 3) {
+                    const angles = [90, 180, 270]; // Selalu miring di awal spawn
+                    this.angle = angles[Math.floor(Math.random() * angles.length)];
+                } else {
+                    this.angle = 0; // Tegak lurus di Level 1 & 2
+                }
+            }
+
+            update() {
+                // Di Level 3 (conveyorSpeed = 0), robot tidak bergerak ke samping
+                this.x += conveyorSpeed;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+                ctx.rotate((this.angle * Math.PI) / 180);
+
+                // Tubuh Utama
+                ctx.fillStyle = this.bodyColor.hex;
+                ctx.beginPath();
+                ctx.roundRect(-this.width / 2, -this.height / 2, this.width, this.height, 8);
+                ctx.fill();
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = '#2f3542';
+                ctx.stroke();
+
+                // Kepala Robot
+                ctx.fillStyle = '#ced6e0';
+                ctx.fillRect(-15, -this.height / 2 - 15, 30, 15);
+                ctx.strokeRect(-15, -this.height / 2 - 15, 30, 15);
+
+                // Mata Robot
+                ctx.fillStyle = '#fffa65';
+                ctx.beginPath();
+                ctx.arc(-6, -this.height / 2 - 8, 3, 0, Math.PI * 2);
+                ctx.arc(6, -this.height / 2 - 8, 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Pola Dada (Simbol Lingkaran Inti)
+                ctx.fillStyle = this.chestColor.hex;
+                ctx.beginPath();
+                ctx.arc(0, 0, 16, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#ffffff';
+                ctx.stroke();
+
+                // Garis penanda arah simetris pada pola dada
+                ctx.beginPath();
+                ctx.moveTo(-10, 0);
+                ctx.lineTo(10, 0);
+                ctx.strokeStyle = '#ffffff';
+                ctx.stroke();
+
+                ctx.restore();
+            }
+
+            isUpright() {
+                return this.angle % 360 === 0;
+            }
+
+            rotate() {
+                this.angle = (this.angle + 90) % 360;
+            }
+
+            containsPoint(px, py) {
+                return (
+                    px >= this.x &&
+                    px <= this.x + this.width &&
+                    py >= this.y &&
+                    py <= this.y + this.height
+                );
+            }
+        }
+
+        // Ban Berjalan (Conveyor Belt)
+        function drawConveyor() {
+            // Jika Level 3: Tampilkan Meja Latihan Stasioner menggantikan Ban Berjalan
+            if (currentLevel === 3) {
+                ctx.fillStyle = '#353b48';
+                ctx.fillRect(0, 330, canvas.width, 40);
+                ctx.fillStyle = '#718093';
+                ctx.fillRect(0, 325, canvas.width, 5);
+                
+                // Teks indikator meja inspeksi
+                ctx.font = 'bold 14px Segoe UI';
+                ctx.fillStyle = '#7f8fa6';
+                ctx.textAlign = 'center';
+                ctx.fillText('MEJA INSPEKSI & LATIHAN ROTASI (TANPA CONVEYOR)', canvas.width / 2, 355);
+                ctx.textAlign = 'left';
+                return;
+            }
+
+            // Level 1, 2, dan 4: Tampilkan Ban Berjalan Bergerak
+            ctx.fillStyle = '#2f3542';
+            ctx.fillRect(0, 330, canvas.width, 40);
+
+            ctx.strokeStyle = '#57606f';
+            ctx.lineWidth = 4;
+            let offset = (Date.now() / (20 / (conveyorSpeed / 2))) % 20;
+            for (let x = -offset; x < canvas.width; x += 20) {
+                ctx.beginPath();
+                ctx.moveTo(x, 330);
+                ctx.lineTo(x + 10, 370);
+                ctx.stroke();
+            }
+
+            ctx.fillStyle = '#747d8c';
+            ctx.fillRect(0, 325, canvas.width, 5);
+        }
+
+        // Tampilan UI Info Level & Skor
+        function drawUI() {
+            ctx.font = 'bold 18px Segoe UI';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(`Skor: ${score} / ${LEVEL_TARGETS[currentLevel]}`, 20, 35);
+
+            ctx.fillStyle = '#ffeaa7';
+            ctx.fillText(`LEVEL ${currentLevel}`, canvas.width / 2 - 35, 35);
+
+            // Nyawa
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText('Nyawa: ', canvas.width - 160, 35);
+            for (let i = 0; i < 3; i++) {
+                ctx.fillStyle = i < lives ? '#ff4757' : '#57606f';
+                ctx.beginPath();
+                ctx.arc(canvas.width - 70 + i * 22, 30, 8, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Panduan Mini
+            ctx.font = '12px Segoe UI';
+            ctx.fillStyle = '#a4b0be';
+            let guideText = 'Klik Kiri: Pola Cocok | Klik Kanan: Pola Beda';
+            if (currentLevel >= 3) {
+                guideText += ' | SCROLL WHEEL: Putar Robot Tegak';
+            }
+            if (currentLevel === 3) {
+                guideText += ' (1 per 1 - Baru muncul setelah dipilah)';
+            }
+            ctx.fillText(guideText, 20, canvas.height - 15);
+        }
+
+        // Pengaturan Properti Berdasarkan Level
+        function setupLevel(level) {
+            robots = [];
+            floatingTexts = [];
+            spawnTimer = 0;
+
+            if (level === 1) {
+                conveyorSpeed = 2;
+                spawnInterval = 100;
+            } else if (level === 2) {
+                conveyorSpeed = 3.5;
+                spawnInterval = 70;
+            } else if (level === 3) {
+                // Mode Latihan: Tidak ada conveyor dan tidak ada interval waktu
+                conveyorSpeed = 0; 
+                spawnInterval = 0;
+                // Langsung spawn 1 robot di awal level
+                robots.push(new Robot(3));
+            } else if (level === 4) {
+                conveyorSpeed = 1.5;
+                spawnInterval = 150;
+            }
+        }
+
+        function checkLevelProgression() {
+            if (score >= LEVEL_TARGETS[currentLevel]) {
+                if (currentLevel < 4) {
+                    isPaused = true;
+                    currentLevel++;
+                    showLevelModal();
+                } else {
+                    endGame(true);
+                }
+            }
+        }
+
+        function showLevelModal() {
+            const desc = document.getElementById('level-desc');
+            if (currentLevel === 2) {
+                desc.innerHTML = `
+                    <p>Selamat! Anda menyelesaikan <strong>Level 1</strong>.</p>
+                    <p style="margin-top:10px; color:#55efc4;"><strong>Tantangan Level 2:</strong> Kecepatan ban berjalan bertambah!</p>
+                    <p style="margin-top:5px;">Target Skor: <strong>250 Poin</strong></p>
+                `;
+            } else if (currentLevel === 3) {
+                desc.innerHTML = `
+                    <p>Hebat! Anda menyelesaikan <strong>Level 2</strong>.</p>
+                    <p style="margin-top:10px; color:#ffeaa7;"><strong>Level 3 (MODE LATIHAN SCROLL):</strong></p>
+                    <p>Ban berjalan dihilangkan! Robot muncul <strong>satu per satu</strong> setelah robot sebelumnya berhasil dipilah.</p>
+                    <p>Gunakan <strong>SCROLL WHEEL</strong> untuk memutar robot hingga TEGAK lalu klik pemilahnya tanpa terburu-buru.</p>
+                    <p style="margin-top:5px;">Target Skor: <strong>400 Poin</strong></p>
+                `;
+            } else if (currentLevel === 4) {
+                desc.innerHTML = `
+                    <p>Latihan Selesai! Anda siap untuk <strong>Level 4 (FINAL)</strong>.</p>
+                    <p style="margin-top:10px; color:#ff7675;"><strong>UJIAN KETANGKASAN:</strong></p>
+                    <p>Ban berjalan dan interval waktu aktif kembali! Putar robot miring dengan <strong>SCROLL WHEEL</strong> sambil memilah robot yang terus berjalan!</p>
+                    <p style="margin-top:5px;">Target Skor: <strong>500 Poin</strong></p>
+                `;
+            }
+            document.getElementById('level-overlay').classList.remove('hidden');
+        }
+
+        function continueNextLevel() {
+            document.getElementById('level-overlay').classList.add('hidden');
+            setupLevel(currentLevel);
+            isPaused = false;
+        }
+
+        // Siklus Utama Loop Game
+        function gameLoop() {
+            if (!gameActive) return;
+
+            if (!isPaused) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawConveyor();
+
+                // Spawn Robot Otomatis (Hanya untuk Level 1, 2, dan 4)
+                if (currentLevel !== 3) {
+                    spawnTimer++;
+                    if (spawnTimer >= spawnInterval) {
+                        robots.push(new Robot(currentLevel));
+                        spawnTimer = 0;
+                    }
+                }
+
+                // Update & Draw Robots
+                for (let i = robots.length - 1; i >= 0; i--) {
+                    let r = robots[i];
+                    r.update();
+                    r.draw();
+
+                    // Jika Robot Lolos dari Layar (Berjalan keluar di Level 1, 2, 4)
+                    if (r.x > canvas.width) {
+                        robots.splice(i, 1);
+                        takeDamage();
+                    }
+                }
+
+                // Floating Text Effects
+                for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                    let ft = floatingTexts[i];
+                    ft.update();
+                    ft.draw();
+                    if (ft.opacity <= 0) floatingTexts.splice(i, 1);
+                }
+
+                drawUI();
+                checkLevelProgression();
+            }
+
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        // Fungsi khusus merilis robot baru di Level 3 setelah pemilahan selesai
+        function triggerNextRobotLevel3() {
+            if (currentLevel === 3 && gameActive && !isPaused) {
+                setTimeout(() => {
+                    if (robots.length === 0 && score < LEVEL_TARGETS[3]) {
+                        robots.push(new Robot(3));
+                    }
+                }, 300); // Penundaan kecil 300ms agar transisi lebih mulus
+            }
+        }
+
+        // Mouse Click Handler
+        canvas.addEventListener('mousedown', function (e) {
+            if (!gameActive || isPaused) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            for (let i = 0; i < robots.length; i++) {
+                let r = robots[i];
+                if (r.containsPoint(mouseX, mouseY)) {
+                    
+                    // Pada Level 3 & 4, Cek Posisi Orientasi Tegak
+                    if (currentLevel >= 3 && !r.isUpright()) {
+                        takeDamage();
+                        floatingTexts.push(new FloatingText("Robot Miring!", r.x, r.y, '#ff4757'));
+                        robots.splice(i, 1);
+                        if (currentLevel === 3) triggerNextRobotLevel3();
+                        return;
+                    }
+
+                    let isLeftClick = e.button === 0;
+                    let isRightClick = e.button === 2;
+
+                    if (isLeftClick) {
+                        if (r.isCorrectPattern) {
+                            score += 10;
+                            floatingTexts.push(new FloatingText("+10 (Tepat)", r.x, r.y, '#2ed573'));
+                        } else {
+                            takeDamage();
+                            floatingTexts.push(new FloatingText("Salah Pola!", r.x, r.y, '#ff4757'));
+                        }
+                        robots.splice(i, 1);
+                        if (currentLevel === 3) triggerNextRobotLevel3();
+                    } else if (isRightClick) {
+                        if (!r.isCorrectPattern) {
+                            score += 10;
+                            floatingTexts.push(new FloatingText("+10 (Pola Cacat)", r.x, r.y, '#2ed573'));
+                        } else {
+                            takeDamage();
+                            floatingTexts.push(new FloatingText("Salah Pola!", r.x, r.y, '#ff4757'));
+                        }
+                        robots.splice(i, 1);
+                        if (currentLevel === 3) triggerNextRobotLevel3();
+                    }
+                    break;
+                }
+            }
+        });
+
+        // Scroll Wheel Handler (Aktif di Level 3 & Level 4)
+        canvas.addEventListener('wheel', function (e) {
+            if (!gameActive || isPaused || currentLevel < 3) return;
+            e.preventDefault();
+
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            for (let r of robots) {
+                if (r.containsPoint(mouseX, mouseY)) {
+                    r.rotate();
+                    break;
+                }
+            }
+        }, { passive: false });
+
+        function takeDamage() {
+            lives--;
+            if (lives <= 0) {
+                endGame(false);
+            }
+        }
+
+        function startGame() {
+            score = 0;
+            lives = 3;
+            currentLevel = 1;
+            gameActive = true;
+            isPaused = false;
+
+            document.getElementById('start-overlay').classList.add('hidden');
+            document.getElementById('level-overlay').classList.add('hidden');
+            document.getElementById('gameover-overlay').classList.add('hidden');
+
+            setupLevel(currentLevel);
+            cancelAnimationFrame(animationFrameId);
+            gameLoop();
+        }
+
+        function endGame(isVictory) {
+            gameActive = false;
+            const title = document.getElementById('gameover-title');
+            const msg = document.getElementById('gameover-msg');
+            
+            if (isVictory) {
+                title.innerText = "VICTORY! 🎉";
+                title.style.color = "#2ed573";
+                msg.innerText = "Luar biasa! Anda berhasil menaklukkan seluruh 4 Level Pabrik Robot!";
+            } else {
+                title.innerText = "GAME OVER";
+                title.style.color = "#ff7675";
+                msg.innerText = `Gagal di Level ${currentLevel}. Tetap tingkatkan ketelitian Anda!`;
+            }
+
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('gameover-overlay').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
