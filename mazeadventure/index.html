@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan Labirin Logika - Game Puzzle Interaktif</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            user-select: none;
+        }
+
+        .font-heading {
+            font-family: 'Fredoka', cursive, sans-serif;
+        }
+
+        /* Custom scrollbar for command queue */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        /* Tile styles */
+        .grid-tile {
+            transition: all 0.2s ease-in-out;
+        }
+
+        /* Dragging animations */
+        .command-card {
+            cursor: grab;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .command-card:active {
+            cursor: grabbing;
+            transform: scale(1.05);
+        }
+
+        .drop-target-active {
+            border-color: #38bdf8 !important;
+            background-color: rgba(56, 189, 248, 0.1) !important;
+        }
+
+        /* Character animation */
+        @keyframes bounce-gentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        .animate-character {
+            animation: bounce-gentle 1s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.08); }
+        }
+        .animate-item {
+            animation: pulse-glow 1.5s infinite ease-in-out;
+        }
+
+        /* Active executing step indicator */
+        .step-active {
+            ring: 4px;
+            ring-color: #f59e0b;
+            transform: scale(1.08);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between bg-slate-950 text-slate-100 overflow-x-hidden">
+
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-30 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-gradient-to-tr from-indigo-500 to-purple-500 p-2.5 rounded-2xl shadow-lg shadow-indigo-500/20 text-white">
+                    <i class="fa-solid fa-compass-drafting text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-heading text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400">
+                        Petualangan Labirin Logika
+                    </h1>
+                    <p class="text-xs text-slate-400">Susun perintah panah & aksi untuk menyelesaikan misi!</p>
+                </div>
+            </div>
+
+            <!-- Level Selector & Status -->
+            <div class="flex items-center gap-2 md:gap-4">
+                <div class="flex items-center bg-slate-800/80 backdrop-blur rounded-xl p-1.5 border border-slate-700">
+                    <span class="text-xs font-semibold px-2 text-slate-400">Level:</span>
+                    <div id="level-buttons" class="flex gap-1">
+                        <!-- Level buttons dynamically generated -->
+                    </div>
+                </div>
+
+                <button id="btn-sound" onclick="toggleSound()" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700" title="Suara On/Off">
+                    <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto w-full px-4 py-6 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- LEFT COLUMN: Maze Grid Board & Mission Details -->
+        <section class="lg:col-span-7 flex flex-col gap-4">
+            
+            <!-- Mission Info Bar -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span id="level-badge" class="bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-xs font-bold px-2.5 py-0.5 rounded-full uppercase">
+                            Level 1
+                        </span>
+                        <h2 id="level-title" class="font-heading text-lg font-bold text-slate-100">Judul Level</h2>
+                    </div>
+                    <p id="level-desc" class="text-xs text-slate-300 mt-1">Petunjuk misi level ini akan tampil di sini.</p>
+                </div>
+                <!-- Inventory Bar -->
+                <div class="w-full sm:w-auto bg-slate-950/80 rounded-xl p-2 border border-slate-800 flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-400 pl-1"><i class="fa-solid fa-bag-shopping mr-1"></i>Tas:</span>
+                    <div id="inventory-container" class="flex items-center gap-1.5 min-w-[120px] min-h-[32px]">
+                        <span class="text-xs text-slate-500 italic px-2">Kosong</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Maze Grid Display Area -->
+            <div class="relative bg-slate-900 border border-slate-800 rounded-3xl p-4 shadow-2xl flex items-center justify-center min-h-[380px] md:min-h-[460px] overflow-hidden">
+                <!-- Grid background pattern -->
+                <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#6366f1_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none"></div>
+
+                <!-- Grid Render Engine Target -->
+                <div id="maze-grid" class="relative grid gap-2 z-10 transition-all duration-300">
+                    <!-- Dynamic Tiles injected here -->
+                </div>
+            </div>
+
+            <!-- Legend Bar -->
+            <div class="bg-slate-900/60 border border-slate-800/80 rounded-xl p-3 flex flex-wrap justify-center gap-4 text-xs text-slate-400">
+                <span class="flex items-center gap-1.5"><span class="text-base">🧑‍🚀</span> Karakter</span>
+                <span class="flex items-center gap-1.5"><span class="text-base">🏁</span> Tujuan</span>
+                <span class="flex items-center gap-1.5"><span class="text-base">🔑</span> Kunci</span>
+                <span class="flex items-center gap-1.5"><span class="text-base">🚪</span> Pintu Terkunci</span>
+                <span class="flex items-center gap-1.5"><span class="text-base">👟</span> Sepatu Air</span>
+                <span class="flex items-center gap-1.5"><span class="text-base">🌊</span> Sungai</span>
+            </div>
+        </section>
+
+        <section class="lg:col-span-5 flex flex-col gap-4">
+            
+            <!-- Command Source Palette (Available Drag Blocks) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center justify-between">
+                    <span><i class="fa-solid fa-hand-pointer text-indigo-400 mr-2"></i>Balok Perintah</span>
+                    <span class="text-[10px] text-slate-500 font-normal">(Drag / Klik untuk tambah)</span>
+                </h3>
+
+                <div class="grid grid-cols-5 gap-2">
+                    <!-- Up -->
+                    <div class="command-card bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-indigo-200 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1 shadow-md hover:scale-105 active:scale-95 transition"
+                         draggable="true" ondragstart="handleDragStart(event, 'UP')" onclick="addCommand('UP')">
+                        <i class="fa-solid fa-arrow-up text-lg"></i>
+                        <span class="text-[10px] font-semibold">Atas</span>
+                    </div>
+                    <!-- Down -->
+                    <div class="command-card bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-indigo-200 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1 shadow-md hover:scale-105 active:scale-95 transition"
+                         draggable="true" ondragstart="handleDragStart(event, 'DOWN')" onclick="addCommand('DOWN')">
+                        <i class="fa-solid fa-arrow-down text-lg"></i>
+                        <span class="text-[10px] font-semibold">Bawah</span>
+                    </div>
+                    <!-- Left -->
+                    <div class="command-card bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-indigo-200 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1 shadow-md hover:scale-105 active:scale-95 transition"
+                         draggable="true" ondragstart="handleDragStart(event, 'LEFT')" onclick="addCommand('LEFT')">
+                        <i class="fa-solid fa-arrow-left text-lg"></i>
+                        <span class="text-[10px] font-semibold">Kiri</span>
+                    </div>
+                    <!-- Right -->
+                    <div class="command-card bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-indigo-200 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1 shadow-md hover:scale-105 active:scale-95 transition"
+                         draggable="true" ondragstart="handleDragStart(event, 'RIGHT')" onclick="addCommand('RIGHT')">
+                        <i class="fa-solid fa-arrow-right text-lg"></i>
+                        <span class="text-[10px] font-semibold">Kanan</span>
+                    </div>
+                    <!-- Action / Pick / Use -->
+                    <div class="command-card bg-amber-600/30 hover:bg-amber-600/50 border border-amber-500/40 text-amber-200 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1 shadow-md hover:scale-105 active:scale-95 transition"
+                         draggable="true" ondragstart="handleDragStart(event, 'ACTION')" onclick="addCommand('ACTION')">
+                        <i class="fa-solid fa-hand text-lg"></i>
+                        <span class="text-[10px] font-semibold">Ambil</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Program Queue Area (Drop Zone) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl flex-1 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center">
+                            <i class="fa-solid fa-list-check text-emerald-400 mr-2"></i>Urutan Perintah
+                        </h3>
+                        <span id="queue-counter" class="text-xs text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full font-mono">0 Balok</span>
+                    </div>
+
+                    <!-- Drop Target Container -->
+                    <div id="command-queue-container" 
+                         class="min-h-[160px] max-h-[260px] overflow-y-auto p-3 bg-slate-950/70 rounded-xl border-2 border-dashed border-slate-700/80 flex flex-wrap content-start gap-2 transition-all"
+                         ondragover="handleDragOver(event)" 
+                         ondragleave="handleDragLeave(event)" 
+                         ondrop="handleDrop(event)">
+                        
+                        <!-- Placeholder when queue is empty -->
+                        <div id="queue-placeholder" class="w-full h-full min-h-[130px] flex flex-col items-center justify-center text-slate-500 text-center pointer-events-none">
+                            <i class="fa-solid fa-cloud-arrow-down text-2xl mb-2 text-slate-600"></i>
+                            <p class="text-xs">Tarik & Lepaskan panah di sini</p>
+                            <p class="text-[10px] text-slate-600 mt-0.5">atau klik tombol arah di atas</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Execution Controls & Speed Toggle -->
+                <div class="mt-4 pt-3 border-t border-slate-800 flex flex-col gap-2">
+                    <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                        <span>Kecepatan Jalur:</span>
+                        <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
+                            <button onclick="setSpeed(600)" id="speed-slow" class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-600 text-white">Lambat</button>
+                            <button onclick="setSpeed(350)" id="speed-normal" class="px-2 py-0.5 rounded text-[10px] font-bold text-slate-400 hover:text-slate-200">Normal</button>
+                            <button onclick="setSpeed(180)" id="speed-fast" class="px-2 py-0.5 rounded text-[10px] font-bold text-slate-400 hover:text-slate-200">Cepat</button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-2">
+                        <!-- Play Button -->
+                        <button id="btn-run" onclick="runProgram()" class="col-span-7 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition active:scale-95">
+                            <i class="fa-solid fa-play"></i> Jalankan
+                        </button>
+                        <!-- Reset Button -->
+                        <button id="btn-reset" onclick="resetLevelState()" class="col-span-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-3 px-3 rounded-xl border border-slate-700 flex items-center justify-center gap-1 transition active:scale-95" title="Ulang Posisi">
+                            <i class="fa-solid fa-rotate-left"></i> Reset
+                        </button>
+                        <!-- Clear Queue Button -->
+                        <button id="btn-clear" onclick="clearQueue()" class="col-span-2 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 font-semibold py-3 px-2 rounded-xl border border-rose-800/50 flex items-center justify-center transition active:scale-95" title="Hapus Semua Perintah">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Win Modal -->
+    <div id="modal-win" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl text-center transform transition-all scale-95 animate-fade-in">
+            <div class="w-20 h-20 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl shadow-lg shadow-emerald-500/20">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <h3 class="font-heading text-2xl font-bold text-white mb-2">Hebat! Level Selesai! 🎉</h3>
+            <p id="modal-win-msg" class="text-slate-300 text-sm mb-6">Kamu berhasil menyusun langkah logis dengan sempurna!</p>
+            <div class="flex gap-3 justify-center">
+                <button onclick="restartCurrentLevel()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-sm font-semibold transition">
+                    <i class="fa-solid fa-rotate-right mr-1"></i> Main Lagi
+                </button>
+                <button id="btn-next-level" onclick="nextLevel()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-600/30 transition">
+                    Level Berikutnya <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lose / Fail Modal -->
+    <div id="modal-fail" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl text-center transform transition-all scale-95">
+            <div class="w-20 h-20 bg-rose-500/20 text-rose-400 border border-rose-500/40 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl shadow-lg shadow-rose-500/20">
+                <i class="fa-solid fa-face-frown"></i>
+            </div>
+            <h3 class="font-heading text-2xl font-bold text-white mb-2">Oops! Jalur Terhalang</h3>
+            <p id="modal-fail-msg" class="text-slate-300 text-sm mb-6">Periksa kembali urutan langkahmu dan item yang dibutuhkan!</p>
+            <button onclick="closeFailModal()" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold shadow-lg transition">
+                <i class="fa-solid fa-wrench mr-1.5"></i> Perbaiki Logika
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer Info -->
+    <footer class="bg-slate-950 border-t border-slate-900 py-3 text-center text-xs text-slate-600">
+        Game Edukasi Interaktif • Media Pembelajaran Logika & Algoritma Siswa
+    </footer>
+
+    <script>
+        let audioCtx = null;
+        let isSoundMuted = false;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (isSoundMuted) return;
+            initAudio();
+            if (!audioCtx) return;
+
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'move') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(450, now + 0.08);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } else if (type === 'pick') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(520, now);
+                osc.frequency.setValueAtTime(780, now + 0.08);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            } else if (type === 'unlock') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.setValueAtTime(600, now + 0.1);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } else if (type === 'win') {
+                const freqs = [400, 500, 600, 800];
+                freqs.forEach((f, i) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    o.type = 'triangle';
+                    o.frequency.setValueAtTime(f, now + i * 0.1);
+                    g.gain.setValueAtTime(0.2, now + i * 0.1);
+                    g.gain.linearRampToValueAtTime(0.01, now + i * 0.1 + 0.2);
+                    o.start(now + i * 0.1);
+                    o.stop(now + i * 0.1 + 0.2);
+                });
+            } else if (type === 'fail') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.linearRampToValueAtTime(110, now + 0.3);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            }
+        }
+
+        function toggleSound() {
+            isSoundMuted = !isSoundMuted;
+            const icon = document.getElementById('sound-icon');
+            if (isSoundMuted) {
+                icon.className = "fa-solid fa-volume-xmark text-rose-400";
+            } else {
+                icon.className = "fa-solid fa-volume-high text-slate-300";
+            }
+        }
+
+        /* 
+           Grid Types:
+           '.' : Empty Path
+           '#' : Solid Wall
+           'S' : Start Position
+           'G' : Goal / Finish
+           Item Spawners:
+           'K' : Key (Kunci)
+           'B' : Water Boots (Sepatu Air)
+           'F' : Bone Food (Makanan Anjing)
+           'H' : Hammer (Palu)
+           'T' : Torch (Obor)
+           Obstacles:
+           'D' : Locked Door (Requires Key 'K')
+           'W' : River/Water (Requires Boots 'B')
+           'A' : Dog (Requires Food 'F')
+           'R' : Broken Rock Wall (Requires Hammer 'H')
+           'I' : Ice Wall (Requires Torch 'T')
+        */
+
+        const LEVELS = [
+            {
+                id: 1,
+                title: "Perkenalan Navigasi",
+                badge: "Level 1",
+                desc: "Susun panah arah ke kanan dan bawah untuk membimbing astronot ke bendera finish!",
+                rows: 4,
+                cols: 4,
+                map: [
+                    ['S', '.', '.', '.'],
+                    ['#', '#', '.', '#'],
+                    ['.', '.', '.', '.'],
+                    ['.', '#', '#', 'G']
+                ]
+            },
+            {
+                id: 2,
+                title: "Kunci & Pintu Terkunci",
+                badge: "Level 2",
+                desc: "Ambil Kunci 🔑 terlebih dahulu dengan balok 'Ambil' 🖐️ sebelum menuju Pintu 🚪!",
+                rows: 5,
+                cols: 5,
+                map: [
+                    ['S', '.', '.', '.', 'K'],
+                    ['.', '#', '#', '#', '.'],
+                    ['.', '.', '.', '.', '.'],
+                    ['#', '#', '#', '#', '.'],
+                    ['.', '.', '.', 'D', 'G']
+                ]
+            },
+            {
+                id: 3,
+                title: "Menyeberangi Sungai",
+                badge: "Level 3",
+                desc: "Ambil Sepatu Air 👟 dahulu agar bisa melewati ubin Sungai 🌊 menuju Finish!",
+                rows: 5,
+                cols: 5,
+                map: [
+                    ['S', '.', '.', '.', '#'],
+                    ['#', '#', '.', '#', '#'],
+                    ['B', '.', '.', 'W', 'G'],
+                    ['.', '#', '#', 'W', '#'],
+                    ['.', '.', '.', '.', '.']
+                ]
+            },
+            {
+                id: 4,
+                title: "Anjing Penjaga & Pintu Istana",
+                badge: "Level 4",
+                desc: "Ambil Makanan Anjing 🦴 untuk jinakkan Anjing 🐶, lalu ambil Kunci 🔑 untuk buka Pintu 🚪!",
+                rows: 6,
+                cols: 6,
+                map: [
+                    ['S', '.', '.', '#', 'K', '.'],
+                    ['.', '#', '.', '#', '.', '.'],
+                    ['F', '.', '.', 'A', '.', '#'],
+                    ['#', '#', '.', '#', '.', '.'],
+                    ['.', '.', '.', '#', 'D', '.'],
+                    ['.', '#', '.', '.', '.', 'G']
+                ]
+            },
+            {
+                id: 5,
+                title: "Master Labirin Logika",
+                badge: "Level 5",
+                desc: "Gunakan Sepatu 👟 melintasi Sungai 🌊, Palu 🔨 meruntuhkan Batu 🧱, & Kunci 🔑 ke Pintu 🚪!",
+                rows: 6,
+                cols: 6,
+                map: [
+                    ['S', '.', '#', '.', '.', 'K'],
+                    ['.', '.', '#', '.', '#', '.'],
+                    ['#', '.', '#', '.', '#', '.'],
+                    ['B', '.', 'W', 'H', '#', 'R'],
+                    ['#', '#', '#', '#', '#', '.'],
+                    ['#', '#', '#', '#', 'D', 'G']
+                ]
+            },
+            {
+                id: 6,
+                title: "Lembah Anjing & Pintu Rahasia",
+                badge: "Level 6",
+                desc: "Labirin 7x7: Ambil Makanan Anjing 🦴 untuk lewat Anjing 🐶, lalu ambil Kunci 🔑 untuk Pintu 🚪!",
+                rows: 7,
+                cols: 7,
+                map: [
+                    ['S', '.', '#', '.', '.', '.', 'K'],
+                    ['.', '.', '#', '.', '#', '.', '.'],
+                    ['F', '.', '.', '.', '#', '#', '.'],
+                    ['#', '#', 'A', '#', '#', '.', '.'],
+                    ['.', '.', '.', '.', '.', '.', '#'],
+                    ['.', '#', '#', '#', 'D', '#', '#'],
+                    ['.', '.', '.', '.', '.', '.', 'G']
+                ]
+            },
+            {
+                id: 7,
+                title: "Sungai & Dinding Batu",
+                badge: "Level 7",
+                desc: "Labirin 7x7: Ambil Sepatu Air 👟 untuk seberangi Sungai 🌊, lalu ambil Palu 🔨 hancurkan Batu 🧱!",
+                rows: 7,
+                cols: 7,
+                map: [
+                    ['S', '.', '.', '#', '.', '.', 'H'],
+                    ['#', '#', '.', '#', '.', '#', '.'],
+                    ['B', '.', '.', '.', '.', '#', '.'],
+                    ['#', '#', 'W', '#', '#', '#', '.'],
+                    ['.', '.', 'W', '.', '.', '.', '.'],
+                    ['.', '#', '#', '#', 'R', '#', '#'],
+                    ['.', '.', '.', '.', '.', '.', 'G']
+                ]
+            },
+            {
+                id: 8,
+                title: "Hutan Tiga Ujian",
+                badge: "Level 8",
+                desc: "Labirin 8x8: Kumpulkan 3 barang (Makanan 🦴, Sepatu 👟, Kunci 🔑) secara berurutan!",
+                rows: 8,
+                cols: 8,
+                map: [
+                    ['S', '.', '.', '.', '#', '.', '.', 'K'],
+                    ['#', '#', '#', '.', '#', '.', '#', '.'],
+                    ['F', '.', '.', '.', '.', '.', '#', '.'],
+                    ['#', '#', 'A', '#', '#', '#', '#', '.'],
+                    ['B', '.', '.', '.', 'W', '.', '.', '.'],
+                    ['#', '#', '#', '#', 'W', '#', '#', '#'],
+                    ['.', '.', '.', '.', '.', '.', 'D', '.'],
+                    ['.', '.', '.', '.', '.', '.', '.', 'G']
+                ]
+            },
+            {
+                id: 9,
+                title: "Kuil Es & Gua Rahasia",
+                badge: "Level 9",
+                desc: "Labirin 8x8: Ambil Obor 🕯️ cairkan Es 🧊, Palu 🔨 hancurkan Batu 🧱, & Kunci 🔑 buka Gerbang 🚪!",
+                rows: 8,
+                cols: 8,
+                map: [
+                    ['S', '.', '.', '#', '.', '.', '.', 'K'],
+                    ['#', '#', '.', '#', '.', '#', '#', '.'],
+                    ['T', '.', '.', '.', '.', '#', '.', '.'],
+                    ['#', '#', 'I', '#', '#', '#', '.', '#'],
+                    ['.', '.', '.', '.', 'H', '.', '.', '.'],
+                    ['.', '#', '#', '#', '#', '#', 'R', '#'],
+                    ['.', '.', '.', '.', '.', '.', '.', '.'],
+                    ['#', '#', '#', '#', '#', '#', 'D', 'G']
+                ]
+            },
+            {
+                id: 10,
+                title: "Benteng Terakhir Logika",
+                badge: "Level 10",
+                desc: "Tantangan Mahkota (8x8): Susun algoritma presisi untuk mengambil 4 item (👟 🦴 🔨 🔑)!",
+                rows: 8,
+                cols: 8,
+                map: [
+                    ['S', '.', '.', '.', '#', '.', '.', 'K'],
+                    ['#', '#', '#', '.', '#', '.', '#', '.'],
+                    ['B', '.', '.', '.', '#', '.', '#', '.'],
+                    ['#', '#', 'W', '#', '#', '.', '#', '.'],
+                    ['F', '.', '.', '.', 'A', '.', '.', '.'],
+                    ['#', '#', '#', '#', '.', '#', 'R', '#'],
+                    ['.', '.', '.', '.', 'H', '.', '.', '.'],
+                    ['#', '#', '#', '#', '#', '#', 'D', 'G']
+                ]
+            }
+        ];
+
+        let currentLevelIndex = 0;
+        let gridState = []; // 2D array of runtime cell objects
+        let playerPos = { r: 0, c: 0 };
+        let startPos = { r: 0, c: 0 };
+        let inventory = new Set();
+        let commandQueue = [];
+        let isExecuting = false;
+        let stepDelay = 350; // Delay in ms between steps
+
+        window.onload = function() {
+            renderLevelButtons();
+            loadLevel(0);
+        };
+
+        function renderLevelButtons() {
+            const container = document.getElementById('level-buttons');
+            container.innerHTML = '';
+            LEVELS.forEach((lvl, idx) => {
+                const btn = document.createElement('button');
+                btn.id = `lvl-btn-${idx}`;
+                btn.innerText = idx + 1;
+                btn.onclick = () => { if (!isExecuting) loadLevel(idx); };
+                btn.className = `w-7 h-7 rounded-lg text-xs font-bold transition flex items-center justify-center ${
+                    idx === currentLevelIndex 
+                    ? 'bg-indigo-600 text-white shadow-md' 
+                    : 'bg-slate-700/80 hover:bg-slate-600 text-slate-300'
+                }`;
+                container.appendChild(btn);
+            });
+        }
+
+        function loadLevel(index) {
+            currentLevelIndex = index;
+            const level = LEVELS[index];
+
+            // Update UI Level Header
+            document.getElementById('level-badge').innerText = level.badge;
+            document.getElementById('level-title').innerText = level.title;
+            document.getElementById('level-desc').innerText = level.desc;
+
+            // Highlight level button
+            LEVELS.forEach((_, idx) => {
+                const btn = document.getElementById(`lvl-btn-${idx}`);
+                if (btn) {
+                    btn.className = `w-7 h-7 rounded-lg text-xs font-bold transition flex items-center justify-center ${
+                        idx === currentLevelIndex 
+                        ? 'bg-indigo-600 text-white shadow-md ring-2 ring-indigo-400' 
+                        : 'bg-slate-700/80 hover:bg-slate-600 text-slate-300'
+                    }`;
+                }
+            });
+
+            // Reset queues & inventory
+            clearQueue();
+            resetLevelState();
+        }
+
+        function resetLevelState() {
+            if (isExecuting) return;
+            const level = LEVELS[currentLevelIndex];
+            inventory.clear();
+            updateInventoryUI();
+
+            // Initialize Grid State Map
+            gridState = [];
+            for (let r = 0; r < level.rows; r++) {
+                gridState[r] = [];
+                for (let c = 0; c < level.cols; c++) {
+                    const char = level.map[r][c];
+                    gridState[r][c] = {
+                        type: char,
+                        item: ['K', 'B', 'F', 'H'].includes(char) ? char : null,
+                        obstacle: ['D', 'W', 'A', 'R'].includes(char) ? char : null
+                    };
+
+                    if (char === 'S') {
+                        startPos = { r, c };
+                        playerPos = { r, c };
+                    }
+                }
+            }
+
+            renderBoard();
+        }
+
+        function renderBoard() {
+            const level = LEVELS[currentLevelIndex];
+            const board = document.getElementById('maze-grid');
+            
+            board.style.gridTemplateColumns = `repeat(${level.cols}, minmax(0, 1fr))`;
+            board.innerHTML = '';
+
+            // Dynamic cell sizing based on grid dimensions
+            const tileSizeClass = level.cols >= 7 
+                ? 'w-8 h-8 sm:w-11 sm:h-11 md:w-12 md:h-12 text-base sm:text-xl' 
+                : 'w-12 h-12 sm:w-16 sm:h-16 text-xl sm:text-2xl';
+
+            for (let r = 0; r < level.rows; r++) {
+                for (let c = 0; c < level.cols; c++) {
+                    const cell = gridState[r][c];
+                    const isPlayerHere = (playerPos.r === r && playerPos.c === c);
+
+                    const tileDiv = document.createElement('div');
+                    tileDiv.id = `cell-${r}-${c}`;
+                    tileDiv.className = `grid-tile ${tileSizeClass} rounded-xl sm:rounded-2xl flex items-center justify-center relative shadow-inner font-bold border ${getTileStyle(cell.type, cell.obstacle)}`;
+
+                    // Content inside Tile
+                    let contentHTML = '';
+
+                    if (isPlayerHere) {
+                        contentHTML += `<span class="animate-character z-20">🧑‍🚀</span>`;
+                    } else if (cell.type === 'G') {
+                        contentHTML += `<span class="animate-bounce">🏁</span>`;
+                    } else if (cell.item) {
+                        contentHTML += `<span class="animate-item">${getItemEmoji(cell.item)}</span>`;
+                    } else if (cell.obstacle) {
+                        contentHTML += `<span>${getObstacleEmoji(cell.obstacle)}</span>`;
+                    } else if (cell.type === 'S') {
+                        contentHTML += `<span class="text-[9px] sm:text-[10px] text-emerald-400/80 font-bold uppercase tracking-tighter">START</span>`;
+                    }
+
+                    tileDiv.innerHTML = contentHTML;
+                    board.appendChild(tileDiv);
+                }
+            }
+        }
+
+        function getTileStyle(type, obstacle) {
+            if (type === '#') return 'bg-slate-800 border-slate-700 text-slate-600 shadow-md';
+            if (obstacle === 'W') return 'bg-cyan-950/80 border-cyan-700/60 text-cyan-300';
+            if (obstacle === 'D') return 'bg-amber-950/60 border-amber-800/80';
+            if (obstacle === 'A') return 'bg-orange-950/60 border-orange-800/80';
+            if (obstacle === 'R') return 'bg-stone-900 border-stone-700';
+            if (obstacle === 'I') return 'bg-blue-950/80 border-blue-700/60';
+            if (type === 'G') return 'bg-emerald-950/80 border-emerald-500/80 shadow-lg shadow-emerald-500/10';
+            return 'bg-slate-900/90 border-slate-800 hover:border-slate-700';
+        }
+
+        function getItemEmoji(code) {
+            switch(code) {
+                case 'K': return '🔑';
+                case 'B': return '👟';
+                case 'F': return '🦴';
+                case 'H': return '🔨';
+                case 'T': return '🕯️';
+                default: return '';
+            }
+        }
+
+        function getItemName(code) {
+            switch(code) {
+                case 'K': return 'Kunci';
+                case 'B': return 'Sepatu Air';
+                case 'F': return 'Makanan';
+                case 'H': return 'Palu';
+                case 'T': return 'Obor';
+                default: return 'Item';
+            }
+        }
+
+        function getObstacleEmoji(code) {
+            switch(code) {
+                case 'D': return '🚪';
+                case 'W': return '🌊';
+                case 'A': return '🐶';
+                case 'R': return '🧱';
+                case 'I': return '🧊';
+                default: return '';
+            }
+        }
+
+        function getItemName(code) {
+            switch(code) {
+                case 'K': return 'Kunci';
+                case 'B': return 'Sepatu Air';
+                case 'F': return 'Tulang Makanan';
+                case 'H': return 'Palu';
+                default: return 'Item';
+            }
+        }
+
+        function getObstacleEmoji(code) {
+            switch(code) {
+                case 'D': return '🚪';
+                case 'W': return '🌊';
+                case 'A': return '🐶';
+                case 'R': return '🧱';
+                default: return '';
+            }
+        }
+
+        function updateInventoryUI() {
+            const container = document.getElementById('inventory-container');
+            container.innerHTML = '';
+
+            if (inventory.size === 0) {
+                container.innerHTML = `<span class="text-xs text-slate-500 italic px-2">Kosong</span>`;
+                return;
+            }
+
+            inventory.forEach(itemCode => {
+                const tag = document.createElement('div');
+                tag.className = 'bg-indigo-950 border border-indigo-700 text-indigo-200 text-xs px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm animate-fade-in';
+                tag.innerHTML = `<span>${getItemEmoji(itemCode)}</span> <span class="text-[10px] font-semibold">${getItemName(itemCode)}</span>`;
+                container.appendChild(tag);
+            });
+        }
+
+        function handleDragStart(e, commandType) {
+            if (isExecuting) return;
+            e.dataTransfer.setData('text/plain', commandType);
+            e.dataTransfer.effectAllowed = 'copy';
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            if (isExecuting) return;
+            e.dataTransfer.dropEffect = 'copy';
+            const container = document.getElementById('command-queue-container');
+            container.classList.add('drop-target-active');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            const container = document.getElementById('command-queue-container');
+            container.classList.remove('drop-target-active');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const container = document.getElementById('command-queue-container');
+            container.classList.remove('drop-target-active');
+            if (isExecuting) return;
+
+            const commandType = e.dataTransfer.getData('text/plain');
+            if (['UP', 'DOWN', 'LEFT', 'RIGHT', 'ACTION'].includes(commandType)) {
+                addCommand(commandType);
+            }
+        }
+
+        function addCommand(type) {
+            if (isExecuting) return;
+            if (commandQueue.length >= 60) {
+                alert('Batas maksimum 60 perintah!');
+                return;
+            }
+            commandQueue.push(type);
+            playSound('move');
+            renderQueueUI();
+        }
+
+        function removeCommand(index) {
+            if (isExecuting) return;
+            commandQueue.splice(index, 1);
+            playSound('move');
+            renderQueueUI();
+        }
+
+        function clearQueue() {
+            if (isExecuting) return;
+            commandQueue = [];
+            renderQueueUI();
+        }
+
+        function renderQueueUI() {
+            const container = document.getElementById('command-queue-container');
+            const counter = document.getElementById('queue-counter');
+
+            counter.innerText = `${commandQueue.length} Balok`;
+
+            if (commandQueue.length === 0) {
+                container.innerHTML = `
+                    <div id="queue-placeholder" class="w-full h-full min-h-[130px] flex flex-col items-center justify-center text-slate-500 text-center pointer-events-none">
+                        <i class="fa-solid fa-cloud-arrow-down text-2xl mb-2 text-slate-600"></i>
+                        <p class="text-xs">Tarik & Lepaskan panah di sini</p>
+                        <p class="text-[10px] text-slate-600 mt-0.5">atau klik tombol arah di atas</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+
+            commandQueue.forEach((cmd, idx) => {
+                const card = document.createElement('div');
+                card.id = `cmd-step-${idx}`;
+                
+                let isAction = (cmd === 'ACTION');
+                let bgStyle = isAction 
+                    ? 'bg-amber-600/40 border-amber-500/50 text-amber-200' 
+                    : 'bg-indigo-600/40 border-indigo-500/50 text-indigo-200';
+
+                card.className = `relative group flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border ${bgStyle} text-xs font-bold shadow transition hover:scale-105`;
+
+                let iconHTML = '';
+                let label = '';
+                switch(cmd) {
+                    case 'UP': iconHTML = '<i class="fa-solid fa-arrow-up"></i>'; label = 'Atas'; break;
+                    case 'DOWN': iconHTML = '<i class="fa-solid fa-arrow-down"></i>'; label = 'Bawah'; break;
+                    case 'LEFT': iconHTML = '<i class="fa-solid fa-arrow-left"></i>'; label = 'Kiri'; break;
+                    case 'RIGHT': iconHTML = '<i class="fa-solid fa-arrow-right"></i>'; label = 'Kanan'; break;
+                    case 'ACTION': iconHTML = '<i class="fa-solid fa-hand"></i>'; label = 'Ambil'; break;
+                }
+
+                card.innerHTML = `
+                    <span class="text-[10px] opacity-60 font-mono">${idx + 1}.</span>
+                    <span>${iconHTML}</span>
+                    <span class="text-[11px]">${label}</span>
+                    <button onclick="removeCommand(${idx})" class="ml-1 text-slate-400 hover:text-rose-400 opacity-80 group-hover:opacity-100 transition">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function setSpeed(ms) {
+            stepDelay = ms;
+            document.getElementById('speed-slow').className = ms === 600 ? 'px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-600 text-white' : 'px-2 py-0.5 rounded text-[10px] font-bold text-slate-400 hover:text-slate-200';
+            document.getElementById('speed-normal').className = ms === 350 ? 'px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-600 text-white' : 'px-2 py-0.5 rounded text-[10px] font-bold text-slate-400 hover:text-slate-200';
+            document.getElementById('speed-fast').className = ms === 180 ? 'px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-600 text-white' : 'px-2 py-0.5 rounded text-[10px] font-bold text-slate-400 hover:text-slate-200';
+        }
+
+        async function runProgram() {
+            if (isExecuting) return;
+            if (commandQueue.length === 0) {
+                alert('Tambahkan setidaknya satu balok perintah terlebih dahulu!');
+                return;
+            }
+
+            // Reset level board state first before running
+            resetLevelState();
+            isExecuting = true;
+            document.getElementById('btn-run').disabled = true;
+            document.getElementById('btn-run').classList.add('opacity-50', 'cursor-not-allowed');
+
+            const level = LEVELS[currentLevelIndex];
+
+            for (let i = 0; i < commandQueue.length; i++) {
+                const cmd = commandQueue[i];
+
+                // Highlight active UI step block
+                highlightStep(i);
+
+                await new Promise(r => setTimeout(r, stepDelay));
+
+                if (cmd === 'ACTION') {
+                    // Try pick item at current tile
+                    const currentCell = gridState[playerPos.r][playerPos.c];
+                    if (currentCell.item) {
+                        const itemCode = currentCell.item;
+                        inventory.add(itemCode);
+                        currentCell.item = null; // Removed from tile
+                        playSound('pick');
+                        updateInventoryUI();
+                        renderBoard();
+                    } else {
+                        // Action failed (nothing to pick)
+                        playSound('fail');
+                    }
+                } else {
+                    // Directional Movement
+                    let nextR = playerPos.r;
+                    let nextC = playerPos.c;
+
+                    if (cmd === 'UP') nextR--;
+                    if (cmd === 'DOWN') nextR++;
+                    if (cmd === 'LEFT') nextC--;
+                    if (cmd === 'RIGHT') nextC++;
+
+                    // Check Grid Boundary
+                    if (nextR < 0 || nextR >= level.rows || nextC < 0 || nextC >= level.cols) {
+                        showFailModal("Karakter menabrak batas luar labirin!");
+                        finishExecution();
+                        return;
+                    }
+
+                    const targetCell = gridState[nextR][nextC];
+
+                    // Check Solid Wall
+                    if (targetCell.type === '#') {
+                        showFailModal("Karakter menabrak tembok keras!");
+                        finishExecution();
+                        return;
+                    }
+
+                    // Check Obstacles vs Inventory
+                    if (targetCell.obstacle) {
+                        const obs = targetCell.obstacle;
+
+                        if (obs === 'D') { // Locked door needs Key 'K'
+                            if (inventory.has('K')) {
+                                targetCell.obstacle = null; // Open door
+                                playSound('unlock');
+                            } else {
+                                showFailModal("Pintu Terkunci! Kamu membutuhkan Kunci 🔑 terlebih dahulu.");
+                                finishExecution();
+                                return;
+                            }
+                        } else if (obs === 'W') { // Water needs Boots 'B'
+                            if (!inventory.has('B')) {
+                                showFailModal("Kamu tenggelam di air! Ambil Sepatu Air 👟 terlebih dahulu.");
+                                finishExecution();
+                                return;
+                            }
+                        } else if (obs === 'A') { // Dog needs Food 'F'
+                            if (inventory.has('F')) {
+                                targetCell.obstacle = null; // Tamed dog
+                                playSound('unlock');
+                            } else {
+                                showFailModal("Anjing galak menghalangi jalan! Berikan Makanan 🦴 dulu.");
+                                finishExecution();
+                                return;
+                            }
+                        } else if (obs === 'R') { // Rock needs Hammer 'H'
+                            if (inventory.has('H')) {
+                                targetCell.obstacle = null; // Broken rock
+                                playSound('unlock');
+                            } else {
+                                showFailModal("Dinding Batu menghalangi! Gunakan Palu 🔨 untuk meruntuhkannya.");
+                                finishExecution();
+                                return;
+                            }
+                        } else if (obs === 'I') { // Ice needs Torch 'T'
+                            if (inventory.has('T')) {
+                                targetCell.obstacle = null; // Melted ice
+                                playSound('unlock');
+                            } else {
+                                showFailModal("Rintangan Es menghalangi! Gunakan Obor 🕯️ untuk mencairkannya.");
+                                finishExecution();
+                                return;
+                            }
+                        }
+                    }
+
+                    // Move Character
+                    playerPos.r = nextR;
+                    playerPos.c = nextC;
+                    playSound('move');
+                    renderBoard();
+
+                    // Check Win Condition
+                    if (targetCell.type === 'G') {
+                        playSound('win');
+                        unhighlightAllSteps();
+                        showWinModal();
+                        finishExecution();
+                        return;
+                    }
+                }
+            }
+
+            // If queue finishes without reaching goal
+            unhighlightAllSteps();
+            if (gridState[playerPos.r][playerPos.c].type !== 'G') {
+                showFailModal("Urutan langkah selesai, tetapi belum mencapai Finish 🏁.");
+            }
+            finishExecution();
+        }
+
+        function highlightStep(index) {
+            unhighlightAllSteps();
+            const stepEl = document.getElementById(`cmd-step-${index}`);
+            if (stepEl) {
+                stepEl.classList.add('step-active');
+                stepEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function unhighlightAllSteps() {
+            commandQueue.forEach((_, idx) => {
+                const el = document.getElementById(`cmd-step-${idx}`);
+                if (el) el.classList.remove('step-active');
+            });
+        }
+
+        function finishExecution() {
+            isExecuting = false;
+            document.getElementById('btn-run').disabled = false;
+            document.getElementById('btn-run').classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        function showWinModal() {
+            const modal = document.getElementById('modal-win');
+            const msg = document.getElementById('modal-win-msg');
+            const btnNext = document.getElementById('btn-next-level');
+
+            if (currentLevelIndex >= LEVELS.length - 1) {
+                msg.innerText = "Selamat! Kamu telah menyelesaikan seluruh 10 Level Tantangan Master Labirin Logika! 🎉🏆";
+                btnNext.classList.add('hidden');
+            } else {
+                msg.innerText = `Luar biasa! Kamu menyelesaikan ${LEVELS[currentLevelIndex].title}. Siap ke level berikutnya?`;
+                btnNext.classList.remove('hidden');
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function showFailModal(reason) {
+            playSound('fail');
+            const modal = document.getElementById('modal-fail');
+            document.getElementById('modal-fail-msg').innerText = reason;
+            modal.classList.remove('hidden');
+        }
+
+        function closeFailModal() {
+            document.getElementById('modal-fail').classList.add('hidden');
+        }
+
+        function restartCurrentLevel() {
+            document.getElementById('modal-win').classList.add('hidden');
+            resetLevelState();
+        }
+
+        function nextLevel() {
+            document.getElementById('modal-win').classList.add('hidden');
+            if (currentLevelIndex < LEVELS.length - 1) {
+                loadLevel(currentLevelIndex + 1);
+            }
+        }
+    </script>
+</body>
+</html>
