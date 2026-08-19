@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan Pola Pintar - Game Matematika Kelas 2 SD</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Fredoka & Quicksand for playful child-friendly typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind Custom Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                        quicksand: ['Quicksand', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            yellow: '#FFD166',
+                            green: '#06D6A0',
+                            blue: '#118AB2',
+                            pink: '#EF476F',
+                            purple: '#8338EC',
+                            dark: '#073B4C'
+                        }
+                    },
+                    keyframes: {
+                        bounceGentle: {
+                            '0%, 100%': { transform: 'translateY(-4%)' },
+                            '50%': { transform: 'translateY(0)' },
+                        },
+                        wiggle: {
+                            '0%, 100%': { transform: 'rotate(-3deg)' },
+                            '50%': { transform: 'rotate(3deg)' },
+                        },
+                        popIn: {
+                            '0%': { transform: 'scale(0.8)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' }
+                        }
+                    },
+                    animation: {
+                        'bounce-gentle': 'bounceGentle 2s infinite ease-in-out',
+                        'wiggle': 'wiggle 0.5s infinite ease-in-out',
+                        'pop-in': 'popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #fef3c7 50%, #fce7f3 100%);
+            min-height: 100vh;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .title-font {
+            font-family: 'Fredoka', cursive;
+        }
+
+        /* Pattern card custom styles */
+        .pattern-card {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .pattern-card:hover {
+            transform: translateY(-5px) scale(1.02);
+        }
+
+        .pattern-card:active {
+            transform: translateY(2px) scale(0.98);
+        }
+
+        /* Custom scrollbar for level selector */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #118AB2;
+            border-radius: 10px;
+        }
+
+        /* Glassmorphism containers */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+        }
+    </style>
+</head>
+<body class="text-slate-800 flex flex-col min-h-screen relative overflow-x-hidden">
+
+    <canvas id="confettiCanvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
+
+    <header class="w-full bg-white/90 backdrop-blur-md shadow-md sticky top-0 z-40 px-4 py-3 border-b-4 border-brand-blue">
+        <div class="max-w-5xl mx-auto flex items-center justify-between">
+            <!-- Game Title & Mascot Icon -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="showLevelSelect()">
+                <div class="w-12 h-12 rounded-2xl bg-brand-yellow flex items-center justify-center text-2xl shadow-inner border-2 border-amber-400 animate-bounce-gentle">
+                    🦊
+                </div>
+                <div>
+                    <h1 class="title-font text-xl md:text-2xl font-bold text-brand-blue tracking-wide leading-none">
+                        Pola Pintar
+                    </h1>
+                    <span class="text-xs font-bold text-slate-500">Matematika Kelas 2 SD</span>
+                </div>
+            </div>
+
+            <!-- Stats Bar (Stars, Sound Toggle, Map Button) -->
+            <div class="flex items-center gap-2 md:gap-4">
+                <!-- Stars Counter -->
+                <div class="flex items-center gap-1.5 bg-amber-100 border-2 border-amber-300 px-3 py-1.5 rounded-full shadow-sm">
+                    <span class="text-xl">⭐</span>
+                    <span id="totalStarsText" class="title-font font-bold text-amber-700 text-lg">0</span>
+                    <span class="text-xs text-amber-600 font-bold hidden sm:inline">/ 150</span>
+                </div>
+
+                <!-- Sound Toggle -->
+                <button id="soundBtn" onclick="toggleSound()" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 border-2 border-slate-300 flex items-center justify-center text-xl transition-all" title="Efek Suara">
+                    🔊
+                </button>
+
+                <!-- Level Select Button -->
+                <button onclick="showLevelSelect()" class="bg-brand-blue hover:bg-blue-600 text-white font-bold px-4 py-2 rounded-full shadow-md transition-all title-font text-sm flex items-center gap-1.5">
+                    <span>🗺️</span>
+                    <span class="hidden sm:inline">Peta Level</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-5xl w-full mx-auto p-4 flex flex-col justify-center items-center">
+
+        <!-- VIEW 1: LEVEL SELECTION MAP -->
+        <section id="levelSelectView" class="w-full glass-panel rounded-3xl p-6 md:p-8 shadow-xl my-4 animate-pop-in">
+            <div class="text-center mb-6">
+                <h2 class="title-font text-2xl md:text-3xl font-bold text-brand-blue">Pilih Level Petualangan</h2>
+                <p class="text-slate-600 text-sm md:text-base font-semibold mt-1">Selesaikan 50 tantangan pola dan kumpulkan semua bintang!</p>
+
+                <!-- Filter Categories -->
+                <div class="flex flex-wrap justify-center gap-2 mt-4">
+                    <button onclick="filterLevels('all')" class="category-btn active border-2 border-slate-300 bg-white px-3 py-1.5 rounded-full text-xs md:text-sm font-bold shadow-sm transition-all hover:scale-105" data-cat="all">Semua (50)</button>
+                    <button onclick="filterLevels('bentuk')" class="category-btn border-2 border-pink-300 bg-pink-50 text-pink-700 px-3 py-1.5 rounded-full text-xs md:text-sm font-bold shadow-sm transition-all hover:scale-105" data-cat="bentuk">🔷 Bentuk</button>
+                    <button onclick="filterLevels('warna')" class="category-btn border-2 border-emerald-300 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full text-xs md:text-sm font-bold shadow-sm transition-all hover:scale-105" data-cat="warna">🎨 Warna</button>
+                    <button onclick="filterLevels('huruf')" class="category-btn border-2 border-purple-300 bg-purple-50 text-purple-700 px-3 py-1.5 rounded-full text-xs md:text-sm font-bold shadow-sm transition-all hover:scale-105" data-cat="huruf">🔤 Huruf</button>
+                    <button onclick="filterLevels('angka')" class="category-btn border-2 border-amber-300 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-full text-xs md:text-sm font-bold shadow-sm transition-all hover:scale-105" data-cat="angka">🔢 Angka Lompat</button>
+                </div>
+            </div>
+
+            <!-- Level Grid -->
+            <div id="levelGrid" class="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-10 gap-2.5 sm:gap-3 max-h-[60vh] overflow-y-auto p-2">
+                <!-- Level buttons will be populated dynamically -->
+            </div>
+        </section>
+
+
+        <!-- VIEW 2: GAMEPLAY BOARD -->
+        <section id="gameplayView" class="w-full glass-panel rounded-3xl p-4 md:p-8 shadow-xl my-4 hidden flex-col items-center">
+            
+            <!-- Gameplay Header: Info, Progress & Hint -->
+            <div class="w-full flex flex-col md:flex-row items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-200">
+                <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
+                    <span id="levelBadge" class="bg-brand-purple text-white title-font text-sm md:text-base font-bold px-4 py-1.5 rounded-full shadow-sm">
+                        Level 1
+                    </span>
+                    <span id="categoryBadge" class="bg-blue-100 text-brand-blue font-bold text-xs md:text-sm px-3 py-1 rounded-full border border-blue-200">
+                        Pola Bentuk
+                    </span>
+                </div>
+
+                <!-- Progress indicator in level -->
+                <div class="w-full md:w-1/3 bg-slate-200 h-3 rounded-full overflow-hidden shadow-inner">
+                    <div id="levelProgressBar" class="bg-brand-green h-full w-0 transition-all duration-300 rounded-full"></div>
+                </div>
+
+                <!-- Hint button -->
+                <button onclick="useHint()" class="bg-amber-100 hover:bg-amber-200 text-amber-800 border-2 border-amber-300 font-bold px-4 py-1.5 rounded-full text-xs md:text-sm transition-all shadow-sm flex items-center gap-1.5">
+                    💡 <span>Petunjuk</span>
+                </button>
+            </div>
+
+            <!-- Mascot Instruction Area -->
+            <div class="w-full bg-white/80 rounded-2xl p-4 mb-6 border-2 border-slate-100 flex items-center gap-4 shadow-sm">
+                <div class="text-3xl md:text-4xl animate-wiggle">🦊</div>
+                <div>
+                    <div class="text-xs font-bold text-brand-blue uppercase tracking-wider">Miko si Rubah</div>
+                    <p id="instructionText" class="title-font text-slate-700 text-sm md:text-base font-medium">
+                        Lengkapilah pola yang hilang di bawah ini!
+                    </p>
+                </div>
+            </div>
+
+            <!-- PATTERN BOARD DISPLAY AREA -->
+            <div class="w-full bg-slate-50/90 rounded-2xl p-4 md:p-8 border-2 border-slate-200 mb-8 flex flex-col items-center justify-center min-h-[180px] shadow-inner">
+                <h3 id="patternTitle" class="title-font text-slate-500 text-xs md:text-sm font-bold uppercase tracking-wider mb-4">
+                    Urutan Pola
+                </h3>
+
+                <!-- Pattern Item List -->
+                <div id="patternContainer" class="flex flex-wrap items-center justify-center gap-2 md:gap-4 w-full">
+                    <!-- Dynamic sequence cards inserted here -->
+                </div>
+            </div>
+
+            <!-- OPTION SELECTION BUTTONS -->
+            <div class="w-full">
+                <p class="text-center text-xs md:text-sm font-bold text-slate-500 mb-3 title-font uppercase tracking-wide">
+                    Pilih Jawaban yang Tepat:
+                </p>
+                <div id="optionsContainer" class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 w-full">
+                    <!-- Option cards inserted here dynamically -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="w-full text-center py-4 text-xs font-semibold text-slate-500">
+        Petualangan Pola Pintar &copy; Media Pembelajaran Interaktif Kelas 2 SD
+    </footer>
+
+    <!-- MODAL 1: LEVEL SUCCESS -->
+    <div id="successModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full text-center shadow-2xl animate-pop-in border-4 border-brand-green">
+            <div class="text-5xl mb-2">🎉</div>
+            <h3 class="title-font text-2xl md:text-3xl font-bold text-brand-green mb-1">Hebat sekali!</h3>
+            <p id="successSubtext" class="text-slate-600 font-semibold text-sm mb-4">Kamu berhasil menyelesaikan pola!</p>
+
+            <!-- Star Reward Animation -->
+            <div id="starContainer" class="flex justify-center items-center gap-2 text-4xl mb-6">
+                <span class="star-anim opacity-20 transition-all duration-300">⭐</span>
+                <span class="star-anim opacity-20 transition-all duration-300 scale-125">⭐</span>
+                <span class="star-anim opacity-20 transition-all duration-300">⭐</span>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <button id="nextLevelBtn" onclick="nextLevel()" class="w-full bg-brand-green hover:bg-emerald-600 text-white title-font font-bold text-lg py-3 rounded-2xl shadow-lg transition-all hover:scale-105">
+                    Lanjut Level Berikutnya ➔
+                </button>
+                <button onclick="showLevelSelect()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-2xl text-sm transition-all">
+                    Pilih Level Lain
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: HINT DIALOG -->
+    <div id="hintModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-md w-full text-center shadow-2xl border-4 border-amber-300 animate-pop-in">
+            <div class="text-4xl mb-2">💡</div>
+            <h3 class="title-font text-xl font-bold text-amber-800 mb-2">Petunjuk Pola</h3>
+            <p id="hintText" class="text-slate-700 text-sm md:text-base font-semibold bg-amber-50 p-4 rounded-2xl border border-amber-200 mb-6">
+                <!-- Hint string -->
+            </p>
+            <button onclick="closeHint()" class="bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold px-6 py-2.5 rounded-full text-sm transition-all">
+                Saya Mengerti!
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL 3: CERTIFICATE / COMPLETION OF ALL 50 LEVELS -->
+    <div id="completionModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel bg-white rounded-3xl p-6 md:p-8 max-w-lg w-full text-center shadow-2xl border-4 border-brand-yellow animate-pop-in">
+            <div class="text-6xl mb-2">🏆</div>
+            <h2 class="title-font text-3xl font-bold text-amber-600 mb-1">JUARA POLA PINTAR!</h2>
+            <p class="text-slate-600 font-semibold text-sm mb-4">Luar biasa! Kamu telah menguasai seluruh 50 level pola matematika!</p>
+
+            <div class="bg-amber-50 p-4 rounded-2xl border-2 border-amber-200 mb-6">
+                <div class="text-xs font-bold text-amber-800 uppercase">Total Bintang Dikumpulkan</div>
+                <div id="finalStarsText" class="title-font text-4xl font-bold text-amber-600 my-1">150 / 150 ⭐</div>
+                <p class="text-xs text-slate-500 font-medium">Kamu adalah Ahli Matematika Muda Kelas 2 SD yang hebat!</p>
+            </div>
+
+            <button onclick="showLevelSelect(); hideModal('completionModal');" class="bg-brand-blue hover:bg-blue-600 text-white title-font font-bold text-lg px-8 py-3 rounded-2xl shadow-lg transition-all hover:scale-105">
+                Kembali ke Peta Level
+            </button>
+        </div>
+    </div>
+
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Audio Context Synthesizer (No external sound file dependencies)
+        let audioCtx = null;
+        let soundEnabled = true;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playTone(freq, type, duration, delay = 0) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                setTimeout(() => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + duration);
+                }, delay);
+            } catch (e) {
+                console.log('Audio playback prevented');
+            }
+        }
+
+        function playSound(effect) {
+            if (!soundEnabled) return;
+            if (effect === 'click') {
+                playTone(400, 'sine', 0.08);
+            } else if (effect === 'correct') {
+                playTone(523.25, 'triangle', 0.15, 0);   // C5
+                playTone(659.25, 'triangle', 0.15, 100); // E5
+                playTone(783.99, 'triangle', 0.15, 200); // G5
+                playTone(1046.50, 'triangle', 0.3, 300); // C6
+            } else if (effect === 'wrong') {
+                playTone(220, 'sawtooth', 0.2, 0);
+                playTone(180, 'sawtooth', 0.25, 150);
+            } else if (effect === 'star') {
+                playTone(880, 'sine', 0.12, 0);
+                playTone(1174.66, 'sine', 0.2, 80);
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('soundBtn').innerText = soundEnabled ? '🔊' : '🔇';
+        }
+
+
+        // Generator helper for pattern items
+        // Item structure: { type: 'shape'|'color'|'huruf'|'angka', val: '...', color: '#...', label: '...' }
+
+        const SHAPES = {
+            circle: { symbol: '🔴', name: 'Lingkaran Merah', color: '#EF4444' },
+            blueSquare: { symbol: '🟦', name: 'Persegi Biru', color: '#3B82F6' },
+            yellowStar: { symbol: '⭐', name: 'Bintang Kuning', color: '#F59E0B' },
+            greenTriangle: { symbol: '🔺', name: 'Segitiga Hijau', color: '#10B981' },
+            purpleHeart: { symbol: '💜', name: 'Hati Ungu', color: '#8B5CF6' },
+            orangeDiamond: { symbol: '🔶', name: 'Belah Ketupat', color: '#F97316' },
+            whiteCircle: { symbol: '⚪', name: 'Lingkaran Putih', color: '#64748B' },
+            blackSquare: { symbol: '⬛', name: 'Persegi Hitam', color: '#1E293B' },
+        };
+
+        // 50 Handcrafted & Categorized Levels for Grade 2 Primary Students
+        const LEVELS_DATA = [
+            // --- BAB 1: POLA BENTUK & WARNA DASAR (Level 1-12) ---
+            {
+                id: 1, category: 'bentuk', title: 'Pola Bentuk (A - B - A - B)',
+                seq: [SHAPES.circle, SHAPES.blueSquare, SHAPES.circle, SHAPES.blueSquare, null, SHAPES.blueSquare],
+                targetIdx: 4, correct: SHAPES.circle,
+                options: [SHAPES.circle, SHAPES.blueSquare, SHAPES.greenTriangle, SHAPES.yellowStar],
+                hint: 'Perhatikan urutannya: Lingkaran Merah, Persegi Biru, Lingkaran Merah, Persegi Biru...'
+            },
+            {
+                id: 2, category: 'bentuk', title: 'Pola Bentuk (A - B - C)',
+                seq: [SHAPES.greenTriangle, SHAPES.yellowStar, SHAPES.purpleHeart, SHAPES.greenTriangle, SHAPES.yellowStar, null],
+                targetIdx: 5, correct: SHAPES.purpleHeart,
+                options: [SHAPES.circle, SHAPES.purpleHeart, SHAPES.greenTriangle, SHAPES.blueSquare],
+                hint: 'Urutannya berulang 3 bentuk: Segitiga Hijau, Bintang Kuning, Hati Ungu...'
+            },
+            {
+                id: 3, category: 'warna', title: 'Pola Warna Selang-Seling',
+                seq: [
+                    { type: 'color', val: '🟥', name: 'Merah', color: '#EF4444' },
+                    { type: 'color', val: '🟨', name: 'Kuning', color: '#F59E0B' },
+                    { type: 'color', val: '🟥', name: 'Merah', color: '#EF4444' },
+                    { type: 'color', val: '🟨', name: 'Kuning', color: '#F59E0B' },
+                    { type: 'color', val: '🟥', name: 'Merah', color: '#EF4444' },
+                    null
+                ],
+                targetIdx: 5, correct: { type: 'color', val: '🟨', name: 'Kuning', color: '#F59E0B' },
+                options: [
+                    { type: 'color', val: '🟩', name: 'Hijau', color: '#10B981' },
+                    { type: 'color', val: '🟨', name: 'Kuning', color: '#F59E0B' },
+                    { type: 'color', val: '🟦', name: 'Biru', color: '#3B82F6' },
+                    { type: 'color', val: '🟪', name: 'Ungu', color: '#8B5CF6' }
+                ],
+                hint: 'Pola warnanya adalah: Merah, Kuning, Merah, Kuning...'
+            },
+            {
+                id: 4, category: 'bentuk', title: 'Pola Pasangan Ganda (A - A - B - B)',
+                seq: [SHAPES.yellowStar, SHAPES.yellowStar, SHAPES.blueSquare, SHAPES.blueSquare, SHAPES.yellowStar, null],
+                targetIdx: 5, correct: SHAPES.yellowStar,
+                options: [SHAPES.blueSquare, SHAPES.yellowStar, SHAPES.circle, SHAPES.greenTriangle],
+                hint: 'Setiap bentuk ada dua berturut-turut: 2 Bintang, 2 Persegi, lalu 2...'
+            },
+            {
+                id: 5, category: 'warna', title: 'Pola Tiga Warna (A - B - C)',
+                seq: [
+                    { type: 'color', val: '🔵', name: 'Biru', color: '#3B82F6' },
+                    { type: 'color', val: '🟢', name: 'Hijau', color: '#10B981' },
+                    { type: 'color', val: '🟡', name: 'Kuning', color: '#F59E0B' },
+                    { type: 'color', val: '🔵', name: 'Biru', color: '#3B82F6' },
+                    null,
+                    { type: 'color', val: '🟡', name: 'Kuning', color: '#F59E0B' }
+                ],
+                targetIdx: 4, correct: { type: 'color', val: '🟢', name: 'Hijau', color: '#10B981' },
+                options: [
+                    { type: 'color', val: '🔴', name: 'Merah', color: '#EF4444' },
+                    { type: 'color', val: '🟢', name: 'Hijau', color: '#10B981' },
+                    { type: 'color', val: '🟡', name: 'Kuning', color: '#F59E0B' },
+                    { type: 'color', val: '🟣', name: 'Ungu', color: '#8B5CF6' }
+                ],
+                hint: 'Urutan warna: Biru, Hijau, Kuning, Biru, ..., Kuning.'
+            },
+            {
+                id: 6, category: 'bentuk', title: 'Pola Tiga Berulang (A - B - B)',
+                seq: [SHAPES.circle, SHAPES.greenTriangle, SHAPES.greenTriangle, SHAPES.circle, null, SHAPES.greenTriangle],
+                targetIdx: 4, correct: SHAPES.greenTriangle,
+                options: [SHAPES.circle, SHAPES.greenTriangle, SHAPES.yellowStar, SHAPES.orangeDiamond],
+                hint: 'Satu Lingkaran diikuti oleh dua Segitiga Hijau.'
+            },
+            {
+                id: 7, category: 'warna', title: 'Pola Pelangi Lingkaran',
+                seq: [
+                    { type: 'color', val: '🔴', name: 'Merah', color: '#EF4444' },
+                    { type: 'color', val: '🟠', name: 'Jingga', color: '#F97316' },
+                    { type: 'color', val: '🟡', name: 'Kuning', color: '#F59E0B' },
+                    { type: 'color', val: '🔴', name: 'Merah', color: '#EF4444' },
+                    { type: 'color', val: '🟠', name: 'Jingga', color: '#F97316' },
+                    null
+                ],
+                targetIdx: 5, correct: { type: 'color', val: '🟡', name: 'Kuning', color: '#F59E0B' },
+                options: [
+                    { type: 'color', val: '🟡', name: 'Kuning', color: '#F59E0B' },
+                    { type: 'color', val: '🟢', name: 'Hijau', color: '#10B981' },
+                    { type: 'color', val: '🔴', name: 'Merah', color: '#EF4444' },
+                    { type: 'color', val: '🟣', name: 'Ungu', color: '#8B5CF6' }
+                ],
+                hint: 'Kelompok warna 3 item: Merah, Jingga, Kuning.'
+            },
+            {
+                id: 8, category: 'bentuk', title: 'Pola Ukuran Simbol (A - B - A - B)',
+                seq: [SHAPES.purpleHeart, SHAPES.orangeDiamond, SHAPES.purpleHeart, SHAPES.orangeDiamond, null, SHAPES.orangeDiamond],
+                targetIdx: 4, correct: SHAPES.purpleHeart,
+                options: [SHAPES.purpleHeart, SHAPES.orangeDiamond, SHAPES.blueSquare, SHAPES.circle],
+                hint: 'Pola bergantian antara Hati Ungu dan Belah Ketupat.'
+            },
+            {
+                id: 9, category: 'warna', title: 'Pola Warna Terang & Gelap',
+                seq: [SHAPES.whiteCircle, SHAPES.blackSquare, SHAPES.whiteCircle, SHAPES.blackSquare, null, SHAPES.blackSquare],
+                targetIdx: 4, correct: SHAPES.whiteCircle,
+                options: [SHAPES.whiteCircle, SHAPES.blackSquare, SHAPES.yellowStar, SHAPES.circle],
+                hint: 'Lingkaran Putih lalu Persegi Hitam.'
+            },
+            {
+                id: 10, category: 'bentuk', title: 'Pola Kombinasi Tiga Bintang',
+                seq: [SHAPES.yellowStar, SHAPES.circle, SHAPES.circle, SHAPES.yellowStar, SHAPES.circle, null],
+                targetIdx: 5, correct: SHAPES.circle,
+                options: [SHAPES.circle, SHAPES.yellowStar, SHAPES.greenTriangle, SHAPES.purpleHeart],
+                hint: 'Satu Bintang selalu diikuti dua Lingkaran Merah.'
+            },
+            {
+                id: 11, category: 'warna', title: 'Pola Gradasi Empat Simbol',
+                seq: [
+                    { type: 'color', val: '🟢', name: 'Hijau', color: '#10B981' },
+                    { type: 'color', val: '🔵', name: 'Biru', color: '#3B82F6' },
+                    { type: 'color', val: '🟣', name: 'Ungu', color: '#8B5CF6' },
+                    { type: 'color', val: '🟢', name: 'Hijau', color: '#10B981' },
+                    null,
+                    { type: 'color', val: '🟣', name: 'Ungu', color: '#8B5CF6' }
+                ],
+                targetIdx: 4, correct: { type: 'color', val: '🔵', name: 'Biru', color: '#3B82F6' },
+                options: [
+                    { type: 'color', val: '🔴', name: 'Merah', color: '#EF4444' },
+                    { type: 'color', val: '🔵', name: 'Biru', color: '#3B82F6' },
+                    { type: 'color', val: '🟡', name: 'Kuning', color: '#F59E0B' },
+                    { type: 'color', val: '🟢', name: 'Hijau', color: '#10B981' }
+                ],
+                hint: 'Kelompok 3 warna: Hijau, Biru, Ungu.'
+            },
+            {
+                id: 12, category: 'bentuk', title: 'Pola Cermin Bentuk (A-B-C-C-B-A)',
+                seq: [SHAPES.greenTriangle, SHAPES.blueSquare, SHAPES.yellowStar, SHAPES.yellowStar, SHAPES.blueSquare, null],
+                targetIdx: 5, correct: SHAPES.greenTriangle,
+                options: [SHAPES.greenTriangle, SHAPES.blueSquare, SHAPES.yellowStar, SHAPES.circle],
+                hint: 'Pola simetris berpantulan: Segitiga, Persegi, Bintang, Bintang, Persegi, ...'
+            },
+
+            // --- BAB 2: POLA ANGKA LOMPAT DASAR (Level 13-25) ---
+            {
+                id: 13, category: 'angka', title: 'Pola Angka Lompat 1 (Maju 1)',
+                seq: [
+                    { type: 'num', val: '1' }, { type: 'num', val: '2' }, { type: 'num', val: '3' },
+                    { type: 'num', val: '4' }, null, { type: 'num', val: '6' }
+                ],
+                targetIdx: 4, correct: { type: 'num', val: '5' },
+                options: [{ type: 'num', val: '4' }, { type: 'num', val: '5' }, { type: 'num', val: '7' }, { type: 'num', val: '8' }],
+                hint: 'Setiap angka bertambah 1 (+1). Berapa setelah 4?'
+            },
+            {
+                id: 14, category: 'angka', title: 'Pola Angka Lompat 2 (Bilangan Genap)',
+                seq: [
+                    { type: 'num', val: '2' }, { type: 'num', val: '4' }, { type: 'num', val: '6' },
+                    { type: 'num', val: '8' }, null, { type: 'num', val: '12' }
+                ],
+                targetIdx: 4, correct: { type: 'num', val: '10' },
+                options: [{ type: 'num', val: '9' }, { type: 'num', val: '10' }, { type: 'num', val: '11' }, { type: 'num', val: '14' }],
+                hint: 'Setiap langkah ditambah 2 (+2): 2, 4, 6, 8, ...'
+            },
+            {
+                id: 15, category: 'angka', title: 'Pola Angka Lompat 2 (Bilangan Ganjil)',
+                seq: [
+                    { type: 'num', val: '1' }, { type: 'num', val: '3' }, { type: 'num', val: '5' },
+                    { type: 'num', val: '7' }, { type: 'num', val: '9' }, null
+                ],
+                targetIdx: 5, correct: { type: 'num', val: '11' },
+                options: [{ type: 'num', val: '10' }, { type: 'num', val: '11' }, { type: 'num', val: '12' }, { type: 'num', val: '13' }],
+                hint: 'Hitung lompat 2 dari 9 (9 + 2).'
+            },
+            {
+                id: 16, category: 'angka', title: 'Pola Angka Lompat 5',
+                seq: [
+                    { type: 'num', val: '5' }, { type: 'num', val: '10' }, { type: 'num', val: '15' },
+                    null, { type: 'num', val: '25' }, { type: 'num', val: '30' }
+                ],
+                targetIdx: 3, correct: { type: 'num', val: '20' },
+                options: [{ type: 'num', val: '16' }, { type: 'num', val: '18' }, { type: 'num', val: '20' }, { type: 'num', val: '22' }],
+                hint: 'Hitung kelipatan 5: 5, 10, 15, ...'
+            },
+            {
+                id: 17, category: 'angka', title: 'Pola Angka Lompat 10',
+                seq: [
+                    { type: 'num', val: '10' }, { type: 'num', val: '20' }, { type: 'num', val: '30' },
+                    { type: 'num', val: '40' }, null, { type: 'num', val: '60' }
+                ],
+                targetIdx: 4, correct: { type: 'num', val: '50' },
+                options: [{ type: 'num', val: '45' }, { type: 'num', val: '50' }, { type: 'num', val: '55' }, { type: 'num', val: '70' }],
+                hint: 'Lompat sepuluh-sepuluh (+10): 10, 20, 30, 40, ...'
+            },
+            {
+                id: 18, category: 'angka', title: 'Pola Angka Lompat 3',
+                seq: [
+                    { type: 'num', val: '3' }, { type: 'num', val: '6' }, { type: 'num', val: '9' },
+                    { type: 'num', val: '12' }, null, { type: 'num', val: '18' }
+                ],
+                targetIdx: 4, correct: { type: 'num', val: '15' },
+                options: [{ type: 'num', val: '13' }, { type: 'num', val: '14' }, { type: 'num', val: '15' }, { type: 'num', val: '16' }],
+                hint: 'Tambah 3 pada setiap angka: 12 + 3 = ?'
+            },
+            {
+                id: 19, category: 'angka', title: 'Pola Angka Mundur (Berkurang 1)',
+                seq: [
+                    { type: 'num', val: '10' }, { type: 'num', val: '9' }, { type: 'num', val: '8' },
+                    { type: 'num', val: '7' }, null, { type: 'num', val: '5' }
+                ],
+                targetIdx: 4, correct: { type: 'num', val: '6' },
+                options: [{ type: 'num', val: '4' }, { type: 'num', val: '6' }, { type: 'num', val: '7' }, { type: 'num', val: '8' }],
+                hint: 'Hitung mundur berkurang 1 (-1) dari 7.'
+            },
+            {
+                id: 20, category: 'angka', title: 'Pola Angka Mundur (Berkurang 2)',
+                seq: [
+                    { type: 'num', val: '20' }, { type: 'num', val: '18' }, { type: 'num', val: '16' },
+                    { type: 'num', val: '14' }, null, { type: 'num', val: '10' }
+                ],
+                targetIdx: 4, correct: { type: 'num', val: '12' },
+                options: [{ type: 'num', val: '11' }, { type: 'num', val: '12' }, { type: 'num', val: '13' }, { type: 'num', val: '15' }],
+                hint: 'Hitung mundur lompat 2: 14 - 2 = ?'
+            },
+            {
+                id: 21, category: 'angka', title: 'Pola Angka Lompat 4',
+                seq: [
+                    { type: 'num', val: '4' }, { type: 'num', val: '8' }, { type: 'num', val: '12' },
+                    null, { type: 'num', val: '20' }, { type: 'num', val: '24' }
+                ],
+                targetIdx: 3, correct: { type: 'num', val: '16' },
+                options: [{ type: 'num', val: '14' }, { type: 'num', val: '15' }, { type: 'num', val: '16' }, { type: 'num', val: '18' }],
+                hint: 'Setiap langkah ditambah 4 (+4): 12 + 4 = ?'
+            },
+            {
+                id: 22, category: 'angka', title: 'Pola Angka Lompat 5 Mulai dari 10',
+                seq: [
+                    { type: 'num', val: '10' }, { type: 'num', val: '15' }, { type: 'num', val: '20' },
+                    { type: 'num', val: '25' }, { type: 'num', val: '30' }, null
+                ],
+                targetIdx: 5, correct: { type: 'num', val: '35' },
+                options: [{ type: 'num', val: '32' }, { type: 'num', val: '35' }, { type: 'num', val: '40' }, { type: 'num', val: '45' }],
+                hint: 'Tambah 5 setelah angka 30.'
+            },
+            {
+                id: 23, category: 'angka', title: 'Pola Angka Lompat 2 Mulai Puluhan',
+                seq: [
+                    { type: 'num', val: '21' }, { type: 'num', val: '23' }, { type: 'num', val: '25' },
+                    null, { type: 'num', val: '29' }, { type: 'num', val: '31' }
+                ],
+                targetIdx: 3, correct: { type: 'num', val: '27' },
+                options: [{ type: 'num', val: '26' }, { type: 'num', val: '27' }, { type: 'num', val: '28' }, { type: 'num', val: '30' }],
+                hint: 'Lompat 2 dari 25 (25 + 2).'
+            },
+            {
+                id: 24, category: 'angka', title: 'Pola Angka Mundur 5',
+                seq: [
+                    { type: 'num', val: '50' }, { type: 'num', val: '45' }, { type: 'num', val: '40' },
+                    { type: 'num', val: '35' }, null, { type: 'num', val: '25' }
+                ],
+                targetIdx: 4, correct: { type: 'num', val: '30' },
+                options: [{ type: 'num', val: '28' }, { type: 'num', val: '30' }, { type: 'num', val: '32' }, { type: 'num', val: '34' }],
+                hint: 'Hitung mundur berkurang 5 dari 35.'
+            },
+            {
+                id: 25, category: 'angka', title: 'Pola Angka Lompat 10 Puluhan Besar',
+                seq: [
+                    { type: 'num', val: '45' }, { type: 'num', val: '55' }, { type: 'num', val: '65' },
+                    { type: 'num', val: '75' }, null, { type: 'num', val: '95' }
+                ],
+                targetIdx: 4, correct: { type: 'num', val: '85' },
+                options: [{ type: 'num', val: '80' }, { type: 'num', val: '85' }, { type: 'num', val: '90' }, { type: 'num', val: '100' }],
+                hint: 'Tambah 10 pada 75 (75 + 10).'
+            },
+
+            // --- BAB 3: POLA HURUF & ABJAD (Level 26-38) ---
+            {
+                id: 26, category: 'huruf', title: 'Pola Abjad Berurutan (A - B - C)',
+                seq: [
+                    { type: 'letter', val: 'A' }, { type: 'letter', val: 'B' }, { type: 'letter', val: 'C' },
+                    { type: 'letter', val: 'D' }, null, { type: 'letter', val: 'F' }
+                ],
+                targetIdx: 4, correct: { type: 'letter', val: 'E' },
+                options: [{ type: 'letter', val: 'D' }, { type: 'letter', val: 'E' }, { type: 'letter', val: 'F' }, { type: 'letter', val: 'G' }],
+                hint: 'Urutan abjad biasa. Huruf apa setelah D?'
+            },
+            {
+                id: 27, category: 'huruf', title: 'Pola Huruf Selang-Seling (A - B - A - B)',
+                seq: [
+                    { type: 'letter', val: 'A' }, { type: 'letter', val: 'B' }, { type: 'letter', val: 'A' },
+                    { type: 'letter', val: 'B' }, { type: 'letter', val: 'A' }, null
+                ],
+                targetIdx: 5, correct: { type: 'letter', val: 'B' },
+                options: [{ type: 'letter', val: 'A' }, { type: 'letter', val: 'B' }, { type: 'letter', val: 'C' }, { type: 'letter', val: 'D' }],
+                hint: 'Bergantian antara huruf A dan B.'
+            },
+            {
+                id: 28, category: 'huruf', title: 'Pola Huruf Vokal (A - I - U - E - O)',
+                seq: [
+                    { type: 'letter', val: 'A' }, { type: 'letter', val: 'I' }, { type: 'letter', val: 'U' },
+                    { type: 'letter', val: 'E' }, null, { type: 'letter', val: 'A' }
+                ],
+                targetIdx: 4, correct: { type: 'letter', val: 'O' },
+                options: [{ type: 'letter', val: 'E' }, { type: 'letter', val: 'O' }, { type: 'letter', val: 'I' }, { type: 'letter', val: 'U' }],
+                hint: 'Pola huruf vokal: A, I, U, E, ...'
+            },
+            {
+                id: 29, category: 'huruf', title: 'Pola Huruf Ganda (AA - BB - CC)',
+                seq: [
+                    { type: 'letter', val: 'A' }, { type: 'letter', val: 'A' },
+                    { type: 'letter', val: 'B' }, { type: 'letter', val: 'B' },
+                    { type: 'letter', val: 'C' }, null
+                ],
+                targetIdx: 5, correct: { type: 'letter', val: 'C' },
+                options: [{ type: 'letter', val: 'B' }, { type: 'letter', val: 'C' }, { type: 'letter', val: 'D' }, { type: 'letter', val: 'A' }],
+                hint: 'Setiap huruf ditulis dua kali: A, A, B, B, C, ...'
+            },
+            {
+                id: 30, category: 'huruf', title: 'Pola Huruf Lompat Satu (A - C - E)',
+                seq: [
+                    { type: 'letter', val: 'A' }, { type: 'letter', val: 'C' }, { type: 'letter', val: 'E' },
+                    { type: 'letter', val: 'G' }, null, { type: 'letter', val: 'K' }
+                ],
+                targetIdx: 4, correct: { type: 'letter', val: 'I' },
+                options: [{ type: 'letter', val: 'H' }, { type: 'letter', val: 'I' }, { type: 'letter', val: 'J' }, { type: 'letter', val: 'K' }],
+                hint: 'Lewati 1 huruf dalam abjad: A, (B), C, (D), E, (F), G, (H), ...'
+            },
+            {
+                id: 31, category: 'huruf', title: 'Pola Tiga Huruf Berulang (K - L - M)',
+                seq: [
+                    { type: 'letter', val: 'K' }, { type: 'letter', val: 'L' }, { type: 'letter', val: 'M' },
+                    { type: 'letter', val: 'K' }, null, { type: 'letter', val: 'M' }
+                ],
+                targetIdx: 4, correct: { type: 'letter', val: 'L' },
+                options: [{ type: 'letter', val: 'K' }, { type: 'letter', val: 'L' }, { type: 'letter', val: 'M' }, { type: 'letter', val: 'N' }],
+                hint: 'Kelompok huruf berulang: K, L, M, K, ..., M.'
+            },
+            {
+                id: 32, category: 'huruf', title: 'Pola Huruf Mundur (Z - Y - X)',
+                seq: [
+                    { type: 'letter', val: 'Z' }, { type: 'letter', val: 'Y' }, { type: 'letter', val: 'X' },
+                    { type: 'letter', val: 'W' }, null, { type: 'letter', val: 'U' }
+                ],
+                targetIdx: 4, correct: { type: 'letter', val: 'V' },
+                options: [{ type: 'letter', val: 'U' }, { type: 'letter', val: 'V' }, { type: 'letter', val: 'T' }, { type: 'letter', val: 'S' }],
+                hint: 'Urutan abjad terbalik dari belakang: Z, Y, X, W, ...'
+            },
+            {
+                id: 33, category: 'huruf', title: 'Pola Huruf Selang-Seling Z-A',
+                seq: [
+                    { type: 'letter', val: 'Z' }, { type: 'letter', val: 'A' }, { type: 'letter', val: 'Z' },
+                    { type: 'letter', val: 'A' }, { type: 'letter', val: 'Z' }, null
+                ],
+                targetIdx: 5, correct: { type: 'letter', val: 'A' },
+                options: [{ type: 'letter', val: 'A' }, { type: 'letter', val: 'Z' }, { type: 'letter', val: 'B' }, { type: 'letter', val: 'Y' }],
+                hint: 'Bergantian antara huruf Z dan A.'
+            },
+            {
+                id: 34, category: 'huruf', title: 'Pola Tiga Huruf Berturut (P - Q - R)',
+                seq: [
+                    { type: 'letter', val: 'P' }, { type: 'letter', val: 'Q' }, { type: 'letter', val: 'R' },
+                    null, { type: 'letter', val: 'Q' }, { type: 'letter', val: 'R' }
+                ],
+                targetIdx: 3, correct: { type: 'letter', val: 'P' },
+                options: [{ type: 'letter', val: 'O' }, { type: 'letter', val: 'P' }, { type: 'letter', val: 'Q' }, { type: 'letter', val: 'S' }],
+                hint: 'Kelompok huruf P, Q, R berulang.'
+            },
+            {
+                id: 35, category: 'huruf', title: 'Pola Huruf Lompat Genap Abjad (B - D - F)',
+                seq: [
+                    { type: 'letter', val: 'B' }, { type: 'letter', val: 'D' }, { type: 'letter', val: 'F' },
+                    { type: 'letter', val: 'H' }, null, { type: 'letter', val: 'L' }
+                ],
+                targetIdx: 4, correct: { type: 'letter', val: 'J' },
+                options: [{ type: 'letter', val: 'I' }, { type: 'letter', val: 'J' }, { type: 'letter', val: 'K' }, { type: 'letter', val: 'M' }],
+                hint: 'Lompat 1 huruf: B, (C), D, (E), F, (G), H, (I), ...'
+            },
+            {
+                id: 36, category: 'huruf', title: 'Pola Huruf Pasangan A-B-B-A',
+                seq: [
+                    { type: 'letter', val: 'A' }, { type: 'letter', val: 'B' }, { type: 'letter', val: 'B' },
+                    { type: 'letter', val: 'A' }, { type: 'letter', val: 'B' }, null
+                ],
+                targetIdx: 5, correct: { type: 'letter', val: 'B' },
+                options: [{ type: 'letter', val: 'A' }, { type: 'letter', val: 'B' }, { type: 'letter', val: 'C' }, { type: 'letter', val: 'D' }],
+                hint: 'Pola berulang: A, B, B, A, B, ...'
+            },
+            {
+                id: 37, category: 'huruf', title: 'Pola Huruf Kata Sederhana (I - B - U)',
+                seq: [
+                    { type: 'letter', val: 'I' }, { type: 'letter', val: 'B' }, { type: 'letter', val: 'U' },
+                    { type: 'letter', val: 'I' }, null, { type: 'letter', val: 'U' }
+                ],
+                targetIdx: 4, correct: { type: 'letter', val: 'B' },
+                options: [{ type: 'letter', val: 'I' }, { type: 'letter', val: 'B' }, { type: 'letter', val: 'U' }, { type: 'letter', val: 'A' }],
+                hint: 'Membentuk urutan kata I - B - U.'
+            },
+            {
+                id: 38, category: 'huruf', title: 'Pola Huruf Terakhir Abjad',
+                seq: [
+                    { type: 'letter', val: 'V' }, { type: 'letter', val: 'W' }, { type: 'letter', val: 'X' },
+                    { type: 'letter', val: 'Y' }, null, { type: 'letter', val: 'V' }
+                ],
+                targetIdx: 4, correct: { type: 'letter', val: 'Z' },
+                options: [{ type: 'letter', val: 'Y' }, { type: 'letter', val: 'Z' }, { type: 'letter', val: 'A' }, { type: 'letter', val: 'W' }],
+                hint: 'Huruf paling akhir dalam abjad Indonesia.'
+            },
+
+            // --- BAB 4: TANTANGAN KOMBINASI & TINGKAT MASTER (Level 39-50) ---
+            {
+                id: 39, category: 'bentuk', title: 'Pola Kombinasi Bentuk Bertingkat',
+                seq: [SHAPES.circle, SHAPES.circle, SHAPES.blueSquare, SHAPES.circle, SHAPES.circle, null],
+                targetIdx: 5, correct: SHAPES.blueSquare,
+                options: [SHAPES.circle, SHAPES.blueSquare, SHAPES.greenTriangle, SHAPES.yellowStar],
+                hint: 'Dua Lingkaran diikuti satu Persegi Biru.'
+            },
+            {
+                id: 40, category: 'angka', title: 'Pola Angka Lompat 6',
+                seq: [
+                    { type: 'num', val: '6' }, { type: 'num', val: '12' }, { type: 'num', val: '18' },
+                    { type: 'num', val: '24' }, null, { type: 'num', val: '36' }
+                ],
+                targetIdx: 4, correct: { type: 'num', val: '30' },
+                options: [{ type: 'num', val: '28' }, { type: 'num', val: '30' }, { type: 'num', val: '32' }, { type: 'num', val: '34' }],
+                hint: 'Lompat 6 angka: 24 + 6 = ?'
+            },
+            {
+                id: 41, category: 'warna', title: 'Pola Warna Pelangi 4 Item',
+                seq: [
+                    { type: 'color', val: '🔴', name: 'Merah', color: '#EF4444' },
+                    { type: 'color', val: '🟡', name: 'Kuning', color: '#F59E0B' },
+                    { type: 'color', val: '🟢', name: 'Hijau', color: '#10B981' },
+                    { type: 'color', val: '🔵', name: 'Biru', color: '#3B82F6' },
+                    { type: 'color', val: '🔴', name: 'Merah', color: '#EF4444' },
+                    null
+                ],
+                targetIdx: 5, correct: { type: 'color', val: '🟡', name: 'Kuning', color: '#F59E0B' },
+                options: [
+                    { type: 'color', val: '🟡', name: 'Kuning', color: '#F59E0B' },
+                    { type: 'color', val: '🟢', name: 'Hijau', color: '#10B981' },
+                    { type: 'color', val: '🔵', name: 'Biru', color: '#3B82F6' },
+                    { type: 'color', val: '🟣', name: 'Ungu', color: '#8B5CF6' }
+                ],
+                hint: 'Urutan 4 warna: Merah, Kuning, Hijau, Biru...'
+            },
+            {
+                id: 42, category: 'angka', title: 'Pola Angka Lompat Campuran +2 dan +1',
+                seq: [
+                    { type: 'num', val: '2' }, { type: 'num', val: '4' }, { type: 'num', val: '5' },
+                    { type: 'num', val: '7' }, { type: 'num', val: '8' }, null
+                ],
+                targetIdx: 5, correct: { type: 'num', val: '10' },
+                options: [{ type: 'num', val: '9' }, { type: 'num', val: '10' }, { type: 'num', val: '11' }, { type: 'num', val: '12' }],
+                hint: 'Pola penambahan selang-seling (+2, +1, +2, +1, +2).'
+            },
+            {
+                id: 43, category: 'huruf', title: 'Pola Huruf Lompat Dua (A - D - G)',
+                seq: [
+                    { type: 'letter', val: 'A' }, { type: 'letter', val: 'D' }, { type: 'letter', val: 'G' },
+                    { type: 'letter', val: 'J' }, null, { type: 'letter', val: 'P' }
+                ],
+                targetIdx: 4, correct: { type: 'letter', val: 'M' },
+                options: [{ type: 'letter', val: 'L' }, { type: 'letter', val: 'M' }, { type: 'letter', val: 'N' }, { type: 'letter', val: 'O' }],
+                hint: 'Lewati 2 huruf dalam abjad: A, (BC), D, (EF), G, (HI), J, (KL), ...'
+            },
+            {
+                id: 44, category: 'bentuk', title: 'Pola Bentuk Hati & Bintang Tiga',
+                seq: [SHAPES.purpleHeart, SHAPES.yellowStar, SHAPES.yellowStar, SHAPES.purpleHeart, null, SHAPES.yellowStar],
+                targetIdx: 4, correct: SHAPES.yellowStar,
+                options: [SHAPES.purpleHeart, SHAPES.yellowStar, SHAPES.circle, SHAPES.blueSquare],
+                hint: 'Satu Hati Ungu diikuti dua Bintang Kuning.'
+            },
+            {
+                id: 45, category: 'angka', title: 'Pola Angka Lompat 25 (Uang Koin)',
+                seq: [
+                    { type: 'num', val: '25' }, { type: 'num', val: '50' }, { type: 'num', val: '75' },
+                    { type: 'num', val: '100' }, null, { type: 'num', val: '150' }
+                ],
+                targetIdx: 4, correct: { type: 'num', val: '125' },
+                options: [{ type: 'num', val: '110' }, { type: 'num', val: '120' }, { type: 'num', val: '125' }, { type: 'num', val: '130' }],
+                hint: 'Tambah 25 setiap langkah: 100 + 25 = ?'
+            },
+            {
+                id: 46, category: 'warna', title: 'Pola Empat Hati Warna-Warni',
+                seq: [
+                    { type: 'color', val: '❤️', name: 'Merah', color: '#EF4444' },
+                    { type: 'color', val: '💙', name: 'Biru', color: '#3B82F6' },
+                    { type: 'color', val: '💛', name: 'Kuning', color: '#F59E0B' },
+                    { type: 'color', val: '❤️', name: 'Merah', color: '#EF4444' },
+                    null,
+                    { type: 'color', val: '💛', name: 'Kuning', color: '#F59E0B' }
+                ],
+                targetIdx: 4, correct: { type: 'color', val: '💙', name: 'Biru', color: '#3B82F6' },
+                options: [
+                    { type: 'color', val: '❤️', name: 'Merah', color: '#EF4444' },
+                    { type: 'color', val: '💙', name: 'Biru', color: '#3B82F6' },
+                    { type: 'color', val: '💚', name: 'Hijau', color: '#10B981' },
+                    { type: 'color', val: '💜', name: 'Ungu', color: '#8B5CF6' }
+                ],
+                hint: 'Kelompok tiga warna hati: Merah, Biru, Kuning.'
+            },
+            {
+                id: 47, category: 'angka', title: 'Pola Angka Mundur Lompat 10',
+                seq: [
+                    { type: 'num', val: '100' }, { type: 'num', val: '90' }, { type: 'num', val: '80' },
+                    { type: 'num', val: '70' }, null, { type: 'num', val: '50' }
+                ],
+                targetIdx: 4, correct: { type: 'num', val: '60' },
+                options: [{ type: 'num', val: '60' }, { type: 'num', val: '65' }, { type: 'num', val: '55' }, { type: 'num', val: '40' }],
+                hint: 'Hitung mundur sepuluh-sepuluh (-10) dari 70.'
+            },
+            {
+                id: 48, category: 'huruf', title: 'Pola Kata BERMAIN',
+                seq: [
+                    { type: 'letter', val: 'M' }, { type: 'letter', val: 'A' }, { type: 'letter', val: 'I' },
+                    { type: 'letter', val: 'N' }, { type: 'letter', val: 'M' }, null
+                ],
+                targetIdx: 5, correct: { type: 'letter', val: 'A' },
+                options: [{ type: 'letter', val: 'M' }, { type: 'letter', val: 'A' }, { type: 'letter', val: 'I' }, { type: 'letter', val: 'N' }],
+                hint: 'Pola susunan huruf kata: M - A - I - N.'
+            },
+            {
+                id: 49, category: 'bentuk', title: 'Pola Segitiga & Belah Ketupat',
+                seq: [SHAPES.greenTriangle, SHAPES.orangeDiamond, SHAPES.greenTriangle, SHAPES.orangeDiamond, null, SHAPES.orangeDiamond],
+                targetIdx: 4, correct: SHAPES.greenTriangle,
+                options: [SHAPES.greenTriangle, SHAPES.orangeDiamond, SHAPES.circle, SHAPES.blueSquare],
+                hint: 'Segitiga Hijau lalu Belah Ketupat Jingga.'
+            },
+            {
+                id: 50, category: 'angka', title: 'TANTANGAN AKHIR: Angka Lompat 100!',
+                seq: [
+                    { type: 'num', val: '100' }, { type: 'num', val: '200' }, { type: 'num', val: '300' },
+                    { type: 'num', val: '400' }, null, { type: 'num', val: '600' }
+                ],
+                targetIdx: 4, correct: { type: 'num', val: '500' },
+                options: [{ type: 'num', val: '450' }, { type: 'num', val: '500' }, { type: 'num', val: '550' }, { type: 'num', val: '700' }],
+                hint: 'Lompat seratus-seratus (+100): 100, 200, 300, 400, ...!'
+            }
+        ];
+
+
+        let currentLevelIndex = 0;
+        let levelStars = {}; // Object mapping level ID to stars earned (1-3)
+        let activeFilter = 'all';
+
+        // Load progress from localStorage
+        function loadProgress() {
+            try {
+                const saved = localStorage.getItem('pola_pintar_stars');
+                if (saved) {
+                    levelStars = JSON.parse(saved);
+                } else {
+                    levelStars = { 1: 0 }; // Level 1 unlocked by default
+                }
+            } catch (e) {
+                levelStars = { 1: 0 };
+            }
+            updateTotalStarsDisplay();
+        }
+
+        function saveProgress() {
+            try {
+                localStorage.setItem('pola_pintar_stars', JSON.stringify(levelStars));
+            } catch (e) {}
+            updateTotalStarsDisplay();
+        }
+
+        function getTotalStars() {
+            return Object.values(levelStars).reduce((sum, val) => sum + (val || 0), 0);
+        }
+
+        function updateTotalStarsDisplay() {
+            document.getElementById('totalStarsText').innerText = getTotalStars();
+        }
+
+
+        function renderLevelGrid() {
+            const grid = document.getElementById('levelGrid');
+            grid.innerHTML = '';
+
+            LEVELS_DATA.forEach((lvl, idx) => {
+                // Filter check
+                if (activeFilter !== 'all' && lvl.category !== activeFilter) {
+                    return;
+                }
+
+                const stars = levelStars[lvl.id] || 0;
+                const isUnlocked = lvl.id === 1 || (levelStars[lvl.id - 1] !== undefined);
+
+                const btn = document.createElement('button');
+                btn.className = `relative flex flex-col items-center justify-center p-2 rounded-2xl border-2 transition-all duration-200 aspect-square ${
+                    isUnlocked 
+                        ? 'bg-white border-brand-blue/30 shadow-md hover:scale-105 hover:border-brand-blue cursor-pointer' 
+                        : 'bg-slate-200 border-slate-300 opacity-60 cursor-not-allowed'
+                }`;
+
+                if (isUnlocked) {
+                    btn.onclick = () => {
+                        playSound('click');
+                        startLevel(idx);
+                    };
+                }
+
+                // Inner content
+                let starsHTML = '';
+                if (isUnlocked) {
+                    starsHTML = `
+                        <div class="text-[10px] sm:text-xs mt-0.5 flex gap-0.5">
+                            <span class="${stars >= 1 ? 'text-amber-400' : 'text-slate-300'}">★</span>
+                            <span class="${stars >= 2 ? 'text-amber-400' : 'text-slate-300'}">★</span>
+                            <span class="${stars >= 3 ? 'text-amber-400' : 'text-slate-300'}">★</span>
+                        </div>
+                    `;
+                }
+
+                btn.innerHTML = `
+                    <span class="title-font text-sm sm:text-base font-bold ${isUnlocked ? 'text-brand-blue' : 'text-slate-500'}">
+                        ${lvl.id}
+                    </span>
+                    ${isUnlocked ? starsHTML : '<span class="text-xs">🔒</span>'}
+                `;
+
+                grid.appendChild(btn);
+            });
+        }
+
+        function filterLevels(category) {
+            playSound('click');
+            activeFilter = category;
+            document.querySelectorAll('.category-btn').forEach(b => {
+                if (b.dataset.cat === category) {
+                    b.classList.add('bg-brand-blue', 'text-white', 'border-brand-blue');
+                    b.classList.remove('bg-white', 'bg-pink-50', 'bg-emerald-50', 'bg-purple-50', 'bg-amber-50');
+                } else {
+                    b.classList.remove('bg-brand-blue', 'text-white');
+                }
+            });
+            renderLevelGrid();
+        }
+
+        function showLevelSelect() {
+            playSound('click');
+            document.getElementById('levelSelectView').classList.remove('hidden');
+            document.getElementById('gameplayView').classList.add('hidden');
+            document.getElementById('gameplayView').classList.remove('flex');
+            renderLevelGrid();
+        }
+
+
+        let currentAttempts = 0;
+
+        function startLevel(index) {
+            currentLevelIndex = index;
+            currentAttempts = 0;
+            const lvl = LEVELS_DATA[index];
+
+            document.getElementById('levelSelectView').classList.add('hidden');
+            document.getElementById('gameplayView').classList.remove('hidden');
+            document.getElementById('gameplayView').classList.add('flex');
+
+            // Set Badges & Text
+            document.getElementById('levelBadge').innerText = `Level ${lvl.id}`;
+            document.getElementById('categoryBadge').innerText = lvl.title;
+            document.getElementById('levelProgressBar').style.width = `${((lvl.id) / 50) * 100}%`;
+            document.getElementById('instructionText').innerText = `Perhatikan urutan pola ${lvl.title} di bawah ini, lalu pilih kartu yang pas!`;
+
+            // Render Pattern Sequence Cards
+            const container = document.getElementById('patternContainer');
+            container.innerHTML = '';
+
+            lvl.seq.forEach((item, i) => {
+                const card = document.createElement('div');
+                card.className = "pattern-card bg-white border-2 rounded-2xl p-3 sm:p-4 min-w-[60px] sm:min-w-[80px] h-[75px] sm:h-[95px] flex flex-col items-center justify-center shadow-md animate-pop-in";
+
+                if (i === lvl.targetIdx) {
+                    // Missing Slot
+                    card.classList.add('border-dashed', 'border-brand-pink', 'bg-pink-50/80', 'animate-pulse');
+                    card.innerHTML = `
+                        <span class="title-font text-2xl sm:text-3xl font-bold text-brand-pink">?</span>
+                        <span class="text-[10px] font-bold text-pink-400 uppercase mt-1">Isi Ini</span>
+                    `;
+                } else {
+                    card.classList.add('border-slate-200');
+                    card.innerHTML = renderItemContent(item);
+                }
+
+                container.appendChild(card);
+            });
+
+            // Render Option Buttons
+            const optContainer = document.getElementById('optionsContainer');
+            optContainer.innerHTML = '';
+
+            // Shuffle options for variety while keeping track
+            const shuffledOptions = [...lvl.options].sort(() => Math.random() - 0.5);
+
+            shuffledOptions.forEach((option) => {
+                const optBtn = document.createElement('button');
+                optBtn.className = "pattern-card bg-white hover:bg-sky-50 border-3 border-slate-200 hover:border-brand-blue rounded-2xl p-4 flex flex-col items-center justify-center shadow-md transition-all duration-200 active:scale-95 group";
+                
+                optBtn.innerHTML = renderItemContent(option);
+
+                optBtn.onclick = () => checkAnswer(option, lvl.correct);
+                optContainer.appendChild(optBtn);
+            });
+        }
+
+        // Helper to display HTML for shapes, colors, letters, numbers
+        function renderItemContent(item) {
+            if (!item) return '';
+
+            if (item.symbol) {
+                // Shape item
+                return `<span class="text-3xl sm:text-4xl transform group-hover:scale-110 transition-transform">${item.symbol}</span>
+                        <span class="text-[11px] font-bold text-slate-500 mt-1">${item.name || ''}</span>`;
+            } else if (item.type === 'color') {
+                return `<span class="text-3xl sm:text-4xl transform group-hover:scale-110 transition-transform">${item.val}</span>
+                        <span class="text-[11px] font-bold text-slate-500 mt-1">${item.name || ''}</span>`;
+            } else if (item.type === 'num') {
+                return `<span class="title-font text-3xl sm:text-4xl font-bold text-brand-blue group-hover:scale-110 transition-transform">${item.val}</span>`;
+            } else if (item.type === 'letter') {
+                return `<span class="title-font text-3xl sm:text-4xl font-bold text-brand-purple group-hover:scale-110 transition-transform">${item.val}</span>`;
+            }
+            return '';
+        }
+
+        function checkAnswer(selected, correct) {
+            currentAttempts++;
+            const isCorrect = JSON.stringify(selected) === JSON.stringify(correct);
+
+            if (isCorrect) {
+                playSound('correct');
+                
+                // Calculate stars (3 stars for first try, 2 for 2nd try, 1 for 3+ tries)
+                let earnedStars = 3;
+                if (currentAttempts === 2) earnedStars = 2;
+                if (currentAttempts >= 3) earnedStars = 1;
+
+                const currentLvlId = LEVELS_DATA[currentLevelIndex].id;
+                // Keep highest stars earned
+                if (!levelStars[currentLvlId] || earnedStars > levelStars[currentLvlId]) {
+                    levelStars[currentLvlId] = earnedStars;
+                }
+
+                // Unlock next level
+                if (currentLvlId < 50 && levelStars[currentLvlId + 1] === undefined) {
+                    levelStars[currentLvlId + 1] = 0;
+                }
+
+                saveProgress();
+                triggerConfetti();
+                showSuccessModal(earnedStars);
+
+            } else {
+                playSound('wrong');
+                // Visual shake feedback on screen
+                const board = document.getElementById('gameplayView');
+                board.classList.add('animate-wiggle');
+                setTimeout(() => board.classList.remove('animate-wiggle'), 500);
+
+                // Friendly mascot hint prompt
+                document.getElementById('instructionText').innerText = "Ups, belum tepat! Coba perhatikan lagi polanya ya 😊";
+            }
+        }
+
+
+        function useHint() {
+            playSound('click');
+            const lvl = LEVELS_DATA[currentLevelIndex];
+            document.getElementById('hintText').innerText = lvl.hint;
+            document.getElementById('hintModal').classList.remove('hidden');
+        }
+
+        function closeHint() {
+            playSound('click');
+            document.getElementById('hintModal').classList.add('hidden');
+        }
+
+        function showSuccessModal(stars) {
+            const modal = document.getElementById('successModal');
+            const starNodes = document.querySelectorAll('.star-anim');
+
+            starNodes.forEach((node, i) => {
+                node.classList.add('opacity-20');
+                if (i < stars) {
+                    setTimeout(() => {
+                        node.classList.remove('opacity-20');
+                        node.classList.add('scale-125');
+                        playSound('star');
+                    }, 300 * (i + 1));
+                }
+            });
+
+            modal.classList.remove('hidden');
+        }
+
+        function nextLevel() {
+            playSound('click');
+            document.getElementById('successModal').classList.add('hidden');
+
+            if (currentLevelIndex + 1 < LEVELS_DATA.length) {
+                startLevel(currentLevelIndex + 1);
+            } else {
+                // All 50 levels completed!
+                document.getElementById('finalStarsText').innerText = `${getTotalStars()} / 150 ⭐`;
+                document.getElementById('completionModal').classList.remove('hidden');
+                triggerConfetti();
+            }
+        }
+
+        function hideModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+
+        function triggerConfetti() {
+            const canvas = document.getElementById('confettiCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            const colors = ['#FFD166', '#06D6A0', '#118AB2', '#EF476F', '#8338EC'];
+
+            for (let i = 0; i < 70; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    vx: (Math.random() - 0.5) * 12,
+                    vy: (Math.random() - 0.8) * 12,
+                    size: Math.random() * 8 + 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    life: 100
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let active = false;
+
+                particles.forEach(p => {
+                    if (p.life > 0) {
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        p.vy += 0.2; // gravity
+                        p.life--;
+                        ctx.fillStyle = p.color;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                        ctx.fill();
+                        active = true;
+                    }
+                });
+
+                if (active) {
+                    requestAnimationFrame(animate);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+
+            animate();
+        }
+
+        // Initialize application on window load
+        window.onload = function () {
+            loadProgress();
+            renderLevelGrid();
+            
+            // Resize canvas dynamically
+            window.addEventListener('resize', () => {
+                const canvas = document.getElementById('confettiCanvas');
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
+        };
+    </script>
+</body>
+</html>
