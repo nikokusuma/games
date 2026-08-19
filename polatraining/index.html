@@ -124,8 +124,8 @@
                 </div>
             </div>
 
-            <!-- Stats Bar (Stars, Sound Toggle, Map Button) -->
-            <div class="flex items-center gap-2 md:gap-4">
+            <!-- Stats Bar (Stars, Sound Toggle, Reset, Map Button) -->
+            <div class="flex items-center gap-2 md:gap-3">
                 <!-- Stars Counter -->
                 <div class="flex items-center gap-1.5 bg-amber-100 border-2 border-amber-300 px-3 py-1.5 rounded-full shadow-sm">
                     <span class="text-xl">⭐</span>
@@ -136,6 +136,11 @@
                 <!-- Sound Toggle -->
                 <button id="soundBtn" onclick="toggleSound()" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 border-2 border-slate-300 flex items-center justify-center text-xl transition-all" title="Efek Suara">
                     🔊
+                </button>
+
+                <!-- Reset Progress Button in Header -->
+                <button onclick="confirmResetProgress()" class="w-10 h-10 rounded-full bg-rose-100 hover:bg-rose-200 border-2 border-rose-300 text-rose-600 flex items-center justify-center text-lg transition-all active:scale-95" title="Reset Progress Game">
+                    🔄
                 </button>
 
                 <!-- Level Select Button -->
@@ -152,16 +157,23 @@
         <!-- VIEW 1: LEVEL SELECTION MAP -->
         <section id="levelSelectView" class="w-full glass-panel rounded-3xl p-6 md:p-8 shadow-xl my-4 animate-pop-in">
             <div class="text-center mb-6">
-                <h2 class="title-font text-2xl md:text-3xl font-bold text-brand-blue">Pilih Level Petualangan</h2>
-                <p class="text-slate-600 text-sm md:text-base font-semibold mt-1">Selesaikan 50 tantangan pola dan kumpulkan semua bintang!</p>
+                <div class="flex items-center justify-center gap-2 mb-1">
+                    <h2 class="title-font text-2xl md:text-3xl font-bold text-brand-blue">Pilih Level Petualangan</h2>
+                </div>
+                <p class="text-slate-600 text-sm md:text-base font-semibold">Selesaikan 50 tantangan pola dan kumpulkan semua bintang!</p>
 
-                <!-- Filter Categories -->
-                <div class="flex flex-wrap justify-center gap-2 mt-4">
+                <!-- Filter Categories & Reset Action -->
+                <div class="flex flex-wrap justify-center items-center gap-2 mt-4">
                     <button onclick="filterLevels('all')" class="category-btn active border-2 border-slate-300 bg-white px-3 py-1.5 rounded-full text-xs md:text-sm font-bold shadow-sm transition-all hover:scale-105" data-cat="all">Semua (50)</button>
                     <button onclick="filterLevels('bentuk')" class="category-btn border-2 border-pink-300 bg-pink-50 text-pink-700 px-3 py-1.5 rounded-full text-xs md:text-sm font-bold shadow-sm transition-all hover:scale-105" data-cat="bentuk">🔷 Bentuk</button>
                     <button onclick="filterLevels('warna')" class="category-btn border-2 border-emerald-300 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full text-xs md:text-sm font-bold shadow-sm transition-all hover:scale-105" data-cat="warna">🎨 Warna</button>
                     <button onclick="filterLevels('huruf')" class="category-btn border-2 border-purple-300 bg-purple-50 text-purple-700 px-3 py-1.5 rounded-full text-xs md:text-sm font-bold shadow-sm transition-all hover:scale-105" data-cat="huruf">🔤 Huruf</button>
                     <button onclick="filterLevels('angka')" class="category-btn border-2 border-amber-300 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-full text-xs md:text-sm font-bold shadow-sm transition-all hover:scale-105" data-cat="angka">🔢 Angka Lompat</button>
+                    
+                    <!-- Secondary Reset Button for easy visibility -->
+                    <button onclick="confirmResetProgress()" class="border-2 border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 px-3 py-1.5 rounded-full text-xs md:text-sm font-bold shadow-sm transition-all hover:scale-105 flex items-center gap-1 ml-auto sm:ml-2">
+                        <span>🔄</span> Reset Game
+                    </button>
                 </div>
             </div>
 
@@ -170,7 +182,6 @@
                 <!-- Level buttons will be populated dynamically -->
             </div>
         </section>
-
 
         <!-- VIEW 2: GAMEPLAY BOARD -->
         <section id="gameplayView" class="w-full glass-panel rounded-3xl p-4 md:p-8 shadow-xl my-4 hidden flex-col items-center">
@@ -295,6 +306,26 @@
         </div>
     </div>
 
+    <!-- MODAL 4: CONFIRMATION FOR RESET PROGRESS -->
+    <div id="resetModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full text-center shadow-2xl border-4 border-rose-400 animate-pop-in">
+            <div class="text-5xl mb-2">🔄</div>
+            <h3 class="title-font text-2xl font-bold text-rose-600 mb-2">Reset Progress Permainan?</h3>
+            <p class="text-slate-600 text-sm md:text-base font-semibold bg-rose-50 p-4 rounded-2xl border border-rose-200 mb-6 text-slate-700">
+                Apakah kamu yakin ingin mengulang permainan dari awal? Semua bintang dan level yang telah terbuka akan dikembalikan seperti semula.
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button onclick="executeResetProgress()" class="w-full bg-rose-500 hover:bg-rose-600 text-white title-font font-bold text-base py-2.5 rounded-xl shadow-md transition-all hover:scale-105">
+                    Ya, Reset Sekarang
+                </button>
+                <button onclick="closeResetModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-base py-2.5 rounded-xl transition-all">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+
 
     <!-- JAVASCRIPT LOGIC -->
     <script>
@@ -344,6 +375,10 @@
             } else if (effect === 'star') {
                 playTone(880, 'sine', 0.12, 0);
                 playTone(1174.66, 'sine', 0.2, 80);
+            } else if (effect === 'reset') {
+                playTone(440, 'sine', 0.1, 0);
+                playTone(330, 'sine', 0.1, 100);
+                playTone(220, 'sine', 0.2, 200);
             }
         }
 
@@ -352,9 +387,6 @@
             document.getElementById('soundBtn').innerText = soundEnabled ? '🔊' : '🔇';
         }
 
-
-        // Generator helper for pattern items
-        // Item structure: { type: 'shape'|'color'|'huruf'|'angka', val: '...', color: '#...', label: '...' }
 
         const SHAPES = {
             circle: { symbol: '🔴', name: 'Lingkaran Merah', color: '#EF4444' },
@@ -933,6 +965,28 @@
 
         function updateTotalStarsDisplay() {
             document.getElementById('totalStarsText').innerText = getTotalStars();
+        }
+
+        // --- RESET PROGRESS LOGIC ---
+        function confirmResetProgress() {
+            playSound('click');
+            document.getElementById('resetModal').classList.remove('hidden');
+        }
+
+        function closeResetModal() {
+            playSound('click');
+            document.getElementById('resetModal').classList.add('hidden');
+        }
+
+        function executeResetProgress() {
+            playSound('reset');
+            // Reset to default state
+            levelStars = { 1: 0 };
+            saveProgress();
+            
+            // Hide modal & refresh level map
+            document.getElementById('resetModal').classList.add('hidden');
+            showLevelSelect();
         }
 
 
