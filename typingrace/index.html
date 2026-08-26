@@ -84,6 +84,7 @@
         </button>
         <button onclick="openConfigModal()" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-semibold flex items-center gap-2 border border-slate-700">
           <i class="fa-solid fa-gear"></i> <span class="hidden sm:inline">Pengaturan Cloud</span>
+          <span id="cloud-status-badge" class="w-2.5 h-2.5 rounded-full bg-amber-500" title="Mengecek koneksi cloud..."></span>
         </button>
       </div>
     </div>
@@ -346,6 +347,27 @@
     <span id="toast-msg" class="text-xs font-bold">Pesan notifikasi</span>
   </div>
 
+  <!-- Diagnostic Error Modal -->
+  <div id="error-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 border border-red-500/30 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h3 id="error-modal-title" class="heading-font text-lg font-bold text-red-400 flex items-center gap-2">
+          <i class="fa-solid fa-circle-exclamation"></i> Kendala Koneksi Cloud
+        </h3>
+        <button onclick="closeErrorModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 text-xs">
+        <p id="error-modal-advice" class="text-amber-300 font-semibold leading-relaxed"></p>
+        <p id="error-modal-detail" class="text-slate-400 font-mono text-[11px] break-all pt-2 border-t border-slate-800/80"></p>
+      </div>
+      <div class="flex justify-end gap-2 pt-1">
+        <button onclick="closeErrorModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs">
+          Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { 
@@ -392,24 +414,116 @@
     let app, auth, db;
     let currentUser = null;
     let roomUnsubscribe = null;
+    let firebaseReady = false;
 
+    // Global Game State Object
     let gameState = {
-      mode: 'multiplayer', // 'multiplayer' or 'bot'
-      roomCode: null,
-      isHost: false,
       playerName: '',
       playerAvatar: AVATARS[0],
-      currentWordIndex: 0,
+      mode: 'multiplayer',
+      isHost: false,
+      roomCode: null,
+      isRacing: false,
       wordList: [],
+      currentWordIndex: 0,
       typedCharacters: 0,
       correctCharacters: 0,
       totalErrors: 0,
+      timeLeft: 180,
       startTime: null,
       timerInterval: null,
       botInterval: null,
-      timeLeft: 180, // 3 Minutes = 180 Seconds
-      isRacing: false,
-      myStats: { wpm: 0, accuracy: 100, wordsTyped: 0, progress: 0 }
+      myStats: {
+        wpm: 0,
+        accuracy: 100,
+        wordsTyped: 0,
+        progress: 0
+      },
+      botPlayers: {}
+    };
+
+    async function initFirebase() {
+      let config = null;
+
+      // Priority 1: Check user custom config saved in LocalStorage
+      const stored = localStorage.getItem('typing_race_fb_config');
+      if (stored) {
+        try { config = JSON.parse(stored); } catch (e) {}
+      }
+
+      // Priority 2: Check window injected config
+      if (!config && typeof __firebase_config !== 'undefined' && __firebase_config) {
+        try { config = JSON.parse(__firebase_config); } catch (e) {}
+      }
+
+      if (!config) {
+        updateCloudStatusBadge('error', 'Belum mengisi Firebase Config');
+        return;
+      }
+
+      try {
+        app = initializeApp(config);
+        auth = getAuth(app);
+        db = getFirestore(app);
+
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+
+        firebaseReady = true;
+        updateCloudStatusBadge('ready', 'Terhubung ke Firebase Cloud');
+
+        onAuthStateChanged(auth, (user) => {
+          if (user) {
+            currentUser = user;
+          }
+        });
+      } catch (err) {
+        console.warn("Firebase Auth error:", err);
+        firebaseReady = false;
+        let detail = err.message || err.toString();
+        let advice = "Gagal terhubung ke Firebase Cloud.";
+
+        if (detail.includes("unauthorized-domain")) {
+          advice = `Domain situs ini (${window.location.hostname}) belum didaftarkan di Firebase Console. Buka Firebase Console > Authentication > Settings > Authorized domains, lalu tambahkan domain ini.`;
+        } else if (detail.includes("operation-not-allowed")) {
+          advice = "Anonymous Auth belum diaktifkan. Buka Firebase Console > Authentication > Sign-in method > aktifkan 'Anonymous'.";
+        } else if (detail.includes("invalid-api-key") || detail.includes("api-key-not-valid")) {
+          advice = "API Key Firebase tidak valid. Periksa kembali JSON Firebase Config Anda.";
+        }
+
+        updateCloudStatusBadge('error', advice);
+        showErrorDialog("Gagal Terhubung ke Cloud Firebase", advice, detail);
+      }
+    }
+
+    function updateCloudStatusBadge(status, titleText) {
+      const badge = document.getElementById('cloud-status-badge');
+      if (!badge) return;
+      if (status === 'ready') {
+        badge.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500';
+        badge.title = titleText || 'Firebase Cloud Terhubung';
+      } else if (status === 'error') {
+        badge.className = 'w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm shadow-red-500';
+        badge.title = titleText || 'Koneksi Cloud Bermasalah';
+      }
+    }
+
+    window.showErrorDialog = function(title, advice, detail) {
+      document.getElementById('error-modal-title').innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${title}`;
+      document.getElementById('error-modal-advice').innerText = advice;
+      document.getElementById('error-modal-detail').innerText = `Detail Error: ${detail}`;
+      const modal = document.getElementById('error-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    };
+
+    window.closeErrorModal = function() {
+      const modal = document.getElementById('error-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
     };
 
     // Web Audio Synthesizer for SFX
@@ -432,57 +546,6 @@
         osc.start();
         osc.stop(audioCtx.currentTime + duration);
       } catch (e) {}
-    }
-
-    async function initFirebase() {
-      let config = null;
-
-      // 1. Check window injected config
-      if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-        try { config = JSON.parse(__firebase_config); } catch (e) {}
-      }
-
-      // 2. Check localStorage config
-      if (!config) {
-        const stored = localStorage.getItem('typing_race_fb_config');
-        if (stored) {
-          try { config = JSON.parse(stored); } catch (e) {}
-        }
-      }
-
-      // Default fallback config for demo preview if not configured
-      if (!config) {
-        config = {
-          apiKey: "AIzaSyDG5RbMgAJLQgRfRTgM6ODqdexDhKc46nA",
-  authDomain: "racetyping-e526b.firebaseapp.com",
-  databaseURL: "https://racetyping-e526b-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "racetyping-e526b",
-  storageBucket: "racetyping-e526b.firebasestorage.app",
-  messagingSenderId: "160664386176",
-  appId: "1:160664386176:web:6ecc3372ab0980eb544465"
-        };
-      }
-
-      try {
-        app = initializeApp(config);
-        auth = getAuth(app);
-        db = getFirestore(app);
-
-        // Authenticate user safely according to Rule 3
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
-        }
-
-        onAuthStateChanged(auth, (user) => {
-          if (user) {
-            currentUser = user;
-          }
-        });
-      } catch (err) {
-        console.warn("Firebase Auth initialized in offline/fallback mode:", err);
-      }
     }
 
     window.showToast = function(msg, icon = 'fa-circle-info') {
@@ -543,7 +606,6 @@
       gameState.roomCode = code;
 
       const seed = Math.floor(Math.random() * 10000);
-
       const uid = getUserId();
 
       const initialRoomData = {
@@ -566,6 +628,9 @@
       };
 
       try {
+        if (!db) {
+          throw new Error("Firestore belum siap. Pastikan JSON Firebase valid.");
+        }
         await setDoc(getRoomRef(code), initialRoomData);
         subscribeToRoom(code);
         showScreen('screen-lobby');
@@ -574,8 +639,16 @@
         showToast('Room Balapan berhasil dibuat!', 'fa-circle-check');
       } catch (e) {
         console.error("Failed to create room:", e);
-        showToast('Gagal terhubung ke cloud. Memulai mode demo local...', 'fa-triangle-exclamation');
-        startSinglePlayerBotRace();
+        let detail = e.message || e.toString();
+        let advice = "Periksa konfigurasi Firebase Anda.";
+        
+        if (detail.includes("permission-denied") || detail.includes("PERMISSION_DENIED")) {
+          advice = "Izin Firestore ditolak. Buka Firebase Console > Firestore Database > Rules, dan ubah menjadi 'allow read, write: if true;' lalu klik Publish.";
+        } else if (detail.includes("auth") || detail.includes("API key") || detail.includes("operation-not-allowed")) {
+          advice = "Anonymous Auth belum diaktifkan. Buka Firebase Console > Authentication > Sign-in method > aktifkan 'Anonymous'.";
+        }
+
+        showErrorDialog("Gagal Membuat Room Balapan", advice, detail);
       }
     };
 
