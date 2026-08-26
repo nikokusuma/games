@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KBBI Typing Race - Multiplayer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            400: '#38bdf8',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            900: '#0c4a6e',
+                        },
+                        neon: {
+                            cyan: '#00f3ff',
+                            pink: '#ff007f',
+                            lime: '#39ff14',
+                            yellow: '#ffe600'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbars & glow effects */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        
+        .glow-cyan { filter: drop-shadow(0 0 8px rgba(0, 243, 255, 0.4)); }
+        .glow-pink { filter: drop-shadow(0 0 8px rgba(255, 0, 127, 0.4)); }
+        .bg-grid {
+            background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        
+        @keyframes pulse-border {
+            0%, 100% { border-color: rgba(56, 189, 248, 0.4); }
+            50% { border-color: rgba(56, 189, 248, 1); }
+        }
+        .active-typing { animation: pulse-border 1.5s infinite; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen bg-grid flex flex-col justify-between selection:bg-brand-500 selection:text-white">
+
+    <!-- TOP NAVBAR -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-neon-cyan flex items-center justify-center text-slate-950 font-black text-xl shadow-lg shadow-brand-500/20">
+                    <i class="fa-solid fa-keyboard"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight tracking-wide bg-gradient-to-r from-white via-slate-200 to-brand-400 bg-clip-text text-transparent">
+                        BALAP KETIK KBBI
+                    </h1>
+                    <p class="text-xs text-slate-400">Multiplayer Public Room &bull; Tingkat SMP (Durasi 3 Menit)</p>
+                </div>
+            </div>
+
+            <!-- Global Status Bar -->
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/60 text-xs">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="player-count-badge" class="font-semibold text-slate-300">Pemain: 0/30</span>
+                </div>
+                <!-- Live Session Timer Display -->
+                <div id="session-timer-badge" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-900 font-mono text-xs font-bold text-neon-cyan flex items-center gap-2">
+                    <i class="fa-regular fa-clock text-brand-400"></i>
+                    <span id="session-timer-text">03:00</span>
+                </div>
+                <div id="room-state-badge" class="px-3 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-400 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i> Menghubungkan...
+                </div>
+                <button id="btn-change-profile" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition text-sm">
+                    <i class="fa-solid fa-user-gear"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-7xl mx-auto w-full px-4 py-6 flex-grow flex flex-col gap-6">
+
+        <!-- WAITING ROOM / SPECTATOR BANNER (Shown when joined mid-game) -->
+        <div id="waiting-banner" class="hidden bg-gradient-to-r from-amber-500/20 via-orange-500/10 to-transparent border-l-4 border-amber-500 rounded-r-xl p-4 backdrop-blur-sm transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-amber-500/20 rounded-lg text-amber-400">
+                        <i class="fa-solid fa-hourglass-half text-xl animate-bounce"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-amber-300">Anda Berada di Waiting Room</h3>
+                        <p class="text-xs text-amber-200/80">Sesi balapan sedang berjalan. Anda akan otomatis ikut bertanding pada ronde berikutnya setelah sesi ini selesai!</p>
+                    </div>
+                </div>
+                <div id="spectate-timer" class="font-mono font-bold text-amber-400 text-sm bg-slate-900/60 px-3 py-1.5 rounded-lg border border-amber-500/30">
+                    Spectating Live...
+                </div>
+            </div>
+        </div>
+
+        <!-- RACE TRACK CONTAINER -->
+        <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-2xl relative overflow-hidden backdrop-blur-md">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-flag-checkered text-brand-400"></i>
+                    <h2 class="font-bold text-slate-200 text-sm uppercase tracking-wider">Lintasan Balap Real-time</h2>
+                </div>
+                <div id="game-status-text" class="text-xs font-medium text-slate-400">
+                    Menunggu pemain lain...
+                </div>
+            </div>
+
+            <!-- Race Lanes Container -->
+            <div id="race-lanes" class="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
+                <!-- Lanes dynamically generated by JS -->
+                <div class="text-center py-8 text-slate-500 text-sm">
+                    <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2"></i>
+                    <p>Memuat lintasan balap...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TYPING AREA & METRICS -->
+        <section class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            
+                <!-- Live Metrics Box -->
+                <div class="grid grid-cols-2 lg:grid-cols-1 gap-3">
+                    <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 flex flex-col">
+                        <span class="text-xs text-slate-400 mb-1">Kecepatan (WPM)</span>
+                        <span id="stat-wpm" class="text-3xl font-black font-mono text-neon-cyan">0</span>
+                    </div>
+                    <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 flex flex-col">
+                        <span class="text-xs text-slate-400 mb-1">Akurasi</span>
+                        <span id="stat-accuracy" class="text-3xl font-black font-mono text-emerald-400">100%</span>
+                    </div>
+                    <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 flex flex-col">
+                        <span class="text-xs text-slate-400 mb-1">Kata Selesai</span>
+                        <span id="stat-progress" class="text-xl font-bold font-mono text-slate-300">0 kata</span>
+                    </div>
+                    <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 flex flex-col">
+                        <span class="text-xs text-slate-400 mb-1">Peringkat</span>
+                        <span id="stat-rank" class="text-xl font-bold font-mono text-amber-400">-</span>
+                    </div>
+                </div>
+
+                <div class="text-[11px] text-slate-500 text-center">
+                    Ketik kata yang tampil dan tekan <kbd class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 font-mono">Spasi</kbd> untuk lanjut.
+                </div>
+            </div>
+
+            <!-- Main Typing Box (One Word at a Time Display) -->
+            <div class="lg:col-span-3 bg-slate-900/90 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between gap-6 shadow-xl relative">
+                
+                <!-- Countdown Overlay -->
+                <div id="countdown-overlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md rounded-2xl z-20 flex flex-col items-center justify-center gap-2">
+                    <span class="text-xs uppercase tracking-widest text-slate-400 font-bold">Balapan 3 Menit Dimulai Dalam</span>
+                    <span id="countdown-number" class="text-7xl font-black font-mono text-brand-400 animate-ping">3</span>
+                </div>
+
+                <!-- Single Word Target Display Card -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 min-h-[160px] flex flex-col items-center justify-center gap-3 relative overflow-hidden shadow-inner" id="single-word-card">
+                    <div class="text-xs font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                        <i class="fa-solid fa-bullseye text-brand-400"></i> Kata Saat Ini
+                    </div>
+                    
+                    <!-- Target Active Word with Letter-by-Letter Realtime Highlight -->
+                    <div id="target-word-display" class="font-mono text-4xl sm:text-5xl font-black tracking-wide text-white transition-all">
+                        <span class="text-slate-500 text-lg font-sans">Menunggu balapan dimulai...</span>
+                    </div>
+
+                    <!-- Next Word Preview -->
+                    <div id="next-word-preview" class="text-xs font-mono text-slate-500 mt-1 flex items-center gap-2">
+                        <span>Berikutnya:</span>
+                        <span id="next-word-text" class="text-slate-400 font-bold font-mono">-</span>
+                    </div>
+                </div>
+
+                <!-- Typing Input Box -->
+                <div class="relative">
+                    <input type="text" id="type-input" 
+                        class="w-full bg-slate-950 border-2 border-slate-700 focus:border-brand-500 rounded-xl px-5 py-4 text-2xl font-mono text-white placeholder-slate-600 outline-none transition duration-200 active-typing disabled:opacity-50 disabled:cursor-not-allowed text-center tracking-wide" 
+                        placeholder="Ketik kata di atas lalu tekan SPASI..." 
+                        autocomplete="off" 
+                        autocorrect="off" 
+                        autocapitalize="off" 
+                        spellcheck="false" 
+                        disabled />
+                </div>
+
+            </div>
+
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-800 bg-slate-900/60 py-4 px-4 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div>
+                &copy; 2026 Balap Ketik KBBI Multiplayer &bull; Kamus Besar Bahasa Indonesia Edition
+            </div>
+            <div class="flex items-center gap-4 text-slate-400">
+                <span><i class="fa-solid fa-server text-emerald-400 mr-1"></i> Direct Cloud Sync</span>
+                <span><i class="fa-solid fa-book text-brand-400 mr-1"></i> 5.000 Vocabulary Pool</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL: PROFILE & USERNAME -->
+    <div id="modal-profile" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <h3 class="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-user-pen text-brand-400"></i> Atur Profil Pemain
+            </h3>
+            <p class="text-xs text-slate-400 mb-4">Pilih nama panggilan dan avatar mobil balap Anda.</p>
+
+            <form id="form-profile" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Nama Panggilan</label>
+                    <input type="text" id="input-username" maxlength="15" required 
+                        class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-brand-500 outline-none" 
+                        placeholder="Contoh: SpeedyRacer" />
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-2">Pilih Warna / Mobil</label>
+                    <div class="grid grid-cols-5 gap-2" id="avatar-selector">
+                        <!-- Avatars rendered by JS -->
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="submit" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-2.5 rounded-xl transition text-sm shadow-lg shadow-brand-500/20">
+                        Simpan & Gabung Balapan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: RACE RESULTS PODIUM -->
+    <div id="modal-results" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+            <div class="text-center mb-6">
+                <span class="text-xs font-bold text-amber-400 uppercase tracking-widest">Hasil Akhir Balapan</span>
+                <h2 class="text-2xl sm:text-3xl font-black text-white mt-1">PAPAN PEMENANG</h2>
+            </div>
+
+            <!-- Winners Podium (Top 3) -->
+            <div id="podium-container" class="grid grid-cols-3 gap-3 items-end mb-6 min-h-[160px]">
+                <!-- Rendered dynamically -->
+            </div>
+
+            <!-- Full Leaderboard Table -->
+            <div class="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden max-h-48 overflow-y-auto mb-6">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-900 border-b border-slate-800 text-slate-400">
+                        <tr>
+                            <th class="p-2.5 text-center">Pos</th>
+                            <th class="p-2.5">Pemain</th>
+                            <th class="p-2.5 text-center">Kecepatan</th>
+                            <th class="p-2.5 text-center">Akurasi</th>
+                            <th class="p-2.5 text-right">Waktu Selesai</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-table-body" class="divide-y divide-slate-800/60 text-slate-300">
+                        <!-- Table rows -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+                <div class="text-xs text-slate-400" id="next-round-countdown-text">
+                    Ronde berikutnya dimulai dalam <span id="results-timer-sec" class="font-bold text-brand-400">10</span> detik...
+                </div>
+                <button id="btn-close-results" class="w-full sm:w-auto px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-white text-sm font-bold rounded-xl transition">
+                    Kembali ke Lintasan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FIREBASE & GAME ENGINE MODULE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInAnonymously, 
+            signInWithCustomToken, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            getDoc, 
+            setDoc, 
+            updateDoc, 
+            deleteDoc, 
+            onSnapshot, 
+            collection, 
+            getDocs 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'typing-race-kbbi-default';
+        
+        let firebaseConfig;
+        if (typeof __firebase_config !== 'undefined') {
+            try {
+                firebaseConfig = JSON.parse(__firebase_config);
+            } catch(e) { console.error("Error parsing firebase config", e); }
+        }
+
+        if (!firebaseConfig) {
+            firebaseConfig = {
+                apiKey: "AIzaSyDemoKeyKBBIForTypingRace12345",
+                authDomain: "typing-race-kbbi.firebaseapp.com",
+                projectId: "typing-race-kbbi",
+                storageBucket: "typing-race-kbbi.appspot.com",
+                messagingSenderId: "1029384756",
+                appId: "1:1029384756:web:abcd1234efgh5678"
+            };
+        }
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Curated Indonesian Vocabulary Pool Suitable for Middle School (SMP / 12-15 Years Old)
+        const SMP_VOCABULARY = [
+            "aljabar", "fotosintesis", "gravitasi", "ekosistem", "sejarah", "proklamasi", "pancasila", "kemerdekaan",
+            "biantara", "pantun", "puisi", "cerpen", "paragraf", "monolog", "atmosfer", "klorofil", "majas", "metafora",
+            "kurikulum", "hipotenusa", "variabel", "reboisasi", "populasi", "komunitas", "kompas", "simetri", "koordinat",
+            "kedaulatan", "konstitusi", "deklarasi", "evolusi", "observasi", "reagen", "pernapasan", "pencernaan", "astronomi",
+            "tata surya", "planet", "asteroid", "nebula", "hidroponik", "erosi", "abrasi", "urbanisasi", "migrasi", "transaksi",
+            "simbiosis", "mutualisme", "parasitisme", "komensalisme", "organel", "sitoplasma", "mitokondria", "nukleus", "kromosom",
+            "reproduksi", "adaptasi", "klasifikasi", "taksonomi", "vertebrata", "invertebrata", "mamalia", "reptil", "amfibi",
+            "persamaan", "pertidaksamaan", "geometri", "trigonometri", "aritmetika", "statistika", "diagrom", "persentase",
+            "skala", "vektor", "konduksi", "konveksi", "radiasi", "termodinamika", "kalor", "suhu", "presipitasi", "kondensasi",
+            "evaporasi", "transpirasi", "infiltrasi", "pencemaran", "biodiversitas", "revolusi", "rotasi", "gerhana", "pasut",
+            "amplitudo", "frekuensi", "gelombang", "resplendens", "optik", "refraksi", "refleksi", "pembiasan", "pemantulan",
+            "magnet", "induksi", "elektron", "proton", "neutron", "atom", "molekul", "unsur", "senyawa", "campuran",
+            "larutan", "basa", "asam", "indikator", "netralisasi", "presipitat", "oksigen", "hidrogen", "karbon", "nitrogen",
+            "kalsium", "fosfor", "glukosa", "karbohidrat", "protein", "vitamin", "mineral", "enzim", "hormon", "syaraf",
+            "jaringan", "organ", "sistem", "metabolisme", "ekskresi", "sirkulasi", "jantung", "paru", "ginjal", "lambung",
+            "usus", "sendi", "rangka", "otot", "kontraksi", "relaksasi", "neuron", "akson", "dendrit", "sinapsis",
+            "kapiler", "vena", "arteri", "plasma", "trombosit", "leukosit", "eritrosit", "antibodi", "antigen", "vaksin",
+            "imunitas", "patogen", "bakteri", "virus", "jamur", "protista", "monera", "flora", "fauna", "bioma",
+            "tundra", "taiga", "savana", "steppa", "hujan tropis", "revolusi industri", "sumpah pemuda", "diponegoro", "kartini",
+            "sudirman", "soekarno", "mohammad hatta", "yamin", "supomo", "linggajati", "renville", "roem royen", "konferensi",
+            "naskah", "autentik", "manifesto", "demokrasi", "terpimpin", "reformasi", "kabinet", "parlemen", "senat",
+            "yudikatif", "eksekutif", "legislatif", "mahkamah", "presiden", "gubernur", "bupati", "walikota", "kecamatan",
+            "kelurahan", "otonomi", "desentralisasi", "sentralisasi", "wawasan", "nusantara", "integrasi", "nasional", "bhinneka",
+            "toleransi", "pluralisme", "sosiometri", "sosialisasi", "interaksi", "akulturasi", "asimilasi", "akomodasi", "konflik",
+            "konsiliasi", "arbitrase", "mediasi", "coercion", "status", "peran", "norma", "nilai", "sanksi", "moral",
+            "etika", "karakter", "disiplin", "tanggung jawab", "kejujuran", "keadilan", "persatuan", "gotong royong", "musyawarah",
+            "mufakat", "orientasi", "komplikasi", "resolusi", "koda", "tinjauan", "abstraksi", "eksplanasi", "eksposisi",
+            "persuasi", "argumentasi", "deskripsi", "narasi", "ringkasan", "sinopsis", "kritik", "esai", "artikel",
+            "editor", "jurnalis", "media", "informasi", "literasi", "digital", "algoritma", "pemrograman", "jaringan", "internet",
+            "perangkat", "aplikasi", "peramban", "unggah", "unduh", "surel", "sandi", "enkripsi", "keamanan", "privasi"
+        ];
+
+        // Generate 5,000 randomized words from SMP vocabulary pool
+        function generate5000SMPWords() {
+            const list = [];
+            for (let i = 0; i < 5000; i++) {
+                const idx = Math.floor(Math.random() * SMP_VOCABULARY.length);
+                list.push(SMP_VOCABULARY[idx]);
+            }
+            return list;
+        }
+
+        const AVATARS = [
+            { id: 'red', name: 'Merah', color: 'bg-red-500', text: 'text-red-400', border: 'border-red-500', icon: 'fa-car' },
+            { id: 'cyan', name: 'Cyan', color: 'bg-cyan-400', text: 'text-cyan-400', border: 'border-cyan-400', icon: 'fa-car-side' },
+            { id: 'emerald', name: 'Hijau', color: 'bg-emerald-400', text: 'text-emerald-400', border: 'border-emerald-400', icon: 'fa-truck-fast' },
+            { id: 'amber', name: 'Kuning', color: 'bg-amber-400', text: 'text-amber-400', border: 'border-amber-400', icon: 'fa-motorcycle' },
+            { id: 'purple', name: 'Ungu', color: 'bg-purple-500', text: 'text-purple-400', border: 'border-purple-500', icon: 'fa-rocket' },
+        ];
+
+        let currentUser = null;
+        let userId = null;
+        let playerProfile = {
+            username: 'SiswaSMP_' + Math.floor(100 + Math.random() * 900),
+            avatar: 'cyan'
+        };
+
+        let roomData = null;
+        let allPlayers = {};
+        let localPlayerState = {
+            wordIndex: 0,
+            correctChars: 0,
+            totalTypedChars: 0,
+            startTime: null,
+            wpm: 0,
+            accuracy: 100,
+            progress: 0,
+            isFinished: false,
+            finishTimeSec: 0,
+            isWaitingRoom: false
+        };
+
+        let targetWords = [];
+        let unsubscribeRoom = null;
+        let unsubscribePlayers = null;
+        let heartbeatInterval = null;
+        let countdownTimer = null;
+        let sessionTimerInterval = null;
+
+        const RACE_DURATION_SECONDS = 180; // 3 minutes total race time
+
+        const elPlayerCountBadge = document.getElementById('player-count-badge');
+        const elSessionTimerText = document.getElementById('session-timer-text');
+        const elRoomStateBadge = document.getElementById('room-state-badge');
+        const elWaitingBanner = document.getElementById('waiting-banner');
+        const elRaceLanes = document.getElementById('race-lanes');
+        
+        const elTargetWordDisplay = document.getElementById('target-word-display');
+        const elNextWordText = document.getElementById('next-word-text');
+        const elTypeInput = document.getElementById('type-input');
+        
+        const elCountdownOverlay = document.getElementById('countdown-overlay');
+        const elCountdownNumber = document.getElementById('countdown-number');
+        const elGameStatusText = document.getElementById('game-status-text');
+        
+        const elStatWpm = document.getElementById('stat-wpm');
+        const elStatAccuracy = document.getElementById('stat-accuracy');
+        const elStatProgress = document.getElementById('stat-progress');
+        const elStatRank = document.getElementById('stat-rank');
+        
+        const elModalProfile = document.getElementById('modal-profile');
+        const elFormProfile = document.getElementById('form-profile');
+        const elInputUsername = document.getElementById('input-username');
+        const elAvatarSelector = document.getElementById('avatar-selector');
+        const elBtnChangeProfile = document.getElementById('btn-change-profile');
+
+        const elModalResults = document.getElementById('modal-results');
+        const elPodiumContainer = document.getElementById('podium-container');
+        const elLeaderboardTableBody = document.getElementById('leaderboard-table-body');
+        const elBtnCloseResults = document.getElementById('btn-close-results');
+
+        const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'game_room', 'main_room');
+        const playersCollRef = collection(db, 'artifacts', appId, 'public', 'data', 'players');
+
+        async function initApp() {
+            renderAvatarOptions();
+            elInputUsername.value = playerProfile.username;
+
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.error("Auth error, fallback to anonymous", err);
+                await signInAnonymously(auth);
+            }
+
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    currentUser = user;
+                    userId = user.uid;
+                    await registerOrUpdatePlayer();
+                    startHeartbeat();
+                    listenToRoomState();
+                    listenToPlayers();
+                }
+            });
+        }
+
+        function renderAvatarOptions() {
+            elAvatarSelector.innerHTML = AVATARS.map(av => `
+                <label class="cursor-pointer">
+                    <input type="radio" name="avatar" value="${av.id}" ${av.id === playerProfile.avatar ? 'checked' : ''} class="peer sr-only">
+                    <div class="p-3 rounded-xl border border-slate-700 bg-slate-950 peer-checked:border-brand-500 peer-checked:bg-brand-500/10 flex flex-col items-center justify-center gap-1 transition">
+                        <i class="fa-solid ${av.icon} text-lg ${av.text}"></i>
+                        <span class="text-[10px] text-slate-400 font-semibold">${av.name}</span>
+                    </div>
+                </label>
+            `).join('');
+        }
+
+        async function registerOrUpdatePlayer() {
+            if (!userId) return;
+            const pRef = doc(playersCollRef, userId);
+            const data = {
+                id: userId,
+                username: playerProfile.username,
+                avatar: playerProfile.avatar,
+                wpm: localPlayerState.wpm,
+                accuracy: localPlayerState.accuracy,
+                progress: localPlayerState.progress,
+                wordsCount: localPlayerState.wordIndex,
+                isFinished: localPlayerState.isFinished,
+                finishTimeSec: localPlayerState.finishTimeSec,
+                isWaitingRoom: localPlayerState.isWaitingRoom,
+                lastActive: Date.now()
+            };
+            await setDoc(pRef, data, { merge: true });
+        }
+
+        function startHeartbeat() {
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            heartbeatInterval = setInterval(async () => {
+                if (userId) {
+                    const pRef = doc(playersCollRef, userId);
+                    await updateDoc(pRef, { lastActive: Date.now() }).catch(() => {});
+                }
+            }, 5000);
+        }
+
+        function listenToRoomState() {
+            unsubscribeRoom = onSnapshot(roomDocRef, async (snapshot) => {
+                if (!snapshot.exists()) {
+                    const newRoom = {
+                        state: 'LOBBY',
+                        words: generate5000SMPWords(),
+                        startTime: 0,
+                        countdownStart: 0,
+                        leaderId: userId
+                    };
+                    await setDoc(roomDocRef, newRoom);
+                    return;
+                }
+
+                const data = snapshot.data();
+                const prevState = roomData ? roomData.state : null;
+                roomData = data;
+                targetWords = data.words || [];
+
+                handleRoomStateTransition(prevState, data.state);
+                updateRoomBadgeUI(data.state);
+            }, (error) => {
+                console.error("Room listener error:", error);
+            });
+        }
+
+        function listenToPlayers() {
+            unsubscribePlayers = onSnapshot(playersCollRef, (snapshot) => {
+                const now = Date.now();
+                const active = {};
+                let count = 0;
+
+                snapshot.forEach(docSnap => {
+                    const p = docSnap.data();
+                    if (now - (p.lastActive || 0) < 15000) {
+                        active[p.id] = p;
+                        count++;
+                    }
+                });
+
+                allPlayers = active;
+                elPlayerCountBadge.textContent = `Pemain: ${count}/30`;
+
+                checkLeaderElection();
+                renderRaceLanes();
+                updateLiveRankings();
+            }, (error) => {
+                console.error("Players listener error:", error);
+            });
+        }
+
+        async function checkLeaderElection() {
+            if (!roomData || !userId) return;
+            const playerIds = Object.keys(allPlayers).sort();
+            if (playerIds.length > 0 && playerIds[0] === userId && roomData.leaderId !== userId) {
+                await updateDoc(roomDocRef, { leaderId: userId }).catch(() => {});
+            }
+
+            if (roomData && roomData.leaderId === userId) {
+                manageRoomLifecycle();
+            }
+        }
+
+        async function manageRoomLifecycle() {
+            if (!roomData) return;
+            const activePlayerCount = Object.keys(allPlayers).length;
+            const now = Date.now();
+
+            if (roomData.state === 'LOBBY') {
+                if (activePlayerCount >= 1) {
+                    await updateDoc(roomDocRef, {
+                        state: 'COUNTDOWN',
+                        countdownStart: now,
+                        words: generate5000SMPWords()
+                    });
+                }
+            } else if (roomData.state === 'COUNTDOWN') {
+                const elapsed = (now - roomData.countdownStart) / 1000;
+                if (elapsed >= 5) {
+                    await updateDoc(roomDocRef, {
+                        state: 'RACING',
+                        startTime: now
+                    });
+                }
+            } else if (roomData.state === 'RACING') {
+                const raceDuration = (now - roomData.startTime) / 1000;
+                
+                // Exactly 3 minutes (180 seconds) session duration cap
+                if (raceDuration >= RACE_DURATION_SECONDS) {
+                    await updateDoc(roomDocRef, {
+                        state: 'FINISHED',
+                        finishTime: now
+                    });
+                }
+            } else if (roomData.state === 'FINISHED') {
+                const elapsed = (now - (roomData.finishTime || now)) / 1000;
+                if (elapsed >= 10) {
+                    await resetPlayersForNewRace();
+                    await updateDoc(roomDocRef, {
+                        state: 'COUNTDOWN',
+                        countdownStart: now,
+                        words: generate5000SMPWords()
+                    });
+                }
+            }
+        }
+
+        async function resetPlayersForNewRace() {
+            const updates = [];
+            for (let pid in allPlayers) {
+                const pRef = doc(playersCollRef, pid);
+                updates.push(updateDoc(pRef, {
+                    wpm: 0,
+                    accuracy: 100,
+                    progress: 0,
+                    wordsCount: 0,
+                    isFinished: false,
+                    finishTimeSec: 0,
+                    isWaitingRoom: false
+                }));
+            }
+            await Promise.all(updates).catch(() => {});
+        }
+
+        function handleRoomStateTransition(prevState, newState) {
+            if (newState === 'LOBBY') {
+                elGameStatusText.textContent = "Menunggu pemain bergabung...";
+                elCountdownOverlay.classList.add('hidden');
+                elTypeInput.disabled = true;
+                elTypeInput.placeholder = "Menunggu balapan dimulai...";
+                elWaitingBanner.classList.add('hidden');
+                localPlayerState.isWaitingRoom = false;
+                stopSessionTimer();
+                elSessionTimerText.textContent = "03:00";
+            } 
+            else if (newState === 'COUNTDOWN') {
+                elModalResults.classList.add('hidden');
+                elGameStatusText.textContent = "Persiapan! Balapan 3 menit akan segera dimulai...";
+                elCountdownOverlay.classList.remove('hidden');
+                elTypeInput.disabled = true;
+                stopSessionTimer();
+                elSessionTimerText.textContent = "03:00";
+                
+                let left = 5;
+                elCountdownNumber.textContent = left;
+                if (countdownTimer) clearInterval(countdownTimer);
+                countdownTimer = setInterval(() => {
+                    left--;
+                    if (left > 0) {
+                        elCountdownNumber.textContent = left;
+                    } else {
+                        clearInterval(countdownTimer);
+                    }
+                }, 1000);
+
+                localPlayerState.isWaitingRoom = false;
+                resetLocalStats();
+                renderActiveSingleWord();
+                registerOrUpdatePlayer();
+                elWaitingBanner.classList.add('hidden');
+            } 
+            else if (newState === 'RACING') {
+                elCountdownOverlay.classList.add('hidden');
+                elGameStatusText.textContent = "BALAPAN KETIK SMP SEDANG BERLANGSUNG! Durasi: 3 Menit";
+                startSessionTimer();
+
+                if (prevState !== 'COUNTDOWN' && !localPlayerState.startTime) {
+                    localPlayerState.isWaitingRoom = true;
+                    elWaitingBanner.classList.remove('hidden');
+                    elTypeInput.disabled = true;
+                    elTypeInput.placeholder = "Anda berada di Waiting Room. Menonton balapan...";
+                    registerOrUpdatePlayer();
+                } else {
+                    localPlayerState.isWaitingRoom = false;
+                    elWaitingBanner.classList.add('hidden');
+                    elTypeInput.disabled = false;
+                    elTypeInput.placeholder = "Ketik kata di atas lalu tekan SPASI...";
+                    elTypeInput.focus();
+                    localPlayerState.startTime = Date.now();
+                }
+            } 
+            else if (newState === 'FINISHED') {
+                stopSessionTimer();
+                elSessionTimerText.textContent = "00:00";
+                elTypeInput.disabled = true;
+                elTypeInput.placeholder = "Waktu 3 menit habis! Balapan selesai.";
+                elGameStatusText.textContent = "Waktu habis. Menampilkan papan juara...";
+                showResultsModal();
+            }
+        }
+
+        function startSessionTimer() {
+            stopSessionTimer();
+            sessionTimerInterval = setInterval(() => {
+                if (!roomData || !roomData.startTime) return;
+                const elapsedSec = Math.floor((Date.now() - roomData.startTime) / 1000);
+                const remainingSec = Math.max(0, RACE_DURATION_SECONDS - elapsedSec);
+                
+                const mins = String(Math.floor(remainingSec / 60)).padStart(2, '0');
+                const secs = String(remainingSec % 60).padStart(2, '0');
+                elSessionTimerText.textContent = `${mins}:${secs}`;
+
+                if (remainingSec <= 0) {
+                    stopSessionTimer();
+                }
+            }, 500);
+        }
+
+        function stopSessionTimer() {
+            if (sessionTimerInterval) {
+                clearInterval(sessionTimerInterval);
+                sessionTimerInterval = null;
+            }
+        }
+
+        function updateRoomBadgeUI(state) {
+            const badges = {
+                'LOBBY': { bg: 'bg-slate-800', border: 'border-slate-700', text: 'text-slate-300', icon: 'fa-users', label: 'Lobby' },
+                'COUNTDOWN': { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-400', icon: 'fa-stopwatch', label: 'Countdown' },
+                'RACING': { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400', icon: 'fa-flag-checkered animate-bounce', label: 'Balapan Live' },
+                'FINISHED': { bg: 'bg-purple-500/10', border: 'border-purple-500/30', text: 'text-purple-400', icon: 'fa-trophy', label: 'Selesai' }
+            };
+            const b = badges[state] || badges['LOBBY'];
+            elRoomStateBadge.className = `px-3 py-1.5 rounded-lg border ${b.border} ${b.bg} ${b.text} text-xs font-bold uppercase tracking-wider flex items-center gap-2`;
+            elRoomStateBadge.innerHTML = `<i class="fa-solid ${b.icon}"></i> ${b.label}`;
+        }
+
+        function resetLocalStats() {
+            localPlayerState.wordIndex = 0;
+            localPlayerState.correctChars = 0;
+            localPlayerState.totalTypedChars = 0;
+            localPlayerState.startTime = null;
+            localPlayerState.wpm = 0;
+            localPlayerState.accuracy = 100;
+            localPlayerState.progress = 0;
+            localPlayerState.isFinished = false;
+            localPlayerState.finishTimeSec = 0;
+            elTypeInput.value = '';
+
+            elStatWpm.textContent = '0';
+            elStatAccuracy.textContent = '100%';
+            elStatProgress.textContent = `0 kata`;
+            elStatRank.textContent = '-';
+        }
+
+        function renderRaceLanes() {
+            const playersList = Object.values(allPlayers);
+            if (playersList.length === 0) {
+                elRaceLanes.innerHTML = `<div class="text-center py-6 text-slate-500 text-xs">Belum ada pemain di lintasan.</div>`;
+                return;
+            }
+
+            playersList.sort((a, b) => (b.wordsCount || 0) - (a.wordsCount || 0) || (b.wpm || 0) - (a.wpm || 0));
+
+            elRaceLanes.innerHTML = playersList.map((p, index) => {
+                const av = AVATARS.find(a => a.id === p.avatar) || AVATARS[0];
+                const isMe = p.id === userId;
+                // Progress dynamically scales based on words typed (e.g., 60 words target for full track fill)
+                const progressPct = Math.min(Math.max(((p.wordsCount || 0) / 60) * 100, 0), 100);
+                const statusBadge = p.isWaitingRoom 
+                    ? `<span class="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded border border-amber-500/30">Waiting</span>`
+                    : `<span class="text-[10px] font-mono text-emerald-400 font-bold">${p.wordsCount || 0} Kata (${p.wpm || 0} WPM)</span>`;
+
+                return `
+                    <div class="relative bg-slate-950/80 border ${isMe ? 'border-brand-500/60 bg-brand-500/5' : 'border-slate-800'} rounded-xl p-2.5 transition-all">
+                        <div class="flex items-center justify-between text-xs mb-1.5">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold font-mono text-slate-400 w-4">#${index + 1}</span>
+                                <span class="font-semibold ${isMe ? 'text-brand-300 font-bold' : 'text-slate-200'}">${escapeHtml(p.username)} ${isMe ? '(Anda)' : ''}</span>
+                                ${statusBadge}
+                            </div>
+                            <span class="font-mono text-slate-400 text-[11px]">${p.wordsCount || 0} Kata</span>
+                        </div>
+
+                        <!-- Track Line -->
+                        <div class="w-full bg-slate-900 rounded-full h-3.5 relative overflow-hidden border border-slate-800">
+                            <div class="absolute right-0 top-0 bottom-0 w-3 bg-slate-700/50 flex flex-col justify-between opacity-80">
+                                <div class="h-1 bg-white"></div>
+                                <div class="h-1 bg-slate-900"></div>
+                                <div class="h-1 bg-white"></div>
+                            </div>
+
+                            <div class="h-full ${av.color} opacity-30 transition-all duration-300 rounded-full" style="width: ${progressPct}%"></div>
+
+                            <div class="absolute top-1/2 -translate-y-1/2 transition-all duration-300 flex items-center justify-center ${av.text}" style="left: calc(${progressPct}% - 14px)">
+                                <i class="fa-solid ${av.icon} text-sm glow-cyan"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateLiveRankings() {
+            if (!userId || !allPlayers[userId]) return;
+            const sorted = Object.values(allPlayers).sort((a, b) => (b.wordsCount || 0) - (a.wordsCount || 0) || (b.wpm || 0) - (a.wpm || 0));
+            const myRank = sorted.findIndex(p => p.id === userId) + 1;
+            elStatRank.textContent = myRank > 0 ? `#${myRank}` : '-';
+        }
+
+        function renderActiveSingleWord() {
+            if (!targetWords || targetWords.length === 0) return;
+            const currentWord = targetWords[localPlayerState.wordIndex] || "selesai";
+            const nextWord = targetWords[localPlayerState.wordIndex + 1] || "-";
+
+            const typedInput = elTypeInput.value;
+            let highlightedHTML = "";
+
+            // Render active word with real-time character matching feedback
+            for (let i = 0; i < currentWord.length; i++) {
+                const targetChar = currentWord[i];
+                const typedChar = typedInput[i];
+
+                if (typedChar === undefined) {
+                    highlightedHTML += `<span class="text-slate-300">${escapeHtml(targetChar)}</span>`;
+                } else if (typedChar === targetChar) {
+                    highlightedHTML += `<span class="text-emerald-400 bg-emerald-500/20 rounded px-0.5">${escapeHtml(targetChar)}</span>`;
+                } else {
+                    highlightedHTML += `<span class="text-red-400 bg-red-500/30 underline decoration-red-500 rounded px-0.5">${escapeHtml(targetChar)}</span>`;
+                }
+            }
+
+            elTargetWordDisplay.innerHTML = highlightedHTML;
+            elNextWordText.textContent = nextWord;
+            elStatProgress.textContent = `${localPlayerState.wordIndex} kata`;
+        }
+
+        elTypeInput.addEventListener('input', (e) => {
+            if (roomData?.state !== 'RACING' || localPlayerState.isWaitingRoom || localPlayerState.isFinished) return;
+
+            const typedValue = elTypeInput.value;
+            const currentWord = targetWords[localPlayerState.wordIndex];
+
+            if (!currentWord) return;
+
+            // When player presses SPACE or completes the target word
+            if (typedValue.endsWith(' ')) {
+                const trimmed = typedValue.trim();
+                if (trimmed === currentWord) {
+                    localPlayerState.correctChars += currentWord.length + 1;
+                    localPlayerState.wordIndex++;
+                    elTypeInput.value = '';
+                } else {
+                    elTypeInput.classList.add('border-red-500');
+                    setTimeout(() => elTypeInput.classList.remove('border-red-500'), 300);
+                }
+            }
+
+            localPlayerState.totalTypedChars++;
+            calculateMetrics();
+            renderActiveSingleWord();
+            syncLocalStateToCloud();
+        });
+
+        function calculateMetrics() {
+            if (!localPlayerState.startTime) return;
+            const elapsedMinutes = (Date.now() - localPlayerState.startTime) / 60000;
+            if (elapsedMinutes > 0) {
+                const rawWpm = Math.round((localPlayerState.correctChars / 5) / elapsedMinutes);
+                localPlayerState.wpm = Math.max(0, rawWpm);
+            }
+
+            const total = localPlayerState.totalTypedChars;
+            if (total > 0) {
+                localPlayerState.accuracy = Math.min(100, Math.round((localPlayerState.correctChars / total) * 100));
+            }
+
+            localPlayerState.progress = localPlayerState.wordIndex;
+
+            elStatWpm.textContent = localPlayerState.wpm;
+            elStatAccuracy.textContent = `${localPlayerState.accuracy}%`;
+        }
+
+        async function syncLocalStateToCloud() {
+            if (!userId) return;
+            const pRef = doc(playersCollRef, userId);
+            await updateDoc(pRef, {
+                wpm: localPlayerState.wpm,
+                accuracy: localPlayerState.accuracy,
+                progress: localPlayerState.progress,
+                wordsCount: localPlayerState.wordIndex,
+                isFinished: localPlayerState.isFinished,
+                finishTimeSec: localPlayerState.finishTimeSec,
+                lastActive: Date.now()
+            }).catch(() => {});
+        }
+
+        function showResultsModal() {
+            const sortedPlayers = Object.values(allPlayers).sort((a, b) => {
+                return (b.wordsCount || 0) - (a.wordsCount || 0) || (b.wpm || 0) - (a.wpm || 0);
+            });
+
+            const top3 = sortedPlayers.slice(0, 3);
+            const podiumOrder = [top3[1], top3[0], top3[2]];
+
+            elPodiumContainer.innerHTML = podiumOrder.map((p, idx) => {
+                if (!p) return `<div></div>`;
+                const isFirst = p === top3[0];
+                const isSecond = p === top3[1];
+                const heightClass = isFirst ? 'h-36 bg-amber-500/20 border-amber-500' : isSecond ? 'h-28 bg-slate-700/40 border-slate-500' : 'h-24 bg-orange-800/20 border-orange-600';
+                const badgeColor = isFirst ? 'bg-amber-400 text-slate-950' : isSecond ? 'bg-slate-300 text-slate-950' : 'bg-orange-500 text-white';
+                const rankNum = isFirst ? '1' : isSecond ? '2' : '3';
+
+                return `
+                    <div class="flex flex-col items-center justify-end">
+                        <span class="text-xs font-bold text-white mb-1 truncate max-w-[90px] text-center">${escapeHtml(p.username)}</span>
+                        <span class="text-[10px] text-slate-400 font-mono mb-2">${p.wordsCount || 0} Kata (${p.wpm || 0} WPM)</span>
+                        <div class="w-full ${heightClass} border-t-2 rounded-t-xl flex flex-col items-center justify-center relative shadow-lg">
+                            <span class="w-7 h-7 rounded-full ${badgeColor} font-black text-sm flex items-center justify-center shadow-md">
+                                ${rankNum}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            elLeaderboardTableBody.innerHTML = sortedPlayers.map((p, idx) => `
+                <tr class="${p.id === userId ? 'bg-brand-500/10 font-bold text-brand-300' : ''}">
+                    <td class="p-2.5 text-center font-mono text-slate-400">#${idx + 1}</td>
+                    <td class="p-2.5">${escapeHtml(p.username)} ${p.id === userId ? '(Anda)' : ''}</td>
+                    <td class="p-2.5 text-center font-mono text-emerald-400">${p.wordsCount || 0} Kata</td>
+                    <td class="p-2.5 text-center font-mono text-neon-cyan">${p.wpm || 0} WPM</td>
+                    <td class="p-2.5 text-right font-mono text-slate-300">${p.accuracy || 100}%</td>
+                </tr>
+            `).join('');
+
+            elModalResults.classList.remove('hidden');
+
+            let left = 10;
+            const timerEl = document.getElementById('results-timer-sec');
+            const resTimer = setInterval(() => {
+                left--;
+                if (timerEl) timerEl.textContent = left;
+                if (left <= 0) clearInterval(resTimer);
+            }, 1000);
+        }
+
+        elBtnChangeProfile.addEventListener('click', () => {
+            elModalProfile.classList.remove('hidden');
+        });
+
+        elFormProfile.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newName = elInputUsername.value.trim();
+            const selectedAvatar = document.querySelector('input[name="avatar"]:checked')?.value || 'cyan';
+
+            if (newName) {
+                playerProfile.username = newName;
+                playerProfile.avatar = selectedAvatar;
+                await registerOrUpdatePlayer();
+                elModalProfile.classList.add('hidden');
+            }
+        });
+
+        elBtnCloseResults.addEventListener('click', () => {
+            elModalResults.classList.add('hidden');
+        });
+
+        function escapeHtml(str) {
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        window.onload = () => {
+            initApp();
+        };
+    </script>
+</body>
+</html>
