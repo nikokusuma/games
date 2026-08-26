@@ -3,337 +3,281 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Race Typing SD - Balap Ketik Multiplayer</title>
+  <title>Race Typing SD - Balap Ketik Ceria</title>
+  
+  <!-- Google Fonts: Fredoka & Nunito -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Custom Styling & Animations -->
   <style>
-    :root {
-      --primary: #4f46e5;
-      --primary-hover: #4338ca;
-      --bg: #f8fafc;
-      --card-bg: #ffffff;
-      --text: #0f172a;
-      --correct: #16a34a;
-      --incorrect: #dc2626;
-      --current: #eab308;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    }
-
     body {
-      background-color: var(--bg);
-      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      background: linear-gradient(135deg, #a5f3fc 0%, #e0e7ff 50%, #fef08a 100%);
       min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
-
-    .container {
-      background: var(--card-bg);
-      width: 100%;
-      max-width: 850px;
-      padding: 30px;
-      border-radius: 16px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-    }
-
-    header {
-      text-align: center;
-      margin-bottom: 25px;
-    }
-
-    header h1 {
-      font-size: 2rem;
-      color: var(--primary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-
-    header p {
-      color: #64748b;
-      font-size: 0.95rem;
-      margin-top: 5px;
-    }
-
-    .card {
-      background: #f1f5f9;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-    }
-
-    .input-group {
-      margin-bottom: 15px;
-    }
-
-    .input-group label {
-      display: block;
-      font-weight: 600;
-      margin-bottom: 6px;
-      font-size: 0.9rem;
-    }
-
-    input[type="text"] {
-      width: 100%;
-      padding: 12px 16px;
-      border: 2px solid #cbd5e1;
-      border-radius: 8px;
-      font-size: 1rem;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    input[type="text"]:focus {
-      border-color: var(--primary);
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      flex: 1;
-      min-width: 140px;
-      padding: 12px 20px;
-      background-color: var(--primary);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background-color 0.2s, transform 0.1s;
-      text-align: center;
-    }
-
-    .btn:hover { background-color: var(--primary-hover); }
-    .btn:active { transform: scale(0.98); }
-    .btn-secondary { background-color: #64748b; }
-    .btn-secondary:hover { background-color: #475569; }
-    .btn-success { background-color: #16a34a; }
-    .btn-success:hover { background-color: #15803d; }
-    .btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
-
-    /* Track / Players Progress */
-    .race-track {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin: 20px 0;
-    }
-
-    .player-lane {
-      background: white;
-      padding: 12px 16px;
-      border-radius: 8px;
-      border: 1px solid #e2e8f0;
-    }
-
-    .player-info {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.9rem;
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-
-    .progress-bar-bg {
-      height: 14px;
-      background: #e2e8f0;
-      border-radius: 7px;
-      overflow: hidden;
+      overflow-x: hidden;
       position: relative;
     }
 
-    .progress-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #6366f1, #a855f7);
-      width: 0%;
-      transition: width 0.3s ease;
-      border-radius: 7px;
+    h1, h2, h3, .font-fredoka {
+      font-family: 'Fredoka', cursive;
     }
 
-    /* Typing Area */
-    .typing-box {
-      background: #ffffff;
-      border: 2px solid #cbd5e1;
+    /* Floating background clouds */
+    .cloud {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 50px;
+      animation: floatClouds 25s linear infinite;
+      z-index: 0;
+    }
+    @keyframes floatClouds {
+      0% { transform: translateX(-150px); }
+      100% { transform: translateX(100vw); }
+    }
+
+    /* 3D Kid-Friendly Buttons */
+    .btn-bounce {
+      transition: all 0.15s ease-out;
+      box-shadow: 0px 6px 0px rgba(0, 0, 0, 0.2);
+    }
+    .btn-bounce:hover {
+      transform: translateY(-2px);
+      box-shadow: 0px 8px 0px rgba(0, 0, 0, 0.2);
+    }
+    .btn-bounce:active {
+      transform: translateY(4px);
+      box-shadow: 0px 2px 0px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Race track lane styling */
+    .track-lane {
+      background: #334155;
+      border-image: repeating-linear-gradient(90deg, #f8fafc 0, #f8fafc 15px, transparent 15px, transparent 30px) 20;
+      position: relative;
+    }
+
+    .asphalt-line {
+      background-image: linear-gradient(to right, #f8fafc 50%, rgba(255,255,255,0) 0%);
+      background-position: bottom;
+      background-size: 24px 3px;
+      background-repeat: repeat-x;
+    }
+
+    /* Avatar radio buttons */
+    .avatar-option input:checked + div {
+      border-color: #4f46e5;
+      background-color: #e0e7ff;
+      transform: scale(1.15) rotate(-3deg);
+      box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+    }
+
+    /* Typing character colors */
+    .char-correct { color: #15803d; background-color: #bbf7d0; border-radius: 4px; padding: 0 2px; }
+    .char-incorrect { color: #b91c1c; background-color: #fecaca; text-decoration: underline; border-radius: 4px; padding: 0 2px; }
+    .char-current { background-color: #fef08a; border-bottom: 3px solid #eab308; border-radius: 4px; padding: 0 2px; animation: pulse 1s infinite; }
+
+    /* Custom Scrollbar for typing box */
+    .typing-box::-webkit-scrollbar {
+      width: 8px;
+    }
+    .typing-box::-webkit-scrollbar-track {
+      background: #f1f5f9;
       border-radius: 10px;
-      padding: 20px;
-      margin: 20px 0;
-      font-size: 1.25rem;
-      line-height: 1.8;
-      letter-spacing: 1px;
-      user-select: none;
-      word-wrap: break-word;
-      max-height: 200px;
-      overflow-y: auto;
     }
-
-    .char-correct { color: var(--correct); background-color: #dcfce7; }
-    .char-incorrect { color: var(--incorrect); background-color: #fee2e2; text-decoration: underline; }
-    .char-current { background-color: #fef08a; border-bottom: 2px solid var(--current); }
-
-    .stats-bar {
-      display: flex;
-      justify-content: space-around;
-      background: #f8fafc;
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-      font-weight: 600;
-      font-size: 0.95rem;
+    .typing-box::-webkit-scrollbar-thumb {
+      background: #a5b4fc;
+      border-radius: 10px;
     }
-
-    .stats-item span {
-      color: var(--primary);
-      font-size: 1.1rem;
-    }
-
-    /* Status Badges */
-    .room-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #e0e7ff;
-      padding: 12px 18px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-    }
-
-    .badge {
-      background: var(--primary);
-      color: white;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 600;
-    }
-
-    /* Results */
-    .winner-modal {
-      text-align: center;
-      padding: 20px;
-    }
-
-    .winner-title {
-      font-size: 1.8rem;
-      color: #16a34a;
-      margin-bottom: 10px;
-    }
-
-    .hidden { display: none !important; }
   </style>
 </head>
-<body>
+<body class="flex items-center justify-center p-3 sm:p-6 relative">
 
-  <div class="container">
-    <header>
-      <h1>🏎️ Race Typing SD</h1>
-      <p>Aplikasi Latihan Ketik Cepat & Multiplayer untuk Siswa SD</p>
+  <!-- Floating Decorative Clouds -->
+  <div class="cloud w-32 h-12 top-10 left-[-50px] opacity-80" style="animation-duration: 35s;"></div>
+  <div class="cloud w-48 h-16 top-1/4 left-[-100px] opacity-60" style="animation-duration: 45s; animation-delay: -10s;"></div>
+  <div class="cloud w-40 h-14 top-2/3 left-[-80px] opacity-70" style="animation-duration: 30s; animation-delay: -5s;"></div>
+
+  <!-- MAIN APP CONTAINER -->
+  <div class="relative z-10 w-full max-w-4xl bg-white/90 backdrop-blur-md border-4 border-indigo-200 rounded-3xl p-4 sm:p-8 shadow-2xl">
+    
+    <!-- HEADER -->
+    <header class="text-center mb-6">
+      <div class="inline-flex items-center justify-center gap-3 bg-amber-300 text-slate-800 px-6 py-2 rounded-full border-4 border-amber-400 shadow-md transform -rotate-1 mb-2">
+        <span class="text-3xl sm:text-4xl animate-bounce">🏎️</span>
+        <h1 class="text-2xl sm:text-4xl font-extrabold tracking-wide font-fredoka text-indigo-900">Race Typing SD</h1>
+        <span class="text-3xl sm:text-4xl animate-bounce" style="animation-delay: 0.2s;">🏁</span>
+      </div>
+      <p class="text-slate-600 font-bold text-sm sm:text-base">Ayo Latihan Ketik Cepat & Seru Bersama Teman-Teman! 🚀</p>
     </header>
 
     <!-- 1. SETUP / MENU LOBBY AREA -->
-    <div id="setup-view" class="card">
-      <div class="input-group">
-        <label for="player-name">Nama Pemain:</label>
-        <input type="text" id="player-name" placeholder="Masukkan nama Anda (contoh: Budi)" maxlength="15">
+    <div id="setup-view" class="bg-indigo-50/80 border-4 border-indigo-100 rounded-2xl p-5 sm:p-8 shadow-inner">
+      
+      <!-- Player Name Input -->
+      <div class="mb-6">
+        <label for="player-name" class="block font-fredoka text-lg text-indigo-900 mb-2">
+          👤 Siapa Nama Kamu?
+        </label>
+        <input type="text" id="player-name" placeholder="Tulis nama panggilanmu di sini..." maxlength="15"
+          class="w-full px-5 py-3 border-4 border-indigo-200 rounded-xl text-lg font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition">
       </div>
 
-      <div class="btn-group">
-        <button class="btn" id="btn-create-room">Buat Room Baru</button>
+      <!-- Avatar Picker -->
+      <div class="mb-6">
+        <label class="block font-fredoka text-lg text-indigo-900 mb-2">
+          🏎️ Pilih Kendaraan / Avatarmu:
+        </label>
+        <div class="grid grid-cols-4 sm:grid-cols-8 gap-2" id="avatar-selector">
+          <!-- Avatars dynamically generated in JS -->
+        </div>
       </div>
 
-      <hr style="margin: 20px 0; border: 0; border-top: 1px solid #cbd5e1;">
+      <!-- Action Buttons -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
+        <button id="btn-create-room" 
+          class="btn-bounce bg-emerald-500 hover:bg-emerald-600 text-white font-fredoka text-xl py-4 px-6 rounded-2xl border-b-4 border-emerald-700 flex items-center justify-center gap-2 cursor-pointer">
+          ✨ Buat Room Baru
+        </button>
 
-      <div class="input-group">
-        <label for="room-code-input">Atau Masukkan Kode Room:</label>
-        <input type="text" id="room-code-input" placeholder="Contoh: AB12CD" style="text-transform: uppercase;">
-      </div>
-
-      <div class="btn-group">
-        <button class="btn btn-secondary" id="btn-join-room">Gabung Room</button>
+        <div class="bg-white p-3 rounded-2xl border-4 border-indigo-200 flex flex-col justify-center">
+          <input type="text" id="room-code-input" placeholder="KODE ROOM (misal: x8a1b)" maxlength="6"
+            class="w-full text-center px-3 py-2 border-2 border-slate-200 rounded-xl text-lg font-extrabold lowercase tracking-widest text-indigo-600 outline-none focus:border-indigo-400 mb-2">
+          <button id="btn-join-room" 
+            class="btn-bounce bg-indigo-500 hover:bg-indigo-600 text-white font-fredoka text-lg py-2.5 px-4 rounded-xl border-b-4 border-indigo-700 cursor-pointer">
+            🎮 Gabung Room
+          </button>
+        </div>
       </div>
     </div>
 
     <!-- 2. ROOM LOBBY AREA -->
-    <div id="lobby-view" class="hidden">
-      <div class="room-header">
+    <div id="lobby-view" class="hidden bg-indigo-50/80 border-4 border-indigo-100 rounded-2xl p-5 sm:p-8">
+      <div class="flex flex-wrap items-center justify-between bg-white p-4 rounded-2xl border-4 border-indigo-200 mb-6 gap-3">
         <div>
-          <strong>Kode Room:</strong> 
-          <span id="display-room-code" style="font-size: 1.2rem; color: var(--primary); font-weight: bold;">-</span>
+          <span class="text-xs font-bold text-slate-400 block uppercase">Kode Room Kamu</span>
+          <span id="display-room-code" class="font-fredoka text-3xl text-indigo-600 tracking-widest block">-</span>
         </div>
-        <span class="badge" id="player-count-badge">1 Pemain</span>
+        <div class="bg-amber-100 text-amber-800 border-2 border-amber-300 font-bold px-4 py-2 rounded-full text-sm flex items-center gap-2">
+          <span>👥 Total Pemain:</span>
+          <span id="player-count-badge" class="bg-amber-400 text-slate-900 px-2.5 py-0.5 rounded-full font-extrabold">1</span>
+        </div>
       </div>
 
-      <h3>Daftar Pemain di Room:</h3>
-      <div class="race-track" id="lobby-player-list">
-        <!-- List pemain di lobby akan dirender di sini -->
+      <h3 class="font-fredoka text-xl text-indigo-900 mb-3 flex items-center gap-2">
+        <span>🏁 Pemain Siap Balapan:</span>
+      </h3>
+      
+      <!-- Lobby Player Cards -->
+      <div id="lobby-player-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+        <!-- Rendered via JS -->
       </div>
 
-      <div class="btn-group" style="margin-top: 20px;">
-        <button class="btn btn-success hidden" id="btn-start-game">Mulai Balapan! 🚀</button>
-        <button class="btn btn-secondary" id="btn-leave-room">Keluar Room</button>
+      <!-- Lobby Buttons -->
+      <div class="flex flex-wrap gap-4 justify-between items-center pt-4 border-t-2 border-indigo-100">
+        <button id="btn-leave-room" class="btn-bounce bg-slate-400 hover:bg-slate-500 text-white font-fredoka text-base py-3 px-6 rounded-xl border-b-4 border-slate-600 cursor-pointer">
+          🚪 Keluar Room
+        </button>
+        <button id="btn-start-game" class="btn-bounce hidden bg-emerald-500 hover:bg-emerald-600 text-white font-fredoka text-xl py-3.5 px-8 rounded-xl border-b-4 border-emerald-700 cursor-pointer animate-pulse">
+          🚀 MULAI BALAPAN SEKARANG!
+        </button>
       </div>
     </div>
 
     <!-- 3. GAMEPLAY AREA -->
     <div id="game-view" class="hidden">
-      <div class="room-header">
-        <span>Status: <strong id="game-status-text">Balapan Dimulai!</strong></span>
-        <span class="badge" id="game-room-code">-</span>
+      <!-- Top Info -->
+      <div class="flex items-center justify-between bg-indigo-900 text-white px-5 py-3 rounded-2xl mb-4 font-fredoka">
+        <div class="flex items-center gap-2 text-amber-300 text-lg sm:text-xl">
+          <span>🚦 Status:</span>
+          <span id="game-status-text" class="text-white">Siap-siap...</span>
+        </div>
+        <span id="game-room-code" class="bg-indigo-800 px-3 py-1 rounded-xl text-sm font-mono text-indigo-200">ROOM: -</span>
       </div>
 
-      <!-- Race Track (Realtime Progress All Players) -->
-      <div class="race-track" id="game-race-track">
-        <!-- Bar balapan antar pemain -->
+      <!-- RACE TRACK MULTIPLAYER -->
+      <div class="bg-slate-800 rounded-2xl p-4 mb-6 shadow-xl border-4 border-slate-700">
+        <div class="text-white font-fredoka text-sm mb-2 flex items-center justify-between">
+          <span>🏁 LINTASAN BALAP REAL-TIME</span>
+          <span class="text-amber-400">FINISH 🏁</span>
+        </div>
+        <div id="game-race-track" class="space-y-3">
+          <!-- Rendered via JS -->
+        </div>
       </div>
 
-      <!-- Live Typing Statistics -->
-      <div class="stats-bar">
-        <div class="stats-item">WPM: <span id="stat-wpm">0</span></div>
-        <div class="stats-item">Akurasi: <span id="stat-accuracy">100%</span></div>
-        <div class="stats-item">Kemajuan: <span id="stat-progress">0%</span></div>
+      <!-- LIVE STATS BADGES -->
+      <div class="grid grid-cols-3 gap-3 mb-4">
+        <div class="bg-amber-100 border-3 border-amber-300 rounded-2xl p-3 text-center">
+          <span class="block text-xs font-bold text-amber-800 uppercase">⚡ Kecepatan (WPM)</span>
+          <span id="stat-wpm" class="font-fredoka text-2xl sm:text-3xl text-amber-600">0</span>
+        </div>
+        <div class="bg-emerald-100 border-3 border-emerald-300 rounded-2xl p-3 text-center">
+          <span class="block text-xs font-bold text-emerald-800 uppercase">🎯 Akurasi</span>
+          <span id="stat-accuracy" class="font-fredoka text-2xl sm:text-3xl text-emerald-600">100%</span>
+        </div>
+        <div class="bg-indigo-100 border-3 border-indigo-300 rounded-2xl p-3 text-center">
+          <span class="block text-xs font-bold text-indigo-800 uppercase">🚩 Kemajuan</span>
+          <span id="stat-progress" class="font-fredoka text-2xl sm:text-3xl text-indigo-600">0%</span>
+        </div>
       </div>
 
-      <!-- Target Text View -->
-      <div class="typing-box" id="typing-text-display">
-        Menyiapkan kata-kata...
+      <!-- TYPING TARGET BOX -->
+      <div class="bg-slate-50 border-4 border-indigo-200 rounded-2xl p-5 mb-4 text-xl sm:text-2xl leading-relaxed tracking-wide font-bold text-slate-700 typing-box shadow-inner max-h-48 overflow-y-auto select-none" id="typing-text-display">
+        Menyiapkan soal ketikan...
       </div>
 
-      <!-- Input Area -->
-      <div class="input-group">
-        <input type="text" id="typing-input" placeholder="Mulai mengetik di sini..." autocomplete="off" disabled>
+      <!-- INPUT FIELD -->
+      <div class="relative">
+        <input type="text" id="typing-input" placeholder="Mulai mengetik kalimat di atas..." autocomplete="off" disabled
+          class="w-full px-6 py-4 border-4 border-amber-400 bg-amber-50/50 rounded-2xl text-xl font-bold text-slate-800 outline-none focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-200 transition shadow-md">
       </div>
     </div>
 
-    <!-- 4. RESULT AREA -->
-    <div id="result-view" class="card hidden winner-modal">
-      <h2 class="winner-title">🎉 Balapan Selesai! 🎉</h2>
-      <p style="font-size: 1.1rem; margin-bottom: 15px;">
-        Pemenang: <strong id="winner-name" style="color: var(--primary);">-</strong>
-      </p>
+    <!-- 4. RESULT AREA / PODIUM -->
+    <div id="result-view" class="hidden bg-indigo-50 border-4 border-indigo-200 rounded-2xl p-6 sm:p-8 text-center">
+      <div class="text-6xl mb-2 animate-bounce">🏆</div>
+      <h2 class="font-fredoka text-3xl sm:text-4xl text-indigo-900 mb-1">BALAPAN SELESAI!</h2>
+      <p class="text-slate-600 font-bold mb-6">Hebat Sekali! Semua Pemain Berhasil Finish!</p>
 
-      <div class="race-track" id="result-leaderboard">
-        <!-- Klasemen Akhir -->
+      <!-- WINNER HIGHLIGHT -->
+      <div class="bg-gradient-to-r from-amber-200 via-amber-300 to-amber-200 border-4 border-amber-400 rounded-2xl p-4 mb-6 shadow-md inline-block w-full max-w-md">
+        <span class="block text-amber-900 font-bold text-sm uppercase">🎉 Pemenang Utama 🎉</span>
+        <span id="winner-name" class="font-fredoka text-3xl text-slate-900 block mt-1">-</span>
       </div>
 
-      <div class="btn-group" style="margin-top: 20px;">
-        <button class="btn" id="btn-back-to-lobby">Kembali ke Lobby</button>
+      <!-- LEADERBOARD LIST -->
+      <div class="max-w-lg mx-auto bg-white rounded-2xl p-4 border-3 border-indigo-100 shadow-sm mb-6 text-left">
+        <h3 class="font-fredoka text-lg text-indigo-900 mb-3 border-b-2 border-indigo-50 pb-2">📊 Klasemen Akhir:</h3>
+        <div id="result-leaderboard" class="space-y-2">
+          <!-- Rendered via JS -->
+        </div>
       </div>
+
+      <button id="btn-back-to-lobby" class="btn-bounce bg-indigo-600 hover:bg-indigo-700 text-white font-fredoka text-xl py-3.5 px-8 rounded-2xl border-b-4 border-indigo-800 cursor-pointer">
+        🔄 Kembali ke Lobby
+      </button>
     </div>
 
   </div>
 
-  <!-- FIREBASE MODULE SCRIPT -->
+  <!-- KID FRIENDLY CUSTOM MODAL (NO ALERT) -->
+  <div id="custom-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white border-4 border-amber-400 rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl transform transition-all scale-100">
+      <div id="modal-icon" class="text-5xl mb-3">⚠️</div>
+      <h3 id="modal-title" class="font-fredoka text-2xl text-slate-800 mb-2">Pemberitahuan</h3>
+      <p id="modal-message" class="text-slate-600 font-bold text-sm mb-6">Pesan peringatan akan muncul di sini.</p>
+      <button id="btn-close-modal" class="btn-bounce bg-amber-400 hover:bg-amber-500 text-slate-900 font-fredoka text-lg py-2.5 px-6 rounded-xl border-b-4 border-amber-600 cursor-pointer w-full">
+        Oke, Saya Mengerti! 👍
+      </button>
+    </div>
+  </div>
+
+  <!-- FIREBASE MODULE & GAME SCRIPT -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { 
@@ -351,7 +295,7 @@
       deleteField
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // 1. Konfigurasi Firebase Project
+    // 1. Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDG5RbMgAJLQgRfRTgM6ODqdexDhKc46nA",
       authDomain: "racetyping-e526b.firebaseapp.com",
@@ -362,7 +306,7 @@
       appId: "1:160664386176:web:6ecc3372ab0980eb544465"
     };
 
-    // 2. Inisialisasi Firebase Services
+    // Initialize Services
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
@@ -374,17 +318,19 @@
     let isHost = false;
     let targetText = "";
     let startTime = null;
-    let totalTypedChars = 0;
-    let correctTypedChars = 0;
+    let selectedAvatar = '🏎️';
 
-    // Bank Kalimat Bahasa Indonesia untuk Level Sekolah Dasar (SD)
+    // Cute Avatar Options
+    const AVATARS = ['🏎️', '🚗', '🚕', '🚓', '🚀', '🦄', '🐱', '🐶'];
+
+    // SD Level Indonesian Text Bank
     const SD_TEXT_BANKS = [
       "Kucing adalah hewan peliharaan yang sangat lucu dan suka bermain bola benang.",
       "Setiap pagi saya pergi ke sekolah bersama teman-teman dengan penuh semangat.",
       "Pancasila adalah dasar negara Indonesia yang wajib kita hormati dan amalkan.",
       "Membaca buku di perpustakaan dapat menambah ilmu pengetahuan dan wawasan kita.",
       "Menjaga kebersihan lingkungan sekolah adalah tugas bersama seluruh murid dan guru.",
-      "Olahraga secara teratur membuat tubuh kita menjadi sehat, kuat, dan terhindar dari penyakit.",
+      "Olahraga secara teratur membuat tubuh kita menjadi sehat, kuat, dan ceria.",
       "Bendera Merah Putih berkibar dengan gagah di halaman sekolah pada hari Senin."
     ];
 
@@ -396,6 +342,8 @@
 
     const inputName = document.getElementById('player-name');
     const inputRoomCode = document.getElementById('room-code-input');
+    const avatarSelector = document.getElementById('avatar-selector');
+    
     const btnCreateRoom = document.getElementById('btn-create-room');
     const btnJoinRoom = document.getElementById('btn-join-room');
     const btnStartGame = document.getElementById('btn-start-game');
@@ -415,16 +363,82 @@
     const statAccuracy = document.getElementById('stat-accuracy');
     const statProgress = document.getElementById('stat-progress');
 
-    // Autentikasi Anonim
+    // Custom Modal Elements
+    const customModal = document.getElementById('custom-modal');
+    const modalIcon = document.getElementById('modal-icon');
+    const modalTitle = document.getElementById('modal-title');
+    const modalMessage = document.getElementById('modal-message');
+    const btnCloseModal = document.getElementById('btn-close-modal');
+
+    // --- STREAMING_CHUNK:Setting up web audio effects for kid interaction... ---
+    // Web Audio Synthesizer Sound Effects (No external audio files required)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playBeep(freq = 440, duration = 0.08, type = 'sine') {
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function playVictorySound() {
+      const notes = [523.25, 659.25, 783.99, 1046.50];
+      notes.forEach((freq, idx) => {
+        setTimeout(() => playBeep(freq, 0.2, 'triangle'), idx * 150);
+      });
+    }
+
+    // Modal Helper
+    function showModal(message, title = "Pemberitahuan 😊", icon = "💡") {
+      modalIcon.innerText = icon;
+      modalTitle.innerText = title;
+      modalMessage.innerText = message;
+      customModal.classList.remove('hidden');
+    }
+
+    btnCloseModal.addEventListener('click', () => {
+      customModal.classList.add('hidden');
+    });
+
+    // Render Avatar Selector Options
+    function initAvatarSelector() {
+      avatarSelector.innerHTML = AVATARS.map((av, idx) => `
+        <label class="avatar-option cursor-pointer block text-center">
+          <input type="radio" name="avatar" value="${av}" ${idx === 0 ? 'checked' : ''} class="hidden">
+          <div class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-2xl bg-white border-3 border-indigo-200 rounded-xl transition-all">
+            ${av}
+          </div>
+        </label>
+      `).join('');
+
+      // Add listener
+      avatarSelector.querySelectorAll('input[name="avatar"]').forEach(input => {
+        input.addEventListener('change', (e) => {
+          selectedAvatar = e.target.value;
+          playBeep(600, 0.05);
+        });
+      });
+    }
+    initAvatarSelector();
+
+    // Anonymous Auth Setup
     signInAnonymously(auth).catch(err => console.error("Auth Error:", err));
     onAuthStateChanged(auth, user => {
       if (user) {
         currentUser = user;
-        console.log("Logged in as:", user.uid);
       }
     });
 
-    // Helper Fungsi Tampilan Screen
+    // View Switcher
     function showScreen(screen) {
       setupView.classList.add('hidden');
       lobbyView.classList.add('hidden');
@@ -434,24 +448,26 @@
       screen.classList.remove('hidden');
     }
 
+    // --- STREAMING_CHUNK:Handling room creation, join, and Firestore listeners... ---
     // 1. BUAT ROOM
     btnCreateRoom.addEventListener('click', async () => {
       const name = inputName.value.trim();
-      if (!name) return alert("Silakan masukkan nama Anda!");
-      if (!currentUser) return alert("Menghubungkan ke server... coba beberapa detik lagi.");
+      if (!name) return showModal("Tuliskan nama panggilanmu terlebih dahulu ya! 😊", "Wah, Siapa Namamu?", "👤");
+      if (!currentUser) return showModal("Sedang menghubungkan ke server... coba sesaat lagi!", "Tunggu Sebentar", "⏳");
 
-      const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const roomCode = Math.random().toString(36).substring(2, 8).toLowerCase();
       const roomRef = doc(db, "rooms", roomCode);
 
       try {
         await setDoc(roomRef, {
           createdAt: new Date().toISOString(),
-          status: "waiting", // waiting, playing, finished
+          status: "waiting",
           targetText: "",
           winner: "",
           players: {
             [currentUser.uid]: {
               name: name,
+              avatar: selectedAvatar,
               progress: 0,
               wpm: 0,
               isHost: true,
@@ -462,31 +478,33 @@
 
         isHost = true;
         listenToRoom(roomCode);
+        playBeep(523, 0.15);
       } catch (err) {
-        alert("Gagal membuat room: " + err.message);
+        showModal("Gagal membuat room: " + err.message, "Aduh Error!", "❌");
       }
     });
 
     // 2. GABUNG ROOM
     btnJoinRoom.addEventListener('click', async () => {
       const name = inputName.value.trim();
-      const code = inputRoomCode.value.trim().toUpperCase();
+      const code = inputRoomCode.value.trim().toLowerCase();
 
-      if (!name) return alert("Silakan masukkan nama Anda!");
-      if (!code) return alert("Masukkan kode room!");
-      if (!currentUser) return alert("Menghubungkan ke server... coba beberapa detik lagi.");
+      if (!name) return showModal("Tuliskan nama panggilanmu dulu ya!", "Nama Belum Diisi", "👤");
+      if (!code) return showModal("Masukkan Kode Room yang ingin kamu masuki!", "Kode Room Kosong", "🔑");
+      if (!currentUser) return showModal("Sedang menghubungkan ke server... coba beberapa detik lagi.", "Tunggu Sebentar", "⏳");
 
       const roomRef = doc(db, "rooms", code);
       try {
         const snap = await getDoc(roomRef);
-        if (!snap.exists()) return alert("Room tidak ditemukan!");
+        if (!snap.exists()) return showModal("Room dengan kode tersebut tidak ditemukan. Cek lagi kodenya ya!", "Room Tidak Ada", "🔍");
 
         const roomData = snap.data();
-        if (roomData.status !== "waiting") return alert("Permainan di room ini sudah berlangsung!");
+        if (roomData.status !== "waiting") return showModal("Balapan di room ini sudah dimulai. Cari room lain ya!", "Balapan Sudah Jalan", "🏎️");
 
         await updateDoc(roomRef, {
           [`players.${currentUser.uid}`]: {
             name: name,
+            avatar: selectedAvatar,
             progress: 0,
             wpm: 0,
             isHost: false,
@@ -496,12 +514,13 @@
 
         isHost = false;
         listenToRoom(code);
+        playBeep(523, 0.15);
       } catch (err) {
-        alert("Gagal bergabung: " + err.message);
+        showModal("Gagal bergabung: " + err.message, "Aduh Error!", "❌");
       }
     });
 
-    // 3. LISTEN REALTIME DATA ROOM
+    // 3. LISTEN REALTIME ROOM DATA
     function listenToRoom(code) {
       currentRoomCode = code;
       const roomRef = doc(db, "rooms", code);
@@ -510,7 +529,7 @@
 
       roomUnsubscribe = onSnapshot(roomRef, (snapshot) => {
         if (!snapshot.exists()) {
-          alert("Room telah ditutup!");
+          showModal("Room ini telah ditutup oleh Host.", "Room Ditutup", "🚪");
           leaveRoomLocal();
           return;
         }
@@ -519,26 +538,34 @@
         const players = roomData.players || {};
         const playerKeys = Object.keys(players);
 
-        // Update Host status
         if (players[currentUser.uid]) {
           isHost = players[currentUser.uid].isHost || false;
         }
 
-        // --- STATUS: WAITING (LOBBY) ---
+        // STATUS: WAITING (LOBBY)
         if (roomData.status === "waiting") {
           showScreen(lobbyView);
           displayRoomCode.innerText = code;
-          playerCountBadge.innerText = `${playerKeys.length} Pemain`;
+          playerCountBadge.innerText = playerKeys.length;
 
-          // Render player list
-          lobbyPlayerList.innerHTML = playerKeys.map(uid => `
-            <div class="player-lane">
-              <div class="player-info">
-                <span>${players[uid].name} ${players[uid].isHost ? '👑 (Host)' : ''}</span>
-                <span>${uid === currentUser.uid ? '(Anda)' : ''}</span>
+          // Render Lobby Players
+          lobbyPlayerList.innerHTML = playerKeys.map(uid => {
+            const p = players[uid];
+            const isMe = uid === currentUser.uid;
+            return `
+              <div class="flex items-center justify-between bg-white p-3.5 rounded-xl border-3 ${isMe ? 'border-amber-400 bg-amber-50/50' : 'border-indigo-100'}">
+                <div class="flex items-center gap-3">
+                  <span class="text-3xl">${p.avatar || '🏎️'}</span>
+                  <div>
+                    <span class="font-fredoka text-slate-800 text-lg block leading-tight">
+                      ${p.name} ${p.isHost ? '👑' : ''}
+                    </span>
+                    <span class="text-xs font-bold text-slate-400">${isMe ? '(Kamu)' : (p.isHost ? 'Host Room' : 'Pemain')}</span>
+                  </div>
+                </div>
               </div>
-            </div>
-          `).join('');
+            `;
+          }).join('');
 
           if (isHost) {
             btnStartGame.classList.remove('hidden');
@@ -547,58 +574,69 @@
           }
         }
 
-        // --- STATUS: PLAYING (BERLANGSUNG) ---
+        // STATUS: PLAYING (GAME IN PROGRESS)
         else if (roomData.status === "playing") {
           if (gameView.classList.contains('hidden')) {
             showScreen(gameView);
-            gameRoomCode.innerText = code;
+            gameRoomCode.innerText = `ROOM: ${code}`;
             targetText = roomData.targetText;
             renderTypingDisplay("");
             typingInput.value = "";
             typingInput.disabled = false;
             typingInput.focus();
             startTime = new Date();
+            document.getElementById('game-status-text').innerText = "Ayo Ketik!";
           }
 
-          // Update Progress Track Seluruh Pemain Realtime
+          // Render Multiplayer Race Track Progress
           gameRaceTrack.innerHTML = playerKeys.map(uid => {
             const p = players[uid];
+            const isMe = uid === currentUser.uid;
+            const progressPct = Math.min(100, Math.max(0, p.progress || 0));
+
             return `
-              <div class="player-lane">
-                <div class="player-info">
-                  <span>${p.name} ${uid === currentUser.uid ? '(Anda)' : ''}</span>
-                  <span>${p.wpm || 0} WPM | ${p.progress || 0}%</span>
+              <div class="bg-slate-700/80 p-2.5 rounded-xl border border-slate-600">
+                <div class="flex justify-between text-xs font-bold text-slate-200 mb-1">
+                  <span>${p.avatar || '🏎️'} ${p.name} ${isMe ? '(Kamu)' : ''}</span>
+                  <span class="text-amber-300 font-mono">${p.wpm || 0} WPM | ${progressPct}%</span>
                 </div>
-                <div class="progress-bar-bg">
-                  <div class="progress-bar-fill" style="width: ${p.progress || 0}%;"></div>
+                <div class="w-full bg-slate-900 rounded-full h-8 relative overflow-hidden asphalt-line p-1 flex items-center">
+                  <div class="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-amber-400 rounded-full transition-all duration-300 flex items-center justify-end pr-1"
+                       style="width: ${Math.max(8, progressPct)}%;">
+                    <span class="text-xl transform translate-x-1">${p.avatar || '🏎️'}</span>
+                  </div>
                 </div>
               </div>
             `;
           }).join('');
         }
 
-        // --- STATUS: FINISHED (SELESAI) ---
+        // STATUS: FINISHED
         else if (roomData.status === "finished") {
           showScreen(resultView);
-          document.getElementById('winner-name').innerText = roomData.winner || "Tidak ada";
+          document.getElementById('winner-name').innerText = roomData.winner || "Tidak Ada";
 
-          // Sort leaderboard berdasarkan progress / finish status
           const sorted = playerKeys.map(uid => players[uid])
             .sort((a, b) => b.progress - a.progress || b.wpm - a.wpm);
 
+          const medals = ['🥇', '🥈', '🥉'];
           document.getElementById('result-leaderboard').innerHTML = sorted.map((p, idx) => `
-            <div class="player-lane">
-              <div class="player-info">
-                <span>#${idx + 1} ${p.name}</span>
-                <span>${p.wpm} WPM</span>
+            <div class="flex items-center justify-between p-3 rounded-xl ${idx === 0 ? 'bg-amber-100 border-2 border-amber-300' : 'bg-slate-50 border border-slate-200'}">
+              <div class="flex items-center gap-3">
+                <span class="text-2xl">${medals[idx] || `#${idx + 1}`}</span>
+                <span class="text-2xl">${p.avatar || '🏎️'}</span>
+                <span class="font-fredoka text-slate-800 text-lg">${p.name}</span>
               </div>
+              <span class="font-bold text-indigo-600">${p.wpm} WPM</span>
             </div>
           `).join('');
+
+          playVictorySound();
         }
       });
     }
 
-    // 4. MULAI GAME (HOST ONLY)
+    // 4. START GAME (HOST)
     btnStartGame.addEventListener('click', async () => {
       if (!isHost) return;
       const randomText = SD_TEXT_BANKS[Math.floor(Math.random() * SD_TEXT_BANKS.length)];
@@ -611,14 +649,24 @@
       });
     });
 
-    // 5. PENANGANAN KETIKAN PLAYER
+    // --- STREAMING_CHUNK:Binding real-time typing input and accuracy calculations... ---
+    // 5. TYPING INPUT HANDLER
     typingInput.addEventListener('input', () => {
       const typed = typingInput.value;
-      totalTypedChars++;
 
       renderTypingDisplay(typed);
 
-      // Hitung Progress %
+      // Sound Cues
+      if (typed.length > 0) {
+        const lastCharIdx = typed.length - 1;
+        if (typed[lastCharIdx] === targetText[lastCharIdx]) {
+          playBeep(800, 0.04, 'sine');
+        } else {
+          playBeep(220, 0.08, 'sawtooth');
+        }
+      }
+
+      // Calculate Stats
       let correctChars = 0;
       for (let i = 0; i < typed.length; i++) {
         if (typed[i] === targetText[i]) correctChars++;
@@ -626,20 +674,18 @@
 
       const progress = Math.min(100, Math.floor((correctChars / targetText.length) * 100));
       
-      // Hitung WPM
       const timeElapsedSec = (new Date() - startTime) / 1000;
-      const wordsTyped = correctChars / 5; // Standar 1 kata = 5 karakter
+      const wordsTyped = correctChars / 5;
       const wpm = timeElapsedSec > 0 ? Math.round((wordsTyped / timeElapsedSec) * 60) : 0;
 
-      // Hitung Akurasi
       const accuracy = typed.length > 0 ? Math.round((correctChars / typed.length) * 100) : 100;
 
-      // Update UI Stats Lokal
+      // Local UI Stats
       statWpm.innerText = wpm;
       statAccuracy.innerText = accuracy + "%";
       statProgress.innerText = progress + "%";
 
-      // Kirim Progress ke Firestore Realtime
+      // Sync Firestore Realtime
       if (currentRoomCode && currentUser) {
         const roomRef = doc(db, "rooms", currentRoomCode);
         const updates = {
@@ -647,18 +693,16 @@
           [`players.${currentUser.uid}.wpm`]: wpm
         };
 
-        // Jika selesai
         if (typed === targetText) {
           typingInput.disabled = true;
           updates[`players.${currentUser.uid}.finished`] = true;
           
-          // Cek jika pemenang pertama
           getDoc(roomRef).then(snap => {
             if (snap.exists() && snap.data().status === "playing") {
               updateDoc(roomRef, {
                 ...updates,
                 status: "finished",
-                winner: currentUser ? snap.data().players[currentUser.uid].name : "Pemain"
+                winner: snap.data().players[currentUser.uid]?.name || "Pemain Cepat"
               });
             }
           });
@@ -668,7 +712,7 @@
       }
     });
 
-    // Render Teks Warna Karakter (Hijau = Benar, Merah = Salah, Kuning = Kursor)
+    // Render Text with Colors
     function renderTypingDisplay(typed) {
       let html = "";
       for (let i = 0; i < targetText.length; i++) {
@@ -688,7 +732,7 @@
       typingTextDisplay.innerHTML = html;
     }
 
-    // 6. KELUAR ROOM / KEMBALI
+    // 6. LEAVE / RESET ROOM
     function leaveRoomLocal() {
       if (roomUnsubscribe) roomUnsubscribe();
       currentRoomCode = null;
