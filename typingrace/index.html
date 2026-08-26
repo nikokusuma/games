@@ -387,6 +387,7 @@ const firebaseConfig = {
   </div>
 
   <script type="module">
+    
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { 
       getAuth, 
@@ -404,6 +405,22 @@ const firebaseConfig = {
       collection 
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+    // ==========================================
+    //  KONFIGURASI FIREBASE ANDA
+    // ==========================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyDG5RbMgAJLQgRfRTgM6ODqdexDhKc46nA",
+      authDomain: "racetyping-e526b.firebaseapp.com",
+      databaseURL: "https://racetyping-e526b-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "racetyping-e526b",
+      storageBucket: "racetyping-e526b.firebasestorage.app",
+      messagingSenderId: "160664386176",
+      appId: "1:160664386176:web:6ecc3372ab0980eb544465"
+    };
+
+    // Menghubungkan config ke window agar dibaca otomatis oleh sistem init
+    window.__firebase_config = JSON.stringify(firebaseConfig);
+
     const SD_WORDS = [
       "kucing", "sekolah", "pelangi", "membaca", "sepeda", "bintang", "makanan", "pohon", "sahabat",
       "matahari", "pensil", "kebersihan", "lingkungan", "olahraga", "kesehatan", "keluarga", "indonesia",
@@ -419,6 +436,8 @@ const firebaseConfig = {
       "lampu", "jendela", "pintu", "meja", "kursi", "lemari", "piring", "gelas", "sendok", "garpu",
       "nasi", "sayur", "buah", "apel", "pisang", "jeruk", "mangga", "semangka", "air", "susu"
     ];
+
+    // ... sisa kode di bawahnya tetap sama ...
 
     const AVATARS = [
       { id: 'car-red', icon: '🏎️', color: 'bg-red-500' },
