@@ -1,1167 +1,1050 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="h-full bg-slate-900 text-slate-100">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Balap Ketik KBBI - Edisi Anak SD (Multiplayer Online 30 Pemain)</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fredoka:wght@400;600;700&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
-    <!-- PeerJS for zero-server WebRTC Peer-to-Peer network fallback -->
-    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lomba Mengetik Cepat SD - Typing Race Multiplayer</title>
 
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Plus Jakarta Sans', 'sans-serif'],
-                        kids: ['Fredoka', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'],
-                    },
-                    colors: {
-                        sd: {
-                            red: '#ef4444',
-                            blue: '#3b82f6',
-                            green: '#22c55e',
-                            yellow: '#eab308',
-                            purple: '#a855f7',
-                            orange: '#f97316'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 
-        .bg-grid-pattern {
-            background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1.5px, transparent 1.5px);
-            background-size: 24px 24px;
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            fredoka: ['Fredoka', 'sans-serif'],
+            nunito: ['Nunito', 'sans-serif'],
+          },
+          colors: {
+            track: '#1e293b',
+            accent: '#f59e0b',
+          }
         }
+      }
+    }
+  </script>
 
-        .track-finish-line {
-            background: repeating-linear-gradient(
-                45deg,
-                #000,
-                #000 8px,
-                #fff 8px,
-                #fff 16px
-            );
-        }
-
-        .glass-panel {
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-        }
-
-        .pulse-target {
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
-        }
-
-        @keyframes toastIn {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        .toast-animate {
-            animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-    </style>
+  <style>
+    body {
+      font-family: 'Nunito', sans-serif;
+      user-select: none;
+    }
+    .heading-font {
+      font-family: 'Fredoka', sans-serif;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+    .text-glow {
+      text-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+    }
+    @keyframes pulse-subtle {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+    }
+    .animate-pulse-subtle {
+      animation: pulse-subtle 2s infinite ease-in-out;
+    }
+  </style>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans min-h-screen bg-grid-pattern flex flex-col justify-between selection:bg-sd-blue selection:text-white">
+<body class="h-full flex flex-col justify-between bg-slate-950 text-slate-100 antialiased overflow-x-hidden">
 
-    <!-- Toast Notification Container (No alerts used) -->
-    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
-
-    <!-- HEADER NAVBAR -->
-    <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-40 px-4 py-3">
-        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-            
-            <!-- Logo & Title -->
-            <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sd-red via-sd-yellow to-sd-blue flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-sd-blue/20 transform -rotate-3 hover:rotate-0 transition">
-                    <i class="fa-solid fa-flag-checkered"></i>
-                </div>
-                <div>
-                    <h1 class="font-kids text-xl sm:text-2xl font-bold tracking-wide text-white flex items-center gap-2">
-                        BALAP KETIK KBBI SD 
-                        <span class="text-xs font-sans font-extrabold px-2 py-0.5 rounded-full bg-sd-yellow text-slate-950">ONLINE 30 PEMAIN</span>
-                    </h1>
-                    <p class="text-xs text-slate-400">Kosakata Bahasa Indonesia SD &bull; Siap di GitHub Pages tanpa Server Fisik</p>
-                </div>
-            </div>
-
-            <!-- Header Controls & Player Profile -->
-            <div class="flex items-center gap-2 sm:gap-3">
-                <!-- Room Badge -->
-                <div id="header-room-badge" class="hidden sm:flex items-center gap-2 bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-mono">
-                    <span class="text-slate-400">KODE ROOM:</span>
-                    <span id="display-room-code" class="font-bold text-sd-yellow tracking-wider select-all">OFFLINE</span>
-                    <button onclick="copyRoomCode()" class="hover:text-sd-blue text-slate-300 transition" title="Salin Kode Room">
-                        <i class="fa-regular fa-copy"></i>
-                    </button>
-                </div>
-
-                <!-- Network Engine Status Badge -->
-                <div id="net-status-badge" class="flex items-center gap-1.5 bg-slate-800 border border-slate-700 px-2.5 py-1.5 rounded-xl text-[11px] text-slate-300" title="Status Jaringan Serverless">
-                    <span class="w-2 h-2 rounded-full bg-sd-green animate-pulse"></span>
-                    <span id="net-status-text" class="font-mono">P2P Ready</span>
-                </div>
-
-                <!-- Sound Toggle -->
-                <button onclick="toggleAudio()" id="btn-sound-toggle" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition text-sm flex items-center gap-1.5" title="Suara On/Off">
-                    <i id="icon-sound" class="fa-solid fa-volume-high text-sd-green"></i>
-                </button>
-
-                <!-- Change Avatar / Profile Button -->
-                <button onclick="openProfileModal()" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-xl text-xs transition">
-                    <span id="header-avatar" class="text-lg">🐱</span>
-                    <span id="header-player-name" class="font-bold text-slate-200 max-w-[100px] truncate">Pemain_SD</span>
-                    <i class="fa-solid fa-pencil text-slate-400 text-[10px]"></i>
-                </button>
-            </div>
+  <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50 px-4 py-3">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-red-500 flex items-center justify-center text-slate-950 font-black text-xl shadow-lg shadow-amber-500/20">
+          <i class="fa-solid fa-flag-checkered"></i>
         </div>
-    </header>
-
-    <main class="max-w-7xl mx-auto w-full px-4 py-6 flex-grow flex flex-col justify-center">
-
-        <!-- VIEW 1: LOBBY / ROOM SELECTION -->
-        <section id="view-lobby" class="w-full max-w-4xl mx-auto space-y-8 animate-fade-in">
-            
-            <!-- Hero Banner -->
-            <div class="text-center space-y-3">
-                <span class="px-4 py-1.5 rounded-full bg-sd-blue/10 border border-sd-blue/30 text-sd-blue text-xs font-bold tracking-widest uppercase inline-flex items-center gap-1.5">
-                    <i class="fa-solid fa-graduation-cap"></i> Edukasi Belajar Ketik Anak Indonesia
-                </span>
-                <h2 class="text-3xl sm:text-5xl font-kids font-bold text-white tracking-wide">
-                    Ayo Lomba Ngetik Kosakata SD!
-                </h2>
-                <p class="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto leading-relaxed">
-                    Tingkatkan kecepatan dan ketepatan mengetik kata KBBI pilihan anak SD. Bisa mabar bersama hingga <strong class="text-sd-yellow">30 teman sekelas</strong> secara realtime tanpa server fisik!
-                </p>
-            </div>
-
-            <!-- Options Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
-                <!-- Card 1: Create Room -->
-                <div class="glass-panel rounded-3xl p-6 border border-slate-800 hover:border-sd-blue/50 transition duration-300 flex flex-col justify-between gap-6 shadow-xl">
-                    <div class="space-y-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 rounded-2xl bg-sd-blue/20 border border-sd-blue/40 text-sd-blue flex items-center justify-center text-2xl font-bold">
-                                <i class="fa-solid fa-plus-circle"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-kids text-xl font-bold text-white">Buat Room Kelas (Host)</h3>
-                                <p class="text-xs text-slate-400">Buat room baru & undang hingga 30 siswa</p>
-                            </div>
-                        </div>
-
-                        <div class="space-y-3 pt-2">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-300 mb-1">Tingkat Kelas SD</label>
-                                <select id="select-grade-level" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-sd-blue">
-                                    <option value="mudah">Kelas 1 - 3 (Kata Pendek & Sederhana)</option>
-                                    <option value="sedang" selected>Kelas 4 - 6 (Kata Sedang KBBI SD)</option>
-                                    <option value="campuran">Semua Kelas (Campuran Kata SD)</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-bold text-slate-300 mb-1">Target Jumlah Kata</label>
-                                <select id="select-word-count" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-sd-blue">
-                                    <option value="15">15 Kata (Balapan Cepat)</option>
-                                    <option value="25" selected>25 Kata (Standar Kelas)</option>
-                                    <option value="40">40 Kata (Balapan Panjang)</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button onclick="createOnlineRoom()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-sd-blue to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold text-sm shadow-lg shadow-sd-blue/30 transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-tower-broadcast"></i> Buat Room Sekarang (Max 30 User)
-                    </button>
-                </div>
-
-                <!-- Card 2: Join Room -->
-                <div class="glass-panel rounded-3xl p-6 border border-slate-800 hover:border-sd-yellow/50 transition duration-300 flex flex-col justify-between gap-6 shadow-xl">
-                    <div class="space-y-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 rounded-2xl bg-sd-yellow/20 border border-sd-yellow/40 text-sd-yellow flex items-center justify-center text-2xl font-bold">
-                                <i class="fa-solid fa-right-to-bracket"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-kids text-xl font-bold text-white">Gabung Kode Room</h3>
-                                <p class="text-xs text-slate-400">Masukkan kode dari Bapak/Ibu Guru atau Teman</p>
-                            </div>
-                        </div>
-
-                        <div class="pt-2 space-y-2">
-                            <label class="block text-xs font-bold text-slate-300">Kode Room 6 Digit</label>
-                            <input type="text" id="input-room-code" placeholder="Contoh: SD-9X2A" uppercase maxlength="8" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-center font-mono font-bold text-lg text-sd-yellow tracking-widest focus:outline-none focus:border-sd-yellow">
-                        </div>
-                    </div>
-
-                    <button onclick="joinOnlineRoom()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-sd-yellow to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-sm shadow-lg shadow-sd-yellow/20 transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-gamepad"></i> Masuk Arena Balap
-                    </button>
-                </div>
-
-            </div>
-
-            <!-- Solo Mode Option -->
-            <div class="text-center pt-4">
-                <button onclick="startSoloRace()" class="inline-flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-sd-green transition underline underline-offset-4">
-                    <i class="fa-solid fa-user-ninja text-sd-green"></i> Main Sendiri (Latihan Offline Lawan Bot AI)
-                </button>
-            </div>
-
-        </section>
-
-        <!-- VIEW 2: RACE ARENA (SUPPORT UP TO 30 PLAYERS) -->
-        <section id="view-arena" class="hidden w-full flex flex-col gap-6 animate-fade-in">
-            
-            <!-- Race Header & Stats -->
-            <div class="glass-panel rounded-2xl p-4 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
-                <div class="flex items-center gap-3">
-                    <span id="arena-status-badge" class="px-3 py-1 rounded-full bg-sd-yellow/20 text-sd-yellow border border-sd-yellow/40 text-xs font-bold animate-pulse">
-                        <i class="fa-solid fa-clock"></i> Menunggu Pemain...
-                    </span>
-                    <span id="arena-info-text" class="text-xs text-slate-300 font-medium">Tingkat SD &bull; Target: 25 Kata</span>
-                </div>
-
-                <!-- Live Typing Metrics -->
-                <div class="flex items-center gap-4 text-xs font-mono">
-                    <div class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2">
-                        <span class="text-slate-400">Kec. (WPM):</span>
-                        <span id="live-wpm" class="font-bold text-sd-green text-sm">0</span>
-                    </div>
-                    <div class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2">
-                        <span class="text-slate-400">Akurasi:</span>
-                        <span id="live-acc" class="font-bold text-sd-blue text-sm">100%</span>
-                    </div>
-                    <button onclick="leaveRoom()" class="px-3 py-1.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 border border-rose-500/30 font-sans font-bold transition">
-                        Keluar
-                    </button>
-                </div>
-            </div>
-
-            <!-- RACE TRACK CONTAINER (Supports up to 30 visible racers with smooth scroll) -->
-            <div class="glass-panel rounded-3xl p-4 sm:p-6 border border-slate-800 flex flex-col gap-3 max-h-[380px] overflow-y-auto relative shadow-2xl">
-                <div class="flex items-center justify-between text-xs text-slate-400 pb-2 border-b border-slate-800 sticky top-0 bg-slate-900/90 backdrop-blur z-20 py-1">
-                    <span class="font-bold flex items-center gap-1.5 text-slate-300">
-                        <i class="fa-solid fa-users text-sd-blue"></i> LINTASAN BALAP (Maksimal 30 Pemain Realtime)
-                    </span>
-                    <span class="font-mono text-[11px]" id="racers-count-text">0 / 30 Pemain Terhubung</span>
-                </div>
-
-                <!-- Dynamic Track List Container -->
-                <div id="racers-track-list" class="space-y-3 pt-1">
-                    <!-- Racer rows generated dynamically -->
-                </div>
-            </div>
-
-            <!-- TYPING PLAY AREA -->
-            <div class="glass-panel rounded-3xl p-6 sm:p-8 border border-slate-800 flex flex-col items-center justify-center gap-5 relative text-center shadow-2xl">
-                
-                <!-- Countdown Overlay -->
-                <div id="countdown-overlay" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md rounded-3xl z-30 flex flex-col items-center justify-center gap-2">
-                    <div id="countdown-number" class="font-kids font-bold text-5xl sm:text-7xl text-sd-yellow animate-bounce">
-                        SIAP!
-                    </div>
-                    <p id="countdown-subtext" class="text-xs sm:text-sm text-slate-400 px-4">Host akan memulai pertandingan...</p>
-                    <button id="btn-start-host" onclick="startMatchAsHost()" class="hidden mt-4 px-6 py-3 rounded-2xl bg-sd-green hover:bg-green-600 text-slate-950 font-bold text-sm shadow-lg shadow-sd-green/30 transition">
-                        <i class="fa-solid fa-play mr-1"></i> Mulai Balapan Sekarang!
-                    </button>
-                </div>
-
-                <!-- Word display card -->
-                <div class="w-full max-w-2xl bg-slate-900 border border-slate-700/80 rounded-2xl p-5 shadow-inner">
-                    <div id="word-display-box" class="font-mono text-xl sm:text-2xl font-bold tracking-wider leading-relaxed text-slate-400 select-none break-words min-h-[70px] flex items-center justify-center flex-wrap gap-x-2 gap-y-1">
-                        <!-- Words rendered here -->
-                    </div>
-                </div>
-
-                <!-- Definition / Meaning Helper for Kids -->
-                <div id="word-definition-box" class="text-xs text-slate-400 bg-slate-900/60 px-4 py-2 rounded-xl border border-slate-800 max-w-xl">
-                    <i class="fa-solid fa-book-open text-sd-yellow mr-1"></i> Arti KBBI: <span id="text-definition" class="text-slate-200 font-medium">Kosakata Bahasa Indonesia SD.</span>
-                </div>
-
-                <!-- Input Field -->
-                <div class="w-full max-w-xl relative">
-                    <input type="text" id="typing-input" placeholder="Ketik kata yang ditandai di atas lalu tekan spasi..." autocomplete="off" spellcheck="false" class="w-full bg-slate-950 border-2 border-sd-blue rounded-2xl px-6 py-4 text-center font-mono font-bold text-xl sm:text-2xl text-white focus:outline-none focus:ring-4 focus:ring-sd-blue/30 transition active-typing shadow-lg">
-                </div>
-
-            </div>
-
-        </section>
-
-    </main>
-
-    <!-- PROFILE & AVATAR MODAL -->
-    <div id="modal-profile" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-panel rounded-3xl p-6 max-w-md w-full border border-slate-700 shadow-2xl space-y-5 relative">
-            <button onclick="closeProfileModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
-                <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
-            <div class="text-center space-y-1">
-                <h3 class="font-kids font-bold text-2xl text-white">Profil Pemain SD</h3>
-                <p class="text-xs text-slate-400">Pilih nama dan avatar karakter kesukaanmu</p>
-            </div>
-
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-1">Nama Pemain / Siswa</label>
-                    <input type="text" id="modal-input-name" maxlength="16" value="Siswa_SD" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-sd-blue font-bold">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-2">Pilih Avatar Karakter</label>
-                    <div id="avatar-selector" class="grid grid-cols-5 gap-2 text-2xl text-center">
-                        <!-- Dynamic Avatars -->
-                    </div>
-                </div>
-            </div>
-
-            <button onclick="saveProfileModal()" class="w-full py-3 rounded-xl bg-sd-blue hover:bg-blue-600 text-white font-bold text-sm transition shadow-lg shadow-sd-blue/30">
-                Simpan Profil
-            </button>
+        <div>
+          <h1 class="heading-font text-xl font-bold tracking-wide bg-gradient-to-r from-amber-400 via-orange-300 to-red-400 bg-clip-text text-transparent">
+            Lomba Mengetik SD
+          </h1>
+          <p class="text-xs text-slate-400 font-medium">Multiplayer Real-time 30 Pemain</p>
         </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button id="btn-sound-toggle" onclick="toggleSound()" class="p-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition" title="Toggle Suara">
+          <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+        </button>
+        <button onclick="openConfigModal()" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-semibold flex items-center gap-2 border border-slate-700">
+          <i class="fa-solid fa-gear"></i> <span class="hidden sm:inline">Pengaturan Cloud</span>
+        </button>
+      </div>
     </div>
+  </header>
 
-    <!-- FINISH PODIUM MODAL -->
-    <div id="modal-finish" class="fixed inset-0 bg-slate-950/90 backdrop-blur-lg z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-slate-700 shadow-2xl text-center space-y-6 relative overflow-hidden">
-            
-            <div class="space-y-2">
-                <div class="inline-block px-4 py-1 rounded-full bg-sd-yellow/20 text-sd-yellow border border-sd-yellow/40 text-xs font-bold">
-                    PERTANDINGAN SELESAI! 🏁
-                </div>
-                <h3 class="font-kids font-bold text-3xl text-white">Hasil Balap Ketik SD</h3>
-                <p class="text-xs text-slate-400">Selamat untuk para pemenang balapan!</p>
-            </div>
+  <!-- MAIN CONTAINER -->
+  <main class="flex-grow flex items-center justify-center p-4">
 
-            <!-- Winner Podium / Summary -->
-            <div id="finish-podium-list" class="space-y-2 text-left max-h-[220px] overflow-y-auto pr-1">
-                <!-- Ranked winners generated dynamically -->
-            </div>
+    <section id="screen-home" class="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+      <div class="text-center space-y-2">
+        <span class="px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-semibold">
+          🎮 Tingkat Sekolah Dasar (SD)
+        </span>
+        <h2 class="heading-font text-3xl font-bold text-white">Siap Berpacu?</h2>
+        <p class="text-slate-400 text-sm">Ketik kata-kata bahasa Indonesia dengan cepat dan tepat dalam waktu 3 menit!</p>
+      </div>
 
-            <!-- Player's personal stats -->
-            <div class="grid grid-cols-2 gap-3 bg-slate-900/80 p-4 rounded-2xl border border-slate-800 font-mono">
-                <div>
-                    <div class="text-[11px] text-slate-400">Kecepatan Anda</div>
-                    <div id="final-my-wpm" class="text-xl font-bold text-sd-green">0 WPM</div>
-                </div>
-                <div>
-                    <div class="text-[11px] text-slate-400">Akurasi Ketik</div>
-                    <div id="final-my-acc" class="text-xl font-bold text-sd-blue">100%</div>
-                </div>
-            </div>
-
-            <div class="flex gap-3 pt-2">
-                <button onclick="leaveRoom()" class="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-sm transition">
-                    Kembali ke Lobby
-                </button>
-            </div>
+      <!-- Player Profile Form -->
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Nama Pemain</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
+              <i class="fa-solid fa-user"></i>
+            </span>
+            <input type="text" id="player-name-input" maxlength="15" placeholder="Masukkan nama kamu..." 
+                   class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-white font-semibold placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition">
+          </div>
         </div>
+
+        <!-- Avatar Selection -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Pilih Mobil Balap</label>
+          <div id="avatar-picker" class="grid grid-cols-5 gap-2">
+            <!-- Avatars injected via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="space-y-3 pt-2">
+        <button onclick="createRoom()" class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 heading-font font-bold text-lg shadow-lg shadow-amber-500/20 transition transform active:scale-95 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-plus-circle"></i> Buat Room Balapan Baru
+        </button>
+
+        <div class="flex items-center gap-2">
+          <input type="text" id="join-room-code-input" placeholder="KODE ROOM" maxlength="6" 
+                 class="w-2/3 px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-center font-mono font-bold tracking-widest text-amber-400 placeholder-slate-600 uppercase focus:outline-none focus:border-amber-500">
+          <button onclick="joinRoomFromInput()" class="w-1/3 py-3 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white heading-font font-semibold border border-slate-700 transition flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-right-to-bracket"></i> Gabung
+          </button>
+        </div>
+
+        <div class="relative flex py-2 items-center">
+          <div class="flex-grow border-t border-slate-800"></div>
+          <span class="flex-shrink mx-4 text-xs font-semibold text-slate-500">ATAU</span>
+          <div class="flex-grow border-t border-slate-800"></div>
+        </div>
+
+        <button onclick="startSinglePlayerBotRace()" class="w-full py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-sm border border-slate-700 transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-robot text-cyan-400"></i> Latihan Sendiri (vs Bot Komputer)
+        </button>
+      </div>
+    </section>
+
+
+    <section id="screen-lobby" class="hidden w-full max-w-3xl bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+        <div>
+          <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider">Ruang Tunggu Balapan</span>
+          <h2 class="heading-font text-2xl font-bold text-white flex items-center gap-2">
+            Kode Room: <span id="display-room-code" class="text-amber-400 font-mono tracking-widest">------</span>
+          </h2>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="copyRoomCode()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 transition flex items-center gap-2">
+            <i class="fa-solid fa-copy"></i> Salin Kode
+          </button>
+          <button onclick="leaveRoom()" class="px-3 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold border border-red-500/20 transition flex items-center gap-2">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Keluar
+          </button>
+        </div>
+      </div>
+
+      <!-- Player Grid (Max 30) -->
+      <div>
+        <div class="flex justify-between items-center mb-3">
+          <span class="text-sm font-bold text-slate-300">Pembalap Terhubung (<span id="player-count">0</span>/30)</span>
+          <span class="text-xs text-slate-500">Tunggu host memulai balapan...</span>
+        </div>
+        <div id="lobby-players-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 max-h-72 overflow-y-auto p-1">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Host Controls / Ready Toggle -->
+      <div class="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="text-xs text-slate-400 flex items-center gap-2">
+          <i class="fa-solid fa-circle-info text-amber-400"></i> Lomba berlangsung selama 3 menit (180 detik).
+        </div>
+        <div class="w-full sm:w-auto flex gap-3">
+          <button id="btn-start-race" onclick="startRaceFromHost()" class="hidden w-full sm:w-auto py-3 px-8 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 heading-font font-bold text-lg shadow-lg shadow-emerald-500/20 transition transform active:scale-95">
+            <i class="fa-solid fa-play"></i> MULAI BALAPAN!
+          </button>
+        </div>
+      </div>
+    </section>
+
+
+    <section id="screen-race" class="hidden w-full max-w-5xl bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-2xl space-y-6">
+      
+      <!-- Race Status Bar -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-950 p-4 rounded-2xl border border-slate-800 text-center">
+        <div class="space-y-1">
+          <span class="text-xs font-bold text-slate-400 uppercase">Sisa Waktu</span>
+          <div id="race-timer" class="heading-font text-2xl sm:text-3xl font-bold text-amber-400 font-mono">03:00</div>
+        </div>
+        <div class="space-y-1">
+          <span class="text-xs font-bold text-slate-400 uppercase">Kecepatan (WPM)</span>
+          <div id="stat-wpm" class="heading-font text-2xl sm:text-3xl font-bold text-emerald-400 font-mono">0</div>
+        </div>
+        <div class="space-y-1">
+          <span class="text-xs font-bold text-slate-400 uppercase">Akurasi</span>
+          <div id="stat-accuracy" class="heading-font text-2xl sm:text-3xl font-bold text-cyan-400 font-mono">100%</div>
+        </div>
+        <div class="space-y-1">
+          <span class="text-xs font-bold text-slate-400 uppercase">Kata Selesai</span>
+          <div id="stat-words" class="heading-font text-2xl sm:text-3xl font-bold text-purple-400 font-mono">0</div>
+        </div>
+      </div>
+
+      <!-- Dynamic Visual Race Track -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between text-xs font-bold text-slate-400 px-2">
+          <span>START 🚩</span>
+          <span class="text-amber-400">LINTASAN BALAP REAL-TIME</span>
+          <span>FINISH 🏁</span>
+        </div>
+        <div id="race-tracks-container" class="bg-slate-950 border border-slate-800 rounded-2xl p-3 max-h-64 sm:max-h-80 overflow-y-auto space-y-3">
+          <!-- Dynamic race tracks for each player -->
+        </div>
+      </div>
+
+      <!-- Typing Area -->
+      <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 sm:p-6 text-center space-y-4">
+        <div class="flex items-center justify-center gap-2">
+          <span class="text-xs font-semibold text-slate-400">KATA SELANJUTNYA:</span>
+          <span id="next-word-preview" class="text-xs font-bold font-mono text-slate-500 bg-slate-900 px-3 py-1 rounded-md">...</span>
+        </div>
+
+        <!-- Target Word Display -->
+        <div class="py-2">
+          <div id="target-word-display" class="heading-font text-3xl sm:text-5xl font-bold tracking-wider text-white inline-block px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 shadow-inner">
+            <!-- Word characters with correct/wrong color coding -->
+          </div>
+        </div>
+
+        <!-- Typing Input -->
+        <div class="max-w-md mx-auto relative">
+          <input type="text" id="typing-input" autocomplete="off" spellcheck="false" placeholder="Ketik kata di atas..." 
+                 class="w-full text-center py-3.5 px-4 rounded-xl bg-slate-900 border-2 border-amber-500/50 text-amber-300 font-mono font-bold text-2xl placeholder-slate-600 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 shadow-lg transition">
+          <div class="mt-2 text-xs text-slate-400">
+            Tekan <kbd class="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-300 font-mono">Spasi</kbd> atau <kbd class="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-300 font-mono">Enter</kbd> untuk lanjut ke kata berikutnya
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+
+    <section id="screen-results" class="hidden w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+      <div class="text-center space-y-2">
+        <div class="inline-flex p-3 rounded-2xl bg-amber-500/10 text-amber-400 text-3xl mb-1">
+          🏆
+        </div>
+        <h2 class="heading-font text-3xl font-bold text-white">Hasil Lomba Mengetik</h2>
+        <p class="text-slate-400 text-sm">Waktu 3 Menit Selesai! Selamat untuk para pemenang!</p>
+      </div>
+
+      <!-- Top 3 Podium -->
+      <div id="podium-container" class="grid grid-cols-3 gap-2 sm:gap-4 items-end pt-4 pb-2">
+        <!-- 2nd Place -->
+        <div id="podium-2" class="bg-slate-800 border border-slate-700 rounded-2xl p-3 text-center space-y-1">
+          <div class="text-2xl">🥈</div>
+          <div class="font-bold text-xs sm:text-sm text-white truncate" id="p2-name">-</div>
+          <div class="text-xs font-bold text-emerald-400 font-mono" id="p2-wpm">0 WPM</div>
+          <div class="h-16 bg-slate-700/50 rounded-lg flex items-center justify-center text-xs font-bold text-slate-400">JUARA 2</div>
+        </div>
+        <!-- 1st Place -->
+        <div id="podium-1" class="bg-gradient-to-b from-amber-500/20 to-slate-800 border border-amber-500/40 rounded-2xl p-4 text-center space-y-1 shadow-lg shadow-amber-500/10">
+          <div class="text-4xl animate-bounce">👑</div>
+          <div class="font-bold text-sm sm:text-base text-amber-300 truncate" id="p1-name">-</div>
+          <div class="text-sm font-bold text-emerald-400 font-mono" id="p1-wpm">0 WPM</div>
+          <div class="h-24 bg-gradient-to-t from-amber-500/30 to-amber-500/10 rounded-lg flex items-center justify-center text-xs font-bold text-amber-300">JUARA 1</div>
+        </div>
+        <!-- 3rd Place -->
+        <div id="podium-3" class="bg-slate-800 border border-slate-700 rounded-2xl p-3 text-center space-y-1">
+          <div class="text-2xl">🥉</div>
+          <div class="font-bold text-xs sm:text-sm text-white truncate" id="p3-name">-</div>
+          <div class="text-xs font-bold text-emerald-400 font-mono" id="p3-wpm">0 WPM</div>
+          <div class="h-12 bg-slate-700/50 rounded-lg flex items-center justify-center text-xs font-bold text-slate-400">JUARA 3</div>
+        </div>
+      </div>
+
+      <!-- Full Standings Table -->
+      <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3 max-h-56 overflow-y-auto">
+        <table class="w-full text-left text-xs sm:text-sm">
+          <thead>
+            <tr class="text-slate-500 border-b border-slate-800 font-bold uppercase">
+              <th class="py-2 px-3">#</th>
+              <th class="py-2 px-3">Pembalap</th>
+              <th class="py-2 px-3 text-center">WPM</th>
+              <th class="py-2 px-3 text-center">Akurasi</th>
+              <th class="py-2 px-3 text-right">Kata</th>
+            </tr>
+          </thead>
+          <tbody id="full-leaderboard-body" class="divide-y divide-slate-800/50 text-slate-300">
+            <!-- Dynamically filled -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pt-2">
+        <button onclick="returnToHome()" class="w-full py-3.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 heading-font font-bold text-base shadow-lg transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-house"></i> Kembali ke Menu Utama
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Configuration Modal for custom Firebase Setup (for GitHub Pages deployment) -->
+  <div id="config-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h3 class="heading-font text-xl font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-cloud text-amber-400"></i> Firebase Config (Serverless Sync)
+        </h3>
+        <button onclick="closeConfigModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <p class="text-xs text-slate-400">
+        Untuk menjalankan multiplayer real-time saat di-host di GitHub Pages tanpa server fisik, masukkan Firebase Config gratis kamu di bawah ini (opsional).
+      </p>
+      <div>
+        <label class="block text-xs font-bold text-slate-300 mb-1">JSON Firebase Config</label>
+        <textarea id="firebase-json-input" rows="5" placeholder='{"apiKey": "...", "authDomain": "...", "projectId": "...", ...}'
+                  class="w-full p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-amber-300 focus:outline-none focus:border-amber-500"></textarea>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="saveFirebaseConfig()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs">
+          Simpan & Terapkan
+        </button>
+      </div>
     </div>
+  </div>
 
-    <!-- FOOTER -->
-    <footer class="border-t border-slate-900 bg-slate-950 py-4 px-4 text-center text-xs text-slate-500">
-        Balap Ketik KBBI SD Online &bull; Mendukung Hingga 30 Pemain P2P / Serverless &bull; Siap Di-hosting di GitHub Pages
-    </footer>
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed bottom-5 right-5 bg-slate-800 border border-amber-500/40 text-slate-100 px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 transform translate-y-20 opacity-0 z-50">
+    <i id="toast-icon" class="fa-solid fa-circle-info text-amber-400 text-lg"></i>
+    <span id="toast-msg" class="text-xs font-bold">Pesan notifikasi</span>
+  </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { 
+      getAuth, 
+      signInAnonymously, 
+      signInWithCustomToken, 
+      onAuthStateChanged 
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { 
+      getFirestore, 
+      doc, 
+      getDoc, 
+      setDoc, 
+      updateDoc, 
+      onSnapshot, 
+      collection 
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Dictionary of KBBI Elementary School Words
-        const SD_DICTIONARY = {
-            mudah: [
-                { word: "buku", def: "Lembar kertas terjilid yang berisi tulisan." },
-                { word: "meja", def: "Perkakas rumah yang mempunyai kaki dan permukaan datar." },
-                { word: "pensil", def: "Alat tulis berupa batang kayu berisi arang keras." },
-                { word: "taman", def: "Kebun yang ditanami bunga-bunga indah." },
-                { word: "rumah", def: "Bangunan tempat tinggal manusia." },
-                { word: "sepatu", def: "Alat alas kaki buatan kulit atau kain." },
-                { word: "tas", def: "Wadah untuk menyimpan dan membawa barang." },
-                { word: "apel", def: "Buah manis berwarna merah atau hijau." },
-                { word: "kucing", def: "Hewan mamalia berkaki empat yang suka mengeong." },
-                { word: "ikan", def: "Bintang bernapas dengan insang yang hidup di air." },
-                { word: "bintang", def: "Benda langit yang memancarkan cahaya di malam hari." },
-                { word: "awan", def: "Kelompok titik-titik air di udara." },
-                { word: "hujan", def: "Titik-titik air yang jatuh dari awan." },
-                { word: "daun", def: "Bagian tumbuhan yang tumbuh pada ranting." },
-                { word: "pohon", def: "Tumbuhan yang memiliki batang kayu keras." },
-                { word: "bunga", def: "Bagian tanaman yang indah dan harum." },
-                { word: "sepeda", def: "Kendaraan roda dua yang dikayuh." },
-                { word: "bola", def: "Benda bulat untuk berolahraga dan bermain." },
-                { word: "topi", def: "Penutup kepala untuk melindungi dari panas." },
-                { word: "baju", def: "Pakaian penutup badan bagian atas." }
-            ],
-            sedang: [
-                { word: "sekolah", def: "Bangunan tempat belajar dan mengajar." },
-                { word: "belajar", def: "Berusaha memperoleh kepandaian atau ilmu." },
-                { word: "membaca", def: "Melihat dan memahami isi tulisan." },
-                { word: "melukis", def: "Membuat gambar dengan cat dan kuas." },
-                { word: "menari", def: "Menggerakkan tubuh sesuai irama musik." },
-                { word: "sahabat", def: "Teman dekat yang saling menyayangi." },
-                { word: "pelangi", def: "Lengkung warna-warni di langit setelah hujan." },
-                { word: "keluarga", def: "Ibu, ayah, dan anak-anak yang tinggal bersama." },
-                { word: "sehat", def: "Bebas dari sakit dan terasa segar." },
-                { word: "juara", def: "Pemenang dalam perlombaan atau pertandingan." },
-                { word: "pintar", def: "Pandai dan cepat memahami sesuatu." },
-                { word: "disiplin", def: "Taat dan patuh pada peraturan." },
-                { word: "jujur", def: "Berkata apa adanya dan tidak berbohong." },
-                { word: "santun", def: "Halus dan baik tutur kata serta budi bahasanya." },
-                { word: "upacara", def: "Rangkaian tindakan yang terikat pada aturan." },
-                { word: "bendera", def: "Kain berkibar penanda lambang negara." },
-                { word: "pramuka", def: "Praja Muda Karana, organisasi kepemudaan." },
-                { word: "istirahat", def: "Berhenti sejenak dari kegiatan untuk melepaskan lelah." },
-                { word: "olahraga", def: "Gerak badan untuk menyehatkan tubuh." },
-                { word: "komputer", def: "Alat elektronik pengolah data cepat." }
-            ],
-            campuran: []
+    const SD_WORDS = [
+      "kucing", "sekolah", "pelangi", "membaca", "sepeda", "bintang", "makanan", "pohon", "sahabat",
+      "matahari", "pensil", "kebersihan", "lingkungan", "olahraga", "kesehatan", "keluarga", "indonesia",
+      "pancasila", "bendera", "garuda", "guru", "murid", "perpustakaan", "pengetahuan", "seragam",
+      "sepatu", "tas", "buku", "penggaris", "penghapus", "halaman", "lapangan", "tanaman", "bunga",
+      "mawar", "melati", "kupu", "burung", "ikan", "sungai", "gunung", "pantai", "lautan", "awan",
+      "hujan", "pelajaran", "matematika", "sejarah", "bahasa", "budaya", "kesenian", "nyanyian",
+      "tarian", "gambar", "lukisan", "cerita", "dongeng", "puisi", "pantun", "bermain", "lari",
+      "lompat", "renang", "senam", "juara", "prestasi", "semangat", "disiplin", "jujur", "santun",
+      "ramah", "gotong", "royong", "toleransi", "kerjasama", "kebaikan", "senyuman", "bahagia",
+      "gembira", "ceria", "sahabat", "teman", "saudara", "ayah", "ibu", "kakak", "adik", "kakek",
+      "nenek", "rumah", "dapur", "taman", "pasar", "kereta", "pesawat", "kapal", "mobil", "motor",
+      "lampu", "jendela", "pintu", "meja", "kursi", "lemari", "piring", "gelas", "sendok", "garpu",
+      "nasi", "sayur", "buah", "apel", "pisang", "jeruk", "mangga", "semangka", "air", "susu"
+    ];
+
+    const AVATARS = [
+      { id: 'car-red', icon: '🏎️', color: 'bg-red-500' },
+      { id: 'car-blue', icon: '🚙', color: 'bg-blue-500' },
+      { id: 'car-green', icon: '🛻', color: 'bg-emerald-500' },
+      { id: 'car-yellow', icon: '🚖', color: 'bg-yellow-500' },
+      { id: 'car-purple', icon: '🏎️', color: 'bg-purple-500' },
+    ];
+
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'typing-race-sd-game';
+    let app, auth, db;
+    let currentUser = null;
+    let roomUnsubscribe = null;
+
+    let gameState = {
+      mode: 'multiplayer', // 'multiplayer' or 'bot'
+      roomCode: null,
+      isHost: false,
+      playerName: '',
+      playerAvatar: AVATARS[0],
+      currentWordIndex: 0,
+      wordList: [],
+      typedCharacters: 0,
+      correctCharacters: 0,
+      totalErrors: 0,
+      startTime: null,
+      timerInterval: null,
+      botInterval: null,
+      timeLeft: 180, // 3 Minutes = 180 Seconds
+      isRacing: false,
+      myStats: { wpm: 0, accuracy: 100, wordsTyped: 0, progress: 0 }
+    };
+
+    // Web Audio Synthesizer for SFX
+    let audioCtx = null;
+    let soundEnabled = true;
+
+    function playTone(freq, type = 'sine', duration = 0.08) {
+      if (!soundEnabled) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    async function initFirebase() {
+      let config = null;
+
+      // 1. Check window injected config
+      if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+        try { config = JSON.parse(__firebase_config); } catch (e) {}
+      }
+
+      // 2. Check localStorage config
+      if (!config) {
+        const stored = localStorage.getItem('typing_race_fb_config');
+        if (stored) {
+          try { config = JSON.parse(stored); } catch (e) {}
+        }
+      }
+
+      // Default fallback config for demo preview if not configured
+      if (!config) {
+        config = {
+          apiKey: "AIzaSyDemoKeyForTypingRaceSD12345",
+          authDomain: "typing-race-demo.firebaseapp.com",
+          projectId: "typing-race-demo",
+          storageBucket: "typing-race-demo.appspot.com",
+          messagingSenderId: "1234567890",
+          appId: "1:1234567890:web:demoapp"
         };
-        SD_DICTIONARY.campuran = [...SD_DICTIONARY.mudah, ...SD_DICTIONARY.sedang];
+      }
 
-        const AVATARS = ['🐱', '🐶', '🦊', '🐰', '🐼', '🐯', '🦁', '🐸', '🦄', '🤖', '🚀', '⭐', '🍎', '⚽', '🚗'];
+      try {
+        app = initializeApp(config);
+        auth = getAuth(app);
+        db = getFirestore(app);
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'kbbi-typing-sd';
-        let db = null;
-        let auth = null;
-        
-        let localPlayer = {
-            id: 'P-' + Math.random().toString(36).substring(2, 8),
-            name: 'Pemain_SD_' + Math.floor(100 + Math.random() * 900),
-            avatar: '🐱',
-            progress: 0, // 0 to 100
-            wordIndex: 0,
+        // Authenticate user safely according to Rule 3
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+
+        onAuthStateChanged(auth, (user) => {
+          if (user) {
+            currentUser = user;
+          }
+        });
+      } catch (err) {
+        console.warn("Firebase Auth initialized in offline/fallback mode:", err);
+      }
+    }
+
+    window.showToast = function(msg, icon = 'fa-circle-info') {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').innerText = msg;
+      document.getElementById('toast-icon').className = `fa-solid ${icon} text-amber-400 text-lg`;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    };
+
+    window.toggleSound = function() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('sound-icon').className = soundEnabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark text-red-400';
+      showToast(soundEnabled ? 'Suara Diaktifkan' : 'Suara Dimatikan');
+    };
+
+    function showScreen(screenId) {
+      ['screen-home', 'screen-lobby', 'screen-race', 'screen-results'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+      });
+      document.getElementById(screenId).classList.remove('hidden');
+    }
+
+    function renderAvatarPicker() {
+      const container = document.getElementById('avatar-picker');
+      container.innerHTML = AVATARS.map(av => `
+        <button type="button" onclick="selectAvatar('${av.id}')" id="av-${av.id}" 
+                class="p-3 rounded-xl border-2 transition flex items-center justify-center text-2xl ${av.id === gameState.playerAvatar.id ? 'border-amber-400 bg-amber-500/10 scale-105' : 'border-slate-800 bg-slate-800/50 hover:border-slate-700'}">
+          ${av.icon}
+        </button>
+      `).join('');
+    }
+
+    window.selectAvatar = function(avatarId) {
+      gameState.playerAvatar = AVATARS.find(a => a.id === avatarId) || AVATARS[0];
+      renderAvatarPicker();
+      playTone(400);
+    };
+
+    function getUserId() {
+      return auth?.currentUser?.uid || 'local_' + Math.random().toString(36).substring(2, 9);
+    }
+
+    function getRoomRef(roomCode) {
+      // RULE 1: STRICT PUBLIC DATA PATH: /artifacts/{appId}/public/data/{collectionName}
+      return doc(db, 'artifacts', appId, 'public', 'data', 'typing_rooms', roomCode.toUpperCase());
+    }
+
+    window.createRoom = async function() {
+      const name = document.getElementById('player-name-input').value.trim() || 'Pembalap ' + Math.floor(Math.random()*100);
+      gameState.playerName = name;
+      gameState.mode = 'multiplayer';
+      gameState.isHost = true;
+
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      gameState.roomCode = code;
+
+      const seed = Math.floor(Math.random() * 10000);
+
+      const uid = getUserId();
+
+      const initialRoomData = {
+        code: code,
+        status: 'waiting',
+        hostId: uid,
+        wordSeed: seed,
+        createdAt: Date.now(),
+        players: {
+          [uid]: {
+            name: name,
+            avatar: gameState.playerAvatar,
             wpm: 0,
             accuracy: 100,
-            isFinished: false,
-            finishTime: null
+            wordsTyped: 0,
+            progress: 0,
+            isHost: true
+          }
+        }
+      };
+
+      try {
+        await setDoc(getRoomRef(code), initialRoomData);
+        subscribeToRoom(code);
+        showScreen('screen-lobby');
+        document.getElementById('display-room-code').innerText = code;
+        document.getElementById('btn-start-race').classList.remove('hidden');
+        showToast('Room Balapan berhasil dibuat!', 'fa-circle-check');
+      } catch (e) {
+        console.error("Failed to create room:", e);
+        showToast('Gagal terhubung ke cloud. Memulai mode demo local...', 'fa-triangle-exclamation');
+        startSinglePlayerBotRace();
+      }
+    };
+
+    window.joinRoomFromInput = function() {
+      const code = document.getElementById('join-room-code-input').value.trim().toUpperCase();
+      if (!code || code.length < 4) {
+        showToast('Masukkan kode room 6 digit!', 'fa-triangle-exclamation');
+        return;
+      }
+      joinRoom(code);
+    };
+
+    async function joinRoom(code) {
+      const name = document.getElementById('player-name-input').value.trim() || 'Pembalap ' + Math.floor(Math.random()*100);
+      gameState.playerName = name;
+      gameState.mode = 'multiplayer';
+      gameState.isHost = false;
+      gameState.roomCode = code;
+
+      try {
+        const snap = await getDoc(getRoomRef(code));
+        if (!snap.exists()) {
+          showToast('Room tidak ditemukan!', 'fa-circle-xmark');
+          return;
+        }
+
+        const roomData = snap.data();
+        const playerCount = Object.keys(roomData.players || {}).length;
+        if (playerCount >= 30) {
+          showToast('Room penuh! Maksimal 30 pemain.', 'fa-triangle-exclamation');
+          return;
+        }
+
+        const uid = getUserId();
+        await updateDoc(getRoomRef(code), {
+          [`players.${uid}`]: {
+            name: name,
+            avatar: gameState.playerAvatar,
+            wpm: 0,
+            accuracy: 100,
+            wordsTyped: 0,
+            progress: 0,
+            isHost: false
+          }
+        });
+
+        subscribeToRoom(code);
+        showScreen('screen-lobby');
+        document.getElementById('display-room-code').innerText = code;
+        document.getElementById('btn-start-race').classList.add('hidden');
+        showToast('Berhasil bergabung ke room!', 'fa-circle-check');
+      } catch (e) {
+        console.error("Error joining room:", e);
+        showToast('Gagal bergabung dengan room', 'fa-triangle-exclamation');
+      }
+    }
+
+    function subscribeToRoom(code) {
+      if (roomUnsubscribe) roomUnsubscribe();
+
+      // RULE 2 & ERROR CALLBACK REQUIRED
+      roomUnsubscribe = onSnapshot(getRoomRef(code), (docSnap) => {
+        if (!docSnap.exists()) return;
+        const data = docSnap.data();
+
+        // Update Lobby UI
+        renderLobbyPlayers(data.players || {});
+
+        // Check if Host started race
+        if (data.status === 'racing' && !gameState.isRacing) {
+          prepareAndStartRace(data.wordSeed);
+        }
+
+        // Update live race positions if racing
+        if (gameState.isRacing && data.players) {
+          updateLiveRaceTrack(data.players);
+        }
+      }, (error) => {
+        console.error("Room snapshot error:", error);
+      });
+    }
+
+    function renderLobbyPlayers(playersObj) {
+      const container = document.getElementById('lobby-players-grid');
+      const players = Object.values(playersObj);
+      document.getElementById('player-count').innerText = players.length;
+
+      container.innerHTML = players.map(p => `
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex flex-col items-center justify-center gap-1 text-center">
+          <div class="text-3xl">${p.avatar?.icon || '🏎️'}</div>
+          <div class="font-bold text-xs text-slate-200 truncate w-full">${p.name}</div>
+          ${p.isHost ? '<span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[10px] font-bold">HOST</span>' : '<span class="text-[10px] text-slate-500">SIAP</span>'}
+        </div>
+      `).join('');
+    }
+
+    window.copyRoomCode = function() {
+      if (!gameState.roomCode) return;
+      navigator.clipboard.writeText(gameState.roomCode);
+      showToast('Kode Room tersalin ke clipboard!', 'fa-copy');
+    };
+
+    window.leaveRoom = function() {
+      if (roomUnsubscribe) roomUnsubscribe();
+      showScreen('screen-home');
+      gameState.roomCode = null;
+      gameState.isRacing = false;
+    };
+
+    window.startRaceFromHost = async function() {
+      if (!gameState.isHost || !gameState.roomCode) return;
+      try {
+        await updateDoc(getRoomRef(gameState.roomCode), {
+          status: 'racing',
+          startTime: Date.now()
+        });
+      } catch (e) {
+        console.error("Failed to start race:", e);
+      }
+    };
+
+    window.startSinglePlayerBotRace = function() {
+      const name = document.getElementById('player-name-input').value.trim() || 'Kamu';
+      gameState.playerName = name;
+      gameState.mode = 'bot';
+      gameState.isHost = true;
+      gameState.roomCode = 'LOCAL_BOT';
+
+      // Generate 5 virtual bots for a lively race!
+      const botNames = ['Bot Budi', 'Bot Ani', 'Bot Siti', 'Bot Doni', 'Bot Eka'];
+      const botAvatars = [AVATARS[1], AVATARS[2], AVATARS[3], AVATARS[4], AVATARS[0]];
+
+      gameState.botPlayers = {
+        'player_me': { name: name, avatar: gameState.playerAvatar, wpm: 0, accuracy: 100, wordsTyped: 0, progress: 0 }
+      };
+
+      botNames.forEach((bName, idx) => {
+        gameState.botPlayers['bot_' + idx] = {
+          name: bName,
+          avatar: botAvatars[idx],
+          wpm: 0,
+          accuracy: 95,
+          wordsTyped: 0,
+          progress: 0,
+          targetSpeed: 25 + Math.floor(Math.random() * 25) // WPM speed range for bots
         };
+      });
 
-        let currentRoomId = null;
-        let isHost = false;
-        let roomUnsubscribe = null;
-        let audioEnabled = true;
+      prepareAndStartRace(Math.floor(Math.random() * 1000));
+    };
 
-        // PeerJS P2P Networking references for Zero-Server setup
-        let peer = null;
-        let p2pConnections = {}; // For Host: { playerID: DataConnection }
-        let hostConnection = null; // For Client: DataConnection to Host
+    function generateSeededWords(seed) {
+      // Deterministic pseudo-random shuffle for exact same word order across all 30 players
+      let array = [...SD_WORDS];
+      let m = array.length, t, i;
+      let rand = function() {
+        seed = (seed * 9301 + 49297) % 233280;
+        return seed / 233280;
+      };
 
-        // Active Race State
-        let roomState = {
-            id: null,
-            grade: 'sedang',
-            wordCount: 25,
-            words: [],
-            status: 'waiting', // 'waiting', 'racing', 'finished'
-            players: {}, // Keyed by player ID, up to 30 players
-            startedAt: null
+      while (m) {
+        i = Math.floor(rand() * m--);
+        t = array[m];
+        array[m] = array[i];
+        array[i] = t;
+      }
+      return array;
+    }
+
+    function prepareAndStartRace(seed) {
+      gameState.wordList = generateSeededWords(seed);
+      gameState.currentWordIndex = 0;
+      gameState.typedCharacters = 0;
+      gameState.correctCharacters = 0;
+      gameState.totalErrors = 0;
+      gameState.timeLeft = 180; // 3 Minutes
+      gameState.isRacing = true;
+      gameState.startTime = Date.now();
+
+      showScreen('screen-race');
+      renderTargetWord();
+      startRaceTimer();
+
+      const input = document.getElementById('typing-input');
+      input.value = '';
+      input.focus();
+
+      if (gameState.mode === 'bot') {
+        startBotSimulation();
+      }
+    }
+
+    function startRaceTimer() {
+      if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+
+      gameState.timerInterval = setInterval(() => {
+        gameState.timeLeft--;
+        
+        // Format MM:SS
+        const mins = Math.floor(gameState.timeLeft / 60);
+        const secs = gameState.timeLeft % 60;
+        document.getElementById('race-timer').innerText = 
+          `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+        if (gameState.timeLeft <= 0) {
+          endRace();
+        }
+      }, 1000);
+    }
+
+    function startBotSimulation() {
+      if (gameState.botInterval) clearInterval(gameState.botInterval);
+
+      gameState.botInterval = setInterval(() => {
+        if (!gameState.isRacing) return;
+
+        Object.keys(gameState.botPlayers).forEach(key => {
+          if (key.startsWith('bot_')) {
+            const bot = gameState.botPlayers[key];
+            // Increment words typed according to WPM target speed
+            const increment = (bot.targetSpeed / 60) * 0.5;
+            bot.wordsTyped += increment;
+            bot.wpm = Math.round((bot.wordsTyped / Math.max(1, (180 - gameState.timeLeft))) * 60);
+            bot.progress = Math.min(100, (bot.wordsTyped / 80) * 100);
+          }
+        });
+
+        updateLiveRaceTrack(gameState.botPlayers);
+      }, 500);
+    }
+
+    function renderTargetWord() {
+      const currentWord = gameState.wordList[gameState.currentWordIndex] || 'selesai';
+      const nextWord = gameState.wordList[gameState.currentWordIndex + 1] || '-';
+      
+      document.getElementById('next-word-preview').innerText = nextWord;
+
+      const inputVal = document.getElementById('typing-input').value;
+      const displayContainer = document.getElementById('target-word-display');
+
+      let html = '';
+      for (let i = 0; i < currentWord.length; i++) {
+        const char = currentWord[i];
+        if (i < inputVal.length) {
+          if (inputVal[i] === char) {
+            html += `<span class="text-emerald-400 border-b-2 border-emerald-400">${char}</span>`;
+          } else {
+            html += `<span class="text-red-400 bg-red-500/20 border-b-2 border-red-500">${char}</span>`;
+          }
+        } else if (i === inputVal.length) {
+          html += `<span class="text-amber-400 underline decoration-amber-400 decoration-4 animate-pulse">${char}</span>`;
+        } else {
+          html += `<span class="text-slate-400">${char}</span>`;
+        }
+      }
+
+      displayContainer.innerHTML = html;
+    }
+
+    document.getElementById('typing-input').addEventListener('input', (e) => {
+      if (!gameState.isRacing) return;
+
+      const currentWord = gameState.wordList[gameState.currentWordIndex] || '';
+      const inputVal = e.target.value;
+
+      playTone(600 + (inputVal.length * 40));
+
+      // Auto check space or exact match
+      if (inputVal.endsWith(' ') || inputVal === currentWord) {
+        checkCompletedWord(inputVal.trim());
+      } else {
+        renderTargetWord();
+      }
+    });
+
+    document.getElementById('typing-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const inputVal = e.target.value.trim();
+        if (inputVal.length > 0) {
+          checkCompletedWord(inputVal);
+        }
+      }
+    });
+
+    function checkCompletedWord(inputWord) {
+      const currentWord = gameState.wordList[gameState.currentWordIndex] || '';
+      const isCorrect = inputWord === currentWord;
+
+      if (isCorrect) {
+        playTone(900, 'triangle', 0.12);
+        gameState.correctCharacters += currentWord.length + 1;
+        gameState.myStats.wordsTyped++;
+      } else {
+        playTone(200, 'sawtooth', 0.2);
+        gameState.totalErrors++;
+      }
+
+      gameState.typedCharacters += inputWord.length + 1;
+      gameState.currentWordIndex++;
+
+      // Reset input box
+      const input = document.getElementById('typing-input');
+      input.value = '';
+
+      // Calculate stats
+      const timeElapsedMinutes = Math.max(0.05, (180 - gameState.timeLeft) / 60);
+      const wpm = Math.round((gameState.myStats.wordsTyped) / timeElapsedMinutes);
+      const accuracy = gameState.typedCharacters > 0 
+        ? Math.round((gameState.correctCharacters / gameState.typedCharacters) * 100) 
+        : 100;
+
+      // Progress percentage estimated (Target 80 words for full track)
+      const progress = Math.min(100, (gameState.myStats.wordsTyped / 80) * 100);
+
+      gameState.myStats = {
+        wpm: wpm,
+        accuracy: accuracy,
+        wordsTyped: gameState.myStats.wordsTyped,
+        progress: progress
+      };
+
+      // Update UI Header
+      document.getElementById('stat-wpm').innerText = wpm;
+      document.getElementById('stat-accuracy').innerText = accuracy + '%';
+      document.getElementById('stat-words').innerText = gameState.myStats.wordsTyped;
+
+      // Sync stats to Firestore
+      if (gameState.mode === 'multiplayer' && gameState.roomCode) {
+        const uid = getUserId();
+        updateDoc(getRoomRef(gameState.roomCode), {
+          [`players.${uid}.wpm`]: wpm,
+          [`players.${uid}.accuracy`]: accuracy,
+          [`players.${uid}.wordsTyped`]: gameState.myStats.wordsTyped,
+          [`players.${uid}.progress`]: progress
+        }).catch(() => {});
+      } else if (gameState.mode === 'bot') {
+        gameState.botPlayers['player_me'] = {
+          name: gameState.playerName,
+          avatar: gameState.playerAvatar,
+          ...gameState.myStats
         };
-
-        let typingStartTime = null;
-        let totalTypedChars = 0;
-        let totalErrorChars = 0;
-        let currentTargetWord = "";
-
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playTone(freq, type = 'sine', duration = 0.08) {
-            if (!audioEnabled || !audioCtx) return;
-            try {
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = type;
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + duration);
-            } catch (e) {}
-        }
-
-        // Custom Toast Notification System (replaces alert)
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            if (!container) return;
-
-            const toast = document.createElement('div');
-            const bgClass = type === 'error' ? 'bg-rose-900/90 border-rose-600 text-rose-100' : 
-                            type === 'success' ? 'bg-emerald-900/90 border-emerald-600 text-emerald-100' : 
-                            'bg-slate-900/90 border-sd-blue text-slate-100';
-            
-            const icon = type === 'error' ? 'fa-circle-exclamation text-rose-400' :
-                         type === 'success' ? 'fa-circle-check text-emerald-400' :
-                         'fa-circle-info text-sd-blue';
-
-            toast.className = `toast-animate pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl border ${bgClass} shadow-xl backdrop-blur-md text-xs font-semibold max-w-sm`;
-            toast.innerHTML = `
-                <i class="fa-solid ${icon} text-base flex-shrink-0"></i>
-                <div class="flex-grow">${message}</div>
-            `;
-            container.appendChild(toast);
-
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transition = 'opacity 0.3s ease-out';
-                setTimeout(() => toast.remove(), 300);
-            }, 3500);
-        }
-
-        window.toggleAudio = () => {
-            audioEnabled = !audioEnabled;
-            const icon = document.getElementById('icon-sound');
-            if (audioEnabled) {
-                icon.className = "fa-solid fa-volume-high text-sd-green";
-                showToast("Suara diaktifkan 🔊", "info");
-            } else {
-                icon.className = "fa-solid fa-volume-xmark text-slate-500";
-                showToast("Suara dimatikan 🔇", "info");
-            }
-        };
-
-        window.onload = async () => {
-            // Load saved profile from storage if available
-            try {
-                const savedName = localStorage.getItem('sd_kbbi_name');
-                const savedAvatar = localStorage.getItem('sd_kbbi_avatar');
-                if (savedName) localPlayer.name = savedName;
-                if (savedAvatar) localPlayer.avatar = savedAvatar;
-            } catch(e) {}
-            
-            updateHeaderProfileUI();
-
-            // Populate avatar selector modal
-            const avatarContainer = document.getElementById('avatar-selector');
-            avatarContainer.innerHTML = '';
-            AVATARS.forEach(av => {
-                const btn = document.createElement('button');
-                btn.className = 'p-2.5 rounded-2xl bg-slate-900 border border-slate-700 hover:border-sd-blue text-2xl transition hover:scale-110';
-                btn.innerText = av;
-                btn.onclick = () => selectAvatarModal(av);
-                avatarContainer.appendChild(btn);
-            });
-
-            // Try Initializing Firebase Firestore according to strictly defined rules
-            try {
-                let firebaseConfig = null;
-                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                    firebaseConfig = JSON.parse(__firebase_config);
-                }
-
-                if (firebaseConfig && firebaseConfig.apiKey) {
-                    const app = initializeApp(firebaseConfig);
-                    db = getFirestore(app);
-                    auth = getAuth(app);
-
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                    if (auth.currentUser) localPlayer.id = auth.currentUser.uid;
-                    document.getElementById('net-status-text').innerText = "Cloud Synced";
-                } else {
-                    initPeerJSEngine();
-                }
-            } catch (err) {
-                console.warn("Firestore not active, switching to P2P engine fallback:", err);
-                initPeerJSEngine();
-            }
-
-            // Setup Typing Listener
-            const inputEl = document.getElementById('typing-input');
-            inputEl.addEventListener('input', handleTypingInput);
-        };
-
-        function initPeerJSEngine() {
-            if (typeof Peer === 'undefined') return;
-            try {
-                // PeerJS ID for general presence
-                peer = new Peer('peer-' + localPlayer.id);
-                peer.on('open', (id) => {
-                    document.getElementById('net-status-text').innerText = "P2P Mesh Ready";
-                });
-                peer.on('error', (err) => {
-                    console.warn("PeerJS warning:", err);
-                });
-            } catch (e) {
-                console.warn("P2P Init Error:", e);
-            }
-        }
-
-        window.openProfileModal = () => {
-            document.getElementById('modal-input-name').value = localPlayer.name;
-            document.getElementById('modal-profile').classList.remove('hidden');
-        };
-
-        window.closeProfileModal = () => {
-            document.getElementById('modal-profile').classList.add('hidden');
-        };
-
-        function selectAvatarModal(av) {
-            localPlayer.avatar = av;
-            playTone(600, 'triangle');
-        }
-
-        window.saveProfileModal = () => {
-            const name = document.getElementById('modal-input-name').value.trim();
-            if (name) localPlayer.name = name;
-            try {
-                localStorage.setItem('sd_kbbi_name', localPlayer.name);
-                localStorage.setItem('sd_kbbi_avatar', localPlayer.avatar);
-            } catch(e) {}
-            updateHeaderProfileUI();
-            closeProfileModal();
-            showToast("Profil berhasil diperbarui!", "success");
-        };
-
-        function updateHeaderProfileUI() {
-            document.getElementById('header-avatar').innerText = localPlayer.avatar;
-            document.getElementById('header-player-name').innerText = localPlayer.name;
-        }
-
-        // STRICT FIREBASE PATH RULE: /artifacts/{appId}/public/data/{collectionName}
-        function getRoomDocRef(roomId) {
-            if (!db) return null;
-            return doc(db, 'artifacts', appId, 'public', 'data', 'typing_rooms', roomId);
-        }
-
-        window.createOnlineRoom = async () => {
-            const grade = document.getElementById('select-grade-level').value;
-            const wordCount = parseInt(document.getElementById('select-word-count').value, 10);
-            const rawCode = Math.random().toString(36).substring(2, 6).toUpperCase();
-            const code = 'SD-' + rawCode;
-
-            // Prepare random word pool for kids
-            const sourcePool = SD_DICTIONARY[grade] || SD_DICTIONARY.sedang;
-            const selectedWords = [];
-            for (let i = 0; i < wordCount; i++) {
-                const item = sourcePool[Math.floor(Math.random() * sourcePool.length)];
-                selectedWords.push(item);
-            }
-
-            const initialPlayers = {};
-            initialPlayers[localPlayer.id] = { ...localPlayer };
-
-            const newRoom = {
-                id: code,
-                grade: grade,
-                wordCount: wordCount,
-                words: selectedWords,
-                status: 'waiting',
-                players: initialPlayers,
-                startedAt: null
-            };
-
-            currentRoomId = code;
-            isHost = true;
-            roomState = newRoom;
-
-            // 1. Try cloud doc creation
-            if (db && auth && auth.currentUser) {
-                try {
-                    await setDoc(getRoomDocRef(code), newRoom);
-                    subscribeRoomCloud(code);
-                } catch (e) {
-                    console.error("Firestore room creation fallback:", e);
-                    setupHostP2PRoom(code);
-                }
-            } else {
-                setupHostP2PRoom(code);
-            }
-
-            switchToArenaView(code);
-            showToast(`Room ${code} berhasil dibuat! Bagikan kode ke teman.`, "success");
-        };
-
-        function setupHostP2PRoom(code) {
-            if (typeof Peer === 'undefined') return;
-            try {
-                if (peer) peer.destroy();
-                // Host listens on peer ID matching the room code
-                const hostPeerId = 'kbbi-room-' + code;
-                peer = new Peer(hostPeerId);
-                
-                peer.on('connection', (conn) => {
-                    conn.on('data', (data) => {
-                        handleIncomingHostData(conn, data);
-                    });
-                    conn.on('close', () => {
-                        // Remove disconnected player if needed
-                    });
-                });
-            } catch (e) {
-                console.warn("Peer Host Setup Error:", e);
-            }
-        }
-
-        function handleIncomingHostData(conn, data) {
-            if (data.type === 'JOIN_REQUEST') {
-                const newP = data.player;
-                const currentCount = Object.keys(roomState.players).length;
-                if (currentCount >= 30 && !roomState.players[newP.id]) {
-                    conn.send({ type: 'ERROR', message: 'Room sudah Penuh (Max 30 Pemain)!' });
-                    return;
-                }
-                roomState.players[newP.id] = newP;
-                p2pConnections[newP.id] = conn;
-                
-                // Broadcast updated room state to all clients
-                broadcastP2PRoomState();
-                renderArenaUI();
-                playTone(700, 'sine', 0.1);
-            } else if (data.type === 'PLAYER_UPDATE') {
-                const updatedP = data.player;
-                roomState.players[updatedP.id] = updatedP;
-                
-                // Check if all players completed
-                const playersArr = Object.values(roomState.players);
-                if (playersArr.length > 0 && playersArr.every(p => p.isFinished)) {
-                    roomState.status = 'finished';
-                }
-
-                broadcastP2PRoomState();
-                renderArenaUI();
-            }
-        }
-
-        function broadcastP2PRoomState() {
-            Object.values(p2pConnections).forEach(conn => {
-                if (conn && conn.open) {
-                    conn.send({ type: 'ROOM_STATE', state: roomState });
-                }
-            });
-        }
-
-        window.joinOnlineRoom = async () => {
-            const code = document.getElementById('input-room-code').value.trim().toUpperCase();
-            if (!code) {
-                showToast("Masukkan kode room terlebih dahulu!", "error");
-                return;
-            }
-
-            let joinedViaCloud = false;
-
-            // 1. Attempt Firestore join
-            if (db && auth && auth.currentUser) {
-                try {
-                    const docSnap = await getDoc(getRoomDocRef(code));
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        const currentPlayersCount = Object.keys(data.players || {}).length;
-                        if (currentPlayersCount >= 30 && !data.players[localPlayer.id]) {
-                            showToast("Room sudah Penuh! (Maksimal 30 Pemain)", "error");
-                            return;
-                        }
-
-                        isHost = false;
-                        currentRoomId = code;
-                        const updatedPlayers = { ...(data.players || {}) };
-                        updatedPlayers[localPlayer.id] = { ...localPlayer };
-
-                        await updateDoc(getRoomDocRef(code), { players: updatedPlayers });
-                        subscribeRoomCloud(code);
-                        switchToArenaView(code);
-                        joinedViaCloud = true;
-                        showToast(`Berhasil bergabung ke Room ${code}!`, "success");
-                    }
-                } catch (err) {
-                    console.warn("Firestore Join error, trying P2P fallback:", err);
-                }
-            }
-
-            // 2. Fallback to PeerJS P2P join if cloud was not used
-            if (!joinedViaCloud) {
-                if (typeof Peer === 'undefined') {
-                    showToast("Tidak dapat terhubung ke server. Gunakan mode Solo!", "error");
-                    return;
-                }
-
-                try {
-                    if (peer) peer.destroy();
-                    peer = new Peer();
-                    
-                    peer.on('open', () => {
-                        const hostPeerId = 'kbbi-room-' + code;
-                        hostConnection = peer.connect(hostPeerId);
-
-                        hostConnection.on('open', () => {
-                            isHost = false;
-                            currentRoomId = code;
-                            hostConnection.send({ type: 'JOIN_REQUEST', player: localPlayer });
-                            switchToArenaView(code);
-                            showToast(`Terhubung via P2P ke Room ${code}!`, "success");
-                        });
-
-                        hostConnection.on('data', (data) => {
-                            if (data.type === 'ROOM_STATE') {
-                                roomState = data.state;
-                                renderArenaUI();
-
-                                if (roomState.status === 'racing' && typingStartTime === null) {
-                                    beginRacingState();
-                                }
-                            } else if (data.type === 'ERROR') {
-                                showToast(data.message, "error");
-                                leaveRoom();
-                            }
-                        });
-
-                        hostConnection.on('error', (e) => {
-                            showToast("Gagal terhubung ke host room! Periksa kode room.", "error");
-                        });
-                    });
-                } catch (e) {
-                    showToast("Gagal terhubung ke room P2P.", "error");
-                }
-            }
-        };
-
-        function subscribeRoomCloud(code) {
-            if (roomUnsubscribe) roomUnsubscribe();
-            const ref = getRoomDocRef(code);
-            if (!ref) return;
-
-            roomUnsubscribe = onSnapshot(ref, (docSnap) => {
-                if (docSnap.exists()) {
-                    roomState = docSnap.data();
-                    renderArenaUI();
-
-                    if (roomState.status === 'racing' && typingStartTime === null) {
-                        beginRacingState();
-                    }
-                }
-            }, (err) => {
-                console.error("Snapshot error:", err);
-            });
-        }
-
-        function renderArenaUI() {
-            document.getElementById('display-room-code').innerText = roomState.id || 'OFFLINE';
-            document.getElementById('arena-info-text').innerText = `Tingkat ${roomState.grade ? roomState.grade.toUpperCase() : 'SD'} • Target: ${roomState.wordCount || 25} Kata`;
-
-            const playersArr = Object.values(roomState.players || {});
-            document.getElementById('racers-count-text').innerText = `${playersArr.length} / 30 Pemain Terhubung`;
-
-            // Sort racers by progress descending
-            playersArr.sort((a, b) => (b.progress || 0) - (a.progress || 0));
-
-            // Render Race Tracks
-            const trackListContainer = document.getElementById('racers-track-list');
-            trackListContainer.innerHTML = '';
-
-            playersArr.forEach((p, idx) => {
-                const isMe = p.id === localPlayer.id;
-                const row = document.createElement('div');
-                row.className = `p-2.5 rounded-2xl border ${isMe ? 'bg-sd-blue/10 border-sd-blue/50 pulse-target' : 'bg-slate-900/80 border-slate-800'} flex items-center gap-3 transition-all`;
-
-                row.innerHTML = `
-                    <div class="w-7 text-center font-bold font-mono text-xs ${idx === 0 ? 'text-sd-yellow text-sm' : 'text-slate-400'}">
-                        #${idx + 1}
-                    </div>
-                    <div class="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-lg flex-shrink-0">
-                        ${p.avatar || '🐱'}
-                    </div>
-                    <div class="flex-grow flex flex-col gap-1 min-w-0">
-                        <div class="flex items-center justify-between text-xs">
-                            <span class="font-bold truncate ${isMe ? 'text-sd-blue' : 'text-slate-200'}">
-                                ${p.name} ${isMe ? '(Anda)' : ''}
-                            </span>
-                            <span class="font-mono text-[11px] text-slate-400">
-                                ${p.wpm || 0} WPM &bull; ${Math.round(p.progress || 0)}%
-                            </span>
-                        </div>
-                        <!-- Progress Bar Track -->
-                        <div class="w-full h-3 bg-slate-950 rounded-full border border-slate-800 overflow-hidden relative">
-                            <div class="h-full bg-gradient-to-r ${isMe ? 'from-sd-blue to-emerald-400' : 'from-sd-yellow to-amber-500'} rounded-full transition-all duration-300" style="width: ${p.progress || 0}%"></div>
-                            <div class="track-finish-line absolute top-0 right-0 w-3 h-full opacity-40"></div>
-                        </div>
-                    </div>
-                `;
-                trackListContainer.appendChild(row);
-            });
-
-            // Update Start Button Visibility for Host
-            const startBtn = document.getElementById('btn-start-host');
-            const subtext = document.getElementById('countdown-subtext');
-
-            if (roomState.status === 'waiting') {
-                document.getElementById('countdown-overlay').classList.remove('hidden');
-                document.getElementById('countdown-number').innerText = "SIAP!";
-                if (isHost) {
-                    startBtn.classList.remove('hidden');
-                    subtext.innerText = "Klik tombol di bawah jika semua siswa (max 30) sudah bergabung!";
-                } else {
-                    startBtn.classList.add('hidden');
-                    subtext.innerText = "Menunggu Bapak/Ibu Guru atau Host memulai pertandingan...";
-                }
-            } else if (roomState.status === 'racing') {
-                document.getElementById('countdown-overlay').classList.add('hidden');
-            } else if (roomState.status === 'finished') {
-                showFinishPodiumModal(playersArr);
-            }
-        }
-
-        window.startMatchAsHost = async () => {
-            if (!isHost) return;
-            playTone(800, 'sine', 0.2);
-
-            roomState.status = 'racing';
-            roomState.startedAt = Date.now();
-
-            if (db && currentRoomId) {
-                try {
-                    await updateDoc(getRoomDocRef(currentRoomId), {
-                        status: 'racing',
-                        startedAt: Date.now()
-                    });
-                } catch(e) {}
-            }
-            
-            // Broadcast via P2P if active
-            broadcastP2PRoomState();
-            beginRacingState();
-        };
-
-        function beginRacingState() {
-            document.getElementById('countdown-overlay').classList.add('hidden');
-            typingStartTime = Date.now();
-            localPlayer.wordIndex = 0;
-            localPlayer.progress = 0;
-            localPlayer.isFinished = false;
-            totalTypedChars = 0;
-            totalErrorChars = 0;
-
-            renderWordDisplay();
-            const inputEl = document.getElementById('typing-input');
-            inputEl.value = '';
-            inputEl.focus();
-        }
-
-        function renderWordDisplay() {
-            const box = document.getElementById('word-display-box');
-            box.innerHTML = '';
-            const words = roomState.words || [];
-
-            words.forEach((item, idx) => {
-                const span = document.createElement('span');
-                span.className = 'px-1.5 py-0.5 rounded transition';
-
-                if (idx < localPlayer.wordIndex) {
-                    span.classList.add('text-sd-green', 'line-through', 'opacity-60');
-                } else if (idx === localPlayer.wordIndex) {
-                    span.classList.add('bg-sd-blue', 'text-white', 'font-extrabold', 'scale-105', 'shadow');
-                    currentTargetWord = item.word;
-                    document.getElementById('text-definition').innerText = item.def || "Kosakata KBBI SD";
-                } else {
-                    span.classList.add('text-slate-400');
-                }
-                span.innerText = item.word;
-                box.appendChild(span);
-            });
-        }
-
-        function handleTypingInput(e) {
-            if (roomState.status !== 'racing' || localPlayer.isFinished) return;
-
-            const typed = e.target.value.trim();
-            const rawVal = e.target.value;
-
-            // Audio click per char typed
-            playTone(400 + typed.length * 25, 'sine', 0.04);
-
-            // Check if completed target word (on Space press or exact word match)
-            if (rawVal.endsWith(' ') || typed === currentTargetWord) {
-                if (typed === currentTargetWord) {
-                    playTone(900, 'triangle', 0.08); // Correct word chime
-                    totalTypedChars += currentTargetWord.length + 1;
-                    localPlayer.wordIndex++;
-                    e.target.value = '';
-
-                    // Calculate progress
-                    const totalWords = roomState.words.length || 1;
-                    localPlayer.progress = Math.min(100, (localPlayer.wordIndex / totalWords) * 100);
-
-                    // Calculate WPM & Acc
-                    const elapsedMins = (Date.now() - typingStartTime) / 60000;
-                    localPlayer.wpm = Math.round((totalTypedChars / 5) / (elapsedMins || 0.01));
-                    localPlayer.accuracy = Math.max(0, Math.round(((totalTypedChars - totalErrorChars) / (totalTypedChars || 1)) * 100));
-
-                    document.getElementById('live-wpm').innerText = localPlayer.wpm;
-                    document.getElementById('live-acc').innerText = `${localPlayer.accuracy}%`;
-
-                    // Check finish condition
-                    if (localPlayer.wordIndex >= totalWords) {
-                        localPlayer.isFinished = true;
-                        localPlayer.progress = 100;
-                        localPlayer.finishTime = Date.now();
-                        playTone(1200, 'square', 0.3);
-                        showToast("Hore! Kamu sudah menyelesaikan semua kata! 🎉", "success");
-                    }
-
-                    syncMyProgressToRoom();
-                    renderWordDisplay();
-
-                } else {
-                    // Typo error chime
-                    playTone(200, 'sawtooth', 0.1);
-                    totalErrorChars++;
-                }
-            }
-        }
-
-        async function syncMyProgressToRoom() {
-            roomState.players[localPlayer.id] = { ...localPlayer };
-
-            // Check if all joined players finished
-            const playersArr = Object.values(roomState.players);
-            const allFinished = playersArr.every(p => p.isFinished);
-            if (allFinished) roomState.status = 'finished';
-
-            if (db && currentRoomId) {
-                try {
-                    const updatedPlayers = { ...(roomState.players || {}) };
-                    await updateDoc(getRoomDocRef(currentRoomId), {
-                        players: updatedPlayers,
-                        status: allFinished ? 'finished' : roomState.status
-                    });
-                } catch(e) {}
-            }
-
-            // Sync via PeerJS Host or Client
-            if (isHost) {
-                broadcastP2PRoomState();
-            } else if (hostConnection && hostConnection.open) {
-                hostConnection.send({ type: 'PLAYER_UPDATE', player: localPlayer });
-            }
-
-            renderArenaUI();
-        }
-
-        window.startSoloRace = () => {
-            const sourcePool = SD_DICTIONARY.sedang;
-            const selectedWords = [];
-            for (let i = 0; i < 20; i++) {
-                selectedWords.push(sourcePool[Math.floor(Math.random() * sourcePool.length)]);
-            }
-
-            // Create 3 Bot Racers
-            const bot1 = { id: 'bot-1', name: 'Bot Kancil', avatar: '🐰', progress: 0, wpm: 25, isFinished: false };
-            const bot2 = { id: 'bot-2', name: 'Bot Robot', avatar: '🤖', progress: 0, wpm: 35, isFinished: false };
-            const bot3 = { id: 'bot-3', name: 'Bot Singa', avatar: '🦁', progress: 0, wpm: 45, isFinished: false };
-
-            const players = {};
-            players[localPlayer.id] = { ...localPlayer };
-            players[bot1.id] = bot1;
-            players[bot2.id] = bot2;
-            players[bot3.id] = bot3;
-
-            roomState = {
-                id: 'SOLO-PRACTICE',
-                grade: 'sedang',
-                wordCount: 20,
-                words: selectedWords,
-                status: 'racing',
-                players: players
-            };
-
-            isHost = true;
-            switchToArenaView('SOLO-PRACTICE');
-            beginRacingState();
-
-            // Simulate Bot Progress
-            const botInterval = setInterval(() => {
-                if (roomState.status !== 'racing') {
-                    clearInterval(botInterval);
-                    return;
-                }
-
-                [bot1, bot2, bot3].forEach(b => {
-                    if (!b.isFinished) {
-                        b.progress += Math.random() * 2.5;
-                        if (b.progress >= 100) {
-                            b.progress = 100;
-                            b.isFinished = true;
-                        }
-                    }
-                });
-
-                renderArenaUI();
-            }, 600);
-        };
-
-        function switchToArenaView(code) {
-            document.getElementById('view-lobby').classList.add('hidden');
-            document.getElementById('view-arena').classList.remove('hidden');
-            document.getElementById('header-room-badge').classList.remove('hidden');
-        }
-
-        window.leaveRoom = () => {
-            if (roomUnsubscribe) roomUnsubscribe();
-            if (hostConnection) hostConnection.close();
-            currentRoomId = null;
-            typingStartTime = null;
-            document.getElementById('view-arena').classList.add('hidden');
-            document.getElementById('view-lobby').classList.remove('hidden');
-            document.getElementById('header-room-badge').classList.add('hidden');
-            document.getElementById('modal-finish').classList.add('hidden');
-        };
-
-        window.copyRoomCode = () => {
-            if (!currentRoomId) return;
-            const dummy = document.createElement('input');
-            document.body.appendChild(dummy);
-            dummy.value = currentRoomId;
-            dummy.select();
-            document.execCommand('copy');
-            document.body.removeChild(dummy);
-            showToast(`Kode Room ${currentRoomId} berhasil disalin!`, "success");
-        };
-
-        function showFinishPodiumModal(playersArr) {
-            const container = document.getElementById('finish-podium-list');
-            container.innerHTML = '';
-
-            playersArr.forEach((p, idx) => {
-                const card = document.createElement('div');
-                card.className = `p-3 rounded-xl border ${idx === 0 ? 'bg-sd-yellow/20 border-sd-yellow text-slate-100' : 'bg-slate-900 border-slate-800'} flex items-center justify-between text-xs`;
-                
-                const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`;
-                card.innerHTML = `
-                    <div class="flex items-center gap-2">
-                        <span class="text-base font-bold">${medal}</span>
-                        <span class="text-lg">${p.avatar || '🐱'}</span>
-                        <span class="font-bold">${p.name}</span>
-                    </div>
-                    <div class="font-mono text-slate-400">
-                        ${p.wpm || 0} WPM &bull; ${p.accuracy || 100}% Akurasi
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-
-            document.getElementById('final-my-wpm').innerText = `${localPlayer.wpm || 0} WPM`;
-            document.getElementById('final-my-acc').innerText = `${localPlayer.accuracy || 100}%`;
-            document.getElementById('modal-finish').classList.remove('hidden');
-        }
-    </script>
+        updateLiveRaceTrack(gameState.botPlayers);
+      }
+
+      renderTargetWord();
+    }
+
+    function updateLiveRaceTrack(playersMap) {
+      const container = document.getElementById('race-tracks-container');
+      const players = Object.values(playersMap || {});
+
+      // Sort by progress / wordsTyped descending
+      players.sort((a, b) => b.wordsTyped - a.wordsTyped);
+
+      container.innerHTML = players.map(p => {
+        const isMe = p.name === gameState.playerName;
+        const pct = Math.min(95, Math.max(0, p.progress || 0));
+
+        return `
+          <div class="relative py-1.5 px-3 rounded-xl ${isMe ? 'bg-amber-500/10 border border-amber-500/30' : 'bg-slate-900 border border-slate-800'}">
+            <div class="flex items-center justify-between text-xs mb-1 font-bold">
+              <span class="${isMe ? 'text-amber-400 font-extrabold' : 'text-slate-300'} flex items-center gap-1.5">
+                ${p.name} ${isMe ? '(Kamu)' : ''}
+              </span>
+              <span class="font-mono text-emerald-400">${p.wpm || 0} WPM</span>
+            </div>
+            <!-- Track bar -->
+            <div class="relative w-full h-4 bg-slate-950 rounded-full border border-slate-800 overflow-visible">
+              <!-- Finish Line Flag -->
+              <div class="absolute right-1 top-0 bottom-0 flex items-center text-[10px]">🏁</div>
+              <!-- Car avatar moving left to right -->
+              <div class="absolute top-1/2 -translate-y-1/2 transition-all duration-300 text-lg z-10" style="left: ${pct}%">
+                ${p.avatar?.icon || '🏎️'}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function endRace() {
+      gameState.isRacing = false;
+      if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+      if (gameState.botInterval) clearInterval(gameState.botInterval);
+
+      playTone(1200, 'sine', 0.5);
+      showScreen('screen-results');
+
+      // Trigger victory confetti!
+      try {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      } catch (e) {}
+
+      // Get leaderboard list
+      if (gameState.mode === 'multiplayer' && gameState.roomCode) {
+        getDoc(getRoomRef(gameState.roomCode)).then(snap => {
+          if (snap.exists()) {
+            renderLeaderboard(Object.values(snap.data().players || {}));
+          }
+        });
+      } else {
+        renderLeaderboard(Object.values(gameState.botPlayers || {}));
+      }
+    }
+
+    function renderLeaderboard(playersList) {
+      // Sort by WPM descending then accuracy
+      playersList.sort((a, b) => (b.wpm - a.wpm) || (b.accuracy - a.accuracy));
+
+      // Podium top 3
+      document.getElementById('p1-name').innerText = playersList[0]?.name || '-';
+      document.getElementById('p1-wpm').innerText = (playersList[0]?.wpm || 0) + ' WPM';
+
+      document.getElementById('p2-name').innerText = playersList[1]?.name || '-';
+      document.getElementById('p2-wpm').innerText = (playersList[1]?.wpm || 0) + ' WPM';
+
+      document.getElementById('p3-name').innerText = playersList[2]?.name || '-';
+      document.getElementById('p3-wpm').innerText = (playersList[2]?.wpm || 0) + ' WPM';
+
+      // Full table
+      const tbody = document.getElementById('full-leaderboard-body');
+      tbody.innerHTML = playersList.map((p, index) => `
+        <tr class="${p.name === gameState.playerName ? 'bg-amber-500/10 font-bold text-amber-300' : ''}">
+          <td class="py-2.5 px-3">${index + 1}</td>
+          <td class="py-2.5 px-3 flex items-center gap-2">
+            <span>${p.avatar?.icon || '🏎️'}</span>
+            <span class="truncate max-w-[120px] sm:max-w-none">${p.name}</span>
+          </td>
+          <td class="py-2.5 px-3 text-center font-mono text-emerald-400 font-bold">${p.wpm}</td>
+          <td class="py-2.5 px-3 text-center font-mono text-cyan-400">${p.accuracy}%</td>
+          <td class="py-2.5 px-3 text-right font-mono">${p.wordsTyped}</td>
+        </tr>
+      `).join('');
+    }
+
+    window.returnToHome = function() {
+      if (roomUnsubscribe) roomUnsubscribe();
+      showScreen('screen-home');
+    };
+
+    window.openConfigModal = function() {
+      document.getElementById('config-modal').classList.remove('hidden');
+      document.getElementById('config-modal').classList.add('flex');
+    };
+
+    window.closeConfigModal = function() {
+      document.getElementById('config-modal').classList.add('hidden');
+      document.getElementById('config-modal').classList.remove('flex');
+    };
+
+    window.saveFirebaseConfig = function() {
+      const input = document.getElementById('firebase-json-input').value.trim();
+      try {
+        JSON.parse(input);
+        localStorage.setItem('typing_race_fb_config', input);
+        showToast('Konfigurasi Firebase berhasil disimpan! Memuat ulang...', 'fa-circle-check');
+        setTimeout(() => location.reload(), 1000);
+      } catch (e) {
+        showToast('Format JSON Firebase tidak valid!', 'fa-circle-xmark');
+      }
+    };
+
+    window.onload = function() {
+      renderAvatarPicker();
+      initFirebase();
+    };
+  </script>
 </body>
 </html>
