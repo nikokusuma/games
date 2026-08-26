@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KBBI Typing Race - Multiplayer 30 Players Online</title>
+    <title>KBBI Typing Race - Multiplayer Online Room</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome -->
@@ -33,9 +33,7 @@
                             cyan: '#00f3ff',
                             pink: '#ff007f',
                             lime: '#39ff14',
-                            yellow: '#ffe600',
-                            orange: '#ff6600',
-                            purple: '#b026ff'
+                            yellow: '#ffe600'
                         }
                     }
                 }
@@ -64,6 +62,7 @@
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans min-h-screen bg-grid flex flex-col justify-between selection:bg-brand-500 selection:text-white">
 
+    <!-- TOP NAVBAR -->
     <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
             <div class="flex items-center gap-3">
@@ -74,7 +73,7 @@
                     <h1 class="font-bold text-lg leading-tight tracking-wide bg-gradient-to-r from-white via-slate-200 to-brand-400 bg-clip-text text-transparent">
                         BALAP KETIK KBBI
                     </h1>
-                    <p class="text-xs text-slate-400">Multiplayer Online Room &bull; Maksimal 30 Pemain</p>
+                    <p class="text-xs text-slate-400">Multiplayer Online Room &bull; Tingkat SMP</p>
                 </div>
             </div>
 
@@ -91,7 +90,7 @@
 
                 <div class="flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/60 text-xs">
                     <span id="connection-dot" class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
-                    <span id="player-count-badge" class="font-semibold text-slate-300">Pemain: 1/30</span>
+                    <span id="player-count-badge" class="font-semibold text-slate-300">Pemain: 1</span>
                 </div>
 
                 <!-- Live Session Timer Display -->
@@ -113,13 +112,14 @@
     <!-- MAIN CONTAINER -->
     <main class="max-w-7xl mx-auto w-full px-4 py-6 flex-grow flex flex-col gap-6">
 
+        <!-- VIEW 1: MODE SELECTOR & ROOM CREATION -->
         <section id="view-room-selection" class="max-w-2xl mx-auto w-full my-auto space-y-6">
             <div class="text-center space-y-2">
                 <span class="px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-bold tracking-widest uppercase">
-                    Edisi Bahasa Indonesia (SMP) &bull; Up to 30 Racers
+                    Edisi Bahasa Indonesia (SMP)
                 </span>
                 <h2 class="text-3xl sm:text-4xl font-black text-white tracking-wide">PILIH MODE PERMAINAN</h2>
-                <p class="text-xs sm:text-sm text-slate-400">Buat room multiplayer hingga 30 pemain secara online untuk bertanding bersama teman, atau gabung room.</p>
+                <p class="text-xs sm:text-sm text-slate-400">Buat room multiplayer online untuk bertanding bersama teman, atau gabung ke room yang sudah ada.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -130,7 +130,7 @@
                             <i class="fa-solid fa-plus-circle"></i>
                         </div>
                         <h3 class="text-lg font-bold text-white">Buat Room Online</h3>
-                        <p class="text-xs text-slate-400 mt-1">Jadilah Host room online (Kapasitas hingga 30 orang), undang teman, dan atur durasi.</p>
+                        <p class="text-xs text-slate-400 mt-1">Jadilah Host, undang teman menggunakan Kode Room, dan atur durasi balapan.</p>
                     </div>
                     <button id="btn-create-room" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3 rounded-xl transition text-sm flex items-center justify-center gap-2 shadow-lg shadow-brand-500/20">
                         <i class="fa-solid fa-house-medical"></i> Buat Room Baru
@@ -144,7 +144,7 @@
                             <i class="fa-solid fa-right-to-bracket"></i>
                         </div>
                         <h3 class="text-lg font-bold text-white">Gabung Room</h3>
-                        <p class="text-xs text-slate-400 mt-1">Masukkan Kode Room dari Host Anda untuk bergabung dalam balapan.</p>
+                        <p class="text-xs text-slate-400 mt-1">Masukkan Kode Room dari teman Anda untuk langsung masuk ke arena balap.</p>
                     </div>
                     <div class="space-y-2">
                         <input type="text" id="input-join-code" placeholder="Contoh: KBBI-1234" uppercase maxlength="9" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-sm font-mono text-center text-neon-cyan focus:border-neon-cyan outline-none tracking-wider">
@@ -158,16 +158,17 @@
             <!-- Quick Practice / Offline Mode -->
             <div class="text-center pt-2">
                 <button id="btn-solo-practice" class="text-xs font-semibold text-slate-400 hover:text-brand-400 transition underline underline-offset-4">
-                    <i class="fa-solid fa-robot mr-1"></i> Main Solo / Latihan Lawan Bot AI (Simulasi 5 Pemain)
+                    <i class="fa-solid fa-robot mr-1"></i> Main Solo / Latihan Lawan Bot AI
                 </button>
             </div>
         </section>
 
-        <section id="view-lobby" class="hidden max-w-4xl mx-auto w-full space-y-6">
+        <!-- VIEW 2: LOBBY ROOM (WAITING FOR PLAYERS) -->
+        <section id="view-lobby" class="hidden max-w-3xl mx-auto w-full space-y-6">
             <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-6">
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
                     <div>
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Lobby Balapan Online</span>
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Lobby Balapan</span>
                         <h2 class="text-2xl font-black text-white flex items-center gap-2">
                             ROOM <span id="lobby-room-code" class="text-neon-cyan font-mono select-all">KBBI-0000</span>
                         </h2>
@@ -184,43 +185,25 @@
                 </div>
 
                 <!-- Host Settings (Only Visible to Host) -->
-                <div id="host-settings-box" class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div id="host-settings-box" class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div class="flex items-center gap-3">
                         <div class="p-2.5 rounded-lg bg-amber-500/20 text-amber-400">
                             <i class="fa-solid fa-sliders text-lg"></i>
                         </div>
                         <div>
                             <h4 class="text-sm font-bold text-white">Pengaturan Balapan (Host)</h4>
-                            <p class="text-xs text-slate-400">Atur kapasitas room dan durasi waktu balapan.</p>
+                            <p class="text-xs text-slate-400">Pilih durasi ronde permainan.</p>
                         </div>
                     </div>
                     
-                    <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                        <!-- Max Players Dropdown -->
-                        <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs">
-                            <span class="text-slate-400 font-medium"><i class="fa-solid fa-users text-brand-400 mr-1"></i> Maks:</span>
-                            <select id="select-max-players" class="bg-transparent text-white font-bold outline-none cursor-pointer">
-                                <option value="5">5 Pemain</option>
-                                <option value="10">10 Pemain</option>
-                                <option value="15">15 Pemain</option>
-                                <option value="20">20 Pemain</option>
-                                <option value="25">25 Pemain</option>
-                                <option value="30" selected>30 Pemain (Max)</option>
-                            </select>
-                        </div>
-
-                        <!-- Duration Select -->
-                        <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs">
-                            <span class="text-slate-400 font-medium"><i class="fa-regular fa-clock text-neon-cyan mr-1"></i> Durasi:</span>
-                            <select id="select-duration" class="bg-transparent text-white font-bold outline-none cursor-pointer">
-                                <option value="60">1 Menit</option>
-                                <option value="120">2 Menit</option>
-                                <option value="180" selected>3 Menit</option>
-                                <option value="300">5 Menit</option>
-                            </select>
-                        </div>
-
-                        <button id="btn-start-race" class="flex-grow md:flex-grow-0 px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-sm rounded-xl transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <select id="select-duration" class="bg-slate-900 border border-slate-700 text-white text-xs font-bold rounded-xl px-3 py-2 outline-none focus:border-brand-500">
+                            <option value="60">1 Menit</option>
+                            <option value="120">2 Menit</option>
+                            <option value="180" selected>3 Menit</option>
+                            <option value="300">5 Menit</option>
+                        </select>
+                        <button id="btn-start-race" class="flex-grow sm:flex-grow-0 px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-sm rounded-xl transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
                             <i class="fa-solid fa-flag-checkered"></i> MULAI BALAPAN
                         </button>
                     </div>
@@ -230,34 +213,35 @@
                     <i class="fa-solid fa-spinner fa-spin text-brand-400 mr-2"></i> Menunggu Host memulai balapan...
                 </div>
 
-                <!-- Player List Grid (Supports 30 Players) -->
+                <!-- Player List Grid -->
                 <div>
                     <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center justify-between">
-                        <span>Daftar Pemain Terhubung</span>
-                        <span id="lobby-player-count" class="font-mono text-brand-400">1 / 30 Pemain</span>
+                        <span>Pemain di Room</span>
+                        <span id="lobby-player-count" class="font-mono text-brand-400">1 Pemain</span>
                     </h3>
-                    <div id="lobby-players-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 max-h-[360px] overflow-y-auto pr-1">
+                    <div id="lobby-players-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <!-- Dynamic Player Cards -->
                     </div>
                 </div>
             </div>
         </section>
 
+        <!-- VIEW 3: GAME RACE TRACK & TYPING (ACTIVE RACE) -->
         <section id="view-race" class="hidden space-y-6">
             <!-- RACE TRACK CONTAINER -->
             <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-2xl relative overflow-hidden backdrop-blur-md">
                 <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
                     <div class="flex items-center gap-2">
                         <i class="fa-solid fa-flag-checkered text-brand-400"></i>
-                        <h2 class="font-bold text-slate-200 text-sm uppercase tracking-wider">Lintasan Balap Real-time (Up to 30 Lanes)</h2>
+                        <h2 class="font-bold text-slate-200 text-sm uppercase tracking-wider">Lintasan Balap Real-time</h2>
                     </div>
                     <div id="game-status-text" class="text-xs font-medium text-slate-400">
                         Persiapan balapan...
                     </div>
                 </div>
 
-                <!-- Race Lanes Scrollable Container (Dynamic 30 Players) -->
-                <div id="race-lanes" class="space-y-2 max-h-[380px] overflow-y-auto pr-1.5">
+                <!-- Race Lanes Container -->
+                <div id="race-lanes" class="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
                     <!-- Dynamic Lanes -->
                 </div>
             </div>
@@ -280,8 +264,8 @@
                             <span id="stat-progress" class="text-xl font-bold font-mono text-slate-300">0 kata</span>
                         </div>
                         <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 flex flex-col">
-                            <span class="text-xs text-slate-400 mb-1">Peringkat Balapan</span>
-                            <span id="stat-rank" class="text-xl font-bold font-mono text-amber-400">- / -</span>
+                            <span class="text-xs text-slate-400 mb-1">Peringkat</span>
+                            <span id="stat-rank" class="text-xl font-bold font-mono text-amber-400">-</span>
                         </div>
                     </div>
 
@@ -301,7 +285,7 @@
                     <!-- Single Word Target Display Card -->
                     <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 min-h-[160px] flex flex-col items-center justify-center gap-3 relative overflow-hidden shadow-inner" id="single-word-card">
                         <div class="text-xs font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                            <i class="fa-solid fa-bullseye text-brand-400"></i> Kata KBBI Saat Ini
+                            <i class="fa-solid fa-bullseye text-brand-400"></i> Kata Saat Ini
                         </div>
                         
                         <div id="target-word-display" class="font-mono text-4xl sm:text-5xl font-black tracking-wide text-white transition-all text-center">
@@ -331,10 +315,10 @@
     <footer class="border-t border-slate-800 bg-slate-900/60 py-4 px-4 text-center text-xs text-slate-500">
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
             <div>
-                &copy; 2026 Balap Ketik KBBI Online &bull; Capable of up to 30 WebRTC Players
+                &copy; 2026 Balap Ketik KBBI Online &bull; Multiplayer WebRTC Room Engine
             </div>
             <div class="flex items-center gap-4 text-slate-400">
-                <span id="sync-mode-label"><i class="fa-solid fa-network-wired text-emerald-400 mr-1"></i> PeerJS WebRTC P2P</span>
+                <span id="sync-mode-label"><i class="fa-solid fa-network-wired text-emerald-400 mr-1"></i> PeerJS P2P Active</span>
                 <span><i class="fa-solid fa-book text-brand-400 mr-1"></i> 5.000 Vocabulary Pool</span>
             </div>
         </div>
@@ -371,9 +355,9 @@
         </div>
     </div>
 
-    <!-- MODAL: RACE RESULTS PODIUM (Supports 30 Players Leaderboard) -->
+    <!-- MODAL: RACE RESULTS PODIUM -->
     <div id="modal-results" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative overflow-hidden">
             <div class="text-center mb-6">
                 <span class="text-xs font-bold text-amber-400 uppercase tracking-widest">Hasil Akhir Balapan</span>
                 <h2 class="text-2xl sm:text-3xl font-black text-white mt-1">PAPAN PEMENANG</h2>
@@ -382,9 +366,9 @@
             <div id="podium-container" class="grid grid-cols-3 gap-3 items-end mb-6 min-h-[160px]">
             </div>
 
-            <div class="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden max-h-56 overflow-y-auto mb-6">
+            <div class="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden max-h-48 overflow-y-auto mb-6">
                 <table class="w-full text-left text-xs">
-                    <thead class="bg-slate-900 border-b border-slate-800 text-slate-400 sticky top-0">
+                    <thead class="bg-slate-900 border-b border-slate-800 text-slate-400">
                         <tr>
                             <th class="p-2.5 text-center">Pos</th>
                             <th class="p-2.5">Pemain</th>
@@ -415,6 +399,7 @@
         <span id="toast-msg">Notifikasi</span>
     </div>
 
+    <!-- GAME ENGINE & ONLINE MULTIPLAYER SCRIPT -->
     <script>
         // --- SMP KBBI VOCABULARY ENGINE ---
         const SMP_VOCABULARY = [
@@ -458,20 +443,15 @@
             return list;
         }
 
-        // Expanded Avatar Colors Spectrum for 30 Unique Racers
         const AVATARS = [
             { id: 'cyan', name: 'Cyan', color: 'bg-cyan-400', text: 'text-cyan-400', border: 'border-cyan-400', icon: 'fa-car' },
             { id: 'red', name: 'Merah', color: 'bg-red-500', text: 'text-red-400', border: 'border-red-500', icon: 'fa-car-side' },
             { id: 'emerald', name: 'Hijau', color: 'bg-emerald-400', text: 'text-emerald-400', border: 'border-emerald-400', icon: 'fa-truck-fast' },
             { id: 'amber', name: 'Kuning', color: 'bg-amber-400', text: 'text-amber-400', border: 'border-amber-400', icon: 'fa-motorcycle' },
             { id: 'purple', name: 'Ungu', color: 'bg-purple-500', text: 'text-purple-400', border: 'border-purple-500', icon: 'fa-rocket' },
-            { id: 'pink', name: 'Pink', color: 'bg-pink-500', text: 'text-pink-400', border: 'border-pink-500', icon: 'fa-car-rear' },
-            { id: 'sky', name: 'Sky', color: 'bg-sky-400', text: 'text-sky-400', border: 'border-sky-400', icon: 'fa-plane' },
-            { id: 'orange', name: 'Oranye', color: 'bg-orange-500', text: 'text-orange-400', border: 'border-orange-500', icon: 'fa-bolt' },
-            { id: 'lime', name: 'Lime', color: 'bg-lime-400', text: 'text-lime-400', border: 'border-lime-400', icon: 'fa-bicycle' },
-            { id: 'indigo', name: 'Indigo', color: 'bg-indigo-500', text: 'text-indigo-400', border: 'border-indigo-500', icon: 'fa-space-shuttle' }
         ];
 
+        // --- AUDIO SYNTHESIZER ---
         let soundEnabled = true;
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(type) {
@@ -515,7 +495,7 @@
 
         // --- GLOBAL STATE ---
         let peer = null;
-        let connections = []; // Host: array of peer connections (Up to 29 guests)
+        let connections = []; // Host: array of peer connections
         let hostConn = null;  // Guest: connection to Host
         
         let isHost = false;
@@ -523,17 +503,15 @@
         let roomCode = '';
         let myPlayerId = 'p_' + Math.random().toString(36).substring(2, 9);
         
-        const randomAvatarIndex = Math.floor(Math.random() * AVATARS.length);
         let playerProfile = {
             id: myPlayerId,
             username: 'Racer_' + Math.floor(100 + Math.random() * 900),
-            avatar: AVATARS[randomAvatarIndex].id
+            avatar: 'cyan'
         };
 
         let roomState = {
             code: '',
             status: 'LOBBY', // LOBBY, COUNTDOWN, RACING, FINISHED
-            maxPlayers: 30,  // Max Capacity set to 30
             durationSec: 180,
             startTime: 0,
             words: [],
@@ -568,7 +546,6 @@
         
         const hostSettingsBox = document.getElementById('host-settings-box');
         const guestWaitingMsg = document.getElementById('guest-waiting-msg');
-        const selectMaxPlayers = document.getElementById('select-max-players');
         const selectDuration = document.getElementById('select-duration');
         const btnStartRace = document.getElementById('btn-start-race');
         
@@ -587,10 +564,12 @@
         const statProgress = document.getElementById('stat-progress');
         const statRank = document.getElementById('stat-rank');
 
+        // --- INITIALIZATION ---
         function init() {
             renderAvatarOptions();
             document.getElementById('input-username').value = playerProfile.username;
 
+            // Check URL for room parameter (e.g. ?room=KBBI-1234)
             const urlParams = new URLSearchParams(window.location.search);
             const roomParam = urlParams.get('room');
             if (roomParam) {
@@ -606,15 +585,16 @@
             container.innerHTML = AVATARS.map(av => `
                 <label class="cursor-pointer">
                     <input type="radio" name="avatar" value="${av.id}" ${av.id === playerProfile.avatar ? 'checked' : ''} class="peer sr-only">
-                    <div class="p-2 rounded-xl border border-slate-700 bg-slate-950 peer-checked:border-brand-500 peer-checked:bg-brand-500/10 flex flex-col items-center justify-center gap-1 transition">
-                        <i class="fa-solid ${av.icon} text-base ${av.text}"></i>
-                        <span class="text-[9px] text-slate-400 font-semibold">${av.name}</span>
+                    <div class="p-2.5 rounded-xl border border-slate-700 bg-slate-950 peer-checked:border-brand-500 peer-checked:bg-brand-500/10 flex flex-col items-center justify-center gap-1 transition">
+                        <i class="fa-solid ${av.icon} text-lg ${av.text}"></i>
+                        <span class="text-[10px] text-slate-400 font-semibold">${av.name}</span>
                     </div>
                 </label>
             `).join('');
         }
 
-        const PEER_PREFIX = 'kbbi-race-30p-';
+        // --- PEERJS MULTIPLAYER NETWORK ENGINE ---
+        const PEER_PREFIX = 'kbbi-race-v1-';
 
         function initHostPeer(customCode = null) {
             isHost = true;
@@ -632,11 +612,9 @@
                 lobbyRoomCode.textContent = roomCode;
                 document.getElementById('room-code-badge').classList.remove('hidden');
 
-                const chosenMax = parseInt(selectMaxPlayers.value) || 30;
                 roomState = {
                     code: roomCode,
                     status: 'LOBBY',
-                    maxPlayers: chosenMax,
                     durationSec: parseInt(selectDuration.value),
                     startTime: 0,
                     words: generateWordsPool(500),
@@ -654,23 +632,10 @@
 
                 switchView('LOBBY');
                 updateLobbyUI();
-                showToast(`Room ${roomCode} dibuat (Kapasitas Maks ${chosenMax} Pemain)!`, 'success');
+                showToast(`Room ${roomCode} berhasil dibuat!`, 'success');
             });
 
             peer.on('connection', (conn) => {
-                // Check Max Capacity (Host + Guests <= MaxPlayers)
-                const currentCount = Object.keys(playersMap).length;
-                if (currentCount >= roomState.maxPlayers) {
-                    conn.on('open', () => {
-                        conn.send({
-                            type: 'ROOM_FULL',
-                            message: `Room sudah penuh! Maksimal ${roomState.maxPlayers} pemain.`
-                        });
-                        setTimeout(() => conn.close(), 500);
-                    });
-                    return;
-                }
-
                 connections.push(conn);
 
                 conn.on('data', (data) => {
@@ -679,6 +644,7 @@
 
                 conn.on('close', () => {
                     connections = connections.filter(c => c !== conn);
+                    // Remove player associated with connection
                     for (let id in playersMap) {
                         if (playersMap[id].peerId === conn.peer) {
                             delete playersMap[id];
@@ -693,10 +659,10 @@
             peer.on('error', (err) => {
                 console.error("PeerJS Host Error:", err);
                 if (err.type === 'unavailable-id') {
-                    showToast('Kode Room sedang digunakan, mencoba kode lain...', 'error');
+                    showToast('Kode Room sudah digunakan, membuat kode baru...', 'error');
                     initHostPeer();
                 } else {
-                    showToast('Gagal terhubung ke server multiplayer WebRTC.', 'error');
+                    showToast('Gagal terhubung ke server online. Membuka mode lokal...', 'error');
                 }
             });
         }
@@ -719,7 +685,7 @@
                     lobbyRoomCode.textContent = roomCode;
                     document.getElementById('room-code-badge').classList.remove('hidden');
 
-                    // Send Join Request
+                    // Send Join Request to Host
                     hostConn.send({
                         type: 'JOIN_REQ',
                         player: {
@@ -741,24 +707,14 @@
 
             peer.on('error', (err) => {
                 console.error("PeerJS Guest Error:", err);
-                showToast('Gagal menemukan Room! Periksa Kode Room atau pastikan room belum penuh.', 'error');
+                showToast('Gagal menemukan Room! Periksa kembali Kode Room.', 'error');
                 connectionDot.className = 'w-2.5 h-2.5 rounded-full bg-red-500';
             });
         }
 
-        // Host Receiver Logic
+        // Host Data Receiver
         function handleHostReceivedData(conn, data) {
             if (data.type === 'JOIN_REQ') {
-                const currentCount = Object.keys(playersMap).length;
-                if (currentCount >= roomState.maxPlayers) {
-                    conn.send({
-                        type: 'ROOM_FULL',
-                        message: `Room sudah penuh! (Maksimal ${roomState.maxPlayers} Pemain)`
-                    });
-                    setTimeout(() => conn.close(), 500);
-                    return;
-                }
-
                 const p = data.player;
                 p.peerId = conn.peer;
                 p.isHost = false;
@@ -769,7 +725,7 @@
 
                 broadcastRoomState();
                 updateLobbyUI();
-                showToast(`${p.username} bergabung! (${Object.keys(playersMap).length}/${roomState.maxPlayers})`, 'info');
+                showToast(`${p.username} bergabung ke room!`, 'info');
             } else if (data.type === 'PLAYER_UPDATE') {
                 if (playersMap[data.player.id]) {
                     playersMap[data.player.id] = { ...playersMap[data.player.id], ...data.player };
@@ -780,15 +736,8 @@
             }
         }
 
-        // Guest Receiver Logic
+        // Guest Data Receiver
         function handleGuestReceivedData(data) {
-            if (data.type === 'ROOM_FULL') {
-                showToast(data.message, 'error');
-                if (peer) peer.destroy();
-                switchView('SELECTION');
-                return;
-            }
-
             if (data.type === 'ROOM_SYNC') {
                 const prevStatus = roomState.status;
                 roomState = data.roomState;
@@ -833,6 +782,7 @@
             }
         }
 
+        // --- SOLO / BOT MODE ---
         function startSoloMode() {
             isSoloMode = true;
             isHost = true;
@@ -844,7 +794,6 @@
             roomState = {
                 code: 'SOLO',
                 status: 'LOBBY',
-                maxPlayers: 5,
                 durationSec: 180,
                 startTime: 0,
                 words: generateWordsPool(500),
@@ -854,11 +803,11 @@
             playersMap = {};
             playersMap[myPlayerId] = { ...playerProfile, isHost: true, wordsCount: 0, wpm: 0, accuracy: 100 };
             
+            // Add 3 Bot Opponents
             const BOTS = [
-                { id: 'bot_1', username: 'Bot_Kiki', avatar: 'red', speed: 0.65 },
-                { id: 'bot_2', username: 'Bot_Budi', avatar: 'emerald', speed: 0.85 },
-                { id: 'bot_3', username: 'Bot_Siti', avatar: 'amber', speed: 1.0 },
-                { id: 'bot_4', username: 'Bot_Agus', avatar: 'purple', speed: 1.15 }
+                { id: 'bot_1', username: 'Bot_Kiki (Pemula)', avatar: 'red', speed: 0.6 },
+                { id: 'bot_2', username: 'Bot_Budi (Jago)', avatar: 'emerald', speed: 0.85 },
+                { id: 'bot_3', username: 'Bot_Siti (Master)', avatar: 'amber', speed: 1.1 }
             ];
 
             BOTS.forEach(b => {
@@ -877,7 +826,7 @@
 
             switchView('LOBBY');
             updateLobbyUI();
-            showToast('Mode Latihan Bot AI Aktif!', 'info');
+            showToast('Mode Solo / Bot AI Aktif!', 'info');
         }
 
         function startBotSimulation() {
@@ -888,20 +837,21 @@
                 
                 for (let id in playersMap) {
                     const p = playersMap[id];
-                    if (p.isBot && Math.random() > 0.25) {
+                    if (p.isBot && Math.random() > 0.3) {
                         p.wordsCount += Math.floor(Math.random() * 2) + 1;
-                        p.wpm = Math.min(130, Math.floor(p.wordsCount * 0.75 * p.botSpeed + Math.random() * 6));
+                        p.wpm = Math.min(120, Math.floor(p.wordsCount * 0.75 * p.botSpeed + Math.random() * 5));
                     }
                 }
                 renderRaceLanes();
                 updateLiveRankings();
-            }, 1600);
+            }, 1800);
         }
 
         function stopBotSimulation() {
             if (botInterval) clearInterval(botInterval);
         }
 
+        // --- STATE & VIEW MANAGEMENT ---
         function switchView(viewName) {
             viewRoomSelection.classList.add('hidden');
             viewLobby.classList.add('hidden');
@@ -918,9 +868,8 @@
 
         function updateLobbyUI() {
             const count = Object.keys(playersMap).length;
-            const maxCap = roomState.maxPlayers || 30;
-            playerCountBadge.textContent = `Pemain: ${count}/${maxCap}`;
-            lobbyPlayerCount.textContent = `${count} / ${maxCap} Pemain`;
+            playerCountBadge.textContent = `Pemain: ${count}`;
+            lobbyPlayerCount.textContent = `${count} Pemain`;
 
             if (isHost) {
                 hostSettingsBox.classList.remove('hidden');
@@ -934,19 +883,19 @@
                 const av = AVATARS.find(a => a.id === p.avatar) || AVATARS[0];
                 const isMe = p.id === myPlayerId;
                 return `
-                    <div class="bg-slate-950 border ${isMe ? 'border-brand-500 bg-brand-500/5' : 'border-slate-800'} rounded-xl p-2.5 flex items-center justify-between">
-                        <div class="flex items-center gap-2.5 min-w-0">
-                            <div class="w-8 h-8 rounded-lg ${av.color} flex-shrink-0 opacity-90 flex items-center justify-center text-slate-950 font-bold text-sm">
+                    <div class="bg-slate-950 border ${isMe ? 'border-brand-500 bg-brand-500/5' : 'border-slate-800'} rounded-xl p-3 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg ${av.color} opacity-90 flex items-center justify-center text-slate-950 font-bold text-lg">
                                 <i class="fa-solid ${av.icon}"></i>
                             </div>
-                            <div class="min-w-0">
-                                <h4 class="font-bold text-xs text-white truncate flex items-center gap-1">
-                                    ${escapeHtml(p.username)} ${isMe ? '<span class="text-[9px] text-brand-400">(Anda)</span>' : ''}
+                            <div>
+                                <h4 class="font-bold text-sm text-white flex items-center gap-1.5">
+                                    ${escapeHtml(p.username)} ${isMe ? '<span class="text-[10px] text-brand-400 font-normal">(Anda)</span>' : ''}
                                 </h4>
-                                <span class="text-[9px] text-slate-400 font-mono block leading-none">${p.isHost ? '👑 Host Room' : 'Pemain'}</span>
+                                <span class="text-[10px] text-slate-400 font-mono">${p.isHost ? '👑 Host Room' : 'Pemain'}</span>
                             </div>
                         </div>
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0"></span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
                     </div>
                 `;
             }).join('');
@@ -991,6 +940,7 @@
             }
         }
 
+        // --- TYPING GAME MECHANICS ---
         function resetLocalTypingStats() {
             localStats = {
                 wordIndex: 0,
@@ -1005,7 +955,7 @@
             statWpm.textContent = '0';
             statAccuracy.textContent = '100%';
             statProgress.textContent = '0 kata';
-            statRank.textContent = `- / ${Object.keys(playersMap).length}`;
+            statRank.textContent = '-';
         }
 
         function renderTargetWord() {
@@ -1062,6 +1012,7 @@
             calculateMetrics();
             renderTargetWord();
             
+            // Sync with host/peers
             if (playersMap[myPlayerId]) {
                 playersMap[myPlayerId].wordsCount = localStats.wordIndex;
                 playersMap[myPlayerId].wpm = localStats.wpm;
@@ -1102,25 +1053,25 @@
             playersList.sort((a, b) => (b.wordsCount || 0) - (a.wordsCount || 0) || (b.wpm || 0) - (a.wpm || 0));
 
             raceLanes.innerHTML = playersList.map((p, index) => {
-                const av = AVATARS.find(a => a.id === p.avatar) || AVATARS[index % AVATARS.length];
+                const av = AVATARS.find(a => a.id === p.avatar) || AVATARS[0];
                 const isMe = p.id === myPlayerId;
                 const maxWordsTarget = 80;
                 const progressPct = Math.min(Math.max(((p.wordsCount || 0) / maxWordsTarget) * 100, 0), 100);
 
                 return `
-                    <div class="relative bg-slate-950/90 border ${isMe ? 'border-brand-500/70 bg-brand-500/10' : 'border-slate-800'} rounded-lg p-2 transition-all">
-                        <div class="flex items-center justify-between text-[11px] mb-1">
-                            <div class="flex items-center gap-2 truncate">
-                                <span class="font-bold font-mono text-slate-400 w-5 text-right">#${index + 1}</span>
-                                <span class="font-semibold truncate ${isMe ? 'text-brand-300 font-bold' : 'text-slate-200'}">${escapeHtml(p.username)} ${isMe ? '(Anda)' : ''}</span>
+                    <div class="relative bg-slate-950/80 border ${isMe ? 'border-brand-500/60 bg-brand-500/5' : 'border-slate-800'} rounded-xl p-2.5 transition-all">
+                        <div class="flex items-center justify-between text-xs mb-1.5">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold font-mono text-slate-400 w-4">#${index + 1}</span>
+                                <span class="font-semibold ${isMe ? 'text-brand-300 font-bold' : 'text-slate-200'}">${escapeHtml(p.username)} ${isMe ? '(Anda)' : ''}</span>
+                                <span class="text-[10px] font-mono text-emerald-400 font-bold">${p.wordsCount || 0} Kata (${p.wpm || 0} WPM)</span>
                             </div>
-                            <span class="text-[10px] font-mono text-emerald-400 font-bold flex-shrink-0">${p.wordsCount || 0} Kata (${p.wpm || 0} WPM)</span>
                         </div>
 
-                        <div class="w-full bg-slate-900 rounded-full h-3 relative overflow-hidden border border-slate-800">
-                            <div class="h-full ${av.color} opacity-35 transition-all duration-300 rounded-full" style="width: ${progressPct}%"></div>
-                            <div class="absolute top-1/2 -translate-y-1/2 transition-all duration-300 flex items-center justify-center ${av.text}" style="left: calc(${progressPct}% - 12px)">
-                                <i class="fa-solid ${av.icon} text-xs glow-cyan"></i>
+                        <div class="w-full bg-slate-900 rounded-full h-3.5 relative overflow-hidden border border-slate-800">
+                            <div class="h-full ${av.color} opacity-30 transition-all duration-300 rounded-full" style="width: ${progressPct}%"></div>
+                            <div class="absolute top-1/2 -translate-y-1/2 transition-all duration-300 flex items-center justify-center ${av.text}" style="left: calc(${progressPct}% - 14px)">
+                                <i class="fa-solid ${av.icon} text-sm glow-cyan"></i>
                             </div>
                         </div>
                     </div>
@@ -1130,9 +1081,8 @@
 
         function updateLiveRankings() {
             const sorted = Object.values(playersMap).sort((a, b) => (b.wordsCount || 0) - (a.wordsCount || 0) || (b.wpm || 0) - (a.wpm || 0));
-            const total = sorted.length;
             const myRank = sorted.findIndex(p => p.id === myPlayerId) + 1;
-            statRank.textContent = myRank > 0 ? `#${myRank} / ${total}` : `- / ${total}`;
+            statRank.textContent = myRank > 0 ? `#${myRank}` : '-';
         }
 
         function startGameTimer() {
@@ -1159,6 +1109,7 @@
             if (gameTimerInterval) clearInterval(gameTimerInterval);
         }
 
+        // --- RESULTS PODIUM MODAL ---
         function showResultsModal() {
             playSound('win');
             const sorted = Object.values(playersMap).sort((a, b) => (b.wordsCount || 0) - (a.wordsCount || 0) || (b.wpm || 0) - (a.wpm || 0));
@@ -1206,16 +1157,10 @@
             }, 1000);
         }
 
+        // --- EVENT LISTENERS & UI ACTIONS ---
         function setupEventListeners() {
             document.getElementById('btn-create-room').addEventListener('click', () => {
                 initHostPeer();
-            });
-
-            document.getElementById('select-max-players').addEventListener('change', (e) => {
-                if (isHost && roomState) {
-                    roomState.maxPlayers = parseInt(e.target.value);
-                    broadcastRoomState();
-                }
             });
 
             document.getElementById('btn-join-room').addEventListener('click', () => {
