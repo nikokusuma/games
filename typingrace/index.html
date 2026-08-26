@@ -4,13 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Balap Ketik KBBI - Edisi Anak SD (Multiplayer Online 30 Pemain)</title>
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fredoka:wght@400;600;700&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
-    
+    <!-- PeerJS for zero-server WebRTC Peer-to-Peer network fallback -->
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -49,18 +52,10 @@
             background: repeating-linear-gradient(
                 45deg,
                 #000,
-                #000 10px,
-                #fff 10px,
-                #fff 20px
+                #000 8px,
+                #fff 8px,
+                #fff 16px
             );
-        }
-
-        .bounce-anim {
-            animation: bounce 1.2s infinite alternate;
-        }
-        @keyframes bounce {
-            from { transform: translateY(0); }
-            to { transform: translateY(-6px); }
         }
 
         .glass-panel {
@@ -72,9 +67,20 @@
         .pulse-target {
             box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
         }
+
+        @keyframes toastIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .toast-animate {
+            animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans min-h-screen bg-grid-pattern flex flex-col justify-between selection:bg-sd-blue selection:text-white">
+
+    <!-- Toast Notification Container (No alerts used) -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
     <!-- HEADER NAVBAR -->
     <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-40 px-4 py-3">
@@ -90,7 +96,7 @@
                         BALAP KETIK KBBI SD 
                         <span class="text-xs font-sans font-extrabold px-2 py-0.5 rounded-full bg-sd-yellow text-slate-950">ONLINE 30 PEMAIN</span>
                     </h1>
-                    <p class="text-xs text-slate-400">Kosakata Bahasa Indonesia Edukasi Sekolah Dasar &bull; Gratis di GitHub Pages</p>
+                    <p class="text-xs text-slate-400">Kosakata Bahasa Indonesia SD &bull; Siap di GitHub Pages tanpa Server Fisik</p>
                 </div>
             </div>
 
@@ -103,6 +109,12 @@
                     <button onclick="copyRoomCode()" class="hover:text-sd-blue text-slate-300 transition" title="Salin Kode Room">
                         <i class="fa-regular fa-copy"></i>
                     </button>
+                </div>
+
+                <!-- Network Engine Status Badge -->
+                <div id="net-status-badge" class="flex items-center gap-1.5 bg-slate-800 border border-slate-700 px-2.5 py-1.5 rounded-xl text-[11px] text-slate-300" title="Status Jaringan Serverless">
+                    <span class="w-2 h-2 rounded-full bg-sd-green animate-pulse"></span>
+                    <span id="net-status-text" class="font-mono">P2P Ready</span>
                 </div>
 
                 <!-- Sound Toggle -->
@@ -134,7 +146,7 @@
                     Ayo Lomba Ngetik Kosakata SD!
                 </h2>
                 <p class="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto leading-relaxed">
-                    Tingkatkan kecepatan dan ketepatan mengetik kata KBBI pilihan anak SD. Bisa mabar bersama hingga <strong class="text-sd-yellow">30 teman sekelas</strong> secara realtime!
+                    Tingkatkan kecepatan dan ketepatan mengetik kata KBBI pilihan anak SD. Bisa mabar bersama hingga <strong class="text-sd-yellow">30 teman sekelas</strong> secara realtime tanpa server fisik!
                 </p>
             </div>
 
@@ -245,7 +257,7 @@
 
             <!-- RACE TRACK CONTAINER (Supports up to 30 visible racers with smooth scroll) -->
             <div class="glass-panel rounded-3xl p-4 sm:p-6 border border-slate-800 flex flex-col gap-3 max-h-[380px] overflow-y-auto relative shadow-2xl">
-                <div class="flex items-center justify-between text-xs text-slate-400 pb-2 border-b border-slate-800">
+                <div class="flex items-center justify-between text-xs text-slate-400 pb-2 border-b border-slate-800 sticky top-0 bg-slate-900/90 backdrop-blur z-20 py-1">
                     <span class="font-bold flex items-center gap-1.5 text-slate-300">
                         <i class="fa-solid fa-users text-sd-blue"></i> LINTASAN BALAP (Maksimal 30 Pemain Realtime)
                     </span>
@@ -253,7 +265,7 @@
                 </div>
 
                 <!-- Dynamic Track List Container -->
-                <div id="racers-track-list" class="space-y-3">
+                <div id="racers-track-list" class="space-y-3 pt-1">
                     <!-- Racer rows generated dynamically -->
                 </div>
             </div>
@@ -263,11 +275,11 @@
                 
                 <!-- Countdown Overlay -->
                 <div id="countdown-overlay" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md rounded-3xl z-30 flex flex-col items-center justify-center gap-2">
-                    <div id="countdown-number" class="font-kids font-bold text-6xl sm:text-7xl text-sd-yellow animate-bounce">
+                    <div id="countdown-number" class="font-kids font-bold text-5xl sm:text-7xl text-sd-yellow animate-bounce">
                         SIAP!
                     </div>
-                    <p id="countdown-subtext" class="text-xs text-slate-400">Host akan memulai pertandingan...</p>
-                    <button id="btn-start-host" onclick="startMatchAsHost()" class="hidden mt-4 px-6 py-2.5 rounded-2xl bg-sd-green hover:bg-green-600 text-slate-950 font-bold text-sm shadow-lg shadow-sd-green/30 transition">
+                    <p id="countdown-subtext" class="text-xs sm:text-sm text-slate-400 px-4">Host akan memulai pertandingan...</p>
+                    <button id="btn-start-host" onclick="startMatchAsHost()" class="hidden mt-4 px-6 py-3 rounded-2xl bg-sd-green hover:bg-green-600 text-slate-950 font-bold text-sm shadow-lg shadow-sd-green/30 transition">
                         <i class="fa-solid fa-play mr-1"></i> Mulai Balapan Sekarang!
                     </button>
                 </div>
@@ -286,7 +298,7 @@
 
                 <!-- Input Field -->
                 <div class="w-full max-w-xl relative">
-                    <input type="text" id="typing-input" placeholder="Ketik kata yang ditandai di atas..." autocomplete="off" spellcheck="false" class="w-full bg-slate-950 border-2 border-sd-blue rounded-2xl px-6 py-4 text-center font-mono font-bold text-xl sm:text-2xl text-white focus:outline-none focus:ring-4 focus:ring-sd-blue/30 transition active-typing shadow-lg">
+                    <input type="text" id="typing-input" placeholder="Ketik kata yang ditandai di atas lalu tekan spasi..." autocomplete="off" spellcheck="false" class="w-full bg-slate-950 border-2 border-sd-blue rounded-2xl px-6 py-4 text-center font-mono font-bold text-xl sm:text-2xl text-white focus:outline-none focus:ring-4 focus:ring-sd-blue/30 transition active-typing shadow-lg">
                 </div>
 
             </div>
@@ -365,14 +377,15 @@
 
     <!-- FOOTER -->
     <footer class="border-t border-slate-900 bg-slate-950 py-4 px-4 text-center text-xs text-slate-500">
-        Balap Ketik KBBI SD Online &bull; Mendukung Hingga 30 Pemain &bull; Siap Di-hosting di GitHub Pages
+        Balap Ketik KBBI SD Online &bull; Mendukung Hingga 30 Pemain P2P / Serverless &bull; Siap Di-hosting di GitHub Pages
     </footer>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Dictionary of KBBI Elementary School Words
         const SD_DICTIONARY = {
             mudah: [
                 { word: "buku", def: "Lembar kertas terjilid yang berisi tulisan." },
@@ -427,10 +440,9 @@
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'kbbi-typing-sd';
         let db = null;
         let auth = null;
-        let currentUser = null;
         
         let localPlayer = {
-            id: 'P-' + Math.random().toString(36).substring(2, 7),
+            id: 'P-' + Math.random().toString(36).substring(2, 8),
             name: 'Pemain_SD_' + Math.floor(100 + Math.random() * 900),
             avatar: '🐱',
             progress: 0, // 0 to 100
@@ -446,14 +458,19 @@
         let roomUnsubscribe = null;
         let audioEnabled = true;
 
+        // PeerJS P2P Networking references for Zero-Server setup
+        let peer = null;
+        let p2pConnections = {}; // For Host: { playerID: DataConnection }
+        let hostConnection = null; // For Client: DataConnection to Host
+
         // Active Race State
         let roomState = {
             id: null,
             grade: 'sedang',
             wordCount: 25,
             words: [],
-            status: 'waiting', // 'waiting', 'countdown', 'racing', 'finished'
-            players: {}, // Keyed by player ID, up to 30 players!
+            status: 'waiting', // 'waiting', 'racing', 'finished'
+            players: {}, // Keyed by player ID, up to 30 players
             startedAt: null
         };
 
@@ -480,22 +497,55 @@
             } catch (e) {}
         }
 
+        // Custom Toast Notification System (replaces alert)
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            const bgClass = type === 'error' ? 'bg-rose-900/90 border-rose-600 text-rose-100' : 
+                            type === 'success' ? 'bg-emerald-900/90 border-emerald-600 text-emerald-100' : 
+                            'bg-slate-900/90 border-sd-blue text-slate-100';
+            
+            const icon = type === 'error' ? 'fa-circle-exclamation text-rose-400' :
+                         type === 'success' ? 'fa-circle-check text-emerald-400' :
+                         'fa-circle-info text-sd-blue';
+
+            toast.className = `toast-animate pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl border ${bgClass} shadow-xl backdrop-blur-md text-xs font-semibold max-w-sm`;
+            toast.innerHTML = `
+                <i class="fa-solid ${icon} text-base flex-shrink-0"></i>
+                <div class="flex-grow">${message}</div>
+            `;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
         window.toggleAudio = () => {
             audioEnabled = !audioEnabled;
             const icon = document.getElementById('icon-sound');
             if (audioEnabled) {
                 icon.className = "fa-solid fa-volume-high text-sd-green";
+                showToast("Suara diaktifkan 🔊", "info");
             } else {
                 icon.className = "fa-solid fa-volume-xmark text-slate-500";
+                showToast("Suara dimatikan 🔇", "info");
             }
         };
 
         window.onload = async () => {
-            // Load saved profile
-            const savedName = localStorage.getItem('sd_kbbi_name');
-            const savedAvatar = localStorage.getItem('sd_kbbi_avatar');
-            if (savedName) localPlayer.name = savedName;
-            if (savedAvatar) localPlayer.avatar = savedAvatar;
+            // Load saved profile from storage if available
+            try {
+                const savedName = localStorage.getItem('sd_kbbi_name');
+                const savedAvatar = localStorage.getItem('sd_kbbi_avatar');
+                if (savedName) localPlayer.name = savedName;
+                if (savedAvatar) localPlayer.avatar = savedAvatar;
+            } catch(e) {}
+            
             updateHeaderProfileUI();
 
             // Populate avatar selector modal
@@ -509,10 +559,10 @@
                 avatarContainer.appendChild(btn);
             });
 
-            // Initialize Firebase Firestore for zero-backend 30-player sync
+            // Try Initializing Firebase Firestore according to strictly defined rules
             try {
                 let firebaseConfig = null;
-                if (typeof __firebase_config !== 'undefined') {
+                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
                     firebaseConfig = JSON.parse(__firebase_config);
                 }
 
@@ -527,15 +577,35 @@
                         await signInAnonymously(auth);
                     }
                     if (auth.currentUser) localPlayer.id = auth.currentUser.uid;
+                    document.getElementById('net-status-text').innerText = "Cloud Synced";
+                } else {
+                    initPeerJSEngine();
                 }
             } catch (err) {
-                console.warn("Firestore fallback active for offline practice mode:", err);
+                console.warn("Firestore not active, switching to P2P engine fallback:", err);
+                initPeerJSEngine();
             }
 
             // Setup Typing Listener
             const inputEl = document.getElementById('typing-input');
             inputEl.addEventListener('input', handleTypingInput);
         };
+
+        function initPeerJSEngine() {
+            if (typeof Peer === 'undefined') return;
+            try {
+                // PeerJS ID for general presence
+                peer = new Peer('peer-' + localPlayer.id);
+                peer.on('open', (id) => {
+                    document.getElementById('net-status-text').innerText = "P2P Mesh Ready";
+                });
+                peer.on('error', (err) => {
+                    console.warn("PeerJS warning:", err);
+                });
+            } catch (e) {
+                console.warn("P2P Init Error:", e);
+            }
+        }
 
         window.openProfileModal = () => {
             document.getElementById('modal-input-name').value = localPlayer.name;
@@ -554,10 +624,13 @@
         window.saveProfileModal = () => {
             const name = document.getElementById('modal-input-name').value.trim();
             if (name) localPlayer.name = name;
-            localStorage.setItem('sd_kbbi_name', localPlayer.name);
-            localStorage.setItem('sd_kbbi_avatar', localPlayer.avatar);
+            try {
+                localStorage.setItem('sd_kbbi_name', localPlayer.name);
+                localStorage.setItem('sd_kbbi_avatar', localPlayer.avatar);
+            } catch(e) {}
             updateHeaderProfileUI();
             closeProfileModal();
+            showToast("Profil berhasil diperbarui!", "success");
         };
 
         function updateHeaderProfileUI() {
@@ -565,6 +638,7 @@
             document.getElementById('header-player-name').innerText = localPlayer.name;
         }
 
+        // STRICT FIREBASE PATH RULE: /artifacts/{appId}/public/data/{collectionName}
         function getRoomDocRef(roomId) {
             if (!db) return null;
             return doc(db, 'artifacts', appId, 'public', 'data', 'typing_rooms', roomId);
@@ -573,7 +647,8 @@
         window.createOnlineRoom = async () => {
             const grade = document.getElementById('select-grade-level').value;
             const wordCount = parseInt(document.getElementById('select-word-count').value, 10);
-            const code = 'SD-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+            const rawCode = Math.random().toString(36).substring(2, 6).toUpperCase();
+            const code = 'SD-' + rawCode;
 
             // Prepare random word pool for kids
             const sourcePool = SD_DICTIONARY[grade] || SD_DICTIONARY.sedang;
@@ -598,65 +673,169 @@
 
             currentRoomId = code;
             isHost = true;
+            roomState = newRoom;
 
-            if (db) {
+            // 1. Try cloud doc creation
+            if (db && auth && auth.currentUser) {
                 try {
                     await setDoc(getRoomDocRef(code), newRoom);
-                    subscribeRoom(code);
+                    subscribeRoomCloud(code);
                 } catch (e) {
-                    console.error("Set doc error:", e);
+                    console.error("Firestore room creation fallback:", e);
+                    setupHostP2PRoom(code);
                 }
             } else {
-                // Offline fallback mode
-                roomState = newRoom;
-                renderArenaUI();
+                setupHostP2PRoom(code);
             }
 
             switchToArenaView(code);
+            showToast(`Room ${code} berhasil dibuat! Bagikan kode ke teman.`, "success");
         };
+
+        function setupHostP2PRoom(code) {
+            if (typeof Peer === 'undefined') return;
+            try {
+                if (peer) peer.destroy();
+                // Host listens on peer ID matching the room code
+                const hostPeerId = 'kbbi-room-' + code;
+                peer = new Peer(hostPeerId);
+                
+                peer.on('connection', (conn) => {
+                    conn.on('data', (data) => {
+                        handleIncomingHostData(conn, data);
+                    });
+                    conn.on('close', () => {
+                        // Remove disconnected player if needed
+                    });
+                });
+            } catch (e) {
+                console.warn("Peer Host Setup Error:", e);
+            }
+        }
+
+        function handleIncomingHostData(conn, data) {
+            if (data.type === 'JOIN_REQUEST') {
+                const newP = data.player;
+                const currentCount = Object.keys(roomState.players).length;
+                if (currentCount >= 30 && !roomState.players[newP.id]) {
+                    conn.send({ type: 'ERROR', message: 'Room sudah Penuh (Max 30 Pemain)!' });
+                    return;
+                }
+                roomState.players[newP.id] = newP;
+                p2pConnections[newP.id] = conn;
+                
+                // Broadcast updated room state to all clients
+                broadcastP2PRoomState();
+                renderArenaUI();
+                playTone(700, 'sine', 0.1);
+            } else if (data.type === 'PLAYER_UPDATE') {
+                const updatedP = data.player;
+                roomState.players[updatedP.id] = updatedP;
+                
+                // Check if all players completed
+                const playersArr = Object.values(roomState.players);
+                if (playersArr.length > 0 && playersArr.every(p => p.isFinished)) {
+                    roomState.status = 'finished';
+                }
+
+                broadcastP2PRoomState();
+                renderArenaUI();
+            }
+        }
+
+        function broadcastP2PRoomState() {
+            Object.values(p2pConnections).forEach(conn => {
+                if (conn && conn.open) {
+                    conn.send({ type: 'ROOM_STATE', state: roomState });
+                }
+            });
+        }
 
         window.joinOnlineRoom = async () => {
             const code = document.getElementById('input-room-code').value.trim().toUpperCase();
-            if (!code) return alert("Masukkan kode room terlebih dahulu!");
+            if (!code) {
+                showToast("Masukkan kode room terlebih dahulu!", "error");
+                return;
+            }
 
-            if (db) {
+            let joinedViaCloud = false;
+
+            // 1. Attempt Firestore join
+            if (db && auth && auth.currentUser) {
                 try {
                     const docSnap = await getDoc(getRoomDocRef(code));
-                    if (!docSnap.exists()) {
-                        alert("Room tidak ditemukan!");
-                        return;
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        const currentPlayersCount = Object.keys(data.players || {}).length;
+                        if (currentPlayersCount >= 30 && !data.players[localPlayer.id]) {
+                            showToast("Room sudah Penuh! (Maksimal 30 Pemain)", "error");
+                            return;
+                        }
+
+                        isHost = false;
+                        currentRoomId = code;
+                        const updatedPlayers = { ...(data.players || {}) };
+                        updatedPlayers[localPlayer.id] = { ...localPlayer };
+
+                        await updateDoc(getRoomDocRef(code), { players: updatedPlayers });
+                        subscribeRoomCloud(code);
+                        switchToArenaView(code);
+                        joinedViaCloud = true;
+                        showToast(`Berhasil bergabung ke Room ${code}!`, "success");
                     }
-                    const data = docSnap.data();
-                    
-                    // Check max 30 players rule
-                    const currentPlayersCount = Object.keys(data.players || {}).length;
-                    if (currentPlayersCount >= 30 && !data.players[localPlayer.id]) {
-                        alert("Mohon maaf, room sudah Penuh! (Maksimal 30 Pemain)");
-                        return;
-                    }
-
-                    isHost = false;
-                    currentRoomId = code;
-
-                    // Update player entry in room
-                    const updatedPlayers = { ...(data.players || {}) };
-                    updatedPlayers[localPlayer.id] = { ...localPlayer };
-
-                    await updateDoc(getRoomDocRef(code), {
-                        players: updatedPlayers
-                    });
-
-                    subscribeRoom(code);
-                    switchToArenaView(code);
                 } catch (err) {
-                    console.error("Join room error:", err);
+                    console.warn("Firestore Join error, trying P2P fallback:", err);
                 }
-            } else {
-                alert("Koneksi cloud tidak tersedia. Gunakan mode Solo!");
+            }
+
+            // 2. Fallback to PeerJS P2P join if cloud was not used
+            if (!joinedViaCloud) {
+                if (typeof Peer === 'undefined') {
+                    showToast("Tidak dapat terhubung ke server. Gunakan mode Solo!", "error");
+                    return;
+                }
+
+                try {
+                    if (peer) peer.destroy();
+                    peer = new Peer();
+                    
+                    peer.on('open', () => {
+                        const hostPeerId = 'kbbi-room-' + code;
+                        hostConnection = peer.connect(hostPeerId);
+
+                        hostConnection.on('open', () => {
+                            isHost = false;
+                            currentRoomId = code;
+                            hostConnection.send({ type: 'JOIN_REQUEST', player: localPlayer });
+                            switchToArenaView(code);
+                            showToast(`Terhubung via P2P ke Room ${code}!`, "success");
+                        });
+
+                        hostConnection.on('data', (data) => {
+                            if (data.type === 'ROOM_STATE') {
+                                roomState = data.state;
+                                renderArenaUI();
+
+                                if (roomState.status === 'racing' && typingStartTime === null) {
+                                    beginRacingState();
+                                }
+                            } else if (data.type === 'ERROR') {
+                                showToast(data.message, "error");
+                                leaveRoom();
+                            }
+                        });
+
+                        hostConnection.on('error', (e) => {
+                            showToast("Gagal terhubung ke host room! Periksa kode room.", "error");
+                        });
+                    });
+                } catch (e) {
+                    showToast("Gagal terhubung ke room P2P.", "error");
+                }
             }
         };
 
-        function subscribeRoom(code) {
+        function subscribeRoomCloud(code) {
             if (roomUnsubscribe) roomUnsubscribe();
             const ref = getRoomDocRef(code);
             if (!ref) return;
@@ -666,23 +845,24 @@
                     roomState = docSnap.data();
                     renderArenaUI();
 
-                    // Trigger countdown when host changes status
                     if (roomState.status === 'racing' && typingStartTime === null) {
                         beginRacingState();
                     }
                 }
+            }, (err) => {
+                console.error("Snapshot error:", err);
             });
         }
 
         function renderArenaUI() {
             document.getElementById('display-room-code').innerText = roomState.id || 'OFFLINE';
-            document.getElementById('arena-info-text').innerText = `Tingkat ${roomState.grade.toUpperCase()} • Target: ${roomState.wordCount} Kata`;
+            document.getElementById('arena-info-text').innerText = `Tingkat ${roomState.grade ? roomState.grade.toUpperCase() : 'SD'} • Target: ${roomState.wordCount || 25} Kata`;
 
             const playersArr = Object.values(roomState.players || {});
             document.getElementById('racers-count-text').innerText = `${playersArr.length} / 30 Pemain Terhubung`;
 
             // Sort racers by progress descending
-            playersArr.sort((a, b) => b.progress - a.progress);
+            playersArr.sort((a, b) => (b.progress || 0) - (a.progress || 0));
 
             // Render Race Tracks
             const trackListContainer = document.getElementById('racers-track-list');
@@ -711,7 +891,7 @@
                         </div>
                         <!-- Progress Bar Track -->
                         <div class="w-full h-3 bg-slate-950 rounded-full border border-slate-800 overflow-hidden relative">
-                            <div class="h-full bg-gradient-to-r ${isMe ? 'from-sd-blue to-neon-cyan' : 'from-sd-yellow to-amber-500'} rounded-full transition-all duration-300" style="width: ${p.progress || 0}%"></div>
+                            <div class="h-full bg-gradient-to-r ${isMe ? 'from-sd-blue to-emerald-400' : 'from-sd-yellow to-amber-500'} rounded-full transition-all duration-300" style="width: ${p.progress || 0}%"></div>
                             <div class="track-finish-line absolute top-0 right-0 w-3 h-full opacity-40"></div>
                         </div>
                     </div>
@@ -728,10 +908,10 @@
                 document.getElementById('countdown-number').innerText = "SIAP!";
                 if (isHost) {
                     startBtn.classList.remove('hidden');
-                    subtext.innerText = "Klik tombol di bawah untuk memulai balapan 30 siswa!";
+                    subtext.innerText = "Klik tombol di bawah jika semua siswa (max 30) sudah bergabung!";
                 } else {
                     startBtn.classList.add('hidden');
-                    subtext.innerText = "Menunggu Host memulai pertandingan...";
+                    subtext.innerText = "Menunggu Bapak/Ibu Guru atau Host memulai pertandingan...";
                 }
             } else if (roomState.status === 'racing') {
                 document.getElementById('countdown-overlay').classList.add('hidden');
@@ -741,20 +921,24 @@
         }
 
         window.startMatchAsHost = async () => {
-            if (!isHost && db) return;
-            
-            // Countdown beep
+            if (!isHost) return;
             playTone(800, 'sine', 0.2);
 
+            roomState.status = 'racing';
+            roomState.startedAt = Date.now();
+
             if (db && currentRoomId) {
-                await updateDoc(getRoomDocRef(currentRoomId), {
-                    status: 'racing',
-                    startedAt: Date.now()
-                });
-            } else {
-                roomState.status = 'racing';
-                beginRacingState();
+                try {
+                    await updateDoc(getRoomDocRef(currentRoomId), {
+                        status: 'racing',
+                        startedAt: Date.now()
+                    });
+                } catch(e) {}
             }
+            
+            // Broadcast via P2P if active
+            broadcastP2PRoomState();
+            beginRacingState();
         };
 
         function beginRacingState() {
@@ -802,7 +986,7 @@
             const rawVal = e.target.value;
 
             // Audio click per char typed
-            playTone(400 + typed.length * 30, 'sine', 0.04);
+            playTone(400 + typed.length * 25, 'sine', 0.04);
 
             // Check if completed target word (on Space press or exact word match)
             if (rawVal.endsWith(' ') || typed === currentTargetWord) {
@@ -813,7 +997,7 @@
                     e.target.value = '';
 
                     // Calculate progress
-                    const totalWords = roomState.words.length;
+                    const totalWords = roomState.words.length || 1;
                     localPlayer.progress = Math.min(100, (localPlayer.wordIndex / totalWords) * 100);
 
                     // Calculate WPM & Acc
@@ -830,6 +1014,7 @@
                         localPlayer.progress = 100;
                         localPlayer.finishTime = Date.now();
                         playTone(1200, 'square', 0.3);
+                        showToast("Hore! Kamu sudah menyelesaikan semua kata! 🎉", "success");
                     }
 
                     syncMyProgressToRoom();
@@ -844,20 +1029,31 @@
         }
 
         async function syncMyProgressToRoom() {
+            roomState.players[localPlayer.id] = { ...localPlayer };
+
+            // Check if all joined players finished
+            const playersArr = Object.values(roomState.players);
+            const allFinished = playersArr.every(p => p.isFinished);
+            if (allFinished) roomState.status = 'finished';
+
             if (db && currentRoomId) {
-                const updatedPlayers = { ...(roomState.players || {}) };
-                updatedPlayers[localPlayer.id] = { ...localPlayer };
-
-                // Check if all joined players finished
-                const allFinished = Object.values(updatedPlayers).every(p => p.isFinished);
-
-                await updateDoc(getRoomDocRef(currentRoomId), {
-                    players: updatedPlayers,
-                    status: allFinished ? 'finished' : roomState.status
-                });
-            } else {
-                renderArenaUI();
+                try {
+                    const updatedPlayers = { ...(roomState.players || {}) };
+                    await updateDoc(getRoomDocRef(currentRoomId), {
+                        players: updatedPlayers,
+                        status: allFinished ? 'finished' : roomState.status
+                    });
+                } catch(e) {}
             }
+
+            // Sync via PeerJS Host or Client
+            if (isHost) {
+                broadcastP2PRoomState();
+            } else if (hostConnection && hostConnection.open) {
+                hostConnection.send({ type: 'PLAYER_UPDATE', player: localPlayer });
+            }
+
+            renderArenaUI();
         }
 
         window.startSoloRace = () => {
@@ -909,7 +1105,7 @@
                 });
 
                 renderArenaUI();
-            }, 500);
+            }, 600);
         };
 
         function switchToArenaView(code) {
@@ -920,6 +1116,7 @@
 
         window.leaveRoom = () => {
             if (roomUnsubscribe) roomUnsubscribe();
+            if (hostConnection) hostConnection.close();
             currentRoomId = null;
             typingStartTime = null;
             document.getElementById('view-arena').classList.add('hidden');
@@ -936,7 +1133,7 @@
             dummy.select();
             document.execCommand('copy');
             document.body.removeChild(dummy);
-            alert(`Kode Room ${currentRoomId} disalin! Bagikan ke teman sekelas.`);
+            showToast(`Kode Room ${currentRoomId} berhasil disalin!`, "success");
         };
 
         function showFinishPodiumModal(playersArr) {
@@ -951,7 +1148,7 @@
                 card.innerHTML = `
                     <div class="flex items-center gap-2">
                         <span class="text-base font-bold">${medal}</span>
-                        <span class="text-lg">${p.avatar}</span>
+                        <span class="text-lg">${p.avatar || '🐱'}</span>
                         <span class="font-bold">${p.name}</span>
                     </div>
                     <div class="font-mono text-slate-400">
@@ -961,8 +1158,8 @@
                 container.appendChild(card);
             });
 
-            document.getElementById('final-my-wpm').innerText = `${localPlayer.wpm} WPM`;
-            document.getElementById('final-my-acc').innerText = `${localPlayer.accuracy}%`;
+            document.getElementById('final-my-wpm').innerText = `${localPlayer.wpm || 0} WPM`;
+            document.getElementById('final-my-acc').innerText = `${localPlayer.accuracy || 100}%`;
             document.getElementById('modal-finish').classList.remove('hidden');
         }
     </script>
