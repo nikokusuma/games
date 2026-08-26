@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>LARIKATA — Lomba Ketik Online</title>
+<meta name="description" content="Lomba ketik multiplayer real-time berbahasa Indonesia. Satu lintasan, maksimal 30 pelari, kosakata dari KBBI.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0f17;
+    --surface:#131a27;
+    --surface2:#1a2333;
+    --track:#1d2740;
+    --track-line:#2a3654;
+    --line:#263049;
+    --text:#e7ebf3;
+    --text-dim:#8b96ad;
+    --text-faint:#5b6580;
+    --accent:#ff7a45;
+    --accent-dim:#c75f35;
+    --teal:#2dd4bf;
+    --yellow:#f2c94c;
+    --danger:#ef4a6a;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 20% -10%, rgba(255,122,69,.08), transparent 60%),
+      radial-gradient(1000px 500px at 100% 0%, rgba(45,212,191,.06), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:'JetBrains Mono',ui-monospace,monospace;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:20px 14px 60px;
+  }
+  h1,h2,h3,.display{
+    font-family:'Oswald',sans-serif;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+  }
+  a{color:var(--teal);}
+  .wrap{width:100%;max-width:880px;}
+
+  /* ---------- Header ---------- */
+  .app-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+  }
+  .logo{
+    font-family:'Oswald',sans-serif;
+    font-weight:700;
+    font-size:28px;
+    letter-spacing:.04em;
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+  }
+  .logo .dot{color:var(--accent);}
+  .logo small{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--text-faint);
+    text-transform:none;
+    letter-spacing:0;
+  }
+  .status-pill{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:7px 14px;
+    font-size:12px;
+    color:var(--text-dim);
+  }
+  .status-pill .b{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--text-faint);
+  }
+  .status-pill.idle .b{background:var(--text-faint);}
+  .status-pill.countdown .b{background:var(--yellow); box-shadow:0 0 8px var(--yellow);}
+  .status-pill.racing .b{background:var(--accent); box-shadow:0 0 8px var(--accent); animation:pulse 1s infinite;}
+  .status-pill.finished .b{background:var(--teal); box-shadow:0 0 8px var(--teal);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+  .counts{font-size:12px;color:var(--text-dim);}
+  .counts b{color:var(--text);}
+
+  /* ---------- Cards ---------- */
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:22px;
+    margin-bottom:16px;
+  }
+  .card h2{font-size:20px;margin:0 0 4px;color:var(--text);}
+  .card p.sub{color:var(--text-dim);font-size:13px;margin:0 0 18px;line-height:1.6;}
+
+  /* ---------- Name entry ---------- */
+  .name-form{display:flex;gap:10px;flex-wrap:wrap;}
+  input[type=text]{
+    flex:1;min-width:180px;
+    background:var(--surface2);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:13px 14px;
+    color:var(--text);
+    font-family:'JetBrains Mono',monospace;
+    font-size:15px;
+    outline:none;
+  }
+  input[type=text]:focus{border-color:var(--accent);}
+  button{
+    font-family:'Oswald',sans-serif;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    font-weight:600;
+    font-size:14px;
+    background:var(--accent);
+    color:#150a05;
+    border:none;
+    border-radius:8px;
+    padding:13px 22px;
+    cursor:pointer;
+    transition:transform .12s ease, background .12s ease;
+  }
+  button:hover{background:#ff8c5f;}
+  button:active{transform:scale(.97);}
+  button:disabled{opacity:.4;cursor:not-allowed;}
+  button.ghost{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--text-dim);
+  }
+
+  /* ---------- Countdown / idle banner ---------- */
+  .banner{
+    text-align:center;
+    padding:34px 20px;
+  }
+  .banner .big{
+    font-family:'Oswald',sans-serif;
+    font-size:56px;
+    font-weight:700;
+    color:var(--yellow);
+    line-height:1;
+    letter-spacing:.02em;
+  }
+  .banner .label{color:var(--text-dim);font-size:13px;margin-top:8px;text-transform:uppercase;letter-spacing:.08em;}
+
+  /* ---------- Race lanes (signature element) ---------- */
+  .track{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .lane{
+    position:relative;
+    background:var(--track);
+    border:1px solid var(--track-line);
+    border-radius:8px;
+    height:38px;
+    overflow:hidden;
+  }
+  .lane.me{border-color:var(--teal);}
+  .lane-fill{
+    position:absolute;
+    inset:0 auto 0 0;
+    width:0%;
+    background:linear-gradient(90deg, rgba(255,122,69,.35), rgba(255,122,69,.14));
+    transition:width .35s ease;
+  }
+  .lane.me .lane-fill{
+    background:linear-gradient(90deg, rgba(45,212,191,.4), rgba(45,212,191,.14));
+  }
+  .lane.finished .lane-fill{
+    background:linear-gradient(90deg, rgba(242,201,76,.45), rgba(242,201,76,.16));
+  }
+  .lane-content{
+    position:relative;
+    z-index:1;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 12px;
+    font-size:13px;
+  }
+  .lane-name{
+    display:flex;align-items:center;gap:7px;
+    color:var(--text);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    max-width:55%;
+  }
+  .lane-name .rank{color:var(--text-faint);width:18px;display:inline-block;}
+  .lane-name .flag{color:var(--yellow);font-size:11px;}
+  .lane-stats{color:var(--text-dim);font-size:11px;display:flex;gap:10px;white-space:nowrap;}
+  .lane-stats b{color:var(--text);}
+  .lane-marker{
+    position:absolute;top:0;bottom:0;
+    width:2px;background:var(--accent);
+    right:0;
+    opacity:0;
+  }
+  .empty-track{
+    text-align:center;color:var(--text-faint);
+    padding:26px;font-size:13px;
+  }
+
+  /* ---------- Typing panel ---------- */
+  .typing-panel{margin-top:18px;}
+  .word-strip{
+    background:var(--surface2);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:16px 18px;
+    font-size:18px;
+    line-height:1.9;
+    color:var(--text-faint);
+    margin-bottom:12px;
+    letter-spacing:.01em;
+  }
+  .word-strip .w{margin-right:10px;display:inline-block;}
+  .word-strip .w.done{color:var(--teal);text-decoration:line-through;text-decoration-color:rgba(45,212,191,.5);}
+  .word-strip .w.current{
+    color:var(--bg);
+    background:var(--yellow);
+    border-radius:4px;
+    padding:1px 6px;
+    font-weight:600;
+  }
+  .type-input-row{display:flex;gap:10px;}
+  #typeInput{
+    flex:1;
+    font-size:20px;
+    padding:15px 16px;
+  }
+  #typeInput.bad{border-color:var(--danger); animation:shake .18s;}
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-4px);}
+    75%{transform:translateX(4px);}
+  }
+  .my-stats{
+    display:flex;gap:18px;margin-top:12px;font-size:12px;color:var(--text-dim);flex-wrap:wrap;
+  }
+  .my-stats b{color:var(--teal);font-size:15px;display:block;font-family:'Oswald',sans-serif;}
+
+  /* ---------- Results ---------- */
+  .results-list{display:flex;flex-direction:column;gap:6px;margin-top:6px;}
+  .result-row{
+    display:flex;align-items:center;gap:12px;
+    background:var(--surface2);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:10px 14px;
+    font-size:13px;
+  }
+  .result-row .medal{width:26px;text-align:center;font-family:'Oswald',sans-serif;color:var(--text-faint);}
+  .result-row:nth-child(1) .medal{color:var(--yellow);}
+  .result-row:nth-child(2) .medal{color:#c9d3e6;}
+  .result-row:nth-child(3) .medal{color:var(--accent-dim);}
+  .result-row .rname{flex:1;color:var(--text);}
+  .result-row .rwpm{color:var(--text-dim);}
+  .result-row.me{border-color:var(--teal);}
+
+  /* ---------- Waiting room notice ---------- */
+  .waiting-notice{
+    display:flex;align-items:center;gap:12px;
+    background:linear-gradient(90deg, rgba(242,201,76,.10), transparent);
+    border:1px solid rgba(242,201,76,.35);
+    border-radius:8px;
+    padding:12px 16px;
+    font-size:13px;
+    color:var(--yellow);
+    margin-bottom:16px;
+  }
+
+  /* ---------- Setup screen ---------- */
+  .setup-screen{max-width:720px;}
+  .setup-screen ol{padding-left:20px;line-height:1.9;color:var(--text-dim);font-size:14px;}
+  .setup-screen li{margin-bottom:6px;}
+  .setup-screen code, .setup-screen pre{
+    background:var(--surface2);
+    border:1px solid var(--line);
+    border-radius:6px;
+    color:var(--teal);
+    font-size:12.5px;
+  }
+  .setup-screen code{padding:2px 6px;}
+  .setup-screen pre{padding:14px;overflow-x:auto;white-space:pre;margin:10px 0 18px;}
+  .setup-screen .step-title{color:var(--text);font-weight:600;}
+
+  footer{
+    color:var(--text-faint);
+    font-size:11px;
+    text-align:center;
+    margin-top:10px;
+  }
+  .hidden{display:none !important;}
+  .flex-between{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="app-header">
+    <div class="logo">LARI<span class="dot">KATA</span><small>lomba ketik &middot; 1 lintasan &middot; maks 30 pelari</small></div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="counts" id="countsBox">— / — pemain</div>
+      <div class="status-pill idle" id="statusPill"><span class="b"></span><span id="statusLabel">memuat…</span></div>
+    </div>
+  </header>
+
+  <!-- ============ SETUP SCREEN (shown if Firebase config belum diisi) ============ -->
+  <section id="setupScreen" class="card setup-screen hidden">
+    <h2>Konfigurasi Firebase dulu, ya</h2>
+    <p class="sub">
+      File ini butuh Firebase Realtime Database sebagai "server" real-time, karena GitHub Pages cuma hosting statis
+      (tidak bisa jalanin server sendiri). Ikuti langkah berikut sekali saja:
+    </p>
+    <ol>
+      <li><span class="step-title">Buat project Firebase</span> — buka
+        <a href="https://console.firebase.google.com" target="_blank" rel="noopener">console.firebase.google.com</a>,
+        klik "Add project", ikuti wizard-nya (boleh matikan Google Analytics).</li>
+      <li><span class="step-title">Aktifkan Realtime Database</span> — di sidebar pilih
+        <b>Build &rarr; Realtime Database &rarr; Create Database</b>. Pilih lokasi server terdekat, lalu mulai dalam
+        <b>test mode</b> dulu (nanti kita ganti dengan rules yang lebih aman di langkah 5).</li>
+      <li><span class="step-title">Aktifkan Anonymous Authentication</span> — di sidebar pilih
+        <b>Build &rarr; Authentication &rarr; Get started</b>, lalu di tab "Sign-in method" aktifkan provider
+        <b>Anonymous</b>. Ini dipakai supaya tiap pemain punya ID unik tanpa perlu daftar/login.</li>
+      <li><span class="step-title">Ambil Firebase config</span> — di halaman utama project, klik ikon web
+        <code>&lt;/&gt;</code> untuk "Add app" (kalau belum ada), kasih nama bebas, lalu Firebase akan menampilkan
+        objek <code>firebaseConfig</code>. Salin isinya, lalu ganti seluruh objek
+        <code>firebaseConfig</code> di dekat baris paling atas <code>&lt;script type="module"&gt;</code> pada file
+        <code>index.html</code> ini dengan hasil salinan tadi. Simpan filenya.</li>
+      <li><span class="step-title">Pasang Security Rules</span> — kembali ke <b>Realtime Database &rarr; Rules</b>,
+        tempel aturan berikut (mencegah pemain memalsukan progres pemain lain / mundur ke belakang), lalu klik
+        Publish:
+<pre id="rulesBlock">memuat contoh rules…</pre>
+      </li>
+      <li><span class="step-title">Upload ke GitHub Pages</span> — buat repo baru, upload file
+        <code>index.html</code> ini ke root repo, lalu aktifkan di
+        <b>Settings &rarr; Pages &rarr; Deploy from branch</b>. Setelah beberapa menit, game bisa dimainkan lewat URL
+        <code>https://namamu.github.io/namarepo/</code>.</li>
+    </ol>
+    <p class="sub">Setelah <code>firebaseConfig</code> diganti dan file disimpan ulang, halaman ini otomatis hilang dan game siap dimainkan.</p>
+  </section>
+
+  <!-- ============ MAIN APP (hidden until config valid) ============ -->
+  <div id="app" class="hidden">
+
+    <!-- Name entry -->
+    <section id="nameScreen" class="card">
+      <h2>Gabung ke lintasan</h2>
+      <p class="sub">Satu lintasan untuk semua orang. Kalau lomba sedang berjalan, kamu masuk ruang tunggu dulu dan otomatis ikut di sesi berikutnya.</p>
+      <form class="name-form" id="nameForm">
+        <input type="text" id="nameInput" placeholder="Nama panggilan kamu…" maxlength="18" autocomplete="off" required>
+        <button type="submit">Gabung Lomba</button>
+      </form>
+    </section>
+
+    <!-- Game screen -->
+    <section id="gameScreen" class="hidden">
+
+      <div id="waitingNotice" class="waiting-notice hidden">
+        ⏳ Lomba sedang berlangsung. Kamu ada di ruang tunggu (<b id="waitingPos">-</b>) &mdash;
+        otomatis ikut begitu sesi ini selesai.
+      </div>
+
+      <div class="card">
+        <div class="flex-between" style="margin-bottom:12px;">
+          <h2 style="margin:0;">Lintasan</h2>
+          <span id="raceSubStatus" style="font-size:12px;color:var(--text-dim);"></span>
+        </div>
+
+        <!-- Idle -->
+        <div id="idleBanner" class="banner hidden">
+          <div class="big">SIAP?</div>
+          <div class="label">Menunggu pemain lain bergabung…</div>
+        </div>
+
+        <!-- Countdown -->
+        <div id="countdownBanner" class="banner hidden">
+          <div class="big" id="countdownNum">8</div>
+          <div class="label">Lomba dimulai sebentar lagi — siapkan jari!</div>
+        </div>
+
+        <!-- Track -->
+        <div id="track" class="track hidden"></div>
+        <div id="emptyTrack" class="empty-track hidden">Belum ada pelari di lintasan.</div>
+
+        <!-- Results -->
+        <div id="resultsBox" class="hidden">
+          <div class="results-list" id="resultsList"></div>
+          <p class="sub" style="margin-top:14px;text-align:center;">Sesi berikutnya dimulai dalam <b id="resultsCountdown">-</b> detik…</p>
+        </div>
+      </div>
+
+      <!-- Typing panel -->
+      <div class="card typing-panel hidden" id="typingCard">
+        <div class="word-strip" id="wordStrip"></div>
+        <div class="type-input-row">
+          <input type="text" id="typeInput" placeholder="Ketik kata yang di-highlight, lalu tekan spasi…" autocomplete="off" autocapitalize="off" spellcheck="false">
+        </div>
+        <div class="my-stats">
+          <div><b id="myWpm">0</b>WPM</div>
+          <div><b id="myProgress">0/40</b>kata</div>
+          <div><b id="myAccuracy">100%</b>akurat</div>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <footer>Kosakata bersumber dari daftar kata KBBI (open dataset) &middot; dibangun sebagai file HTML tunggal, tanpa server sendiri.</footer>
+</div>
+
+<script type="module">
+// ===================================================================================
+// 1) FIREBASE CONFIG — GANTI OBJEK DI BAWAH INI dengan config project kamu sendiri.
+//    Lihat panduan di layar "Konfigurasi Firebase" (muncul otomatis kalau ini belum diganti).
+// ===================================================================================
+// Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyDG5RbMgAJLQgRfRTgM6ODqdexDhKc46nA",
+    authDomain: "racetyping-e526b.firebaseapp.com",
+    databaseURL: "https://racetyping-e526b-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "racetyping-e526b",
+    storageBucket: "racetyping-e526b.firebasestorage.app",
+    messagingSenderId: "160664386176",
+    appId: "1:160664386176:web:6ecc3372ab0980eb544465"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+
+{
+  "rules": {
+    "larikata": {
+      "room": {
+        ".read": true,
+        ".write": "auth != null",
+        "players": {
+          "$uid": {
+            "p": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 60 && (!data.exists() || newData.val() >= data.val())"
+            }
+          }
+        }
+      },
+      "waitingRoom": {
+        ".read": true,
+        "$uid": {
+          ".write": "auth != null && auth.uid == $uid"
+        }
+      }
+    }
+  }
+}
+document.getElementById('rulesBlock').textContent = SECURITY_RULES_EXAMPLE;
+
+const isConfigured = firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith('GANTI');
+if (!isConfigured) {
+  document.getElementById('setupScreen').classList.remove('hidden');
+} else {
+  boot();
+}
+
+async function boot(){
+  const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+  const {
+    getDatabase, ref, onValue, runTransaction, update, set, get, remove, onDisconnect, serverTimestamp
+  } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js');
+  const { getAuth, signInAnonymously, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const auth = getAuth(app);
+
+  // ===================================================================================
+  // 2) KONSTANTA GAME
+  // ===================================================================================
+  const MAX_PLAYERS = 30;
+  const WORDS_PER_RACE = 40;
+  const LOBBY_COUNTDOWN_MS = 8000;
+  const RACE_TIMEOUT_MS = 4 * 60 * 1000;
+  const RESULTS_DISPLAY_MS = 7000;
+  const SUSPICIOUS_WPM = 220;
+
+  const WORDS = ["aabi","aabinomin","aaji","aal","aan","aau","aaui","aba","abaaka","abab","abad","abadi","abadiah","abadiat","abah","abahan","abahui","abai","abaian","abaimana","abajang","abaka","abaksial","abaktinal","abakus","abal","abalalu","abalone","abam","abampere","aban","abanat","abandira","abang","abangan","abangda","abangga","abano","abap","abar","abaran","abarumbung","abas","abasia","abat","abate","abatis","abatisasi","abatoar","abaton","abau","abawi","abaya","abdi","abdikasi","abdikasim","abdis","abdomen","abdominal","abdu","abduksi","abduktor","abdul","abdusen","abe","abece","abek","abeli","aben","aber","aberasi","abet","abg","abi","abian","abib","abid","abidin","abih","abikara","abila","abilah","abimana","abina","abing","abiogenik","abiologi","abiosen","abioseston","abiosfer","abiotik","abiotrofi","abir","abis","abisal","abiseka","abit","abiti","abiturien","abjad","abjadiah","abjat","abjeksi","abk","abklats","ablasi","ablastin","ablatif","ablaut","ableisme","ablepsia","ablur","abnon","abnormal","abnus","abo","aboa","abobo","aboi","abolisi","abomasum","abon","abone","abonemen","aboospora","abor","aboral","aborigin","aborsi","abortif","abortiva","abortus","abot","abotoi","aboya","abpar","abrab","abrag","abrak","abrap","abrar","abras","abrasi","abrasif","abreaksi","abrek","abreviasi","abri","abrikos","abrin","abrip","abripda","abriptu","abrogasi","abrop","abrosfer","abrosia","abrupsi","abs","absah","absen","absensi","absente","abses","absis","absisi","absolusi","absolut","absonan","absorb","absorbat","absorben","absorbsi","absorpsi","absorptans","absorptif","abstain","abstensi","abstinensi","abstrak","abstraksi","absurd","absurdisme","absurditas","abt","abtar","abti","abu","abuan","abubu","abudaga","abudo","abuh","abuhan","abui","abuja","abuk","abukajung","abul","abulhayat","abulia","abulus","abumi","abung","abur","aburage","aburan","abus","abut","abutmen","abuya","abuza","abyad","abyor","acabis","acak","acakadul","acakadut","acala","acan","acang","acap","acapkali","acar","acara","acaraki","acaram","acarya","acat","acatan","acau","acawi","acc","accoord","ace","aceh","acekarom","aceng","acerang","aci","acian","acingara","acintia","aco","acoan","acok","acop","acth","acu","acuan","acuci","acuh","acuhan","acum","acuman","acung","ada","adab","adabiah","adaci","adad","adagio","adagium","adah","adaini","adak","adakah","adakala","adakalanya","adakan","adaks","adaksial","adaktil","adalabang","adalah","adalapur","adalat","adam","adamat","adamu","adan","adang","adangiyah","adanya","adaptabel","adaptasi","adapter","adaptif","adaptogen","adaptor","adapun","adapus","adar","adargom","adarusa","adas","adat","adati","adatuang","adau","adbukin","ade","adeg","adegan","adeh","adei","adek","adekuat","adelfogami","adelo","adem","ademaraja","adempauze","adena","adenda","adendum","adenin","adenina","adenium","adenoblas","adenoid","adenoma","adenopati","adenosina","adenosis","adenosit","adenovirus","aderang","adesi","adfluvial","adh","adhan","adhesi","adhesif","adi","adiabat","adiabatik","adiafanus","adiafora","adiaksa","adiaktinik","adiarus","adib","adibahasa","adibangkit","adibasa","adibibit","adibintang","adiboga","adibusana","adidaya","adidi","adidingin","adigang","adiguna","adigung","adihablur","adihantar","adijana","adijenuh","adik","adika","adikanda","adikara","adikarya","adikekisi","adikodrati","adikong","adiksi","adiksimba","adiktif","adikuasa","adil","adilaga","adiluhung","adimanusia","adimarga","adimas","adinamia","adinda","ading","adion","adios","adiparwa","adipati","adipatni","adipektomi","adiposa","adiposit","adipositas","adipsia","adipuisi","adipura","adipurna","adiraja","adiratna","adisatria","adiseni","adisi","adisional","adisiswa","adit","aditama","aditi","aditif","aditokoh","aditorium","aditya","adiwacana","adiwangsa","adiwarna","adiwastra","adiwicara","adiwidia","adiwira","adiwiyata","adiyuga","adiyuswa","adjektif","adjektiva","adjektival","adjudikasi","adjuster","adjuvan","adlib","admin","admiral","admisi","admitans","adnan","adnasal","adneksitis","adnominal","ado","adobe","adodui","adok","adolesens","adolu","adon","adonan","adong","adopsi","adopsian","adoptif","adora","adoral","adorasi","adp","adpel","adpertensi","adpi","adpis","adpokat","adposisi","adrenal","adrenalin","adrenalina","adrenergik","adreng","adres","adri","adsorbat","adsorben","adsorpsi","adsorptif","adstratum","adstringen","adu","aduan","aduh","aduhai","aduk","adukan","aduksi","aduktor","adum","adumla","adun","adunan","adung","adur","adusen","adutan","advantam","adveksi","adven","adventif","adventisia","adverbia","adverbial","advertensi","advis","advisor","advisori","advokasi","advokat","adzab","adzan","aelotropik","aem","aemono","aeni","aeolian","aeolus","aerasi","aerator","aerial","aero","aerob","aerobatik","aerobik","aerobika","aerodine","aerofisika","aerofobia","aerofon","aerograf","aerogram","aerokori","aerolit","aerologi","aerologis","aerometer","aeromonas","aeromovel","aeronaut","aeronomi","aeropolis","aeroponik","aerosista","aeroskop","aerosol","aerostat","aerotaksis","aeroterapi","aesi","aestetika","aetiologi","afa","afafar","afaftema","afagia","afagosis","afair","afakia","afal","afanisme","afanitik","afantobion","afara","afasia","afasiologi","afdal","afdeling","afdol","afdruk","afek","afeksi","afektif","aferen","aferesis","afesis","afetuoso","afgani","afganistan","afian","afiat","afidavit","afidikola","afidivor","afifar","afiks","afiksasi","afiliasi","afiliator","afinitas","afirmasi","afirmatif","afitik","afk","afkir","afkiran","afkofor","aflatoksin","afluks","afogato","afoka","afonia","afore","aforefe","aforestasi","aforisme","afotik","afrasia","afrika","afrikans","afrikat","afrit","afrodisiak","afspraak","afsun","aftab","aftovirus","aftufin","afuah","afui","afwah","afwan","afyauf","aga","agad","agadi","agah","agahan","agai","againe","agak","agaknya","agal","agalaksia","agam","agama","agamais","agamaisme","agamani","agamawan","agamawi","agamen","agameon","agamet","agami","agamis","agamobium","agamodem","agamogoni","agamon","agamotrop","agan","agape","agar","agarikola","agarosa","agas","agastya","agau","agdaga","age","agega","ageisme","agel","agem","ageman","agen","agenda","agenesis","agens","agensi","agentif","ager","ageusia","aght","agi","agie","agih","agihan","agil","agio","agiria","agirofobia","agit","agitasi","agitatif","agitator","agium","aglaf","aglaonema","aglet","aglikon","agliofobia","aglomerasi","aglomerat","aglonema","aglutinasi","aglutinat","aglutinin","agmaman","agnatus","agni","agnihotra","agnosia","agnosterol","agnostik","agnyana","ago","agogo","agoh","agok","agometer","agon","agonan","agoni","agonia","agonis","agonisis","agorafobia","agouti","agrad","agradasi","agrafia","agrafobia","agraria","agraris","agregasi","agregat","agregatif","agresi","agresif","agresor","agrestal","agrian","agribisnis","agrikultur","agrin","agriologi","agriotipe","agripnia","agrium","agrobis","agrobisnis","agrofili","agrofit","agroikos","agroinput","agrokimia","agrologi","agromania","agronom","agronomi","agronomik","agronomis","agropangan","agropolis","agrotipe","agrowisata","agu","aguk","agul","agun","agunan","agung","agustus","agustusan","agut","aha","ahad","ahadiat","ahai","ahanawan","ahang","ahare","ahas","ahasale","ahau","ahaun","ahe","aherat","ahermatipe","ahet","ahi","ahido","ahiloso","ahimsa","ahin","ahing","ahir","ahirat","ahire","ahistoris","ahit","ahkam","ahkana","ahlak","ahli","ahlilkitab","ahlulbait","ahlulkitab","ahlulkubur","ahlunujum","ahlusuluk","ahlusunah","ahmak","ahmar","ahmer","aho","ahoi","ahola","ahori","ahsan","ahudu","ahuh","ahuite","ahum","ahuneyo","ahuni","ahutu","ahwal","aib","aibinan","aibohfobia","aids","aigialium","aih","aihoi","aikido","aikidoka","aikmofobia","aikwakai","ail","aila","ailakua","aileron","ailurofili","aimala","aimara","aimatatuli","ain","ainulbanat","ainulyakin","aipda","air","airan","airawata","airlangga","airo","airoran","airud","ais","aisi","aisibia","aitolida","aiwo","aja","ajab","ajai","ajaib","ajak","ajakan","ajal","ajang","ajar","ajara","ajaran","ajb","ajeg","ajek","ajektif","ajektiva","ajen","ajendam","ajeng","ajengan","ajenrem","ajeran","aji","ajian","ajib","ajigineng","ajik","ajimat","ajing","ajir","ajisaka","ajnabi","ajnas","ajo","ajojing","ajoli","ajongi","ajre","aju","ajuan","ajudan","ajufan","ajuh","ajujah","ajuk","ajuman","ajun","ajuna","ajung","ajur","ajus","ajuster","ajuvan","aka","akabri","akad","akademi","akademik","akademikus","akademis","akademisi","akai","akaid","akak","akal","akalasia","akamsi","akan","akanan","akang","akap","akapela","akapnia","akar","akaridofag","akariosit","akariot","akarisida","akarofili","akarofobia","akarologi","akaroros","akarota","akarurit","akas","akasa","akasia","akatopi","akbar","akbid","akbukin","akcaya","akd","ake","akei","akekah","akekun","akelit","akene","akeul","akfakul","akg","akh","akhazah","akhbar","akherat","akhi","akhir","akhiran","akhirat","akhirnya","akhlak","akhlaki","akhlaq","akhlas","akhli","akhtaj","akhwal","akhwan","akhwat","aki","akibat","akibatnya","akidah","akik","akikah","akil","akilah","akinesia","akinesis","akinet","akinetik","aking","akit","akiyowa","akla","aklamasi","aklasia","akli","akliah","aklimasi","akluofobia","akmal","akmatoang","akmil","akne","ako","akod","akok","akolade","akomata","akomodasi","akomodatif","akomodir","akon","akonitase","akor","akordeon","akordeonis","akp","akpen","akper","akpol","akpri","akr","akra","akrasia","akreditasi","akresi","akri","akrilamida","akrilat","akrilik","akroasit","akrobat","akrobatik","akrobatis","akroda","akrodinia","akrodon","akrodron","akrofobia","akrofoni","akrogen","akroglobin","akrolein","akrolek","akromania","akromasi","akromatik","akromatin","akromegali","akrometer","akromion","akronim","akronimi","akropetal","akropodium","akropolis","akrosom","akrospora","akrostik","akrotergit","akroyoga","akrual","akruk","aks","aksa","aksara","aksarawan","aksarawati","akseleran","akselerasi","aksen","aksenik","aksentuasi","aksep","akseptabel","akseptasi","akseptor","akses","aksesi","aksesibel","aksesori","aksesoris","aksi","aksidental","aksila","aksiologi","aksioma","aksiomatik","aksiomatis","aksis","akson","aksostil","akta","aktan","akte","aktentas","aktif","aktifitas","aktin","aktina","akting","aktinida","aktinik","aktinisme","aktinium","aktinoblas","aktinodrom","aktinograf","aktinolit","aktinomorf","aktip","aktiva","aktivasi","aktivator","aktivis","aktivisme","aktivitas","aktofili","aktofit","aktologi","aktomiosin","aktor","aktris","aktual","aktualitas","aktuaria","aktuaris","aktuator","aktuil","aku","akua","akuades","akuaduk","akuafaba","akuafalfa","akuakaktin","akuakultur","akualung","akuamarin","akuan","akuanaut","akuaponik","akuarel","akuarium","akuarius","akuaskap","akuastat","akuatik","akuatosere","akuduktus","akueduk","akuene","akuifer","akuisisi","akuk","akulea","akulturasi","akumulasi","akumulatif","akumulator","akun","akuntabel","akuntan","akuntansi","akuoion","akupresur","akupunktur","akupuntur","akur","akurasi","akurat","akus","akusatif","akustik","akustika","akut","akuwu","akwai","akwal","ala","alaan","alab","alabangka","alad","alaestesia","alaf","alah","alahan","alahata","alai","alak","alalia","alam","alama","alamah","alamai","alamak","alamanda","alamas","alamat","alami","alamiah","alamin","alan","alana","alane","alang","alangkah","alanina","alansara","alantoin","alap","alar","alarima","alarm","alas","alasan","alat","alati","alau","alay","alba","albino","album","albumin","albung","alcema","aldebaran","aldehida","aldol","aldosteron","alegori","alegoris","alegro","alek","aleksia","alel","alem","alergen","alergi","alergis","aleuron","aleuroplas","alewar","alewarai","alewoh","alf","alfa","alfabet","alfabetis","alfalfa","alforn","alfu","alfuil","alfuren","alga","algebra","algifobia","algoid","algojo","algol","algologi","algometer","algoritma","algoritme","algrafi","alhasil","alhijamah","ali","alia","aliagrem","aliah","aliansi","alias","aliase","alibi","alidad","alien","alienasi","alif","alifatik","alifbata","alifuru","aligator","alih","alik","alikuot","alikusu","alila","aliliu","alim","alimbuane","alimbubu","alimen","alimentasi","alimenter","alin","alinea","aling","alingan","alino","alip","alir","aliran","alis","alit","aliterasi","aliumfobia","aliwadala","aliyah","alizarin","aljabar","aljalil","aljazair","alkabir","alkadim","alkadir","alkah","alkalemia","alkali","alkalis","alkaloid","alkalosis","alkamar","alkana","alkanol","alkap","alkapins","alkapsus","alkari","alkasyaf","alkausar","alkemis","alkena","alkes","alkesgi","alkeslap","alkesprev","alki","alkil","alkilasi","alkimia","alkisah","alkitab","alkitabiah","alkohol","alkoholik","alkom","alkomlek","alkompur","alkomwil","alkon","alku","alkudsi","alkuna","alkuronium","alkus","allah","allargando","almaktub","almalun","almamater","almanak","almandin","almandit","almang","almarhum","almarhumah","almari","almasih","almatsus","almil","almon","almuazam","almuhit","almukhlis","alnaud","alngilin","alo","aloalo","alobar","aloco","alodinia","alodna","alofan","alofon","alogen","alogia","alograf","aloha","alohospes","aloi","aloin","alokai","alokarp","alokasi","alokinesis","alokromi","alokron","aloksenia","alokton","aloktonus","aloleks","alolong","alomerisme","alomon","alomorf","alon","along","alongins","alonim","aloparasit","alopati","alopatrik","alopelagik","alopesia","aloplasma","aloploid","aloptik","alor","alosa","alosom","alosterik","alosu","alot","aloterm","alotetua","alotipe","alotrof","alotrop","alotropi","alotropik","aloun","alozim","alpa","alpahub","alpaka","alpal","alpalkes","alpeka","alperes","alpin","alpiris","alpis","alpokat","alpukah","alpukat","alquran","alri","alro","alsatri","alsil","alsintan","alsofili","altar","alter","alterasi","alteratif","altern","alternasi","alternatif","alternator","altimeter","altimetri","altitudo","alto","altrosa","altruis","altruisme","altruistik","altruistis","alu","aluakas","aluang","alue","alufiru","alula","alum","alumbu","alumina","aluminium","aluminum","alumni","alumnus","alumpa","alumunium","alun","alunan","alundum","alune","alung","aluo","alup","alur","aluran","alusi","alutan","alutsista","alutta","aluvial","aluviasi","aluvium","alveola","alveolar","alveoli","alveolitis","alveolum","alveolus","alwah","alwasi","alwasia","alzheimer","alzi","ama","amabakdu","amaf","amah","amahai","amahatua","amai","amak","amal","amalaka","amalaki","amalan","amalgam","amalgamasi","amali","amaliah","amalo","amam","aman","amanah","amanat","amanatun","amandel","amandemen","amane","amang","amango","amanita","amanitin","amanra","amantadin","amantium","amanuban","amanue","amar","amarah","amaran","amarendra","amarilis","amat","amatan","amati","amatir","amatirisme","amato","amatofit","amatofobia","amatol","amau","amba","ambacang","ambah","ambai","ambaian","ambak","ambaks","ambal","ambalan","ambalang","ambalau","ambalela","amban","ambang","ambar","ambara","ambarau","ambarile","ambarita","ambaro","ambasade","ambasador","ambat","ambataran","ambataron","ambau","ambayasa","ambeg","ambeien","ambek","ambekan","ambekara","ambekdarma","ambekpati","ambeksiya","ambeksura","ambelar","ambelau","amben","ambeng","amber","amberal","ambergris","amberit","ambet","ambeyen","ambi","ambiens","ambigram","ambigu","ambiguitas","ambil","ambilan","ambin","ambinan","ambing","ambir","ambis","ambisi","ambisius","ambivalen","ambiver","ambivor","amblek","ambles","amblesan","ambligonit","amblikusia","ambliopia","amblong","ambo","amboi","ambok","ambon","ambong","ambori","ambretolid","ambril","ambring","ambrol","ambrosia","ambruk","ambrukan","ambrung","ambu","ambua","ambuh","ambul","ambulan","ambulans","ambulatori","ambulralra","ambung","ambur","amburadul","amburat","amburu","ambyang","ambyar","ambyok","ambyur","amd","amdal","amdk","ameba","amebiasis","ameboid","amebosit","amegop","ameiosis","amelioran","ameliorasi","amen","amendemen","amenitas","amenorea","amer","amerika","amerikano","amerisium","amerospora","amerta","amesureng","amet","ametabola","ametaboli","ametesis","ametis","ameto","ametria","ametropia","amfetamin","amfetamina","amfi","amfiapomik","amfibi","amfibiotik","amfibol","amfibolik","amfidelfik","amfidrom","amfigea","amfigen","amfigin","amfikarion","amfimik","amfimiksis","amfiploid","amfiprotik","amfisarka","amfiston","amfiteater","amfitesium","amfitop","amfitrika","amfitrop","amfixilem","amfogen","amfolitoid","amfosom","amfoterik","amharik","ami","amiah","amida","amidase","amidasi","amidina","amido","amidoksim","amien","amigdala","amigdalin","amigol","amih","amik","amikal","amikofobia","amikron","amiksis","amil","amilase","amilemia","amiloform","amilograf","amiloid","amilolisis","amilom","amiloplas","amilopsin","amilosa","amilum","amin","amina","aminase","aminisasi","amino","aminogram","amiografi","amiotonia","amiotrofi","amir","amirulhaj","amis","amit","amitate","amitoha","amitosis","amiug","amjawat","amko","amla","amlaut","amleng","ammabakdu","ammeter","ammi","amn","amnesia","amnesti","amnion","amnionitis","amniotik","amniotomi","amoa","amofili","amofilia","amoh","amoi","amoktofit","among","amonga","amonia","amoniak","amonit","amonium","amor","amorf","amortisasi","amosi","amot","ampa","ampah","ampai","ampak","ampal","ampang","ampar","amparan","ampas","ampat","ampau","ampe","ampean","ampek","ampel","ampela","ampelam","ampelas","ampeng","ampera","ampere","ampersan","ampet","ampi","ampiang","ampibi","ampig","ampik","ampikale","ampil","ampilalas","ampis","ampisilin","ampit","amplang","amplas","ampleh","amplek","ampleksus","amplitudo","amplop","ampo","ampog","ampok","ampon","ampor","amporang","amporo","ampos","ampot","amprah","amprok","amprung","amprut","ampu","ampuh","ampuk","ampul","ampula","ampun","ampunan","ampung","ampuni","amput","amputan","amputasi","amputir","amra","amrik","amril","amsal","amsemai","amsterdam","amtenar","amu","amuba","amudi","amuk","amukan","amulet","amung","amungkal","amungme","amunisi","ana","anabasis","anabati","anabatik","anabiosis","anabolik","anabolisme","anabul","anacina","anadrom","anaerobik","anafora","anaforesis","anaforis","anagami","anaglif","anagram","anahar","anaheha","anahida","anak","anakalang","anakan","anakarung","anakda","anakia","anaklisis","anakoda","anakoluton","anakompo","anakonda","anakrus","anakusis","anal","analekta","analema","analeptik","analgesia","analgesik","analgetik","analis","analisa","analisis","analitik","analitis","analog","analogi","analsit","anamel","anami","anamnesis","anamolepo","anan","ananda","anang","anangkela","anani","ananim","ananta","anapaso","anapes","anaptiksis","anaria","anarki","anarkis","anarkisme","anarkistis","anasional","anasir","anastesi","anatase","anateksis","anatema","anatolia","anatomi","anatomis","anatrop","anau","anaweli","anaye","anbia","anbk","anca","ancai","ancak","ancala","ancam","ancaman","ancang","ancangan","ancing","anco","ancoa","ancok","ancol","ancrub","ancruk","ancuan","ancuk","ancul","ancumcum","ancur","ancut","anda","andai","andaian","andaikan","andak","andaka","andal","andalan","andalas","andaliman","andalusit","andam","andaman","andan","andang","andangan","andante","andantino","andap","andapita","andar","andara","andaran","andaru","andegan","andege","andek","andem","andeman","ander","anderak","anderik","andes","andesit","andewi","andi","andik","andika","andikara","andiko","andil","andilau","andina","andini","andir","ando","andoi","andok","andolaki","andong","andorra","andradit","andragogi","andrawina","andreas","andresium","androfili","androfilia","androfobia","androgen","androgini","androginus","android","androlog","andrologi","andromeda","andropause","andu","anduh","anduhan","anduk","andukan","andun","andung","andur","andurabian","aneh","anehe","aneka","anekdot","anekdotal","aneksasi","aneksi","anelida","anemer","anemia","anemofili","anemofobia","anemogami","anemograf","anemogram","anemokori","anemometer","anemon","anemotrofi","anergi","aneroid","anestesi","anestesia","anestesian","anestetik","anestetis","anetol","aneuploid","aneurina","aneurisme","anev","anevlap","anfakah","anfal","anfas","anfo","angad","angah","angai","angair","angalaki","angan","angau","angciu","angdam","angdes","angel","angga","anggai","anggak","anggal","anggan","anggana","anggap","anggapan","anggar","anggara","anggaran","anggas","anggau","angger","anggerka","anggi","anggir","anggit","anggitan","angglap","anggo","anggong","anggota","anggrang","anggrek","anggrekwan","anggu","angguh","angguk","anggukan","anggul","anggun","anggung","anggur","angguran","anggus","anggut","anghengar","anghun","angi","angik","angin","angina","angioedema","angiografi","angiologi","angiopati","angit","angka","angkak","angkap","angkar","angkara","angkasa","angkasawan","angkat","angkatan","angke","angkel","angker","angket","angki","angkin","angkit","angklek","angklung","angko","angkong","angkop","angkot","angkring","angkringan","angkrok","angkruk","angku","angkub","angkuh","angkuk","angkup","angkur","angkus","angkusa","angkut","angkutan","angla","anglamil","anglap","anglek","angler","anglo","angola","angon","angonan","angop","angora","angot","angpao","angpau","angrat","angratmil","angrem","angrofobia","angsa","angsana","angsang","angsel","angsio","angsle","angso","angsoka","angson","angsongar","angsop","angstrom","angsu","angsung","angsur","angsuran","angu","angula","angur","angus","angut","angwain","anhedonia","anhidrida","anhidrit","anhidrosis","ani","aniaya","anibenu","anido","anih","anihilasi","anikonis","anikonisme","anil","anilina","animasi","animato","animator","anime","animin","animis","animisme","animistik","animistis","animo","aningo","anion","aniridia","anisogamet","anisokoria","anisotropi","anit","aniwui","anja","anjak","anjakan","anjal","anjali","anjan","anjang","anjangsana","anjangsono","anjar","anjat","anjeng","anjer","anjik","anjiman","anjing","anjir","anjlok","anjok","anjong","anjrah","anju","anjul","anjun","anjung","anjungan","anjur","anjuran","ankanan","ankara","anker","ankilosis","ankum","anno","anoa","anoda","anode","anodin","anodonsia","anofeles","anoftalmus","anoksemia","anoksia","anoksik","anom","anomali","anomer","anomi","anonim","anonimitas","anopsia","anorak","anoreksia","anorektal","anorektik","anorganik","anorgasmi","anorgasmia","anorgasmik","anorgastik","anortopsia","anosmia","anotang","anotasi","anovulasi","anpein","anpotmil","anpotwil","anri","ansa","ansai","ansambel","ansar","ansari","ansietas","ansiolitik","ansis","ansor","ansori","ansuan","anta","antagonis","antah","antaladan","antalas","antalkali","antamir","antan","antanan","antang","antanik","antap","antar","antara","antaraksi","antaran","antarbenua","antardesa","antares","antaretnis","antarfaksi","antari","antariksa","antarkota","antarktik","antarktika","antarlina","antarmuka","antarpulau","antarras","antarruang","antarsel","antarsuku","antartika","antasid","antasida","antawacana","ante","antefleksi","antek","anteken","antelas","anteliks","antelop","antem","antemortem","antena","antenatal","antene","anteng","antenul","antep","antera","anteridium","anterior","antero","anterozoid","anteseden","antesis","anteversi","anti","antialergi","antianemia","antiangina","antiasam","antibarion","antibatuk","antibeku","antibiosis","antibiotik","antibodi","antibusa","anticadar","anticemas","antidialog","antidot","antidotum","antidromik","antienzim","antigatal","antigen","antihama","antihamil","antihan","antihero","antihormon","antiimun","antijamur","antijasad","antik","antikanker","antikarat","antikatode","antikejang","antikerut","antiklin","antiklinal","antiklorin","antikorona","antikuari","antikuman","antil","antimagnet","antimateri","antimikrob","antimon","antimoni","antimonium","antimuntah","anting","antinomi","antinovel","antinyeri","antip","antipasat","antipasto","antipati","antipode","antipolusi","antiproton","antiradang","antirasuah","antiselip","antisepsis","antiseptik","antiserum","antisiklon","antisimpul","antisionin","antisipasi","antisosial","antitank","antitesis","antitoksik","antitoksin","antitragus","antitumor","antitusif","antivenom","antiviral","antivirus","antizarah","antler","antlia","antlofobia","antofili","antofilia","antofobia","antoi","antok","antol","antologi","antolong","antomania","anton","antong","antoni","antonim","antonimi","antop","antor","antosian","antosianin","antraknos","antrakosis","antraks","antrap","antrasena","antrasian","antrasit","antre","antrean","antri","antropik","antropoda","antropoid","antropolog","antroponim","antui","antuk","antul","antulawo","antumbra","antun","antung","antunga","anturium","antus","antusias","antusiasme","antutan","anu","anua","anual","anudun","anugerah","anugrah","anuhuai","anuitan","anuitas","anulir","anulus","anuma","anumerta","anunasika","anungo","anunsiasi","anuresis","anuria","anus","anuswara","anut","anutan","anvian","anyak","anyam","anyaman","anyang","anyar","anyeh","anyel","anyelir","anyik","anyir","anyu","aok","aom","aong","aora","aorta","aota","apa","apaan","apabila","apak","apakah","apakala","apalagi","apam","apanase","apang","apar","aparat","aparatur","aparatus","aparteid","apartemen","apartheid","apas","apastia","apatah","apatate","apati","apatis","apayamuka","apbd","apbn","apd","ape","apean","apek","apel","apelativa","apelium","apem","apen","apendiks","apepsi","aperd","aperitif","apersepsi","apertur","apes","aphelion","api","apid","apifobia","apigenin","apik","apikal","apikultur","apil","apilan","apimania","apin","apinan","apindo","aping","apintel","apiologi","apion","apit","apitan","apiterapi","apitoksin","apiun","apkir","apkiran","apkromat","aplasia","aplaus","aplikan","aplikasi","aplikatif","aplikator","aplus","aplusan","apm","apmi","apmk","apnea","apo","apodal","apoenzim","apoferitin","apogami","apoge","apograf","apok","apokalips","apokdim","apoking","apokope","apokrifa","apokrin","apolitis","apolo","apologetis","apologi","apologia","apomik","apomiksis","apomorfin","apon","apopleksi","apopleksia","apoptosis","aporia","aporisma","aposematik","aposia","aposisi","apositia","apositif","apostasi","apostel","apostolik","apostrof","apotek","apoteker","apotema","apotheosis","apotik","appetizer","appi","appu","apraksi","apraksia","apresiasi","apresiatif","apresiator","apresorium","apri","aprikot","april","apriori","aprit","apron","apsara","apsari","apstra","aptasi","apter","aptindo","aptronim","apu","apuh","apula","apung","apungan","apuran","apus","apwil","aqidah","aquarius","aquila","ara","arab","arabes","arabika","arafah","aragonit","arah","arahat","arai","arajang","arak","arakan","arakin","araknida","araknitis","araknoid","aral","aram","arama","aramba","arambasi","arame","aramrat","aran","arandai","arang","aransemen","aranyaka","arapaima","arapota","araro","ararut","aras","arasy","arat","arau","arbab","arbeba","arbei","arbiter","arbitrase","arbitrasi","arbitrator","arbitrer","arbor","arboreal","arboretum","arbuskul","arbutin","arca","arcas","ardang","ardi","ardok","are","area","areal","areh","arek","aren","arena","areng","areografi","areola","areometer","ares","arestasi","areta","argari","argentina","argentit","argentum","argilan","arginina","argiria","argirodit","argo","argol","argometer","argon","argot","argumen","arguni","arhanud","arhir","ari","aria","ariah","ariari","arid","aridisol","ariel","aries","arif","arifin","arigol","arih","arik","aril","arilus","aring","arip","arirang","aris","arisan","aristokrat","aristotipe","arit","aritenoid","aritmatika","aritmetik","aritmetika","aritmetis","aritmia","arja","arjer","arjuna","arkade","arkais","arkaisme","arkati","arkegonium","arkeolog","arkeologi","arkeologis","arketipe","arkian","arkifonem","arkileksem","arkitraf","arko","arktik","arktika","arku","arkunel","arkus","arlindo","arloji","armabar","armada","armatim","armatur","armed","armel","armenia","armorer","armos","armuzna","arnal","arnika","arnis","arnu","arogan","arogansi","aroma","aromatik","arombai","aron","aronan","arorut","arowana","arowon","arpegio","arpus","arrivee","arsakal","arsap","arsen","arsenal","arsenik","arsenikum","arsi","arsik","arsip","arsiparis","arsipelago","arsir","arsiran","arsis","arsitek","arsitektur","arsobo","arsonfobia","arsu","art","arta","artefak","arteri","arteriola","artesis","artetis","arti","artia","artian","articok","artifak","artifisial","artik","artikel","artikula","artikular","artikulasi","artileri","artis","artisan","artistik","artisyok","artlap","artotek","artralgia","artritis","artrok","artropati","artropoda","aru","aruan","aruba","aruda","arugula","aruh","aruhaha","arui","aruk","arum","arumba","arun","aruna","arung","arungan","arunika","arupadatu","arupako","arupera","aruris","arus","arustama","arwah","arwana","arwer","arya","aryaduta","arzak","asa","asabat","asabiah","asabiyah","asad","asada","asagan","asah","asahan","asahehe","asahi","asai","asak","asakue","asal","asalan","asali","asalkan","asalnya","asam","asaman","asan","asana","asango","asap","asar","asari","asas","asasi","asat","asbak","asbes","asbestos","asbestosis","asbun","asbut","ascun","asdikamba","asdos","asdp","ase","asean","aseksual","asem","asemen","asepan","asepsis","aseptik","aseptis","aseran","aserola","asertif","asesang","asese","asesi","asesmen","asesor","aset","asetabulum","asetal","asetat","asetilena","aseton","asetonemia","asetonuria","asetum","asfal","asfar","asfiksia","ashar","asi","asia","asian","asibilan","asibilasi","asid","asidah","aside","asidenton","asidimeter","asidoid","asidosis","asidulan","asih","asik","asiklik","asil","asilabis","asimetri","asimetris","asimilasi","asimpi","asimtot","asimus","asin","asinan","asindeton","asing","asinkron","asinkronus","asintel","asinyor","asiri","asistensi","asitaba","asites","asiwung","asjetan","asji","askar","askariasis","askarid","askasdam","askes","askeskin","asket","asketik","asketisme","askon","askot","askrindo","askriptif","aslesar","asli","aslog","aslosin","asma","asmara","asmat","asmatik","asmr","asn","asnad","asnawi","aso","asoa","asoi","asonansi","asong","asongan","asonisoni","asops","asortimen","asosial","asosiasi","asosiatif","aspal","asparaga","asparagina","asparagus","aspartam","aspartat","aspek","aspel","asperger","asperses","aspiran","aspirasi","aspirat","aspiratif","aspirator","aspirin","asprak","aspri","asrama","asrar","asrena","asri","asrok","asrot","asta","astaga","astaganaga","astagina","astaka","astakona","astana","astas","astasia","astatik","astatin","astek","asteng","astenia","astenik","astenopia","astenosfer","aster","asteris","asterisme","asteroid","astigmatis","astrada","astrafobia","astral","astringen","astrofili","astrofilia","astrofobia","astrolab","astrolog","astrologi","astrometri","astronaut","astronom","astronomi","astronomis","astronot","astrosit","astungkara","asu","asuan","asuang","asuh","asuhan","asumsi","asumtif","asung","asungan","asup","asupan","asura","asurador","asuransi","asusila","aswa","aswad","aswaja","aswasada","asyar","asyera","asyik","asyura","ata","atak","ataksia","atal","atalakiah","atalat","atam","atan","ataninai","atap","atar","atas","atasan","atase","atavisme","atavistis","atbm","atc","atdikbud","ate","ateis","ateisme","ateistis","atela","atelir","atelis","atelofobia","atensi","atenuasi","atenuator","ateret","ateroma","ates","atf","athan","atheis","athg","ati","atid","atikifobia","atinggola","atipikal","atir","atita","atk","atlantik","atlas","atlaut","atlet","atletik","atletis","atlit","atm","atma","atman","atmil","atmolisis","atmologi","atmometer","atmosfer","atmosferis","atmosfir","atogoim","atogram","atok","atol","atom","atomisasi","atomisme","atomistis","atomologi","atonemen","atoni","atori","atos","atowa","atp","atpm","atraksi","atraktan","atraktif","atresia","atribusi","atribut","atributif","atrisi","atrium","atrofi","atropin","atsiri","atud","atuh","atuk","atung","atur","aturan","atus","aubade","audial","audiens","audiensi","audio","audiofil","audiofilia","audiofon","audiograf","audiogram","audiolog","audiologi","audiologis","audiometer","audiometri","audisi","audit","auditan","audite","auditor","auditori","auditorium","augmen","auk","auksi","auksin","auksologi","aula","aulia","aulofobia","aum","auman","aung","aungan","auning","aur","aura","aural","aurat","aureol","auri","auriga","aurofobia","aurora","aurum","aus","ausdauer","auskultasi","australia","austria","autad","autarki","autarkis","autentik","autis","autisme","autistik","autistis","auto","autobahn","autobiopik","autodial","autodidak","autodin","autoerotis","autofobia","autofokus","autogami","autogamik","autogen","autograf","autografi","autogram","autohtonus","autoignisi","autoimun","autoklaf","autokrasi","autokrat","autokratik","autokritik","autokton","autolisis","autologi","automasi","automatik","automatis","automaton","automobil","automorf","automotif","autonisasi","autopilot","autopsi","autorotasi","autoskop","autosom","autotoksin","autotomi","autotrof","autotrofik","autotropik","autumnal","avalans","avatar","ave","aven","aversi","avesta","avgas","aviari","aviasi","aviator","avidin","aviditas","avifauna","avikultur","aviofobia","avirulen","avit","avokad","avolisi","avontur","avonturir","avtur","avulsi","awaagama","awaair","awaarang","awaasam","awabau","awabulu","awabusa","awadara","awah","awahama","awai","awak","awakutu","awal","awalan","awalembap","awalengas","awam","awamineral","awan","awana","awanama","awang","awangan","awar","awaracun","awas","awasan","awasuara","awat","awataksa","awatara","awawarna","aweh","awelat","awer","awet","awetan","awi","awil","awin","awis","awit","awitan","awo","awonatuk","awonkat","awonkup","awota","awuhu","awur","awuran","awut","awuta","awyi","awyu","ayah","ayahanda","ayak","ayakan","ayal","ayam","ayan","ayanda","ayanginahe","ayap","ayapan","ayar","ayat","ayatullah","ayem","ayeng","ayetan","ayeuh","ayfat","ayid","ayit","ayo","ayom","ayomas","aytek","ayu","ayub","ayuk","ayum","ayuman","ayun","ayunan","ayunda","ayurweda","ayut","azab","azal","azalea","azali","azam","azamat","azan","azas","azemat","azeotrop","azeri","aziana","azimat","azimut","azis","azmat","azoikum","azonal","azoologi","azotemia","azuki","azulena","azurit","baal","baang","baasuh","baawu","bab","baba","babad","babah","babak","babakan","babal","babala","baban","babanci","babancik","babancong","babang","babango","babantar","babar","babaran","babarangan","babas","babasu","babat","babatan","babaun","babe","babel","babelan","babelih","babesiasis","babi","babil","babilonia","babinsa","babit","babka","bablas","babo","babon","babongko","babtis","babu","babulu","babun","babunyai","babur","baburin","baburu","baburua","babut","babydoll","baca","bacaan","bacah","bacak","bacaleg","bacan","bacang","bacar","bacek","bacem","baceman","bachelor","bacik","bacin","backhand","baco","bacoho","bacok","bacokan","bacot","bacul","bacut","bacuur","bad","bada","badai","badak","badal","badam","badan","badandang","badang","badani","badaniah","badar","badare","badari","badasi","badau","badaus","bade","badek","badenga","bader","bades","badi","badik","badiri","badminton","bado","badola","badong","badu","badui","badul","badung","badur","badut","baduta","baduyut","baebunta","bafta","baftah","baga","bagaba","bagai","bagaikan","bagaimana","bagak","bagal","bagan","bagana","bagang","baganjin","bagar","bagara","bagarit","bagas","bagasi","bagasosis","bagat","bagau","bagea","bagei","bagel","bagelen","bagen","baget","bageur","bagi","bagian","baginda","bagito","baglog","bago","bagong","bagongan","bagor","bagu","baguk","bagul","bagung","bagur","bagus","bagusan","bah","bahadur","bahaduri","bahagi","bahagia","bahak","bahal","bahala","bahalan","baham","bahan","bahana","bahandup","bahang","bahar","bahara","bahari","bahariwan","baharkam","baharok","baharu","bahas","bahasa","bahasan","bahasawan","bahau","bahaya","bahei","bahela","bahenol","bahimiah","bahkan","baho","bahok","bahrain","bahri","bahroten","baht","bahtera","bahu","bahudayang","bahuku","bahutai","bahwa","bahwasanya","bai","baiat","baid","baiduri","baik","baikulino","baikutu","bail","bailau","baileo","bailmen","bain","bainah","baing","baintelkam","bair","bairi","bais","bait","baita","baitullah","baitulmal","baja","bajabu","bajabuk","bajaj","bajak","bajakan","bajan","bajang","bajao","bajar","bajarah","bajas","bajau","bajawa","bajetah","baji","bajigur","bajik","bajing","bajingan","bajir","bajo","bajok","baju","bajuju","bajul","bak","baka","bakah","bakak","bakal","bakalan","bakam","bakamla","bakap","bakar","bakaran","bakarat","bakasang","bakat","bakau","bakaya","bakbarak","bakda","bakdahu","bakdu","bakdul","bake","bakelit","baker","bakera","bakeri","bakero","bakes","bakese","bakh","bakhil","bakhir","bakhor","bakhsis","bakhu","baki","bakiak","bakik","bakir","bakit","bakkah","baklava","bakmi","bako","bakon","bakopa","bakpao","bakpau","bakpia","bakrik","baksi","baksis","bakso","baksos","baktau","bakteremia","bakteri","bakterin","bakterisid","bakti","baku","bakul","bakum","bakumpai","bakung","bakup","bakurung","bakut","bakwan","bal","bala","balaba","balabad","balabak","balabar","balabua","balad","balada","baladiba","balado","baladu","balaesang","balagah","balagendir","balah","balai","balairung","balajar","balak","balakan","balaki","balakodan","balakpus","balalaika","balalau","balam","balamika","balamiri","balan","balana","balandong","balang","balangan","balangkep","balango","balanitis","balanja","balanjo","balans","balantak","balanu","balaon","balap","balapak","balapan","balar","balas","balasan","balase","balaseba","balata","balatang","balato","balatu","balatuk","balau","balayan","balboa","bale","baleg","balek","balela","balelang","baleman","balen","balera","balerina","balerino","balero","balerong","balet","baleta","baleyango","balgam","bali","balian","balibul","baliem","balig","baliga","baligau","baligh","baliho","balik","balika","balikan","balikpapan","balim","balin","balinan","baling","balio","balistik","balistika","balit","balita","balitbang","baliu","balkam","balkamon","balkan","balkas","balkir","balkon","balneologi","balo","balobas","balobe","balobo","balobu","baloh","balok","baloki","balombong","balon","balonga","balonggar","balonisasi","baloreni","balosok","balot","balsam","balsem","balseros","balsom","balu","baluara","baluarti","baluat","balubar","balubua","balugut","baluh","baluhan","baluhur","balui","baluian","baluk","balukang","balula","balulang","balumba","balumbung","balun","balunek","balung","balungan","balungka","balur","baluran","baluse","balusu","balususung","balut","balutan","bam","bama","bamayo","bambam","bamban","bambang","bambangan","bambaru","bambo","bambu","bambua","bambung","bambungan","bamikuli","bamilsuk","bamilwa","bamper","bamus","ban","bana","banai","banal","banang","banar","banas","banaspati","banat","banawa","banbarang","bancah","bancak","bancakan","bancan","bancang","bancar","bancau","bancea","bancei","bancet","banci","bancik","bancingah","bancuh","bancuhan","bancut","banda","bandan","bandana","bandang","bandar","bandara","bandaran","bandariksa","bandarsah","bandayo","bandea","bandel","bandela","bandeng","bandering","banderol","bandes","bandha","bandigung","bandih","banding","bandingan","bandir","bandit","banditisme","bando","bandol","bandongan","bandos","bandot","bandotan","bandrang","bandrek","bandring","bandrol","bandros","bandu","bandul","bandulan","bandung","bandungan","bandusa","bandut","banera","banga","bangai","bangal","bangan","bangang","bangar","bangas","bangat","bangau","bangbang","bangbangan","bangbarung","bangbung","bangdes","bangdik","banget","bangga","banggai","banggakoro","banggan","banggel","banggi","banggoha","bangi","bangil","bangir","bangit","bangka","bangkah","bangkai","bangkal","bangkala","bangkalan","bangkanang","bangkang","bangkar","bangkaran","bangkari","bangkas","bangkasa","bangkasan","bangkat","bangke","bangkeh","bangkelung","bangker","bangket","bangkilan","bangking","bangkir","bangkis","bangkit","bangkitan","bangko","bangkok","bangkong","bangkot","bangkotan","bangkrak","bangkrut","bangku","bangkuang","bangkuat","bangkuna","bangkunang","bangkung","bangkut","bangladesh","banglas","bangle","banglo","bangmil","bango","bangon","bangops","bangopstik","bangor","bangpak","bangpers","bangsa","bangsai","bangsal","bangsat","bangsawan","bangsawati","bangsi","bangsung","bangui","bangun","bangunan","bangus","bani","banian","banien","baning","banir","baniu","banius","banjang","banjar","banjaran","banjet","banji","banjir","banjo","banjur","bank","banker","bankes","banket","bankir","banlog","banlol","banminkes","banofi","banpol","banpres","banpur","banrol","bansa","bansai","bansarkas","bansat","bansekower","bansos","banta","bantae","bantah","bantahan","bantai","bantaian","bantak","bantal","bantalan","bantam","bantar","bantara","bantaran","bantat","bantau","bantayo","bantea","banteh","bantek","banten","banteng","banter","banteras","bantet","banti","bantik","bantilang","banting","bantingan","banto","bantongan","bantu","bantuan","bantuha","bantun","bantut","banu","banua","banya","banyabak","banyak","banyakan","banyala","banyara","banyo","banyois","banyol","banyolan","banyu","banyumas","banyun","banyup","banyuwangi","banzai","banzi","bao","baong","bap","bapa","bapak","bapakisme","bapanda","bapanduk","bapang","bapani","bapao","bapekan","baper","baperan","bapet","bapindo","baplang","bapomi","bapopsi","bapor","bappeda","bappenas","bapra","baptis","baqa","bar","bara","baraat","barabadan","barabea","baragajul","barago","barah","barahan","barai","barak","barakai","barakallah","barakat","barakuda","baralek","baramban","barambang","baran","barang","barangan","barangkali","barantan","barap","barapan","barapasi","barapen","baras","barasang","barase","barat","baratan","baratea","baratu","barau","barbados","barbar","barbari","barbarian","barbarisme","barbaritas","barbeku","barbekyu","barbel","barber","barbir","barbital","barbiturat","barbuk","barbur","bardi","barel","baren","bareng","barengkar","barep","bareskrim","baret","barga","bargas","bari","bariatrik","barid","barier","barik","barikade","barindu","baring","baringan","barion","baris","barisan","barisfer","barista","barit","barita","barito","bariton","barium","bariung","barjad","barkas","barkometer","barkuet","barlang","barli","baroar","barobo","barofobia","barograf","barogram","barok","barologi","barometer","barometri","barometrik","baron","barong","barongan","barongko","barongsai","baronsai","baros","baroskop","barotropik","barso","bartender","barter","baru","baruangan","baruasa","baruh","baruje","barukbuk","barukuk","barun","baruna","barunawati","barungbung","barunggam","barusan","barut","barvas","barza","barzah","barzakh","barzanji","bas","basa","basah","basahan","basal","basalioma","basalo","basang","basanit","basantara","basap","basar","basarnas","basarok","basat","basau","base","basekat","baselang","basemah","basemen","basi","basic","basidium","basifobia","basiha","basil","basilari","basilika","basilus","basin","basinet","basir","basirah","basis","baskara","baskat","basket","baskom","basmalah","basmati","basmi","baso","basoka","basondo","basreng","bastar","basu","basuh","basuhan","basung","basungan","basur","basut","baswara","bat","bata","batacina","batagor","batai","batak","batako","batal","batalion","batalyon","batamarang","batan","batanas","batanda","batandang","batang","batangan","batara","batarang","batari","batas","batasan","batat","batata","batatapas","batau","batavia","batawi","bateh","batek","batekeng","batel","batela","baterai","batere","baterei","bathil","bathin","bati","batial","batibul","batih","batik","batikan","batil","batila","batimetri","batin","batiniah","batintin","batis","batisfer","batita","batmat","batmofobia","bato","batobo","batofobia","batogal","batohan","batok","batolit","batombe","baton","batonet","batu","batubara","batui","batuk","batun","batung","batuori","batur","baturbenua","batutu","batuwa","bau","baud","bauh","bauk","bauksit","baulaco","baun","baung","baur","bauran","baureksa","baurmin","bauryah","bausastra","bausuku","baut","bauwarna","bauzi","bavarois","bawa","bawaan","bawab","bawah","bawahan","bawak","bawal","bawang","bawas","bawasda","bawasir","bawaslu","bawat","bawean","bawel","bawo","bawokan","bawon","bawor","bawusu","baya","bayah","bayak","bayam","bayan","bayang","bayangan","bayangkara","bayangkari","bayar","bayaran","bayas","bayat","bayata","bayati","bayawa","bayem","bayi","bayo","bayonet","bayong","bayu","bayuan","bayuh","bayun","bayung","bayur","bazaar","bazar","bazari","bazis","baznas","bazoka","bbg","bbk","bblr","bbm","bcc","bea","beasiswa","beawiyata","bebak","bebal","bebalan","bebali","bebalun","beban","bebandos","bebang","bebangkit","bebar","bebarongan","bebaru","bebas","bebaso","bebat","bebatan","bebatuan","bebatur","bebauan","bebe","bebecek","bebegig","bebek","bebeke","bebekel","bebekisme","bebeksan","bebel","bebelen","bebenah","bebence","bebenjit","beber","beberan","beberapa","beberas","beberasan","bebercak","beberok","bebesaran","bebetek","bebetok","bebi","bebijian","bebodoran","bebop","bebotoh","bebrek","bebuahan","bebuku","bebulan","bebulun","bebungaan","bebunyian","bebuyutan","becak","becek","beceng","becermin","becik","becolok","becuk","becus","beda","bedah","bedak","bedal","bedama","bedan","bedano","bedar","bedaru","bedawi","bedaya","bedebah","bedegap","bedegong","bedel","bedeng","bederis","bederma","bedih","bedil","bedinde","bedo","bedoanas","bedodo","bedol","bedolan","bedomo","bedondotan","bedong","bedor","bedu","bedudak","beduk","bedukang","bedung","bedungan","bega","begadang","begah","begal","begana","begandring","begap","begar","begasi","begawan","begawi","begeng","begimana","begini","begitu","begituan","bego","begog","begonia","begu","beguk","begundal","beha","behandel","behel","behena","behina","bei","beijing","bej","bejana","bejat","beje","bejege","bejermang","bejibun","bejo","bek","beka","bekadu","bekakak","bekakas","bekal","bekam","bekang","bekangdam","bekangin","bekantan","bekap","bekas","bekasam","bekasi","bekat","bekatul","bekekok","bekel","beken","beker","bekerja","bekicot","bekil","bekile","bekisar","bekkan","bekleding","bekles","beklit","bekmat","bekpal","beksan","beku","bekuan","bekuk","bekuku","bekukung","bel","bela","belabar","belabas","belacak","belacan","belacu","belada","beladau","beladu","belagu","belah","belahak","belahan","belahong","belai","belaian","belajar","belak","belaka","belakang","belakangan","belakin","belako","belalah","belalai","belalak","belalakan","belalang","belalau","belam","belambang","belan","belanak","belanda","belandang","belandar","belandong","belandung","belang","belanga","belangah","belanggur","belangir","belangiran","belangkas","belangkin","belangko","belangkon","belangun","belanja","belantai","belantan","belantara","belantik","belantika","belantuk","belar","belarak","belarusia","belas","belasah","belasan","belasting","belasut","belat","belata","belati","belatik","belatuk","belatung","belau","belavukan","belawa","belawan","belawing","beldu","bele","belebas","belebat","beled","beleda","beledang","belederu","beledi","beledu","belegong","beleid","belek","belekan","belekek","belekok","belel","belelang","beleleng","beleman","belembang","belencong","belender","belendong","belendrang","belendung","beleng","belenger","belenggu","belengguan","belengket","belengkok","belengkong","belengset","belenting","belentung","belepas","beler","belera","beleran","belerang","belerong","belesir","belete","beleter","belgia","beli","belia","beliak","belian","beliau","belibas","belibat","belibeh","belibis","belico","belida","beligat","beligo","beligu","belik","belikan","belikat","beliku","belimbeng","belimbing","belincong","beling","belingkang","belingsat","belingut","belinjo","belintang","belio","belis","belit","belitan","belitung","beliung","beliut","belize","belkih","belo","beloan","belobor","belodok","beloh","belok","belokan","belolang","belolok","belolong","belom","belon","belong","belonggok","belongkang","belongkeng","belongkot","belongsong","belontang","belontok","beloon","beloso","belot","belotong","belta","belu","beluam","beluan"];
+
+  function mulberry32(a){
+    return function(){
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function genSequence(seed, count){
+    const rand = mulberry32(seed >>> 0);
+    const seq = []; let prev = -1;
+    for(let i=0;i<count;i++){
+      let idx;
+      do { idx = Math.floor(rand()*WORDS.length); } while (idx === prev);
+      prev = idx;
+      seq.push(idx);
+    }
+    return seq;
+  }
+
+  // ===================================================================================
+  // 3) STATE
+  // ===================================================================================
+  let uid = null;
+  let myName = null;
+  let joined = false;
+  let inWaitingRoom = false;
+  let roomVal = null;
+  let serverOffset = 0;
+  let mySequence = [];
+  let myProgress = 0;
+  let myTypedChars = 0;
+  let myMistakes = 0;
+  let raceStartAtCache = null;
+  let lastLeaderTick = 0;
+
+  const roomRef = ref(db, 'larikata/room');
+  const waitingRoomRef = ref(db, 'larikata/waitingRoom');
+  const offsetRef = ref(db, '.info/serverTimeOffset');
+
+  onValue(offsetRef, (snap) => { serverOffset = snap.val() || 0; });
+  function nowServer(){ return Date.now() + serverOffset; }
+
+  // ===================================================================================
+  // 4) AUTH
+  // ===================================================================================
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      uid = user.uid;
+      document.getElementById('app').classList.remove('hidden');
+    }
+  });
+  signInAnonymously(auth).catch((err) => {
+    alert('Gagal masuk secara anonim ke Firebase. Cek apakah Anonymous Authentication sudah diaktifkan di Firebase Console.\n\n' + err.message);
+  });
+
+  // ===================================================================================
+  // 5) JOIN FLOW
+  // ===================================================================================
+  document.getElementById('nameForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const val = document.getElementById('nameInput').value.trim();
+    if (!val) return;
+    myName = val.slice(0, 18);
+    await joinRoom();
+  });
+
+  async function joinRoom(){
+    const btn = document.querySelector('#nameForm button');
+    btn.disabled = true;
+    try{
+      const result = await runTransaction(roomRef, (room) => {
+        if (!room) room = { status: 'idle', players: {} };
+        if (!room.players) room.players = {};
+        const count = Object.keys(room.players).length;
+        if (room.status === 'racing' || room.status === 'finished' || count >= MAX_PLAYERS) {
+          return room; // tidak diubah -> nanti dicek di luar, masuk waiting room
+        }
+        room.players[uid] = { name: myName, p: 0, wpm: 0, finished: false, joinedAt: Date.now() };
+        if (room.status === 'idle' || !room.status) {
+          room.status = 'countdown';
+          room.seed = Math.floor(Math.random() * 1e9);
+          room.startAt = Date.now() + LOBBY_COUNTDOWN_MS;
+        }
+        return room;
+      });
+      const val = result.snapshot.val();
+      if (val && val.players && val.players[uid]) {
+        joined = true;
+        onDisconnect(ref(db, 'larikata/room/players/' + uid)).remove();
+      } else {
+        await set(ref(db, 'larikata/waitingRoom/' + uid), { name: myName, joinedAt: Date.now() });
+        inWaitingRoom = true;
+        onDisconnect(ref(db, 'larikata/waitingRoom/' + uid)).remove();
+      }
+      document.getElementById('nameScreen').classList.add('hidden');
+      document.getElementById('gameScreen').classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // ===================================================================================
+  // 6) ROOM LISTENER + RENDER
+  // ===================================================================================
+  onValue(roomRef, (snap) => {
+    roomVal = snap.val() || { status: 'idle', players: {} };
+    render();
+  });
+
+  onValue(waitingRoomRef, (snap) => {
+    const w = snap.val() || {};
+    if (inWaitingRoom && uid) {
+      const ids = Object.entries(w).sort((a,b)=> (a[1].joinedAt||0) - (b[1].joinedAt||0)).map(e=>e[0]);
+      const pos = ids.indexOf(uid);
+      document.getElementById('waitingPos').textContent = pos >= 0 ? ('posisi ' + (pos+1)) : '…';
+    }
+  });
+
+  function render(){
+    if (!roomVal) return;
+    const players = roomVal.players || {};
+    const playerIds = Object.keys(players);
+    const status = roomVal.status || 'idle';
+
+    document.getElementById('countsBox').innerHTML =
+      '<b>' + playerIds.length + '</b>/' + MAX_PLAYERS + ' di lintasan';
+
+    const pill = document.getElementById('statusPill');
+    pill.className = 'status-pill ' + status;
+    const labelMap = { idle:'menunggu pemain', countdown:'bersiap-siap', racing:'lomba berlangsung', finished:'hasil lomba' };
+    document.getElementById('statusLabel').textContent = labelMap[status] || status;
+
+    // am I in the current race?
+    const amRacing = uid && players[uid];
+    if (amRacing) inWaitingRoom = false;
+    document.getElementById('waitingNotice').classList.toggle('hidden', !(inWaitingRoom && status === 'racing'));
+
+    // banners
+    document.getElementById('idleBanner').classList.toggle('hidden', status !== 'idle');
+    document.getElementById('countdownBanner').classList.toggle('hidden', status !== 'countdown');
+    document.getElementById('resultsBox').classList.toggle('hidden', status !== 'finished');
+    const showTrack = (status === 'racing' || status === 'countdown') ;
+    document.getElementById('track').classList.toggle('hidden', !showTrack || playerIds.length===0);
+    document.getElementById('emptyTrack').classList.toggle('hidden', !(showTrack && playerIds.length===0));
+
+    if (status === 'countdown') {
+      const remain = Math.max(0, Math.ceil((roomVal.startAt - nowServer())/1000));
+      document.getElementById('countdownNum').textContent = remain;
+    }
+
+    // typing panel visibility
+    const showTyping = status === 'racing' && amRacing;
+    document.getElementById('typingCard').classList.toggle('hidden', !showTyping);
+    if (showTyping) ensureTypingReady();
+
+    // race track lanes
+    if (showTrack && playerIds.length){
+      const sorted = playerIds.slice().sort((a,b)=> (players[b].p||0) - (players[a].p||0));
+      const trackEl = document.getElementById('track');
+      trackEl.innerHTML = sorted.map((id, i) => {
+        const p = players[id];
+        const pct = Math.min(100, Math.round(((p.p||0)/WORDS_PER_RACE)*100));
+        const isMe = id === uid;
+        const finishedCls = p.finished ? ' finished' : '';
+        const flag = p.wpm > SUSPICIOUS_WPM ? '<span class="flag" title="Kecepatan tidak wajar">⚑</span>' : '';
+        return '<div class="lane' + (isMe?' me':'') + finishedCls + '">' +
+          '<div class="lane-fill" style="width:' + pct + '%"></div>' +
+          '<div class="lane-content">' +
+            '<span class="lane-name"><span class="rank">#'+(i+1)+'</span>' + escapeHtml(p.name || '?') + (isMe?' (kamu)':'') + flag + '</span>' +
+            '<span class="lane-stats"><b>' + pct + '%</b><span>' + (p.wpm||0) + ' wpm</span></span>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    // results
+    if (status === 'finished'){
+      const sorted = playerIds.slice().sort((a,b)=>{
+        const pa = players[a], pb = players[b];
+        if ((pb.p||0) !== (pa.p||0)) return (pb.p||0)-(pa.p||0);
+        return (pb.wpm||0)-(pa.wpm||0);
+      });
+      const medals = ['🥇','🥈','🥉'];
+      document.getElementById('resultsList').innerHTML = sorted.map((id,i)=>{
+        const p = players[id];
+        return '<div class="result-row' + (id===uid?' me':'') + '">' +
+          '<span class="medal">' + (medals[i] || ('#'+(i+1))) + '</span>' +
+          '<span class="rname">' + escapeHtml(p.name||'?') + (id===uid?' (kamu)':'') + '</span>' +
+          '<span class="rwpm">' + Math.round(((p.p||0)/WORDS_PER_RACE)*100) + '% &middot; ' + (p.wpm||0) + ' wpm</span>' +
+        '</div>';
+      }).join('');
+      const remain = Math.max(0, Math.ceil((RESULTS_DISPLAY_MS - (nowServer() - (roomVal.finishedAt||nowServer())))/1000));
+      document.getElementById('resultsCountdown').textContent = remain;
+    }
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // ===================================================================================
+  // 7) TYPING LOGIC
+  // ===================================================================================
+  let typingReady = false;
+  function ensureTypingReady(){
+    if (typingReady) return;
+    typingReady = true;
+    mySequence = genSequence(roomVal.seed || 0, WORDS_PER_RACE);
+    myProgress = 0;
+    myTypedChars = 0;
+    myMistakes = 0;
+    renderWordStrip();
+  }
+
+  function renderWordStrip(){
+    const el = document.getElementById('wordStrip');
+    const start = Math.max(0, myProgress - 3);
+    const end = Math.min(mySequence.length, myProgress + 8);
+    let html = '';
+    for (let i = start; i < end; i++){
+      const w = WORDS[mySequence[i]];
+      let cls = 'w';
+      if (i < myProgress) cls += ' done';
+      else if (i === myProgress) cls += ' current';
+      html += '<span class="' + cls + '">' + escapeHtml(w) + '</span>';
+    }
+    el.innerHTML = html;
+    document.getElementById('myProgress').textContent = myProgress + '/' + WORDS_PER_RACE;
+  }
+
+  const typeInput = document.getElementById('typeInput');
+  typeInput.addEventListener('input', () => {
+    if (!roomVal || roomVal.status !== 'racing') return;
+    const raw = typeInput.value;
+    if (raw.endsWith(' ')) {
+      const attempt = raw.trim();
+      const target = WORDS[mySequence[myProgress]];
+      if (attempt === target) {
+        myProgress++;
+        myTypedChars += target.length + 1;
+        typeInput.value = '';
+        typeInput.classList.remove('bad');
+        renderWordStrip();
+        pushProgress();
+        if (myProgress >= WORDS_PER_RACE) {
+          finishRace();
+        }
+      } else if (attempt.length > 0) {
+        myMistakes++;
+        typeInput.value = '';
+        typeInput.classList.add('bad');
+        setTimeout(()=>typeInput.classList.remove('bad'), 180);
+        updateAccuracy();
+      }
+    }
+  });
+
+  function updateAccuracy(){
+    const attempts = myProgress + myMistakes;
+    const acc = attempts > 0 ? Math.round((myProgress/attempts)*100) : 100;
+    document.getElementById('myAccuracy').textContent = acc + '%';
+  }
+
+  function currentWpm(){
+    const raceStartAt = roomVal && roomVal.raceStartAt;
+    if (!raceStartAt) return 0;
+    const elapsedMin = Math.max(0.05, (nowServer() - raceStartAt) / 60000);
+    return Math.round((myTypedChars / 5) / elapsedMin);
+  }
+
+  let lastPushAt = 0;
+  function pushProgress(){
+    const wpm = currentWpm();
+    document.getElementById('myWpm').textContent = wpm;
+    updateAccuracy();
+    const suspicious = wpm > SUSPICIOUS_WPM;
+    update(ref(db, 'larikata/room/players/' + uid), {
+      p: myProgress,
+      wpm: wpm,
+      finished: myProgress >= WORDS_PER_RACE,
+      suspicious: suspicious
+    });
+  }
+
+  function finishRace(){
+    typeInput.disabled = true;
+    typeInput.placeholder = 'Selesai! Menunggu pemain lain…';
+    update(ref(db, 'larikata/room/players/' + uid), {
+      p: myProgress, wpm: currentWpm(), finished: true, finishedAt: Date.now()
+    });
+  }
+
+  // reset local typing state whenever a brand new race begins (seed changes)
+  let lastSeenSeed = null;
+  onValue(roomRef, (snap) => {
+    const v = snap.val();
+    if (!v) return;
+    if (v.status === 'countdown' && v.seed !== lastSeenSeed) {
+      lastSeenSeed = v.seed;
+      typingReady = false;
+      typeInput.disabled = false;
+      typeInput.value = '';
+      typeInput.placeholder = 'Ketik kata yang di-highlight, lalu tekan spasi…';
+      document.getElementById('myWpm').textContent = '0';
+      document.getElementById('myAccuracy').textContent = '100%';
+    }
+  });
+
+  // ===================================================================================
+  // 8) CLIENT-LEADER ELECTION — semua klien yang terbuka ikut "piket" menjaga state room
+  //    berjalan maju (mulai countdown->racing, racing->finished, lalu reset + promosi
+  //    ruang tunggu). Firebase transaction menjamin hanya satu yang berhasil eksekusi.
+  // ===================================================================================
+  setInterval(async () => {
+    if (!roomVal) return;
+    const now = nowServer();
+    const status = roomVal.status;
+
+    if (status === 'countdown' && roomVal.startAt && now >= roomVal.startAt) {
+      await runTransaction(roomRef, (room) => {
+        if (room && room.status === 'countdown') {
+          room.status = 'racing';
+          room.raceStartAt = Date.now();
+        }
+        return room;
+      });
+      return;
+    }
+
+    if (status === 'racing') {
+      const players = roomVal.players || {};
+      const ids = Object.keys(players);
+      const allFinished = ids.length > 0 && ids.every(id => players[id].finished);
+      const timedOut = roomVal.raceStartAt && (now - roomVal.raceStartAt > RACE_TIMEOUT_MS);
+      if (allFinished || timedOut) {
+        await runTransaction(roomRef, (room) => {
+          if (room && room.status === 'racing') {
+            room.status = 'finished';
+            room.finishedAt = Date.now();
+          }
+          return room;
+        });
+      }
+      return;
+    }
+
+    if (status === 'finished' && roomVal.finishedAt && (now - roomVal.finishedAt > RESULTS_DISPLAY_MS)) {
+      await promoteWaitingRoom();
+      return;
+    }
+  }, 500);
+
+  async function promoteWaitingRoom(){
+    const wSnap = await get(waitingRoomRef);
+    const waiting = wSnap.val() || {};
+    const entries = Object.entries(waiting).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0));
+    const promoted = entries.slice(0, MAX_PLAYERS);
+    const stayWaiting = entries.slice(MAX_PLAYERS);
+
+    const newPlayers = {};
+    promoted.forEach(([id, data]) => {
+      newPlayers[id] = { name: data.name, p: 0, wpm: 0, finished: false, joinedAt: data.joinedAt };
+    });
+
+    await runTransaction(roomRef, (room) => {
+      if (!room || room.status !== 'finished') return room; // sudah dihandle klien lain
+      if (promoted.length > 0) {
+        return {
+          status: 'countdown',
+          seed: Math.floor(Math.random() * 1e9),
+          startAt: Date.now() + LOBBY_COUNTDOWN_MS,
+          players: newPlayers
+        };
+      }
+      return { status: 'idle', players: {} };
+    });
+
+    const remainingObj = {};
+    stayWaiting.forEach(([id, data]) => { remainingObj[id] = data; });
+    await set(waitingRoomRef, remainingObj);
+  }
+
+  // tick every 400ms for smooth countdown/local re-render even without new snapshots
+  setInterval(render, 400);
+}
+</script>
+</body>
+</html>
