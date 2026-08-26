@@ -3,96 +3,334 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Race Typing SD - Multiplayer</title>
+  <title>Race Typing SD - Balap Ketik Multiplayer</title>
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f0f2f5;
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --correct: #16a34a;
+      --incorrect: #dc2626;
+      --current: #eab308;
+    }
+
+    * {
+      box-sizing: border-box;
       margin: 0;
-      padding: 20px;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
       display: flex;
-      flex-direction: column;
+      justify-content: center;
       align-items: center;
+      padding: 20px;
     }
+
     .container {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      max-width: 800px;
+      background: var(--card-bg);
       width: 100%;
+      max-width: 850px;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
     }
-    h1 { text-align: center; color: #333; }
-    .btn {
-      background-color: #4CAF50;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 16px;
-      margin: 5px;
+
+    header {
+      text-align: center;
+      margin-bottom: 25px;
     }
-    .btn:hover { background-color: #45a049; }
-    .input-group {
-      margin: 15px 0;
+
+    header h1 {
+      font-size: 2rem;
+      color: var(--primary);
       display: flex;
+      align-items: center;
+      justify-content: center;
       gap: 10px;
     }
-    input[type="text"] {
-      flex: 1;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 16px;
+
+    header p {
+      color: #64748b;
+      font-size: 0.95rem;
+      margin-top: 5px;
     }
-    #word-display {
-      font-size: 24px;
-      font-weight: bold;
-      letter-spacing: 2px;
-      margin: 20px 0;
-      padding: 15px;
-      background: #e9ecef;
-      border-radius: 6px;
+
+    .card {
+      background: #f1f5f9;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    .input-group {
+      margin-bottom: 15px;
+    }
+
+    .input-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--primary);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      flex: 1;
+      min-width: 140px;
+      padding: 12px 20px;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
       text-align: center;
     }
-    .status-box {
-      margin-top: 15px;
-      padding: 10px;
-      background: #e7f3fe;
-      border-left: 6px solid #2196F3;
+
+    .btn:hover { background-color: var(--primary-hover); }
+    .btn:active { transform: scale(0.98); }
+    .btn-secondary { background-color: #64748b; }
+    .btn-secondary:hover { background-color: #475569; }
+    .btn-success { background-color: #16a34a; }
+    .btn-success:hover { background-color: #15803d; }
+    .btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
+
+    /* Track / Players Progress */
+    .race-track {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 20px 0;
     }
+
+    .player-lane {
+      background: white;
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .player-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .progress-bar-bg {
+      height: 14px;
+      background: #e2e8f0;
+      border-radius: 7px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #6366f1, #a855f7);
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: 7px;
+    }
+
+    /* Typing Area */
+    .typing-box {
+      background: #ffffff;
+      border: 2px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 20px;
+      margin: 20px 0;
+      font-size: 1.25rem;
+      line-height: 1.8;
+      letter-spacing: 1px;
+      user-select: none;
+      word-wrap: break-word;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .char-correct { color: var(--correct); background-color: #dcfce7; }
+    .char-incorrect { color: var(--incorrect); background-color: #fee2e2; text-decoration: underline; }
+    .char-current { background-color: #fef08a; border-bottom: 2px solid var(--current); }
+
+    .stats-bar {
+      display: flex;
+      justify-content: space-around;
+      background: #f8fafc;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .stats-item span {
+      color: var(--primary);
+      font-size: 1.1rem;
+    }
+
+    /* Status Badges */
+    .room-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #e0e7ff;
+      padding: 12px 18px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+
+    .badge {
+      background: var(--primary);
+      color: white;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    /* Results */
+    .winner-modal {
+      text-align: center;
+      padding: 20px;
+    }
+
+    .winner-title {
+      font-size: 1.8rem;
+      color: #16a34a;
+      margin-bottom: 10px;
+    }
+
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <h1>🏎️ Balap Ketik SD (Multiplayer)</h1>
-    
-    <div id="setup-area">
+    <header>
+      <h1>🏎️ Race Typing SD</h1>
+      <p>Aplikasi Latihan Ketik Cepat & Multiplayer untuk Siswa SD</p>
+    </header>
+
+    <!-- 1. SETUP / MENU LOBBY AREA -->
+    <div id="setup-view" class="card">
       <div class="input-group">
-        <input type="text" id="player-name" placeholder="Masukkan Nama Anda...">
+        <label for="player-name">Nama Pemain:</label>
+        <input type="text" id="player-name" placeholder="Masukkan nama Anda (contoh: Budi)" maxlength="15">
       </div>
-      <button class="btn" id="btn-create">Buat Room Balapan Baru</button>
-      
+
+      <div class="btn-group">
+        <button class="btn" id="btn-create-room">Buat Room Baru</button>
+      </div>
+
+      <hr style="margin: 20px 0; border: 0; border-top: 1px solid #cbd5e1;">
+
       <div class="input-group">
-        <input type="text" id="room-code-input" placeholder="Masukkan Kode Room...">
-        <button class="btn" id="btn-join">Gabung Room</button>
+        <label for="room-code-input">Atau Masukkan Kode Room:</label>
+        <input type="text" id="room-code-input" placeholder="Contoh: AB12CD" style="text-transform: uppercase;">
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-secondary" id="btn-join-room">Gabung Room</button>
       </div>
     </div>
 
-    <div id="game-area" style="display: none;">
-      <div class="status-box">
-        <strong>Kode Room:</strong> <span id="current-room-code">-</span> | 
-        <strong>Pemain:</strong> <span id="player-list-count">0</span>
+    <!-- 2. ROOM LOBBY AREA -->
+    <div id="lobby-view" class="hidden">
+      <div class="room-header">
+        <div>
+          <strong>Kode Room:</strong> 
+          <span id="display-room-code" style="font-size: 1.2rem; color: var(--primary); font-weight: bold;">-</span>
+        </div>
+        <span class="badge" id="player-count-badge">1 Pemain</span>
       </div>
 
-      <div id="word-display">Menunggu Permainan Dimulai...</div>
+      <h3>Daftar Pemain di Room:</h3>
+      <div class="race-track" id="lobby-player-list">
+        <!-- List pemain di lobby akan dirender di sini -->
+      </div>
 
-      <div class="input-group">
-        <input type="text" id="typing-input" placeholder="Ketik kata di atas di sini..." disabled>
+      <div class="btn-group" style="margin-top: 20px;">
+        <button class="btn btn-success hidden" id="btn-start-game">Mulai Balapan! 🚀</button>
+        <button class="btn btn-secondary" id="btn-leave-room">Keluar Room</button>
       </div>
     </div>
+
+    <!-- 3. GAMEPLAY AREA -->
+    <div id="game-view" class="hidden">
+      <div class="room-header">
+        <span>Status: <strong id="game-status-text">Balapan Dimulai!</strong></span>
+        <span class="badge" id="game-room-code">-</span>
+      </div>
+
+      <!-- Race Track (Realtime Progress All Players) -->
+      <div class="race-track" id="game-race-track">
+        <!-- Bar balapan antar pemain -->
+      </div>
+
+      <!-- Live Typing Statistics -->
+      <div class="stats-bar">
+        <div class="stats-item">WPM: <span id="stat-wpm">0</span></div>
+        <div class="stats-item">Akurasi: <span id="stat-accuracy">100%</span></div>
+        <div class="stats-item">Kemajuan: <span id="stat-progress">0%</span></div>
+      </div>
+
+      <!-- Target Text View -->
+      <div class="typing-box" id="typing-text-display">
+        Menyiapkan kata-kata...
+      </div>
+
+      <!-- Input Area -->
+      <div class="input-group">
+        <input type="text" id="typing-input" placeholder="Mulai mengetik di sini..." autocomplete="off" disabled>
+      </div>
+    </div>
+
+    <!-- 4. RESULT AREA -->
+    <div id="result-view" class="card hidden winner-modal">
+      <h2 class="winner-title">🎉 Balapan Selesai! 🎉</h2>
+      <p style="font-size: 1.1rem; margin-bottom: 15px;">
+        Pemenang: <strong id="winner-name" style="color: var(--primary);">-</strong>
+      </p>
+
+      <div class="race-track" id="result-leaderboard">
+        <!-- Klasemen Akhir -->
+      </div>
+
+      <div class="btn-group" style="margin-top: 20px;">
+        <button class="btn" id="btn-back-to-lobby">Kembali ke Lobby</button>
+      </div>
+    </div>
+
   </div>
 
   <!-- FIREBASE MODULE SCRIPT -->
@@ -109,11 +347,11 @@
       getDoc, 
       setDoc, 
       updateDoc, 
-      onSnapshot, 
-      collection 
+      onSnapshot,
+      deleteField
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // 1. Konfigurasi Firebase Anda
+    // 1. Konfigurasi Firebase Project
     const firebaseConfig = {
       apiKey: "AIzaSyDG5RbMgAJLQgRfRTgM6ODqdexDhKc46nA",
       authDomain: "racetyping-e526b.firebaseapp.com",
@@ -124,46 +362,83 @@
       appId: "1:160664386176:web:6ecc3372ab0980eb544465"
     };
 
-    // 2. Inisialisasi Firebase & Services secara eksplisit
+    // 2. Inisialisasi Firebase Services
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
 
+    // Game Variables & State
     let currentUser = null;
+    let currentRoomCode = null;
+    let roomUnsubscribe = null;
+    let isHost = false;
+    let targetText = "";
+    let startTime = null;
+    let totalTypedChars = 0;
+    let correctTypedChars = 0;
 
-    // Login Anonim Otomatis
-    signInAnonymously(auth).catch((error) => {
-      console.error("Gagal melakukan Login Anonim:", error);
-    });
+    // Bank Kalimat Bahasa Indonesia untuk Level Sekolah Dasar (SD)
+    const SD_TEXT_BANKS = [
+      "Kucing adalah hewan peliharaan yang sangat lucu dan suka bermain bola benang.",
+      "Setiap pagi saya pergi ke sekolah bersama teman-teman dengan penuh semangat.",
+      "Pancasila adalah dasar negara Indonesia yang wajib kita hormati dan amalkan.",
+      "Membaca buku di perpustakaan dapat menambah ilmu pengetahuan dan wawasan kita.",
+      "Menjaga kebersihan lingkungan sekolah adalah tugas bersama seluruh murid dan guru.",
+      "Olahraga secara teratur membuat tubuh kita menjadi sehat, kuat, dan terhindar dari penyakit.",
+      "Bendera Merah Putih berkibar dengan gagah di halaman sekolah pada hari Senin."
+    ];
 
-    onAuthStateChanged(auth, (user) => {
+    // DOM Elements
+    const setupView = document.getElementById('setup-view');
+    const lobbyView = document.getElementById('lobby-view');
+    const gameView = document.getElementById('game-view');
+    const resultView = document.getElementById('result-view');
+
+    const inputName = document.getElementById('player-name');
+    const inputRoomCode = document.getElementById('room-code-input');
+    const btnCreateRoom = document.getElementById('btn-create-room');
+    const btnJoinRoom = document.getElementById('btn-join-room');
+    const btnStartGame = document.getElementById('btn-start-game');
+    const btnLeaveRoom = document.getElementById('btn-leave-room');
+    const btnBackToLobby = document.getElementById('btn-back-to-lobby');
+
+    const displayRoomCode = document.getElementById('display-room-code');
+    const playerCountBadge = document.getElementById('player-count-badge');
+    const lobbyPlayerList = document.getElementById('lobby-player-list');
+
+    const gameRoomCode = document.getElementById('game-room-code');
+    const gameRaceTrack = document.getElementById('game-race-track');
+    const typingTextDisplay = document.getElementById('typing-text-display');
+    const typingInput = document.getElementById('typing-input');
+
+    const statWpm = document.getElementById('stat-wpm');
+    const statAccuracy = document.getElementById('stat-accuracy');
+    const statProgress = document.getElementById('stat-progress');
+
+    // Autentikasi Anonim
+    signInAnonymously(auth).catch(err => console.error("Auth Error:", err));
+    onAuthStateChanged(auth, user => {
       if (user) {
         currentUser = user;
-        console.log("Terautentikasi dengan UID:", user.uid);
+        console.log("Logged in as:", user.uid);
       }
     });
 
-    // Daftar Kata SD
-    const SD_WORDS = [
-      "kucing", "sekolah", "pelangi", "membaca", "sepeda", "bintang", "makanan", "pohon", "sahabat",
-      "matahari", "pensil", "kebersihan", "lingkungan", "olahraga", "kesehatan", "keluarga", "indonesia",
-      "pancasila", "bendera", "garuda", "guru", "murid", "perpustakaan", "pengetahuan", "seragam"
-    ];
+    // Helper Fungsi Tampilan Screen
+    function showScreen(screen) {
+      setupView.classList.add('hidden');
+      lobbyView.classList.add('hidden');
+      gameView.classList.add('hidden');
+      resultView.classList.add('hidden');
 
-    // Elemen UI
-    const btnCreate = document.getElementById('btn-create');
-    const btnJoin = document.getElementById('btn-join');
-    const inputName = document.getElementById('player-name');
-    const inputRoomCode = document.getElementById('room-code-input');
-    const setupArea = document.getElementById('setup-area');
-    const gameArea = document.getElementById('game-area');
-    const currentRoomCodeEl = document.getElementById('current-room-code');
+      screen.classList.remove('hidden');
+    }
 
-    // Fungsi Membuat Room
-    btnCreate.addEventListener('click', async () => {
+    // 1. BUAT ROOM
+    btnCreateRoom.addEventListener('click', async () => {
       const name = inputName.value.trim();
-      if (!name) return alert("Harap masukkan nama Anda terlebih dahulu!");
-      if (!currentUser) return alert("Sedang menghubungkan ke server, coba lagi dalam beberapa detik.");
+      if (!name) return alert("Silakan masukkan nama Anda!");
+      if (!currentUser) return alert("Menghubungkan ke server... coba beberapa detik lagi.");
 
       const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
       const roomRef = doc(db, "rooms", roomCode);
@@ -171,67 +446,274 @@
       try {
         await setDoc(roomRef, {
           createdAt: new Date().toISOString(),
-          status: "waiting",
+          status: "waiting", // waiting, playing, finished
+          targetText: "",
+          winner: "",
           players: {
             [currentUser.uid]: {
               name: name,
               progress: 0,
-              isHost: true
+              wpm: 0,
+              isHost: true,
+              finished: false
             }
           }
         });
 
-        enterRoom(roomCode);
+        isHost = true;
+        listenToRoom(roomCode);
       } catch (err) {
-        console.error("Gagal membuat room:", err);
         alert("Gagal membuat room: " + err.message);
       }
     });
 
-    // Fungsi Bergabung ke Room
-    btnJoin.addEventListener('click', async () => {
+    // 2. GABUNG ROOM
+    btnJoinRoom.addEventListener('click', async () => {
       const name = inputName.value.trim();
       const code = inputRoomCode.value.trim().toUpperCase();
-      if (!name) return alert("Harap masukkan nama Anda!");
-      if (!code) return alert("Harap masukkan kode room!");
-      if (!currentUser) return alert("Sedang menghubungkan ke server, coba lagi beberapa detik lagi.");
+
+      if (!name) return alert("Silakan masukkan nama Anda!");
+      if (!code) return alert("Masukkan kode room!");
+      if (!currentUser) return alert("Menghubungkan ke server... coba beberapa detik lagi.");
 
       const roomRef = doc(db, "rooms", code);
       try {
-        const docSnap = await getDoc(roomRef);
-        if (!docSnap.exists()) {
-          return alert("Room tidak ditemukan!");
-        }
+        const snap = await getDoc(roomRef);
+        if (!snap.exists()) return alert("Room tidak ditemukan!");
+
+        const roomData = snap.data();
+        if (roomData.status !== "waiting") return alert("Permainan di room ini sudah berlangsung!");
 
         await updateDoc(roomRef, {
           [`players.${currentUser.uid}`]: {
             name: name,
             progress: 0,
-            isHost: false
+            wpm: 0,
+            isHost: false,
+            finished: false
           }
         });
 
-        enterRoom(code);
+        isHost = false;
+        listenToRoom(code);
       } catch (err) {
-        console.error("Gagal bergabung:", err);
-        alert("Gagal bergabung ke room: " + err.message);
+        alert("Gagal bergabung: " + err.message);
       }
     });
 
-    function enterRoom(code) {
-      setupArea.style.display = "none";
-      gameArea.style.display = "block";
-      currentRoomCodeEl.innerText = code;
+    // 3. LISTEN REALTIME DATA ROOM
+    function listenToRoom(code) {
+      currentRoomCode = code;
+      const roomRef = doc(db, "rooms", code);
 
-      // Listen perubahan data room secara realtime
-      onSnapshot(doc(db, "rooms", code), (snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.data();
-          const playerCount = Object.keys(data.players || {}).length;
-          document.getElementById('player-list-count').innerText = playerCount;
+      if (roomUnsubscribe) roomUnsubscribe();
+
+      roomUnsubscribe = onSnapshot(roomRef, (snapshot) => {
+        if (!snapshot.exists()) {
+          alert("Room telah ditutup!");
+          leaveRoomLocal();
+          return;
+        }
+
+        const roomData = snapshot.data();
+        const players = roomData.players || {};
+        const playerKeys = Object.keys(players);
+
+        // Update Host status
+        if (players[currentUser.uid]) {
+          isHost = players[currentUser.uid].isHost || false;
+        }
+
+        // --- STATUS: WAITING (LOBBY) ---
+        if (roomData.status === "waiting") {
+          showScreen(lobbyView);
+          displayRoomCode.innerText = code;
+          playerCountBadge.innerText = `${playerKeys.length} Pemain`;
+
+          // Render player list
+          lobbyPlayerList.innerHTML = playerKeys.map(uid => `
+            <div class="player-lane">
+              <div class="player-info">
+                <span>${players[uid].name} ${players[uid].isHost ? '👑 (Host)' : ''}</span>
+                <span>${uid === currentUser.uid ? '(Anda)' : ''}</span>
+              </div>
+            </div>
+          `).join('');
+
+          if (isHost) {
+            btnStartGame.classList.remove('hidden');
+          } else {
+            btnStartGame.classList.add('hidden');
+          }
+        }
+
+        // --- STATUS: PLAYING (BERLANGSUNG) ---
+        else if (roomData.status === "playing") {
+          if (gameView.classList.contains('hidden')) {
+            showScreen(gameView);
+            gameRoomCode.innerText = code;
+            targetText = roomData.targetText;
+            renderTypingDisplay("");
+            typingInput.value = "";
+            typingInput.disabled = false;
+            typingInput.focus();
+            startTime = new Date();
+          }
+
+          // Update Progress Track Seluruh Pemain Realtime
+          gameRaceTrack.innerHTML = playerKeys.map(uid => {
+            const p = players[uid];
+            return `
+              <div class="player-lane">
+                <div class="player-info">
+                  <span>${p.name} ${uid === currentUser.uid ? '(Anda)' : ''}</span>
+                  <span>${p.wpm || 0} WPM | ${p.progress || 0}%</span>
+                </div>
+                <div class="progress-bar-bg">
+                  <div class="progress-bar-fill" style="width: ${p.progress || 0}%;"></div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+
+        // --- STATUS: FINISHED (SELESAI) ---
+        else if (roomData.status === "finished") {
+          showScreen(resultView);
+          document.getElementById('winner-name').innerText = roomData.winner || "Tidak ada";
+
+          // Sort leaderboard berdasarkan progress / finish status
+          const sorted = playerKeys.map(uid => players[uid])
+            .sort((a, b) => b.progress - a.progress || b.wpm - a.wpm);
+
+          document.getElementById('result-leaderboard').innerHTML = sorted.map((p, idx) => `
+            <div class="player-lane">
+              <div class="player-info">
+                <span>#${idx + 1} ${p.name}</span>
+                <span>${p.wpm} WPM</span>
+              </div>
+            </div>
+          `).join('');
         }
       });
     }
+
+    // 4. MULAI GAME (HOST ONLY)
+    btnStartGame.addEventListener('click', async () => {
+      if (!isHost) return;
+      const randomText = SD_TEXT_BANKS[Math.floor(Math.random() * SD_TEXT_BANKS.length)];
+
+      const roomRef = doc(db, "rooms", currentRoomCode);
+      await updateDoc(roomRef, {
+        status: "playing",
+        targetText: randomText,
+        winner: ""
+      });
+    });
+
+    // 5. PENANGANAN KETIKAN PLAYER
+    typingInput.addEventListener('input', () => {
+      const typed = typingInput.value;
+      totalTypedChars++;
+
+      renderTypingDisplay(typed);
+
+      // Hitung Progress %
+      let correctChars = 0;
+      for (let i = 0; i < typed.length; i++) {
+        if (typed[i] === targetText[i]) correctChars++;
+      }
+
+      const progress = Math.min(100, Math.floor((correctChars / targetText.length) * 100));
+      
+      // Hitung WPM
+      const timeElapsedSec = (new Date() - startTime) / 1000;
+      const wordsTyped = correctChars / 5; // Standar 1 kata = 5 karakter
+      const wpm = timeElapsedSec > 0 ? Math.round((wordsTyped / timeElapsedSec) * 60) : 0;
+
+      // Hitung Akurasi
+      const accuracy = typed.length > 0 ? Math.round((correctChars / typed.length) * 100) : 100;
+
+      // Update UI Stats Lokal
+      statWpm.innerText = wpm;
+      statAccuracy.innerText = accuracy + "%";
+      statProgress.innerText = progress + "%";
+
+      // Kirim Progress ke Firestore Realtime
+      if (currentRoomCode && currentUser) {
+        const roomRef = doc(db, "rooms", currentRoomCode);
+        const updates = {
+          [`players.${currentUser.uid}.progress`]: progress,
+          [`players.${currentUser.uid}.wpm`]: wpm
+        };
+
+        // Jika selesai
+        if (typed === targetText) {
+          typingInput.disabled = true;
+          updates[`players.${currentUser.uid}.finished`] = true;
+          
+          // Cek jika pemenang pertama
+          getDoc(roomRef).then(snap => {
+            if (snap.exists() && snap.data().status === "playing") {
+              updateDoc(roomRef, {
+                ...updates,
+                status: "finished",
+                winner: currentUser ? snap.data().players[currentUser.uid].name : "Pemain"
+              });
+            }
+          });
+        } else {
+          updateDoc(roomRef, updates);
+        }
+      }
+    });
+
+    // Render Teks Warna Karakter (Hijau = Benar, Merah = Salah, Kuning = Kursor)
+    function renderTypingDisplay(typed) {
+      let html = "";
+      for (let i = 0; i < targetText.length; i++) {
+        const char = targetText[i];
+        if (i < typed.length) {
+          if (typed[i] === char) {
+            html += `<span class="char-correct">${char}</span>`;
+          } else {
+            html += `<span class="char-incorrect">${char}</span>`;
+          }
+        } else if (i === typed.length) {
+          html += `<span class="char-current">${char}</span>`;
+        } else {
+          html += `<span>${char}</span>`;
+        }
+      }
+      typingTextDisplay.innerHTML = html;
+    }
+
+    // 6. KELUAR ROOM / KEMBALI
+    function leaveRoomLocal() {
+      if (roomUnsubscribe) roomUnsubscribe();
+      currentRoomCode = null;
+      showScreen(setupView);
+    }
+
+    btnLeaveRoom.addEventListener('click', async () => {
+      if (currentRoomCode && currentUser) {
+        const roomRef = doc(db, "rooms", currentRoomCode);
+        await updateDoc(roomRef, {
+          [`players.${currentUser.uid}`]: deleteField()
+        });
+      }
+      leaveRoomLocal();
+    });
+
+    btnBackToLobby.addEventListener('click', async () => {
+      if (isHost && currentRoomCode) {
+        const roomRef = doc(db, "rooms", currentRoomCode);
+        await updateDoc(roomRef, { status: "waiting" });
+      } else {
+        leaveRoomLocal();
+      }
+    });
+
   </script>
 </body>
 </html>
