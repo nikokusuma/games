@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KBBI Typing Race - Multiplayer Online Room</title>
+    <title>kbbi typing race - multiplayer online room</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome -->
@@ -60,7 +60,7 @@
         .active-typing { animation: pulse-border 1.5s infinite; }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans min-h-screen bg-grid flex flex-col justify-between selection:bg-brand-500 selection:text-white">
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen bg-grid flex flex-col justify-between selection:bg-brand-500 selection:text-white lowercase">
 
     <!-- TOP NAVBAR -->
     <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-40">
@@ -70,10 +70,10 @@
                     <i class="fa-solid fa-keyboard"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-lg leading-tight tracking-wide bg-gradient-to-r from-white via-slate-200 to-brand-400 bg-clip-text text-transparent">
-                        BALAP KETIK KBBI
+                    <h1 class="font-bold text-lg leading-tight tracking-wide bg-gradient-to-r from-white via-slate-200 to-brand-400 bg-clip-text text-transparent lowercase">
+                        balap ketik kbbi
                     </h1>
-                    <p class="text-xs text-slate-400">Multiplayer Online Room &bull; Tingkat SMP</p>
+                    <p class="text-xs text-slate-400 lowercase">multiplayer online room &bull; tingkat sd (max 30 pemain)</p>
                 </div>
             </div>
 
@@ -81,8 +81,8 @@
             <div class="flex items-center gap-2 sm:gap-3">
                 <!-- Room Code Display -->
                 <div id="room-code-badge" class="hidden sm:flex items-center gap-2 bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-mono">
-                    <span class="text-slate-400">ROOM:</span>
-                    <span id="display-room-code" class="font-bold text-neon-cyan select-all">OFFLINE</span>
+                    <span class="text-slate-400 lowercase">room:</span>
+                    <span id="display-room-code" class="font-bold text-neon-cyan select-all lowercase">offline</span>
                     <button id="btn-copy-room" class="hover:text-brand-400 transition" title="Salin Kode Room">
                         <i class="fa-regular fa-copy"></i>
                     </button>
@@ -90,7 +90,7 @@
 
                 <div class="flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/60 text-xs">
                     <span id="connection-dot" class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
-                    <span id="player-count-badge" class="font-semibold text-slate-300">Pemain: 1</span>
+                    <span id="player-count-badge" class="font-semibold text-slate-300 lowercase">pemain: 1/30</span>
                 </div>
 
                 <!-- Live Session Timer Display -->
@@ -115,11 +115,11 @@
         <!-- VIEW 1: MODE SELECTOR & ROOM CREATION -->
         <section id="view-room-selection" class="max-w-2xl mx-auto w-full my-auto space-y-6">
             <div class="text-center space-y-2">
-                <span class="px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-bold tracking-widest uppercase">
-                    Edisi Bahasa Indonesia (SMP)
+                <span class="px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-bold tracking-widest lowercase">
+                    edisi bahasa indonesia (sd)
                 </span>
-                <h2 class="text-3xl sm:text-4xl font-black text-white tracking-wide">PILIH MODE PERMAINAN</h2>
-                <p class="text-xs sm:text-sm text-slate-400">Buat room multiplayer online untuk bertanding bersama teman, atau gabung ke room yang sudah ada.</p>
+                <h2 class="text-3xl sm:text-4xl font-black text-white tracking-wide lowercase">pilih mode permainan</h2>
+                <p class="text-xs sm:text-sm text-slate-400 lowercase">buat room multiplayer online untuk bertanding bersama teman hingga 30 orang, atau gabung ke room yang sudah ada.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -129,11 +129,11 @@
                         <div class="w-12 h-12 rounded-xl bg-brand-500/20 text-brand-400 flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition">
                             <i class="fa-solid fa-plus-circle"></i>
                         </div>
-                        <h3 class="text-lg font-bold text-white">Buat Room Online</h3>
-                        <p class="text-xs text-slate-400 mt-1">Jadilah Host, undang teman menggunakan Kode Room, dan atur durasi balapan.</p>
+                        <h3 class="text-lg font-bold text-white lowercase">buat room online</h3>
+                        <p class="text-xs text-slate-400 mt-1 lowercase">jadilah host, undang teman menggunakan kode room, dan atur durasi balapan.</p>
                     </div>
-                    <button id="btn-create-room" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3 rounded-xl transition text-sm flex items-center justify-center gap-2 shadow-lg shadow-brand-500/20">
-                        <i class="fa-solid fa-house-medical"></i> Buat Room Baru
+                    <button id="btn-create-room" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3 rounded-xl transition text-sm flex items-center justify-center gap-2 shadow-lg shadow-brand-500/20 lowercase">
+                        <i class="fa-solid fa-house-medical"></i> buat room baru
                     </button>
                 </div>
 
@@ -143,13 +143,13 @@
                         <div class="w-12 h-12 rounded-xl bg-neon-cyan/20 text-neon-cyan flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition">
                             <i class="fa-solid fa-right-to-bracket"></i>
                         </div>
-                        <h3 class="text-lg font-bold text-white">Gabung Room</h3>
-                        <p class="text-xs text-slate-400 mt-1">Masukkan Kode Room dari teman Anda untuk langsung masuk ke arena balap.</p>
+                        <h3 class="text-lg font-bold text-white lowercase">gabung room</h3>
+                        <p class="text-xs text-slate-400 mt-1 lowercase">masukkan kode room dari teman anda untuk langsung masuk ke arena balap.</p>
                     </div>
                     <div class="space-y-2">
-                        <input type="text" id="input-join-code" placeholder="Contoh: KBBI-1234" uppercase maxlength="9" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-sm font-mono text-center text-neon-cyan focus:border-neon-cyan outline-none tracking-wider">
-                        <button id="btn-join-room" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2 border border-slate-700">
-                            <i class="fa-solid fa-gamepad"></i> Gabung Room
+                        <input type="text" id="input-join-code" placeholder="contoh: kbbi-1234" maxlength="9" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-sm font-mono text-center text-neon-cyan focus:border-neon-cyan outline-none tracking-wider lowercase">
+                        <button id="btn-join-room" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2 border border-slate-700 lowercase">
+                            <i class="fa-solid fa-gamepad"></i> gabung room
                         </button>
                     </div>
                 </div>
@@ -157,8 +157,8 @@
 
             <!-- Quick Practice / Offline Mode -->
             <div class="text-center pt-2">
-                <button id="btn-solo-practice" class="text-xs font-semibold text-slate-400 hover:text-brand-400 transition underline underline-offset-4">
-                    <i class="fa-solid fa-robot mr-1"></i> Main Solo / Latihan Lawan Bot AI
+                <button id="btn-solo-practice" class="text-xs font-semibold text-slate-400 hover:text-brand-400 transition underline underline-offset-4 lowercase">
+                    <i class="fa-solid fa-robot mr-1"></i> main solo / latihan lawan bot ai
                 </button>
             </div>
         </section>
@@ -168,18 +168,18 @@
             <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-6">
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
                     <div>
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Lobby Balapan</span>
-                        <h2 class="text-2xl font-black text-white flex items-center gap-2">
-                            ROOM <span id="lobby-room-code" class="text-neon-cyan font-mono select-all">KBBI-0000</span>
+                        <span class="text-xs font-bold text-slate-400 lowercase tracking-wider">lobby balapan</span>
+                        <h2 class="text-2xl font-black text-white flex items-center gap-2 lowercase">
+                            room <span id="lobby-room-code" class="text-neon-cyan font-mono select-all lowercase">kbbi-0000</span>
                         </h2>
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <button id="btn-share-room" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition flex items-center gap-2">
-                            <i class="fa-solid fa-share-nodes text-brand-400"></i> Bagikan Link
+                        <button id="btn-share-room" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition flex items-center gap-2 lowercase">
+                            <i class="fa-solid fa-share-nodes text-brand-400"></i> bagikan link
                         </button>
-                        <button id="btn-leave-room" class="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-semibold rounded-xl border border-red-500/30 transition flex items-center gap-2">
-                            <i class="fa-solid fa-door-open"></i> Keluar
+                        <button id="btn-leave-room" class="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-semibold rounded-xl border border-red-500/30 transition flex items-center gap-2 lowercase">
+                            <i class="fa-solid fa-door-open"></i> keluar
                         </button>
                     </div>
                 </div>
@@ -191,35 +191,35 @@
                             <i class="fa-solid fa-sliders text-lg"></i>
                         </div>
                         <div>
-                            <h4 class="text-sm font-bold text-white">Pengaturan Balapan (Host)</h4>
-                            <p class="text-xs text-slate-400">Pilih durasi ronde permainan.</p>
+                            <h4 class="text-sm font-bold text-white lowercase">pengaturan balapan (host)</h4>
+                            <p class="text-xs text-slate-400 lowercase">pilih durasi ronde permainan.</p>
                         </div>
                     </div>
                     
                     <div class="flex items-center gap-2 w-full sm:w-auto">
-                        <select id="select-duration" class="bg-slate-900 border border-slate-700 text-white text-xs font-bold rounded-xl px-3 py-2 outline-none focus:border-brand-500">
-                            <option value="60">1 Menit</option>
-                            <option value="120">2 Menit</option>
-                            <option value="180" selected>3 Menit</option>
-                            <option value="300">5 Menit</option>
+                        <select id="select-duration" class="bg-slate-900 border border-slate-700 text-white text-xs font-bold rounded-xl px-3 py-2 outline-none focus:border-brand-500 lowercase">
+                            <option value="60">1 menit</option>
+                            <option value="120">2 menit</option>
+                            <option value="180" selected>3 menit</option>
+                            <option value="300">5 menit</option>
                         </select>
-                        <button id="btn-start-race" class="flex-grow sm:flex-grow-0 px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-sm rounded-xl transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-flag-checkered"></i> MULAI BALAPAN
+                        <button id="btn-start-race" class="flex-grow sm:flex-grow-0 px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-sm rounded-xl transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 lowercase">
+                            <i class="fa-solid fa-flag-checkered"></i> mulai balapan
                         </button>
                     </div>
                 </div>
 
-                <div id="guest-waiting-msg" class="hidden bg-slate-950/60 border border-slate-800 rounded-xl p-4 text-center text-xs text-slate-400">
-                    <i class="fa-solid fa-spinner fa-spin text-brand-400 mr-2"></i> Menunggu Host memulai balapan...
+                <div id="guest-waiting-msg" class="hidden bg-slate-950/60 border border-slate-800 rounded-xl p-4 text-center text-xs text-slate-400 lowercase">
+                    <i class="fa-solid fa-spinner fa-spin text-brand-400 mr-2"></i> menunggu host memulai balapan...
                 </div>
 
                 <!-- Player List Grid -->
                 <div>
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center justify-between">
-                        <span>Pemain di Room</span>
-                        <span id="lobby-player-count" class="font-mono text-brand-400">1 Pemain</span>
+                    <h3 class="text-xs font-bold text-slate-400 lowercase tracking-wider mb-3 flex items-center justify-between">
+                        <span>pemain di room</span>
+                        <span id="lobby-player-count" class="font-mono text-brand-400 lowercase">1/30 pemain</span>
                     </h3>
-                    <div id="lobby-players-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div id="lobby-players-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                         <!-- Dynamic Player Cards -->
                     </div>
                 </div>
@@ -233,15 +233,15 @@
                 <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
                     <div class="flex items-center gap-2">
                         <i class="fa-solid fa-flag-checkered text-brand-400"></i>
-                        <h2 class="font-bold text-slate-200 text-sm uppercase tracking-wider">Lintasan Balap Real-time</h2>
+                        <h2 class="font-bold text-slate-200 text-sm lowercase tracking-wider">lintasan balap real-time</h2>
                     </div>
-                    <div id="game-status-text" class="text-xs font-medium text-slate-400">
-                        Persiapan balapan...
+                    <div id="game-status-text" class="text-xs font-medium text-slate-400 lowercase">
+                        persiapan balapan...
                     </div>
                 </div>
 
                 <!-- Race Lanes Container -->
-                <div id="race-lanes" class="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
+                <div id="race-lanes" class="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
                     <!-- Dynamic Lanes -->
                 </div>
             </div>
@@ -252,25 +252,25 @@
                 <div class="flex flex-col gap-3">
                     <div class="grid grid-cols-2 lg:grid-cols-1 gap-3">
                         <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 flex flex-col">
-                            <span class="text-xs text-slate-400 mb-1">Kecepatan (WPM)</span>
+                            <span class="text-xs text-slate-400 mb-1 lowercase">kecepatan (wpm)</span>
                             <span id="stat-wpm" class="text-3xl font-black font-mono text-neon-cyan">0</span>
                         </div>
                         <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 flex flex-col">
-                            <span class="text-xs text-slate-400 mb-1">Akurasi</span>
+                            <span class="text-xs text-slate-400 mb-1 lowercase">akurasi</span>
                             <span id="stat-accuracy" class="text-3xl font-black font-mono text-emerald-400">100%</span>
                         </div>
                         <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 flex flex-col">
-                            <span class="text-xs text-slate-400 mb-1">Kata Selesai</span>
-                            <span id="stat-progress" class="text-xl font-bold font-mono text-slate-300">0 kata</span>
+                            <span class="text-xs text-slate-400 mb-1 lowercase">kata selesai</span>
+                            <span id="stat-progress" class="text-xl font-bold font-mono text-slate-300 lowercase">0 kata</span>
                         </div>
                         <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 flex flex-col">
-                            <span class="text-xs text-slate-400 mb-1">Peringkat</span>
+                            <span class="text-xs text-slate-400 mb-1 lowercase">peringkat</span>
                             <span id="stat-rank" class="text-xl font-bold font-mono text-amber-400">-</span>
                         </div>
                     </div>
 
-                    <div class="text-[11px] text-slate-500 text-center">
-                        Ketik kata yang tampil dan tekan <kbd class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 font-mono">Spasi</kbd> untuk lanjut.
+                    <div class="text-[11px] text-slate-500 text-center lowercase">
+                        ketik kata yang tampil dan tekan <kbd class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 font-mono">spasi</kbd> untuk lanjut.
                     </div>
                 </div>
 
@@ -278,31 +278,31 @@
                 <div class="lg:col-span-3 bg-slate-900/90 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between gap-6 shadow-xl relative">
                     <!-- Countdown Overlay -->
                     <div id="countdown-overlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md rounded-2xl z-20 flex flex-col items-center justify-center gap-2">
-                        <span class="text-xs uppercase tracking-widest text-slate-400 font-bold">Balapan Dimulai Dalam</span>
+                        <span class="text-xs lowercase tracking-widest text-slate-400 font-bold">balapan dimulai dalam</span>
                         <span id="countdown-number" class="text-7xl font-black font-mono text-brand-400 animate-pulse">3</span>
                     </div>
 
                     <!-- Single Word Target Display Card -->
                     <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 min-h-[160px] flex flex-col items-center justify-center gap-3 relative overflow-hidden shadow-inner" id="single-word-card">
-                        <div class="text-xs font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                            <i class="fa-solid fa-bullseye text-brand-400"></i> Kata Saat Ini
+                        <div class="text-xs font-semibold text-slate-400 lowercase tracking-widest flex items-center gap-2">
+                            <i class="fa-solid fa-bullseye text-brand-400"></i> kata saat ini
                         </div>
                         
-                        <div id="target-word-display" class="font-mono text-4xl sm:text-5xl font-black tracking-wide text-white transition-all text-center">
-                            <span class="text-slate-500 text-lg font-sans">Menunggu balapan...</span>
+                        <div id="target-word-display" class="font-mono text-4xl sm:text-5xl font-black tracking-wide text-white transition-all text-center lowercase">
+                            <span class="text-slate-500 text-lg font-sans lowercase">menunggu balapan...</span>
                         </div>
 
-                        <div id="next-word-preview" class="text-xs font-mono text-slate-500 mt-1 flex items-center gap-2">
-                            <span>Berikutnya:</span>
-                            <span id="next-word-text" class="text-slate-400 font-bold font-mono">-</span>
+                        <div id="next-word-preview" class="text-xs font-mono text-slate-500 mt-1 flex items-center gap-2 lowercase">
+                            <span>berikutnya:</span>
+                            <span id="next-word-text" class="text-slate-400 font-bold font-mono lowercase">-</span>
                         </div>
                     </div>
 
                     <!-- Typing Input Box -->
                     <div class="relative">
                         <input type="text" id="type-input" 
-                            class="w-full bg-slate-950 border-2 border-slate-700 focus:border-brand-500 rounded-xl px-5 py-4 text-2xl font-mono text-white placeholder-slate-600 outline-none transition duration-200 active-typing disabled:opacity-50 disabled:cursor-not-allowed text-center tracking-wide" 
-                            placeholder="Ketik kata di atas lalu tekan SPASI..." 
+                            class="w-full bg-slate-950 border-2 border-slate-700 focus:border-brand-500 rounded-xl px-5 py-4 text-2xl font-mono text-white placeholder-slate-600 outline-none transition duration-200 active-typing disabled:opacity-50 disabled:cursor-not-allowed text-center tracking-wide lowercase" 
+                            placeholder="ketik kata di atas lalu tekan spasi..." 
                             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" disabled />
                     </div>
                 </div>
@@ -312,43 +312,43 @@
     </main>
 
     <!-- FOOTER -->
-    <footer class="border-t border-slate-800 bg-slate-900/60 py-4 px-4 text-center text-xs text-slate-500">
+    <footer class="border-t border-slate-800 bg-slate-900/60 py-4 px-4 text-center text-xs text-slate-500 lowercase">
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
             <div>
-                &copy; 2026 Balap Ketik KBBI Online &bull; Multiplayer WebRTC Room Engine
+                &copy; 2026 balap ketik kbbi online &bull; multiplayer webrtc room engine
             </div>
             <div class="flex items-center gap-4 text-slate-400">
-                <span id="sync-mode-label"><i class="fa-solid fa-network-wired text-emerald-400 mr-1"></i> PeerJS P2P Active</span>
-                <span><i class="fa-solid fa-book text-brand-400 mr-1"></i> 5.000 Vocabulary Pool</span>
+                <span id="sync-mode-label"><i class="fa-solid fa-network-wired text-emerald-400 mr-1"></i> peerjs p2p active</span>
+                <span><i class="fa-solid fa-book text-brand-400 mr-1"></i> kosakata sd</span>
             </div>
         </div>
     </footer>
 
     <!-- MODAL: PROFILE & USERNAME -->
-    <div id="modal-profile" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div id="modal-profile" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 lowercase">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <h3 class="text-lg font-bold text-white mb-1 flex items-center gap-2">
-                <i class="fa-solid fa-user-pen text-brand-400"></i> Atur Profil Pemain
+            <h3 class="text-lg font-bold text-white mb-1 flex items-center gap-2 lowercase">
+                <i class="fa-solid fa-user-pen text-brand-400"></i> atur profil pemain
             </h3>
-            <p class="text-xs text-slate-400 mb-4">Pilih nama panggilan dan warna mobil balap Anda.</p>
+            <p class="text-xs text-slate-400 mb-4 lowercase">pilih nama panggilan dan warna mobil balap anda.</p>
 
             <form id="form-profile" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">Nama Panggilan</label>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1 lowercase">nama panggilan</label>
                     <input type="text" id="input-username" maxlength="15" required 
-                        class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-brand-500 outline-none" 
-                        placeholder="Contoh: SpeedyRacer" />
+                        class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-brand-500 outline-none lowercase" 
+                        placeholder="contoh: pembalap_cepat" />
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-2">Pilih Warna / Mobil</label>
+                    <label class="block text-xs font-semibold text-slate-300 mb-2 lowercase">pilih warna / mobil</label>
                     <div class="grid grid-cols-5 gap-2" id="avatar-selector">
                     </div>
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2">
-                    <button type="submit" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-2.5 rounded-xl transition text-sm shadow-lg shadow-brand-500/20">
-                        Simpan Profil
+                    <button type="submit" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-2.5 rounded-xl transition text-sm shadow-lg shadow-brand-500/20 lowercase">
+                        simpan profil
                     </button>
                 </div>
             </form>
@@ -356,11 +356,11 @@
     </div>
 
     <!-- MODAL: RACE RESULTS PODIUM -->
-    <div id="modal-results" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div id="modal-results" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 lowercase">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative overflow-hidden">
             <div class="text-center mb-6">
-                <span class="text-xs font-bold text-amber-400 uppercase tracking-widest">Hasil Akhir Balapan</span>
-                <h2 class="text-2xl sm:text-3xl font-black text-white mt-1">PAPAN PEMENANG</h2>
+                <span class="text-xs font-bold text-amber-400 lowercase tracking-widest">hasil akhir balapan</span>
+                <h2 class="text-2xl sm:text-3xl font-black text-white mt-1 lowercase">papan pemenang</h2>
             </div>
 
             <div id="podium-container" class="grid grid-cols-3 gap-3 items-end mb-6 min-h-[160px]">
@@ -370,11 +370,11 @@
                 <table class="w-full text-left text-xs">
                     <thead class="bg-slate-900 border-b border-slate-800 text-slate-400">
                         <tr>
-                            <th class="p-2.5 text-center">Pos</th>
-                            <th class="p-2.5">Pemain</th>
-                            <th class="p-2.5 text-center">Kata Selesai</th>
-                            <th class="p-2.5 text-center">Kecepatan</th>
-                            <th class="p-2.5 text-right">Akurasi</th>
+                            <th class="p-2.5 text-center lowercase">pos</th>
+                            <th class="p-2.5 lowercase">pemain</th>
+                            <th class="p-2.5 text-center lowercase">kata selesai</th>
+                            <th class="p-2.5 text-center lowercase">kecepatan</th>
+                            <th class="p-2.5 text-right lowercase">akurasi</th>
                         </tr>
                     </thead>
                     <tbody id="leaderboard-table-body" class="divide-y divide-slate-800/60 text-slate-300">
@@ -383,72 +383,65 @@
             </div>
 
             <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-                <div class="text-xs text-slate-400" id="next-round-countdown-text">
-                    Kembali ke lobby dalam <span id="results-timer-sec" class="font-bold text-brand-400">10</span> detik...
+                <div class="text-xs text-slate-400 lowercase" id="next-round-countdown-text">
+                    kembali ke lobby dalam <span id="results-timer-sec" class="font-bold text-brand-400">10</span> detik...
                 </div>
-                <button id="btn-close-results" class="w-full sm:w-auto px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-white text-sm font-bold rounded-xl transition">
-                    Kembali ke Lobby Room
+                <button id="btn-close-results" class="w-full sm:w-auto px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-white text-sm font-bold rounded-xl transition lowercase">
+                    kembali ke lobby room
                 </button>
             </div>
         </div>
     </div>
 
     <!-- TOAST NOTIFICATION -->
-    <div id="toast" class="hidden fixed bottom-6 right-6 bg-slate-900 border border-slate-700 text-slate-100 text-xs px-4 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2">
+    <div id="toast" class="hidden fixed bottom-6 right-6 bg-slate-900 border border-slate-700 text-slate-100 text-xs px-4 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2 lowercase">
         <i id="toast-icon" class="fa-solid fa-circle-info text-brand-400"></i>
-        <span id="toast-msg">Notifikasi</span>
+        <span id="toast-msg">notifikasi</span>
     </div>
 
     <!-- GAME ENGINE & ONLINE MULTIPLAYER SCRIPT -->
     <script>
-        // --- SMP KBBI VOCABULARY ENGINE ---
-        const SMP_VOCABULARY = [
-            "aljabar", "fotosintesis", "gravitasi", "ekosistem", "sejarah", "proklamasi", "pancasila", "kemerdekaan",
-            "biantara", "pantun", "puisi", "cerpen", "paragraf", "monolog", "atmosfer", "klorofil", "majas", "metafora",
-            "kurikulum", "hipotenusa", "variabel", "reboisasi", "populasi", "komunitas", "kompas", "simetri", "koordinat",
-            "kedaulatan", "konstitusi", "deklarasi", "evolusi", "observasi", "reagen", "pernapasan", "pencernaan", "astronomi",
-            "tata surya", "planet", "asteroid", "nebula", "hidroponik", "erosi", "abrasi", "urbanisasi", "migrasi", "transaksi",
-            "simbiosis", "mutualisme", "parasitisme", "komensalisme", "organel", "sitoplasma", "mitokondria", "nukleus", "kromosom",
-            "reproduksi", "adaptasi", "klasifikasi", "taksonomi", "vertebrata", "invertebrata", "mamalia", "reptil", "amfibi",
-            "persamaan", "pertidaksamaan", "geometri", "trigonometri", "aritmetika", "statistika", "diagram", "persentase",
-            "skala", "vektor", "konduksi", "konveksi", "radiasi", "termodinamika", "kalor", "suhu", "presipitasi", "kondensasi",
-            "evaporasi", "transpirasi", "infiltrasi", "pencemaran", "biodiversitas", "revolusi", "rotasi", "gerhana", "pasut",
-            "amplitudo", "frekuensi", "gelombang", "resplendens", "optik", "refraksi", "refleksi", "pembiasan", "pemantulan",
-            "magnet", "induksi", "elektron", "proton", "neutron", "atom", "molekul", "unsur", "senyawa", "campuran",
-            "larutan", "basa", "asam", "indikator", "netralisasi", "presipitat", "oksigen", "hidrogen", "karbon", "nitrogen",
-            "kalsium", "fosfor", "glukosa", "karbohidrat", "protein", "vitamin", "mineral", "enzim", "hormon", "syaraf",
-            "jaringan", "organ", "sistem", "metabolisme", "ekskresi", "sirkulasi", "jantung", "paru", "ginjal", "lambung",
-            "usus", "sendi", "rangka", "otot", "kontraksi", "relaksasi", "neuron", "akson", "dendrit", "sinapsis",
-            "kapiler", "vena", "arteri", "plasma", "trombosit", "leukosit", "eritrosit", "antibodi", "antigen", "vaksin",
-            "imunitas", "patogen", "bakteri", "virus", "jamur", "protista", "monera", "flora", "fauna", "bioma",
-            "tundra", "taiga", "savana", "steppa", "hujan tropis", "revolusi industri", "sumpah pemuda", "diponegoro", "kartini",
-            "sudirman", "soekarno", "mohammad hatta", "yamin", "supomo", "linggajati", "renville", "roem royen", "konferensi",
-            "naskah", "autentik", "manifesto", "demokrasi", "terpimpin", "reformasi", "kabinet", "parlemen", "senat",
-            "yudikatif", "eksekutif", "legislatif", "mahkamah", "presiden", "gubernur", "bupati", "walikota", "kecamatan",
-            "kelurahan", "otonomi", "desentralisasi", "sentralisasi", "wawasan", "nusantara", "integrasi", "nasional", "bhinneka",
-            "toleransi", "pluralisme", "sosiometri", "sosialisasi", "interaksi", "akulturasi", "asimilasi", "akomodasi", "konflik",
-            "konsiliasi", "arbitrase", "mediasi", "coercion", "status", "peran", "norma", "nilai", "sanksi", "moral",
-            "etika", "karakter", "disiplin", "tanggung jawab", "kejujuran", "keadilan", "persatuan", "gotong royong", "musyawarah",
-            "mufakat", "orientasi", "komplikasi", "resolusi", "koda", "tinjauan", "abstraksi", "eksplanasi", "eksposisi",
-            "persuasi", "argumentasi", "deskripsi", "narasi", "ringkasan", "sinopsis", "kritik", "esai", "artikel",
-            "editor", "jurnalis", "media", "informasi", "literasi", "digital", "algoritma", "pemrograman", "jaringan", "internet"
+        // MAX PLAYER CAPACITY
+        const MAX_PLAYERS = 30;
+
+        // --- SD KBBI VOCABULARY ENGINE (HURUF KECIL SEMUA) ---
+        const SD_VOCABULARY = [
+            "buku", "pensil", "penggaris", "sekolah", "kelas", "guru", "murid", "papan", "kapur", "tas",
+            "sepatu", "seragam", "membaca", "menulis", "berhitung", "gambar", "krayon", "kertas", "meja", "kursi",
+            "kantin", "lapangan", "bendera", "upacara", "sehat", "bersih", "makanan", "minuman", "buah", "sayur",
+            "apel", "pisang", "jeruk", "mangga", "bayam", "wortel", "kucing", "anjing", "kelinci", "burung",
+            "ikan", "kambing", "sapi", "kuda", "ayam", "bebek", "bebek", "rusa", "gajah", "jerapah",
+            "singa", "harimau", "air", "api", "tanah", "udara", "matahari", "bulan", "bintang", "awan",
+            "hujan", "pelangi", "pagi", "siang", "sore", "malam", "rumah", "kamar", "dapur", "taman",
+            "pintu", "jendela", "atap", "lantai", "keluarga", "ayah", "ibu", "kakak", "adik", "kakek",
+            "nenek", "teman", "sahabat", "bermain", "lari", "lompat", "lempar", "tangkap", "bola", "sepeda",
+            "mobil", "kereta", "kapal", "pesawat", "pasar", "toko", "uang", "belanja", "jujur", "rajin",
+            "pintar", "baik", "sopan", "ramah", "disiplin", "tolong", "terima kasih", "maaf", "senang", "gembira",
+            "sedih", "tertawa", "tersenyum", "belajar", "agama", "sains", "sejarah", "kamus", "cerita", "dongeng",
+            "hewan", "tumbuhan", "daun", "bunga", "akar", "batang", "buah", "biji", "hutan", "gunung",
+            "sungai", "danau", "laut", "pantai", "ombak", "pasir", "batu", "tanah", "kebun", "sawah",
+            "petani", "nelayan", "dokter", "polisi", "tentara", "sopir", "pilot", "koki", "penjahit", "pelukis",
+            "merah", "kuning", "hijau", "biru", "putih", "hitam", "cokelat", "ungu", "oranye", "abu-abu",
+            "satu", "dua", "tiga", "empat", "lima", "enam", "tujuh", "delapan", "sembilan", "sepuluh",
+            "senin", "selasa", "rabu", "kamis", "jumat", "sabtu", "minggu", "januari", "februari", "maret",
+            "april", "mei", "juni", "juli", "agustus", "september", "oktober", "november", "desember", "indonesia"
         ];
 
         function generateWordsPool(count = 500) {
             const list = [];
             for (let i = 0; i < count; i++) {
-                const idx = Math.floor(Math.random() * SMP_VOCABULARY.length);
-                list.push(SMP_VOCABULARY[idx]);
+                const idx = Math.floor(Math.random() * SD_VOCABULARY.length);
+                list.push(SD_VOCABULARY[idx].toLowerCase());
             }
             return list;
         }
 
         const AVATARS = [
-            { id: 'cyan', name: 'Cyan', color: 'bg-cyan-400', text: 'text-cyan-400', border: 'border-cyan-400', icon: 'fa-car' },
-            { id: 'red', name: 'Merah', color: 'bg-red-500', text: 'text-red-400', border: 'border-red-500', icon: 'fa-car-side' },
-            { id: 'emerald', name: 'Hijau', color: 'bg-emerald-400', text: 'text-emerald-400', border: 'border-emerald-400', icon: 'fa-truck-fast' },
-            { id: 'amber', name: 'Kuning', color: 'bg-amber-400', text: 'text-amber-400', border: 'border-amber-400', icon: 'fa-motorcycle' },
-            { id: 'purple', name: 'Ungu', color: 'bg-purple-500', text: 'text-purple-400', border: 'border-purple-500', icon: 'fa-rocket' },
+            { id: 'cyan', name: 'cyan', color: 'bg-cyan-400', text: 'text-cyan-400', border: 'border-cyan-400', icon: 'fa-car' },
+            { id: 'red', name: 'merah', color: 'bg-red-500', text: 'text-red-400', border: 'border-red-500', icon: 'fa-car-side' },
+            { id: 'emerald', name: 'hijau', color: 'bg-emerald-400', text: 'text-emerald-400', border: 'border-emerald-400', icon: 'fa-truck-fast' },
+            { id: 'amber', name: 'kuning', color: 'bg-amber-400', text: 'text-amber-400', border: 'border-amber-400', icon: 'fa-motorcycle' },
+            { id: 'purple', name: 'ungu', color: 'bg-purple-500', text: 'text-purple-400', border: 'border-purple-500', icon: 'fa-rocket' },
         ];
 
         // --- AUDIO SYNTHESIZER ---
@@ -505,7 +498,7 @@
         
         let playerProfile = {
             id: myPlayerId,
-            username: 'Racer_' + Math.floor(100 + Math.random() * 900),
+            username: 'pembalap_' + Math.floor(100 + Math.random() * 900),
             avatar: 'cyan'
         };
 
@@ -567,14 +560,14 @@
         // --- INITIALIZATION ---
         function init() {
             renderAvatarOptions();
-            document.getElementById('input-username').value = playerProfile.username;
+            document.getElementById('input-username').value = playerProfile.username.toLowerCase();
 
-            // Check URL for room parameter (e.g. ?room=KBBI-1234)
+            // Check URL for room parameter
             const urlParams = new URLSearchParams(window.location.search);
             const roomParam = urlParams.get('room');
             if (roomParam) {
-                document.getElementById('input-join-code').value = roomParam.toUpperCase();
-                showToast(`Kode room ${roomParam.toUpperCase()} terdeteksi dari URL!`, 'info');
+                document.getElementById('input-join-code').value = roomParam.toLowerCase();
+                showToast(`kode room ${roomParam.toLowerCase()} terdeteksi dari url!`, 'info');
             }
 
             setupEventListeners();
@@ -587,19 +580,19 @@
                     <input type="radio" name="avatar" value="${av.id}" ${av.id === playerProfile.avatar ? 'checked' : ''} class="peer sr-only">
                     <div class="p-2.5 rounded-xl border border-slate-700 bg-slate-950 peer-checked:border-brand-500 peer-checked:bg-brand-500/10 flex flex-col items-center justify-center gap-1 transition">
                         <i class="fa-solid ${av.icon} text-lg ${av.text}"></i>
-                        <span class="text-[10px] text-slate-400 font-semibold">${av.name}</span>
+                        <span class="text-[10px] text-slate-400 font-semibold lowercase">${av.name}</span>
                     </div>
                 </label>
             `).join('');
         }
 
         // --- PEERJS MULTIPLAYER NETWORK ENGINE ---
-        const PEER_PREFIX = 'kbbi-race-v1-';
+        const PEER_PREFIX = 'kbbi-sd-v1-';
 
         function initHostPeer(customCode = null) {
             isHost = true;
             isSoloMode = false;
-            roomCode = customCode || 'KBBI-' + Math.floor(1000 + Math.random() * 9000);
+            roomCode = customCode || 'kbbi-' + Math.floor(1000 + Math.random() * 9000);
             
             const peerId = PEER_PREFIX + roomCode;
             peer = new Peer(peerId, { debug: 1 });
@@ -608,12 +601,12 @@
 
             peer.on('open', (id) => {
                 connectionDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400';
-                displayRoomCode.textContent = roomCode;
-                lobbyRoomCode.textContent = roomCode;
+                displayRoomCode.textContent = roomCode.toLowerCase();
+                lobbyRoomCode.textContent = roomCode.toLowerCase();
                 document.getElementById('room-code-badge').classList.remove('hidden');
 
                 roomState = {
-                    code: roomCode,
+                    code: roomCode.toLowerCase(),
                     status: 'LOBBY',
                     durationSec: parseInt(selectDuration.value),
                     startTime: 0,
@@ -632,10 +625,16 @@
 
                 switchView('LOBBY');
                 updateLobbyUI();
-                showToast(`Room ${roomCode} berhasil dibuat!`, 'success');
+                showToast(`room ${roomCode.toLowerCase()} berhasil dibuat!`, 'success');
             });
 
             peer.on('connection', (conn) => {
+                if (Object.keys(playersMap).length >= MAX_PLAYERS) {
+                    conn.send({ type: 'ROOM_FULL', message: 'room sudah penuh (maksimal 30 pemain).' });
+                    setTimeout(() => conn.close(), 500);
+                    return;
+                }
+
                 connections.push(conn);
 
                 conn.on('data', (data) => {
@@ -644,7 +643,6 @@
 
                 conn.on('close', () => {
                     connections = connections.filter(c => c !== conn);
-                    // Remove player associated with connection
                     for (let id in playersMap) {
                         if (playersMap[id].peerId === conn.peer) {
                             delete playersMap[id];
@@ -659,10 +657,10 @@
             peer.on('error', (err) => {
                 console.error("PeerJS Host Error:", err);
                 if (err.type === 'unavailable-id') {
-                    showToast('Kode Room sudah digunakan, membuat kode baru...', 'error');
+                    showToast('kode room sudah digunakan, membuat kode baru...', 'error');
                     initHostPeer();
                 } else {
-                    showToast('Gagal terhubung ke server online. Membuka mode lokal...', 'error');
+                    showToast('gagal terhubung ke server online.', 'error');
                 }
             });
         }
@@ -670,7 +668,7 @@
         function initGuestPeer(targetRoomCode) {
             isHost = false;
             isSoloMode = false;
-            roomCode = targetRoomCode.toUpperCase().trim();
+            roomCode = targetRoomCode.toLowerCase().trim();
 
             peer = new Peer({ debug: 1 });
             connectionDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping';
@@ -685,7 +683,6 @@
                     lobbyRoomCode.textContent = roomCode;
                     document.getElementById('room-code-badge').classList.remove('hidden');
 
-                    // Send Join Request to Host
                     hostConn.send({
                         type: 'JOIN_REQ',
                         player: {
@@ -700,14 +697,14 @@
                 });
 
                 hostConn.on('close', () => {
-                    showToast('Koneksi ke Host terputus!', 'error');
+                    showToast('koneksi ke host terputus!', 'error');
                     switchView('SELECTION');
                 });
             });
 
             peer.on('error', (err) => {
                 console.error("PeerJS Guest Error:", err);
-                showToast('Gagal menemukan Room! Periksa kembali Kode Room.', 'error');
+                showToast('gagal menemukan room! periksa kembali kode room.', 'error');
                 connectionDot.className = 'w-2.5 h-2.5 rounded-full bg-red-500';
             });
         }
@@ -715,6 +712,10 @@
         // Host Data Receiver
         function handleHostReceivedData(conn, data) {
             if (data.type === 'JOIN_REQ') {
+                if (Object.keys(playersMap).length >= MAX_PLAYERS) {
+                    conn.send({ type: 'ROOM_FULL', message: 'room penuh!' });
+                    return;
+                }
                 const p = data.player;
                 p.peerId = conn.peer;
                 p.isHost = false;
@@ -725,7 +726,7 @@
 
                 broadcastRoomState();
                 updateLobbyUI();
-                showToast(`${p.username} bergabung ke room!`, 'info');
+                showToast(`${p.username.toLowerCase()} bergabung ke room!`, 'info');
             } else if (data.type === 'PLAYER_UPDATE') {
                 if (playersMap[data.player.id]) {
                     playersMap[data.player.id] = { ...playersMap[data.player.id], ...data.player };
@@ -738,6 +739,11 @@
 
         // Guest Data Receiver
         function handleGuestReceivedData(data) {
+            if (data.type === 'ROOM_FULL') {
+                showToast(data.message || 'room sudah penuh!', 'error');
+                switchView('SELECTION');
+                return;
+            }
             if (data.type === 'ROOM_SYNC') {
                 const prevStatus = roomState.status;
                 roomState = data.roomState;
@@ -786,13 +792,13 @@
         function startSoloMode() {
             isSoloMode = true;
             isHost = true;
-            roomCode = 'SOLO';
+            roomCode = 'solo';
             
-            displayRoomCode.textContent = 'SOLO BOT';
+            displayRoomCode.textContent = 'solo bot';
             document.getElementById('room-code-badge').classList.remove('hidden');
 
             roomState = {
-                code: 'SOLO',
+                code: 'solo',
                 status: 'LOBBY',
                 durationSec: 180,
                 startTime: 0,
@@ -803,11 +809,10 @@
             playersMap = {};
             playersMap[myPlayerId] = { ...playerProfile, isHost: true, wordsCount: 0, wpm: 0, accuracy: 100 };
             
-            // Add 3 Bot Opponents
             const BOTS = [
-                { id: 'bot_1', username: 'Bot_Kiki (Pemula)', avatar: 'red', speed: 0.6 },
-                { id: 'bot_2', username: 'Bot_Budi (Jago)', avatar: 'emerald', speed: 0.85 },
-                { id: 'bot_3', username: 'Bot_Siti (Master)', avatar: 'amber', speed: 1.1 }
+                { id: 'bot_1', username: 'bot_kiki', avatar: 'red', speed: 0.6 },
+                { id: 'bot_2', username: 'bot_budi', avatar: 'emerald', speed: 0.85 },
+                { id: 'bot_3', username: 'bot_siti', avatar: 'amber', speed: 1.1 }
             ];
 
             BOTS.forEach(b => {
@@ -826,7 +831,7 @@
 
             switchView('LOBBY');
             updateLobbyUI();
-            showToast('Mode Solo / Bot AI Aktif!', 'info');
+            showToast('mode solo / bot ai aktif!', 'info');
         }
 
         function startBotSimulation() {
@@ -868,8 +873,8 @@
 
         function updateLobbyUI() {
             const count = Object.keys(playersMap).length;
-            playerCountBadge.textContent = `Pemain: ${count}`;
-            lobbyPlayerCount.textContent = `${count} Pemain`;
+            playerCountBadge.textContent = `pemain: ${count}/${MAX_PLAYERS}`;
+            lobbyPlayerCount.textContent = `${count}/${MAX_PLAYERS} pemain`;
 
             if (isHost) {
                 hostSettingsBox.classList.remove('hidden');
@@ -889,10 +894,10 @@
                                 <i class="fa-solid ${av.icon}"></i>
                             </div>
                             <div>
-                                <h4 class="font-bold text-sm text-white flex items-center gap-1.5">
-                                    ${escapeHtml(p.username)} ${isMe ? '<span class="text-[10px] text-brand-400 font-normal">(Anda)</span>' : ''}
+                                <h4 class="font-bold text-sm text-white flex items-center gap-1.5 lowercase">
+                                    ${escapeHtml(p.username.toLowerCase())} ${isMe ? '<span class="text-[10px] text-brand-400 font-normal lowercase">(anda)</span>' : ''}
                                 </h4>
-                                <span class="text-[10px] text-slate-400 font-mono">${p.isHost ? '👑 Host Room' : 'Pemain'}</span>
+                                <span class="text-[10px] text-slate-400 font-mono lowercase">${p.isHost ? '👑 host room' : 'pemain'}</span>
                             </div>
                         </div>
                         <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
@@ -964,7 +969,7 @@
             const currentWord = roomState.words[localStats.wordIndex] || "selesai";
             const nextWord = roomState.words[localStats.wordIndex + 1] || "-";
 
-            const typedInput = typeInput.value;
+            const typedInput = typeInput.value.toLowerCase();
             let highlightedHTML = "";
 
             for (let i = 0; i < currentWord.length; i++) {
@@ -988,6 +993,7 @@
         typeInput.addEventListener('input', () => {
             if (roomState.status !== 'RACING') return;
 
+            typeInput.value = typeInput.value.toLowerCase();
             playSound('key');
             const typedValue = typeInput.value;
             const currentWord = roomState.words[localStats.wordIndex];
@@ -1012,7 +1018,6 @@
             calculateMetrics();
             renderTargetWord();
             
-            // Sync with host/peers
             if (playersMap[myPlayerId]) {
                 playersMap[myPlayerId].wordsCount = localStats.wordIndex;
                 playersMap[myPlayerId].wpm = localStats.wpm;
@@ -1055,7 +1060,7 @@
             raceLanes.innerHTML = playersList.map((p, index) => {
                 const av = AVATARS.find(a => a.id === p.avatar) || AVATARS[0];
                 const isMe = p.id === myPlayerId;
-                const maxWordsTarget = 80;
+                const maxWordsTarget = 60;
                 const progressPct = Math.min(Math.max(((p.wordsCount || 0) / maxWordsTarget) * 100, 0), 100);
 
                 return `
@@ -1063,8 +1068,8 @@
                         <div class="flex items-center justify-between text-xs mb-1.5">
                             <div class="flex items-center gap-2">
                                 <span class="font-bold font-mono text-slate-400 w-4">#${index + 1}</span>
-                                <span class="font-semibold ${isMe ? 'text-brand-300 font-bold' : 'text-slate-200'}">${escapeHtml(p.username)} ${isMe ? '(Anda)' : ''}</span>
-                                <span class="text-[10px] font-mono text-emerald-400 font-bold">${p.wordsCount || 0} Kata (${p.wpm || 0} WPM)</span>
+                                <span class="font-semibold ${isMe ? 'text-brand-300 font-bold' : 'text-slate-200'} lowercase">${escapeHtml(p.username.toLowerCase())} ${isMe ? '(anda)' : ''}</span>
+                                <span class="text-[10px] font-mono text-emerald-400 font-bold lowercase">${p.wordsCount || 0} kata (${p.wpm || 0} wpm)</span>
                             </div>
                         </div>
 
@@ -1125,8 +1130,8 @@
 
                 return `
                     <div class="flex flex-col items-center justify-end">
-                        <span class="text-xs font-bold text-white mb-1 truncate max-w-[90px] text-center">${escapeHtml(p.username)}</span>
-                        <span class="text-[10px] text-slate-400 font-mono mb-2">${p.wordsCount || 0} Kata (${p.wpm || 0} WPM)</span>
+                        <span class="text-xs font-bold text-white mb-1 truncate max-w-[90px] text-center lowercase">${escapeHtml(p.username.toLowerCase())}</span>
+                        <span class="text-[10px] text-slate-400 font-mono mb-2 lowercase">${p.wordsCount || 0} kata (${p.wpm || 0} wpm)</span>
                         <div class="w-full ${heightClass} border-t-2 rounded-t-xl flex flex-col items-center justify-center relative shadow-lg">
                             <span class="w-7 h-7 rounded-full ${badgeColor} font-black text-sm flex items-center justify-center shadow-md">
                                 ${isFirst ? '1' : isSecond ? '2' : '3'}
@@ -1139,9 +1144,9 @@
             document.getElementById('leaderboard-table-body').innerHTML = sorted.map((p, idx) => `
                 <tr class="${p.id === myPlayerId ? 'bg-brand-500/10 font-bold text-brand-300' : ''}">
                     <td class="p-2.5 text-center font-mono text-slate-400">#${idx + 1}</td>
-                    <td class="p-2.5">${escapeHtml(p.username)} ${p.id === myPlayerId ? '(Anda)' : ''}</td>
-                    <td class="p-2.5 text-center font-mono text-emerald-400">${p.wordsCount || 0} Kata</td>
-                    <td class="p-2.5 text-center font-mono text-neon-cyan">${p.wpm || 0} WPM</td>
+                    <td class="p-2.5 lowercase">${escapeHtml(p.username.toLowerCase())} ${p.id === myPlayerId ? '(anda)' : ''}</td>
+                    <td class="p-2.5 text-center font-mono text-emerald-400 lowercase">${p.wordsCount || 0} kata</td>
+                    <td class="p-2.5 text-center font-mono text-neon-cyan">${p.wpm || 0} wpm</td>
                     <td class="p-2.5 text-right font-mono text-slate-300">${p.accuracy || 100}%</td>
                 </tr>
             `).join('');
@@ -1166,7 +1171,7 @@
             document.getElementById('btn-join-room').addEventListener('click', () => {
                 const code = document.getElementById('input-join-code').value;
                 if (!code) {
-                    showToast('Masukkan Kode Room terlebih dahulu!', 'error');
+                    showToast('masukkan kode room terlebih dahulu!', 'error');
                     return;
                 }
                 initGuestPeer(code);
@@ -1194,19 +1199,19 @@
             document.getElementById('btn-share-room').addEventListener('click', () => {
                 const url = window.location.origin + window.location.pathname + '?room=' + roomCode;
                 navigator.clipboard.writeText(url);
-                showToast('Link room berhasil disalin ke clipboard!', 'success');
+                showToast('link room berhasil disalin ke clipboard!', 'success');
             });
 
             document.getElementById('btn-copy-room').addEventListener('click', () => {
                 navigator.clipboard.writeText(roomCode);
-                showToast(`Kode room ${roomCode} disalin!`, 'success');
+                showToast(`kode room ${roomCode} disalin!`, 'success');
             });
 
             document.getElementById('btn-leave-room').addEventListener('click', () => {
                 if (peer) peer.destroy();
                 switchView('SELECTION');
                 document.getElementById('room-code-badge').classList.add('hidden');
-                showToast('Anda keluar dari room.', 'info');
+                showToast('anda keluar dari room.', 'info');
             });
 
             document.getElementById('btn-close-results').addEventListener('click', () => {
@@ -1226,7 +1231,7 @@
 
             document.getElementById('form-profile').addEventListener('submit', (e) => {
                 e.preventDefault();
-                const name = document.getElementById('input-username').value.trim();
+                const name = document.getElementById('input-username').value.trim().toLowerCase();
                 const avatar = document.querySelector('input[name="avatar"]:checked')?.value || 'cyan';
 
                 if (name) {
@@ -1240,7 +1245,7 @@
                     else sendPlayerUpdateToHost();
                     
                     document.getElementById('modal-profile').classList.add('hidden');
-                    showToast('Profil berhasil disimpan!', 'success');
+                    showToast('profil berhasil disimpan!', 'success');
                 }
             });
 
@@ -1255,7 +1260,7 @@
             const toastMsg = document.getElementById('toast-msg');
             const toastIcon = document.getElementById('toast-icon');
 
-            toastMsg.textContent = msg;
+            toastMsg.textContent = msg.toLowerCase();
             if (type === 'error') toastIcon.className = 'fa-solid fa-circle-exclamation text-red-400';
             else if (type === 'success') toastIcon.className = 'fa-solid fa-circle-check text-emerald-400';
             else toastIcon.className = 'fa-solid fa-circle-info text-brand-400';
