@@ -329,7 +329,7 @@
         Untuk menjalankan multiplayer real-time saat di-host di GitHub Pages tanpa server fisik, masukkan Firebase Config gratis kamu di bawah ini (opsional).
       </p>
       <div>
-        <label class="block text-xs font-bold text-slate-300 mb-1">JSON Firebase Config</label>
+        <label class="block text-xs font-bold text-slate-300 mb-1">JSON </label>
         <textarea id="firebase-json-input" rows="5" placeholder='{"apiKey": "...", "authDomain": "...", "projectId": "...", ...}'
                   class="w-full p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-amber-300 focus:outline-none focus:border-amber-500"></textarea>
       </div>
@@ -400,8 +400,12 @@
       appId: "1:160664386176:web:6ecc3372ab0980eb544465"
     };
 
-    // Menghubungkan config ke window agar dibaca otomatis oleh sistem init
     window.__firebase_config = JSON.stringify(firebaseConfig);
+
+    // --- TAMBAHKAN DUA BARIS INI UNTUK MEMAKSA INISIALISASI ---
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
 
     const SD_WORDS = [
       "kucing", "sekolah", "pelangi", "membaca", "sepeda", "bintang", "makanan", "pohon", "sahabat",
