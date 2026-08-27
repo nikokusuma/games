@@ -296,7 +296,8 @@
       setDoc, 
       updateDoc, 
       onSnapshot,
-      deleteField
+      deleteField,
+      serverTimestamp
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     // 1. Firebase Configuration
@@ -733,8 +734,8 @@
               typingInput.focus();
             }
             
-            // Jalankan timer 180 detik ter-sinkronisasi berdasarkan startTime server
-            const startTimestamp = roomData.startTime || Date.now();
+            // Konversi serverTimestamp ke milidetik secara aman
+            const startTimestamp = roomData.startTime?.toMillis ? roomData.startTime.toMillis() : (roomData.startTime || Date.now());
             startTime = new Date(startTimestamp);
             startTimer(startTimestamp);
             
@@ -821,11 +822,11 @@
             updatedPlayers[`players.${uid}.finished`] = false;
           });
 
-          // Update waktu mulai baru (Date.now()) dan status game secara bersamaan
+          // Update startTime menggunakan waktu server resmi Firebase
           await updateDoc(roomRef, {
             ...updatedPlayers,
             status: "playing",
-            startTime: Date.now(),
+            startTime: serverTimestamp(),
             targetText: randomWordsText,
             winner: ""
           });
