@@ -383,13 +383,13 @@
       "sekolah", "kelas", "lapangan", "kantin", "perpustakaan", "laboratorium", "halaman", "toilet", "gerbang", "aula",
       "guru", "murid", "siswa", "kepala", "dokter", "perawat", "polisi", "tentara", "pilot", "sopir",
       "petani", "nelayan", "koki", "pelukis", "penyanyi", "penari", "penulis", "atlet", "wasit", "juara",
-      "apul", "pisang", "jeruk", "mangga", "anggur", "semangka", "melon", "durian", "rambutan", "nanas",
+      "apel", "pisang", "jeruk", "mangga", "anggur", "semangka", "melon", "durian", "rambutan", "nanas",
       "pepaya", "alpukat", "jambu", "manggis", "salak", "kelapa", "lemon", "stroberi", "nangka", "sirsak",
       "bayam", "kangkung", "wortel", "tomat", "kentang", "bawang", "cabai", "jagung", "kacang", "terong",
       "timun", "labu", "kubis", "brokoli", "sawi", "lobak", "jamur", "seledri", "serai", "jahe", "nasi",
       "roti", "mie", "bakso", "soto", "sate", "rendang", "gulai", "sup", "bubur", "gorengan", "telur",
       "daging", "ikan", "tempe", "tahu", "kerupuk", "sambal", "keju", "susu", "mentega", "cokelat",
-      "air", "teh", "kopi", "jUS", "sirup", "es", "soda", "kuah", "kaldu", "madu", "merah", "kuning",
+      "air", "teh", "kopi", "jus", "sirup", "es", "soda", "kuah", "kaldu", "madu", "merah", "kuning",
       "hijau", "biru", "ungu", "merah muda", "oranye", "cokelat", "hitam", "putih", "abu", "emas", "perak",
       "satu", "dua", "tiga", "empat", "lima", "enam", "tujuh", "delapan", "sembilan", "sepuluh", "ratus",
       "ribu", "juta", "banyak", "sedikit", "kosong", "penuh", "panjang", "pendek", "tinggi", "rendah",
@@ -404,7 +404,7 @@
       "hujan", "kemarau", "angin", "awan", "petir", "pelangi", "matahari", "bulan", "bintang", "langit",
       "bumi", "laut", "gunung", "sungai", "danau", "hutan", "pantai", "pulau", "lembah", "sawah",
       "batu", "tanah", "pasir", "air", "api", "udara", "daun", "pohon", "bunga", "akar", "batang",
-      "buah", "bijii", "rumput", "taman", "kebun", "gua", "bukit", "samudra", "ombak", "muara",
+      "buah", "biji", "rumput", "taman", "kebun", "gua", "bukit", "samudra", "ombak", "muara",
       "kepala", "rambut", "mata", "telinga", "hidung", "mulut", "gigi", "lidah", "leher", "dada",
       "perut", "tangan", "jari", "kaki", "lutut", "siku", "bahu", "punggung", "kulit", "darah",
       "tulang", "otot", "jantung", "paru", "hati", "lambung", "otak", "suara", "napas", "langkah",
@@ -661,10 +661,6 @@
           leaveRoomLocal();
           return;
         }
-    const statusText = document.getElementById('game-status-text');
-    if (statusText) statusText.innerText = "Ayo Ketik! (Waktu: 3 Menit)";
-  }
-}
 
         const roomData = snapshot.data();
         const players = roomData.players || {};
@@ -712,42 +708,32 @@
         }
 
         // STATUS: PLAYING (GAME IN PROGRESS)
-        // Di dalam listenToRoom -> else if (roomData.status === "playing")
-else if (roomData.status === "playing") {
-  if (gameView && gameView.classList.contains('hidden')) {
-    showScreen(gameView);
-    if (gameRoomCode) gameRoomCode.innerText = `ROOM: ${code}`;
-    
-    // Reset variabel pengetikan lokal pemain
-    targetText = roomData.targetText || "";
-    targetWords = targetText.split(/\s+/).filter(w => w.length > 0);
-    currentWordIndex = 0;
-    totalTypedCharsCount = 0;
-    correctTypedCharsCount = 0;
-    correctWordsCount = 0;
-
-    if (statWpm) statWpm.innerText = "0";
-    if (statAccuracy) statAccuracy.innerText = "100%";
-    const wordCountStat = document.getElementById('stat-word-count');
-    if (wordCountStat) wordCountStat.innerText = "0";
-
-    renderTypingDisplay("");
-    if (typingInput) {
-      typingInput.value = "";
-      typingInput.disabled = false;
-      typingInput.focus();
-    }
-    
-    // Jalankan timer 180 detik ter-sinkronisasi berdasarkan startTime server
-    const startTimestamp = roomData.startTime || Date.now();
-    startTime = new Date(startTimestamp);
-    startTimer(startTimestamp);
-    
-    const statusText = document.getElementById('game-status-text');
-    if (statusText) statusText.innerText = "Ayo Ketik! (Waktu: 3 Menit)";
-  }
-}
+        else if (roomData.status === "playing") {
+          if (gameView && gameView.classList.contains('hidden')) {
+            showScreen(gameView);
+            if (gameRoomCode) gameRoomCode.innerText = `ROOM: ${code}`;
             
+            // Reset variabel pengetikan lokal pemain
+            targetText = roomData.targetText || "";
+            targetWords = targetText.split(/\s+/).filter(w => w.length > 0);
+            currentWordIndex = 0;
+            totalTypedCharsCount = 0;
+            correctTypedCharsCount = 0;
+            correctWordsCount = 0;
+
+            if (statWpm) statWpm.innerText = "0";
+            if (statAccuracy) statAccuracy.innerText = "100%";
+            const wordCountStat = document.getElementById('stat-word-count');
+            if (wordCountStat) wordCountStat.innerText = "0";
+
+            renderTypingDisplay("");
+            if (typingInput) {
+              typingInput.value = "";
+              typingInput.disabled = false;
+              typingInput.focus();
+            }
+            
+            // Jalankan timer 180 detik ter-sinkronisasi berdasarkan startTime server
             const startTimestamp = roomData.startTime || Date.now();
             startTime = new Date(startTimestamp);
             startTimer(startTimestamp);
@@ -815,37 +801,37 @@ else if (roomData.status === "playing") {
       });
     }
 
-    // 4. START GAME (HOST) - Diperbarui agar skor & waktu di-reset total
-if (btnStartGame) {
-  btnStartGame.addEventListener('click', async () => {
-    if (!isHost || !currentRoomCode) return;
-    const randomWordsText = getNextWordSet(300);
+    // 4. START GAME (HOST)
+    if (btnStartGame) {
+      btnStartGame.addEventListener('click', async () => {
+        if (!isHost || !currentRoomCode) return;
+        const randomWordsText = getNextWordSet(300);
 
-    const roomRef = doc(db, "rooms", currentRoomCode);
-    const snap = await getDoc(roomRef);
+        const roomRef = doc(db, "rooms", currentRoomCode);
+        const snap = await getDoc(roomRef);
 
-    if (snap.exists()) {
-      const roomData = snap.data();
-      const updatedPlayers = {};
+        if (snap.exists()) {
+          const roomData = snap.data();
+          const updatedPlayers = {};
 
-      // Reset skor kata dan WPM semua pemain ke 0
-      Object.keys(roomData.players || {}).forEach(uid => {
-        updatedPlayers[`players.${uid}.wordsCount`] = 0;
-        updatedPlayers[`players.${uid}.wpm`] = 0;
-        updatedPlayers[`players.${uid}.finished`] = false;
-      });
+          // Reset skor kata dan WPM semua pemain ke 0
+          Object.keys(roomData.players || {}).forEach(uid => {
+            updatedPlayers[`players.${uid}.wordsCount`] = 0;
+            updatedPlayers[`players.${uid}.wpm`] = 0;
+            updatedPlayers[`players.${uid}.finished`] = false;
+          });
 
-      // Update waktu mulai baru (Date.now()) dan status game secara bersamaan
-      await updateDoc(roomRef, {
-        ...updatedPlayers,
-        status: "playing",
-        startTime: Date.now(), // Memastikan waktu di-reset dari detik 0 (180 detik penuh)
-        targetText: randomWordsText,
-        winner: ""
+          // Update waktu mulai baru (Date.now()) dan status game secara bersamaan
+          await updateDoc(roomRef, {
+            ...updatedPlayers,
+            status: "playing",
+            startTime: Date.now(),
+            targetText: randomWordsText,
+            winner: ""
+          });
+        }
       });
     }
-  });
-}
 
     // 5. TYPING INPUT HANDLER
     if (typingInput) {
