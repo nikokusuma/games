@@ -660,7 +660,41 @@
           showModal("Room ini telah ditutup oleh Host.", "Room Ditutup", "🚪");
           leaveRoomLocal();
           return;
-        }
+        }// Di dalam listenToRoom -> else if (roomData.status === "playing")
+else if (roomData.status === "playing") {
+  if (gameView && gameView.classList.contains('hidden')) {
+    showScreen(gameView);
+    if (gameRoomCode) gameRoomCode.innerText = `ROOM: ${code}`;
+    
+    // Reset variabel pengetikan lokal pemain
+    targetText = roomData.targetText || "";
+    targetWords = targetText.split(/\s+/).filter(w => w.length > 0);
+    currentWordIndex = 0;
+    totalTypedCharsCount = 0;
+    correctTypedCharsCount = 0;
+    correctWordsCount = 0;
+
+    if (statWpm) statWpm.innerText = "0";
+    if (statAccuracy) statAccuracy.innerText = "100%";
+    const wordCountStat = document.getElementById('stat-word-count');
+    if (wordCountStat) wordCountStat.innerText = "0";
+
+    renderTypingDisplay("");
+    if (typingInput) {
+      typingInput.value = "";
+      typingInput.disabled = false;
+      typingInput.focus();
+    }
+    
+    // Jalankan timer 180 detik ter-sinkronisasi berdasarkan startTime server
+    const startTimestamp = roomData.startTime || Date.now();
+    startTime = new Date(startTimestamp);
+    startTimer(startTimestamp);
+    
+    const statusText = document.getElementById('game-status-text');
+    if (statusText) statusText.innerText = "Ayo Ketik! (Waktu: 3 Menit)";
+  }
+}
 
         const roomData = snapshot.data();
         const players = roomData.players || {};
@@ -792,21 +826,37 @@
       });
     }
 
-    // 4. START GAME (HOST)
-    if (btnStartGame) {
-      btnStartGame.addEventListener('click', async () => {
-        if (!isHost) return;
-        const randomWordsText = getNextWordSet(300);
+    // 4. START GAME (HOST) - Diperbarui agar skor & waktu di-reset total
+if (btnStartGame) {
+  btnStartGame.addEventListener('click', async () => {
+    if (!isHost || !currentRoomCode) return;
+    const randomWordsText = getNextWordSet(300);
 
-        const roomRef = doc(db, "rooms", currentRoomCode);
-        await updateDoc(roomRef, {
-          status: "playing",
-          startTime: Date.now(),
-          targetText: randomWordsText,
-          winner: ""
-        });
+    const roomRef = doc(db, "rooms", currentRoomCode);
+    const snap = await getDoc(roomRef);
+
+    if (snap.exists()) {
+      const roomData = snap.data();
+      const updatedPlayers = {};
+
+      // Reset skor kata dan WPM semua pemain ke 0
+      Object.keys(roomData.players || {}).forEach(uid => {
+        updatedPlayers[`players.${uid}.wordsCount`] = 0;
+        updatedPlayers[`players.${uid}.wpm`] = 0;
+        updatedPlayers[`players.${uid}.finished`] = false;
+      });
+
+      // Update waktu mulai baru (Date.now()) dan status game secara bersamaan
+      await updateDoc(roomRef, {
+        ...updatedPlayers,
+        status: "playing",
+        startTime: Date.now(), // Memastikan waktu di-reset dari detik 0 (180 detik penuh)
+        targetText: randomWordsText,
+        winner: ""
       });
     }
+  });
+}
 
     // 5. TYPING INPUT HANDLER
     if (typingInput) {
