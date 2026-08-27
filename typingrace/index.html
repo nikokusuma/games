@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Race Typing SD - Balap Ketik Ceria</title>
+  <title>Race Typing SD & SMP - Balap Ketik Ceria</title>
   
   <!-- Google Fonts: Fredoka & Nunito -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -109,7 +109,7 @@
     <header class="text-center mb-6">
       <div class="inline-flex items-center justify-center gap-3 bg-amber-300 text-slate-800 px-6 py-2 rounded-full border-4 border-amber-400 shadow-md transform -rotate-1 mb-2">
         <span class="text-3xl sm:text-4xl animate-bounce">🏎️</span>
-        <h1 class="text-2xl sm:text-4xl font-extrabold tracking-wide font-fredoka text-indigo-900">Race Typing SD</h1>
+        <h1 class="text-2xl sm:text-4xl font-extrabold tracking-wide font-fredoka text-indigo-900">Race Typing SD & SMP</h1>
         <span class="text-3xl sm:text-4xl animate-bounce" style="animation-delay: 0.2s;">🏁</span>
       </div>
       <p class="text-slate-600 font-bold text-sm sm:text-base">Ayo Latihan Ketik Cepat & Seru Bersama Teman-Teman! 🚀</p>
@@ -211,30 +211,34 @@
       </div>
 
       <!-- LIVE STATS BADGES -->
-      <div class="grid grid-cols-3 gap-3 mb-4">
-        <div class="bg-amber-100 border-3 border-amber-300 rounded-2xl p-3 text-center">
-          <span class="block text-xs font-bold text-amber-800 uppercase">⚡ Kecepatan (WPM)</span>
-          <span id="stat-wpm" class="font-fredoka text-2xl sm:text-3xl text-amber-600">0</span>
+      <div class="grid grid-cols-4 gap-2 sm:gap-3 mb-4">
+        <div class="bg-amber-100 border-3 border-amber-300 rounded-2xl p-2.5 sm:p-3 text-center">
+          <span class="block text-xs font-bold text-amber-800 uppercase">⚡ WPM</span>
+          <span id="stat-wpm" class="font-fredoka text-xl sm:text-3xl text-amber-600">0</span>
         </div>
-        <div class="bg-emerald-100 border-3 border-emerald-300 rounded-2xl p-3 text-center">
+        <div class="bg-emerald-100 border-3 border-emerald-300 rounded-2xl p-2.5 sm:p-3 text-center">
           <span class="block text-xs font-bold text-emerald-800 uppercase">🎯 Akurasi</span>
-          <span id="stat-accuracy" class="font-fredoka text-2xl sm:text-3xl text-emerald-600">100%</span>
+          <span id="stat-accuracy" class="font-fredoka text-xl sm:text-3xl text-emerald-600">100%</span>
         </div>
-        <div class="bg-indigo-100 border-3 border-indigo-300 rounded-2xl p-3 text-center">
-          <span class="block text-xs font-bold text-indigo-800 uppercase">🚩 Kemajuan</span>
-          <span id="stat-progress" class="font-fredoka text-2xl sm:text-3xl text-indigo-600">0%</span>
+        <div class="bg-indigo-100 border-3 border-indigo-300 rounded-2xl p-2.5 sm:p-3 text-center">
+          <span class="block text-xs font-bold text-indigo-800 uppercase">⏱️ Sisa Waktu</span>
+          <span id="stat-timer" class="font-fredoka text-xl sm:text-3xl text-indigo-600">03:00</span>
+        </div>
+        <div class="bg-purple-100 border-3 border-purple-300 rounded-2xl p-2.5 sm:p-3 text-center">
+          <span class="block text-xs font-bold text-purple-800 uppercase">📝 Kata Benar</span>
+          <span id="stat-word-count" class="font-fredoka text-xl sm:text-3xl text-purple-600">0</span>
         </div>
       </div>
 
-      <!-- TYPING TARGET BOX -->
-      <div class="bg-slate-50 border-4 border-indigo-200 rounded-2xl p-5 mb-4 text-xl sm:text-2xl leading-relaxed tracking-wide font-bold text-slate-700 typing-box shadow-inner max-h-48 overflow-y-auto select-none" id="typing-text-display">
+      <!-- TYPING TARGET BOX (KATA MUNCUL SATU PER SATU) -->
+      <div class="bg-slate-50 border-4 border-indigo-200 rounded-2xl p-5 mb-4 shadow-inner select-none flex flex-col items-center justify-center min-h-[140px]" id="typing-text-display">
         Menyiapkan soal ketikan...
       </div>
 
       <!-- INPUT FIELD -->
       <div class="relative">
-        <input type="text" id="typing-input" placeholder="Mulai mengetik kalimat di atas..." autocomplete="off" disabled
-          class="w-full px-6 py-4 border-4 border-amber-400 bg-amber-50/50 rounded-2xl text-xl font-bold text-slate-800 outline-none focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-200 transition shadow-md">
+        <input type="text" id="typing-input" placeholder="Ketik kata di atas lalu tekan SPASI..." autocomplete="off" disabled
+          class="w-full px-6 py-4 border-4 border-amber-400 bg-amber-50/50 rounded-2xl text-2xl font-bold text-slate-800 text-center outline-none focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-200 transition shadow-md">
       </div>
     </div>
 
@@ -311,30 +315,7 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // Game Variables & State
-    let currentUser = null;
-    let currentRoomCode = null;
-    let roomUnsubscribe = null;
-    let isHost = false;
-    let targetText = "";
-    let startTime = null;
-    let selectedAvatar = '🏎️';
-
-    // Cute Avatar Options
-    const AVATARS = ['🏎️', '🚗', '🚕', '🚓', '🚀', '🦄', '🐱', '🐶'];
-
-    // SD Level Indonesian Text Bank
-    const SD_TEXT_BANKS = [
-      "Kucing adalah hewan peliharaan yang sangat lucu dan suka bermain bola benang.",
-      "Setiap pagi saya pergi ke sekolah bersama teman-teman dengan penuh semangat.",
-      "Pancasila adalah dasar negara Indonesia yang wajib kita hormati dan amalkan.",
-      "Membaca buku di perpustakaan dapat menambah ilmu pengetahuan dan wawasan kita.",
-      "Menjaga kebersihan lingkungan sekolah adalah tugas bersama seluruh murid dan guru.",
-      "Olahraga secara teratur membuat tubuh kita menjadi sehat, kuat, dan ceria.",
-      "Bendera Merah Putih berkibar dengan gagah di halaman sekolah pada hari Senin."
-    ];
-
-    // DOM Elements
+    // DOM Elements Selection
     const setupView = document.getElementById('setup-view');
     const lobbyView = document.getElementById('lobby-view');
     const gameView = document.getElementById('game-view');
@@ -342,8 +323,6 @@
 
     const inputName = document.getElementById('player-name');
     const inputRoomCode = document.getElementById('room-code-input');
-    const avatarSelector = document.getElementById('avatar-selector');
-    
     const btnCreateRoom = document.getElementById('btn-create-room');
     const btnJoinRoom = document.getElementById('btn-join-room');
     const btnStartGame = document.getElementById('btn-start-game');
@@ -361,76 +340,176 @@
 
     const statWpm = document.getElementById('stat-wpm');
     const statAccuracy = document.getElementById('stat-accuracy');
-    const statProgress = document.getElementById('stat-progress');
+    const statTimer = document.getElementById('stat-timer');
+    const avatarSelector = document.getElementById('avatar-selector');
 
-    // Custom Modal Elements
     const customModal = document.getElementById('custom-modal');
-    const modalIcon = document.getElementById('modal-icon');
     const modalTitle = document.getElementById('modal-title');
     const modalMessage = document.getElementById('modal-message');
+    const modalIcon = document.getElementById('modal-icon');
     const btnCloseModal = document.getElementById('btn-close-modal');
 
-    // --- STREAMING_CHUNK:Setting up web audio effects for kid interaction... ---
-    // Web Audio Synthesizer Sound Effects (No external audio files required)
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    
-    function playBeep(freq = 440, duration = 0.08, type = 'sine') {
-      try {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = type;
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + duration);
-      } catch (e) {}
-    }
+    // Game Variables & State
+    let currentUser = null;
+    let currentRoomCode = null;
+    let roomUnsubscribe = null;
+    let isHost = false;
+    let targetText = "";
+    let targetWords = [];
+    let currentWordIndex = 0;
+    let totalTypedCharsCount = 0;
+    let correctTypedCharsCount = 0;
+    let correctWordsCount = 0;
+    let startTime = null;
+    let selectedAvatar = '🏎️';
 
-    function playVictorySound() {
-      const notes = [523.25, 659.25, 783.99, 1046.50];
-      notes.forEach((freq, idx) => {
-        setTimeout(() => playBeep(freq, 0.2, 'triangle'), idx * 150);
-      });
+    // Game Timer Configuration (3 Menit = 180 Detik)
+    const GAME_DURATION_SEC = 180;
+    let gameTimerInterval = null;
+
+    // Cute Avatar Options
+    const AVATARS = ['🏎️', '🚗', '🚕', '🚓', '🚀', '🦄', '🐱', '🐶'];
+
+    // 500 Kosakata Bahasa Indonesia SD-SMP (Semua lowercase)
+    const WORD_BANK = [
+      "kucing", "anjing", "burung", "ikan", "gajah", "jerapah", "singa", "harimau", "kelinci", "kuda",
+      "monyet", "panda", "beruang", "serigala", "lumba", "paus", "hiu", "penyu", "katak", "ular",
+      "elang", "merpati", "ayam", "bebek", "angsa", "kambing", "sapi", "kerbau", "domba", "babi",
+      "semut", "lebah", "lalat", "nyamuk", "kupu", "belalang", "laba", "cacing", "siput", "gurita",
+      "meja", "kursi", "papan", "buku", "pensil", "pulpen", "penghapus", "penggaris", "tas", "sepatu",
+      "kaos", "celana", "topi", "jaket", "sabuk", "kaos kaki", "seragam", "dasi", "tas sekolah", "kotak",
+      "rumah", "pintu", "jendela", "atap", "dinding", "lantai", "kamar", "dapur", "taman", "pagar",
+      "piring", "sendok", "garpu", "gelas", "mangkuk", "wajan", "panci", "pisau", "kompor", "kulkas",
+      "sekolah", "kelas", "lapangan", "kantin", "perpustakaan", "laboratorium", "halaman", "toilet", "gerbang", "aula",
+      "guru", "murid", "siswa", "kepala", "dokter", "perawat", "polisi", "tentara", "pilot", "sopir",
+      "petani", "nelayan", "koki", "pelukis", "penyanyi", "penari", "penulis", "atlet", "wasit", "juara",
+      "apul", "pisang", "jeruk", "mangga", "anggur", "semangka", "melon", "durian", "rambutan", "nanas",
+      "pepaya", "alpukat", "jambu", "manggis", "salak", "kelapa", "lemon", "stroberi", "nangka", "sirsak",
+      "bayam", "kangkung", "wortel", "tomat", "kentang", "bawang", "cabai", "jagung", "kacang", "terong",
+      "timun", "labu", "kubis", "brokoli", "sawi", "lobak", "jamur", "seledri", "serai", "jahe", "nasi",
+      "roti", "mie", "bakso", "soto", "sate", "rendang", "gulai", "sup", "bubur", "gorengan", "telur",
+      "daging", "ikan", "tempe", "tahu", "kerupuk", "sambal", "keju", "susu", "mentega", "cokelat",
+      "air", "teh", "kopi", "jUS", "sirup", "es", "soda", "kuah", "kaldu", "madu", "merah", "kuning",
+      "hijau", "biru", "ungu", "merah muda", "oranye", "cokelat", "hitam", "putih", "abu", "emas", "perak",
+      "satu", "dua", "tiga", "empat", "lima", "enam", "tujuh", "delapan", "sembilan", "sepuluh", "ratus",
+      "ribu", "juta", "banyak", "sedikit", "kosong", "penuh", "panjang", "pendek", "tinggi", "rendah",
+      "besar", "kecil", "luas", "sempit", "tebal", "tipis", "berat", "ringan", "cepat", "lambat",
+      "kuat", "lemah", "pintar", "rajin", "ramah", "sopan", "jujur", "berani", "hebat", "indah",
+      "cantik", "tampan", "bersih", "kotor", "harum", "bau", "manis", "asin", "pahit", "asam",
+      "pedas", "gurih", "panas", "dingin", "hangat", "sejuk", "basah", "kering", "keras", "lembut",
+      "mudah", "sulit", "baru", "lama", "tua", "muda", "murah", "mahal", "terang", "gelap",
+      "siang", "malam", "pagi", "sore", "hari", "minggu", "bulan", "tahun", "detik", "menit", "jam",
+      "senin", "selasa", "rabu", "kamis", "jumat", "sabtu", "minggu", "januari", "februari", "maret",
+      "april", "mei", "juni", "juli", "agustus", "september", "oktober", "november", "desember", "musim",
+      "hujan", "kemarau", "angin", "awan", "petir", "pelangi", "matahari", "bulan", "bintang", "langit",
+      "bumi", "laut", "gunung", "sungai", "danau", "hutan", "pantai", "pulau", "lembah", "sawah",
+      "batu", "tanah", "pasir", "air", "api", "udara", "daun", "pohon", "bunga", "akar", "batang",
+      "buah", "bijii", "rumput", "taman", "kebun", "gua", "bukit", "samudra", "ombak", "muara",
+      "kepala", "rambut", "mata", "telinga", "hidung", "mulut", "gigi", "lidah", "leher", "dada",
+      "perut", "tangan", "jari", "kaki", "lutut", "siku", "bahu", "punggung", "kulit", "darah",
+      "tulang", "otot", "jantung", "paru", "hati", "lambung", "otak", "suara", "napas", "langkah",
+      "baca", "tulis", "hitung", "gambar", "nyanyi", "tari", "lari", "lompat", "jalan", "duduk",
+      "berdiri", "tidur", "bangun", "makan", "minum", "mandi", "masak", "cuci", "sapu", "pel",
+      "buka", "tutup", "tarik", "dorong", "lempar", "tangkap", "tendang", "pukul", "pegang", "bawa",
+      "simpan", "cari", "temu", "lihat", "dengar", "rasa", "pikir", "ingat", "lupa", "belajar",
+      "bermain", "bekerja", "berenang", "sepeda", "terbang", "senyum", "tawa", "menangis", "sapa", "tolong",
+      "terima", "kasih", "maaf", "permisi", "selamat", "datang", "halo", "kabar", "sehat", "bahagia",
+      "senang", "gembira", "sedih", "marah", "takut", "kaget", "bosan", "lelah", "capek", "semangat",
+      "indonesia", "jakarta", "garuda", "bendera", "pancasila", "bangsa", "negara", "rakyat", "pahlawan", "merdeka",
+      "sejarah", "budaya", "tari", "lagu", "musik", "alat", "angklung", "gamelan", "batik", "candi",
+      "komputer", "laptop", "ponsel", "internet", "robot", "mesin", "listrik", "lampu", "kamera", "layar",
+      "tombol", "kabel", "sinyal", "data", "aplikasi", "gim", "situs", "pesawat", "mobil", "motor",
+      "kereta", "kapal", "sepeda", "bus", "truk", "helikopter", "roket", "stasiun", "bandara", "pelabuhan"
+    ];
+
+    // Helper Fungsi Tampilan Screen
+    function showScreen(screen) {
+      if (setupView) setupView.classList.add('hidden');
+      if (lobbyView) lobbyView.classList.add('hidden');
+      if (gameView) gameView.classList.add('hidden');
+      if (resultView) resultView.classList.add('hidden');
+
+      if (screen) screen.classList.remove('hidden');
     }
 
     // Modal Helper
-    function showModal(message, title = "Pemberitahuan 😊", icon = "💡") {
-      modalIcon.innerText = icon;
-      modalTitle.innerText = title;
-      modalMessage.innerText = message;
-      customModal.classList.remove('hidden');
+    function showModal(message, title = "Pemberitahuan", icon = "⚠️") {
+      if (modalTitle) modalTitle.innerText = title;
+      if (modalMessage) modalMessage.innerText = message;
+      if (modalIcon) modalIcon.innerText = icon;
+      if (customModal) customModal.classList.remove('hidden');
     }
 
-    btnCloseModal.addEventListener('click', () => {
-      customModal.classList.add('hidden');
-    });
+    if (btnCloseModal) {
+      btnCloseModal.addEventListener('click', () => {
+        if (customModal) customModal.classList.add('hidden');
+      });
+    }
+
+    // Audio Synth Effects
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playBeep(freq = 440, typeDuration = 0.05, type = 'sine') {
+      try {
+        const ctx = getAudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + typeDuration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + typeDuration);
+      } catch(e) {}
+    }
+
+    function playVictorySound() {
+      try {
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+          setTimeout(() => playBeep(freq, 0.2, 'triangle'), idx * 150);
+        });
+      } catch(e) {}
+    }
 
     // Render Avatar Selector Options
-    function initAvatarSelector() {
+    if (avatarSelector) {
       avatarSelector.innerHTML = AVATARS.map((av, idx) => `
-        <label class="avatar-option cursor-pointer block text-center">
-          <input type="radio" name="avatar" value="${av}" ${idx === 0 ? 'checked' : ''} class="hidden">
-          <div class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-2xl bg-white border-3 border-indigo-200 rounded-xl transition-all">
+        <label class="avatar-option cursor-pointer">
+          <input type="radio" name="avatar" value="${av}" class="hidden" ${idx === 0 ? 'checked' : ''}>
+          <div class="w-11 h-11 border-2 border-indigo-200 rounded-2xl flex items-center justify-center text-2xl transition-all duration-200 hover:scale-105 bg-white">
             ${av}
           </div>
         </label>
       `).join('');
 
-      // Add listener
-      avatarSelector.querySelectorAll('input[name="avatar"]').forEach(input => {
-        input.addEventListener('change', (e) => {
-          selectedAvatar = e.target.value;
-          playBeep(600, 0.05);
-        });
+      avatarSelector.addEventListener('change', (e) => {
+        selectedAvatar = e.target.value;
       });
     }
-    initAvatarSelector();
 
-    // Anonymous Auth Setup
+    // Generator kata acak tidak berulang
+    function getNextWordSet(count = 300) {
+      const shuffled = [...WORD_BANK].sort(() => 0.5 - Math.random());
+      let words = [];
+      while (words.length < count) {
+        words.push(...shuffled);
+      }
+      return words.slice(0, count).join(" ");
+    }
+
+    // Autentikasi Anonim
     signInAnonymously(auth).catch(err => console.error("Auth Error:", err));
     onAuthStateChanged(auth, user => {
       if (user) {
@@ -438,87 +517,136 @@
       }
     });
 
-    // View Switcher
-    function showScreen(screen) {
-      setupView.classList.add('hidden');
-      lobbyView.classList.add('hidden');
-      gameView.classList.add('hidden');
-      resultView.classList.add('hidden');
+    // 1. BUAT ROOM
+    if (btnCreateRoom) {
+      btnCreateRoom.addEventListener('click', async () => {
+        const name = inputName ? inputName.value.trim() : "";
+        if (!name) return showModal("Silakan tulis nama panggilanmu dulu ya! 😊", "Nama Kosong", "✏️");
+        if (!currentUser) return showModal("Menghubungkan ke server... Coba sejenak lagi!", "Tunggu Bentar", "⏳");
 
-      screen.classList.remove('hidden');
+        const roomCode = Math.random().toString(36).substring(2, 7).toLowerCase();
+        const roomRef = doc(db, "rooms", roomCode);
+
+        try {
+          await setDoc(roomRef, {
+            createdAt: new Date().toISOString(),
+            status: "waiting",
+            targetText: "",
+            winner: "",
+            players: {
+              [currentUser.uid]: {
+                name: name,
+                avatar: selectedAvatar,
+                wordsCount: 0,
+                wpm: 0,
+                isHost: true,
+                finished: false
+              }
+            }
+          });
+
+          isHost = true;
+          listenToRoom(roomCode);
+        } catch (err) {
+          showModal("Gagal membuat room: " + err.message, "Oops!", "❌");
+        }
+      });
     }
 
-    // --- STREAMING_CHUNK:Handling room creation, join, and Firestore listeners... ---
-    // 1. BUAT ROOM
-    btnCreateRoom.addEventListener('click', async () => {
-      const name = inputName.value.trim();
-      if (!name) return showModal("Tuliskan nama panggilanmu terlebih dahulu ya! 😊", "Wah, Siapa Namamu?", "👤");
-      if (!currentUser) return showModal("Sedang menghubungkan ke server... coba sesaat lagi!", "Tunggu Sebentar", "⏳");
+    // 2. GABUNG ROOM
+    if (btnJoinRoom) {
+      btnJoinRoom.addEventListener('click', async () => {
+        const name = inputName ? inputName.value.trim() : "";
+        const code = inputRoomCode ? inputRoomCode.value.trim().toLowerCase() : "";
 
-      const roomCode = Math.random().toString(36).substring(2, 8).toLowerCase();
-      const roomRef = doc(db, "rooms", roomCode);
+        if (!name) return showModal("Silakan tulis nama panggilanmu dulu ya! 😊", "Nama Kosong", "✏️");
+        if (!code) return showModal("Masukkan kode room yang diberikan temanmu!", "Kode Kosong", "🔑");
+        if (!currentUser) return showModal("Menghubungkan ke server... Coba sejenak lagi!", "Tunggu Bentar", "⏳");
 
-      try {
-        await setDoc(roomRef, {
-          createdAt: new Date().toISOString(),
-          status: "waiting",
-          targetText: "",
-          winner: "",
-          players: {
-            [currentUser.uid]: {
+        const roomRef = doc(db, "rooms", code);
+        try {
+          const snap = await getDoc(roomRef);
+          if (!snap.exists()) return showModal("Kode room tidak ditemukan. Cek lagi kodenya ya!", "Room Tidak Ada", "🔍");
+
+          const roomData = snap.data();
+          if (roomData.status !== "waiting") return showModal("Balapan di room ini sudah dimulai!", "Sedang Berlangsung", "🏎️");
+
+          await updateDoc(roomRef, {
+            [`players.${currentUser.uid}`]: {
               name: name,
               avatar: selectedAvatar,
-              progress: 0,
+              wordsCount: 0,
               wpm: 0,
-              isHost: true,
+              isHost: false,
               finished: false
             }
+          });
+
+          isHost = false;
+          listenToRoom(code);
+        } catch (err) {
+          showModal("Gagal bergabung: " + err.message, "Oops!", "❌");
+        }
+      });
+    }
+
+    // Timer Countdown Helper
+    function startTimer(startTimeMs) {
+      if (gameTimerInterval) clearInterval(gameTimerInterval);
+
+      const updateTimer = () => {
+        const elapsedSec = Math.floor((Date.now() - startTimeMs) / 1000);
+        const timeRemaining = Math.max(0, GAME_DURATION_SEC - elapsedSec);
+
+        const mins = Math.floor(timeRemaining / 60);
+        const secs = timeRemaining % 60;
+        const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+        if (statTimer) statTimer.innerText = timeStr;
+
+        // Waktu Habis (3 Menit Selesai)
+        if (timeRemaining <= 0) {
+          clearInterval(gameTimerInterval);
+          if (typingInput) typingInput.disabled = true;
+          const statusText = document.getElementById('game-status-text');
+          if (statusText) statusText.innerText = "⏱️ Waktu 3 Menit Habis!";
+
+          if (isHost && currentRoomCode) {
+            const roomRef = doc(db, "rooms", currentRoomCode);
+            getDoc(roomRef).then(snap => {
+              if (snap.exists() && snap.data().status === "playing") {
+                const playersData = snap.data().players || {};
+                let topPlayer = "";
+                let maxWords = -1;
+
+                Object.keys(playersData).forEach(uid => {
+                  const words = playersData[uid].wordsCount || 0;
+                  if (words > maxWords) {
+                    maxWords = words;
+                    topPlayer = playersData[uid].name;
+                  }
+                });
+
+                updateDoc(roomRef, {
+                  status: "finished",
+                  winner: topPlayer ? `${topPlayer} (${maxWords} Kata)` : "Pemain Cepat"
+                });
+              }
+            });
           }
-        });
+        }
+      };
 
-        isHost = true;
-        listenToRoom(roomCode);
-        playBeep(523, 0.15);
-      } catch (err) {
-        showModal("Gagal membuat room: " + err.message, "Aduh Error!", "❌");
+      updateTimer();
+      gameTimerInterval = setInterval(updateTimer, 1000);
+    }
+
+    function stopTimer() {
+      if (gameTimerInterval) {
+        clearInterval(gameTimerInterval);
+        gameTimerInterval = null;
       }
-    });
-
-    // 2. GABUNG ROOM
-    btnJoinRoom.addEventListener('click', async () => {
-      const name = inputName.value.trim();
-      const code = inputRoomCode.value.trim().toLowerCase();
-
-      if (!name) return showModal("Tuliskan nama panggilanmu dulu ya!", "Nama Belum Diisi", "👤");
-      if (!code) return showModal("Masukkan Kode Room yang ingin kamu masuki!", "Kode Room Kosong", "🔑");
-      if (!currentUser) return showModal("Sedang menghubungkan ke server... coba beberapa detik lagi.", "Tunggu Sebentar", "⏳");
-
-      const roomRef = doc(db, "rooms", code);
-      try {
-        const snap = await getDoc(roomRef);
-        if (!snap.exists()) return showModal("Room dengan kode tersebut tidak ditemukan. Cek lagi kodenya ya!", "Room Tidak Ada", "🔍");
-
-        const roomData = snap.data();
-        if (roomData.status !== "waiting") return showModal("Balapan di room ini sudah dimulai. Cari room lain ya!", "Balapan Sudah Jalan", "🏎️");
-
-        await updateDoc(roomRef, {
-          [`players.${currentUser.uid}`]: {
-            name: name,
-            avatar: selectedAvatar,
-            progress: 0,
-            wpm: 0,
-            isHost: false,
-            finished: false
-          }
-        });
-
-        isHost = false;
-        listenToRoom(code);
-        playBeep(523, 0.15);
-      } catch (err) {
-        showModal("Gagal bergabung: " + err.message, "Aduh Error!", "❌");
-      }
-    });
+    }
 
     // 3. LISTEN REALTIME ROOM DATA
     function listenToRoom(code) {
@@ -544,92 +672,120 @@
 
         // STATUS: WAITING (LOBBY)
         if (roomData.status === "waiting") {
+          stopTimer();
           showScreen(lobbyView);
-          displayRoomCode.innerText = code;
-          playerCountBadge.innerText = playerKeys.length;
+          if (displayRoomCode) displayRoomCode.innerText = code;
+          if (playerCountBadge) playerCountBadge.innerText = playerKeys.length;
 
           // Render Lobby Players
-          lobbyPlayerList.innerHTML = playerKeys.map(uid => {
-            const p = players[uid];
-            const isMe = uid === currentUser.uid;
-            return `
-              <div class="flex items-center justify-between bg-white p-3.5 rounded-xl border-3 ${isMe ? 'border-amber-400 bg-amber-50/50' : 'border-indigo-100'}">
-                <div class="flex items-center gap-3">
-                  <span class="text-3xl">${p.avatar || '🏎️'}</span>
-                  <div>
-                    <span class="font-fredoka text-slate-800 text-lg block leading-tight">
-                      ${p.name} ${p.isHost ? '👑' : ''}
-                    </span>
-                    <span class="text-xs font-bold text-slate-400">${isMe ? '(Kamu)' : (p.isHost ? 'Host Room' : 'Pemain')}</span>
+          if (lobbyPlayerList) {
+            lobbyPlayerList.innerHTML = playerKeys.map(uid => {
+              const p = players[uid];
+              const isMe = uid === currentUser.uid;
+              return `
+                <div class="flex items-center justify-between bg-white p-3.5 rounded-xl border-3 ${isMe ? 'border-amber-400 bg-amber-50/50' : 'border-indigo-100'}">
+                  <div class="flex items-center gap-3">
+                    <span class="text-3xl">${p.avatar || '🏎️'}</span>
+                    <div>
+                      <span class="font-fredoka text-slate-800 text-lg block leading-tight">
+                        ${p.name} ${p.isHost ? '👑' : ''}
+                      </span>
+                      <span class="text-xs font-bold text-slate-400">${isMe ? '(Kamu)' : (p.isHost ? 'Host Room' : 'Pemain')}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            `;
-          }).join('');
+              `;
+            }).join('');
+          }
 
-          if (isHost) {
-            btnStartGame.classList.remove('hidden');
-          } else {
-            btnStartGame.classList.add('hidden');
+          if (btnStartGame) {
+            if (isHost) {
+              btnStartGame.classList.remove('hidden');
+            } else {
+              btnStartGame.classList.add('hidden');
+            }
           }
         }
 
         // STATUS: PLAYING (GAME IN PROGRESS)
         else if (roomData.status === "playing") {
-          if (gameView.classList.contains('hidden')) {
+          if (gameView && gameView.classList.contains('hidden')) {
             showScreen(gameView);
-            gameRoomCode.innerText = `ROOM: ${code}`;
-            targetText = roomData.targetText;
+            if (gameRoomCode) gameRoomCode.innerText = `ROOM: ${code}`;
+            targetText = roomData.targetText || "";
+            targetWords = targetText.split(/\s+/).filter(w => w.length > 0);
+            currentWordIndex = 0;
+            totalTypedCharsCount = 0;
+            correctTypedCharsCount = 0;
+            correctWordsCount = 0;
             renderTypingDisplay("");
-            typingInput.value = "";
-            typingInput.disabled = false;
-            typingInput.focus();
-            startTime = new Date();
-            document.getElementById('game-status-text').innerText = "Ayo Ketik!";
+            if (typingInput) {
+              typingInput.value = "";
+              typingInput.disabled = false;
+              typingInput.focus();
+            }
+            
+            const startTimestamp = roomData.startTime || Date.now();
+            startTime = new Date(startTimestamp);
+            startTimer(startTimestamp);
+            
+            const statusText = document.getElementById('game-status-text');
+            if (statusText) statusText.innerText = "Ayo Ketik! (Waktu: 3 Menit)";
           }
 
           // Render Multiplayer Race Track Progress
-          gameRaceTrack.innerHTML = playerKeys.map(uid => {
-            const p = players[uid];
-            const isMe = uid === currentUser.uid;
-            const progressPct = Math.min(100, Math.max(0, p.progress || 0));
+          if (gameRaceTrack) {
+            gameRaceTrack.innerHTML = playerKeys.map(uid => {
+              const p = players[uid];
+              const isMe = uid === currentUser.uid;
+              const words = p.wordsCount || 0;
+              const progressPct = Math.min(100, Math.max(0, Math.floor((words / 100) * 100)));
 
-            return `
-              <div class="bg-slate-700/80 p-2.5 rounded-xl border border-slate-600">
-                <div class="flex justify-between text-xs font-bold text-slate-200 mb-1">
-                  <span>${p.avatar || '🏎️'} ${p.name} ${isMe ? '(Kamu)' : ''}</span>
-                  <span class="text-amber-300 font-mono">${p.wpm || 0} WPM | ${progressPct}%</span>
-                </div>
-                <div class="w-full bg-slate-900 rounded-full h-8 relative overflow-hidden asphalt-line p-1 flex items-center">
-                  <div class="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-amber-400 rounded-full transition-all duration-300 flex items-center justify-end pr-1"
-                       style="width: ${Math.max(8, progressPct)}%;">
-                    <span class="text-xl transform translate-x-1">${p.avatar || '🏎️'}</span>
+              return `
+                <div class="bg-slate-700/80 p-2.5 rounded-xl border border-slate-600">
+                  <div class="flex justify-between text-xs font-bold text-slate-200 mb-1">
+                    <span>${p.avatar || '🏎️'} ${p.name} ${isMe ? '(Kamu)' : ''}</span>
+                    <span class="text-amber-300 font-mono">${p.wpm || 0} WPM | ${words} Kata</span>
+                  </div>
+                  <div class="w-full bg-slate-900 rounded-full h-8 relative overflow-hidden asphalt-line p-1 flex items-center">
+                    <div class="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-amber-400 rounded-full transition-all duration-300 flex items-center justify-end pr-1"
+                         style="width: ${Math.max(8, progressPct)}%;">
+                      <span class="text-xl transform translate-x-1">${p.avatar || '🏎️'}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            `;
-          }).join('');
+              `;
+            }).join('');
+          }
         }
 
         // STATUS: FINISHED
         else if (roomData.status === "finished") {
+          stopTimer();
           showScreen(resultView);
-          document.getElementById('winner-name').innerText = roomData.winner || "Tidak Ada";
+          const winnerElem = document.getElementById('winner-name');
+          if (winnerElem) winnerElem.innerText = roomData.winner || "Tidak Ada";
 
           const sorted = playerKeys.map(uid => players[uid])
-            .sort((a, b) => b.progress - a.progress || b.wpm - a.wpm);
+            .sort((a, b) => (b.wordsCount || 0) - (a.wordsCount || 0) || (b.wpm || 0) - (a.wpm || 0));
 
           const medals = ['🥇', '🥈', '🥉'];
-          document.getElementById('result-leaderboard').innerHTML = sorted.map((p, idx) => `
-            <div class="flex items-center justify-between p-3 rounded-xl ${idx === 0 ? 'bg-amber-100 border-2 border-amber-300' : 'bg-slate-50 border border-slate-200'}">
-              <div class="flex items-center gap-3">
-                <span class="text-2xl">${medals[idx] || `#${idx + 1}`}</span>
-                <span class="text-2xl">${p.avatar || '🏎️'}</span>
-                <span class="font-fredoka text-slate-800 text-lg">${p.name}</span>
+          const lbElem = document.getElementById('result-leaderboard');
+          if (lbElem) {
+            lbElem.innerHTML = sorted.map((p, idx) => `
+              <div class="flex items-center justify-between p-3 rounded-xl ${idx === 0 ? 'bg-amber-100 border-2 border-amber-300' : 'bg-slate-50 border border-slate-200'}">
+                <div class="flex items-center gap-3">
+                  <span class="text-2xl">${medals[idx] || `#${idx + 1}`}</span>
+                  <span class="text-2xl">${p.avatar || '🏎️'}</span>
+                  <span class="font-fredoka text-slate-800 text-lg">${p.name}</span>
+                </div>
+                <div class="text-right">
+                  <span class="font-bold text-indigo-600 block">${p.wordsCount || 0} Kata</span>
+                  <span class="text-xs text-slate-400 font-semibold">${p.wpm || 0} WPM</span>
+                </div>
               </div>
-              <span class="font-bold text-indigo-600">${p.wpm} WPM</span>
-            </div>
-          `).join('');
+            `).join('');
+          }
 
           playVictorySound();
         }
@@ -637,127 +793,181 @@
     }
 
     // 4. START GAME (HOST)
-    btnStartGame.addEventListener('click', async () => {
-      if (!isHost) return;
-      const randomText = SD_TEXT_BANKS[Math.floor(Math.random() * SD_TEXT_BANKS.length)];
+    if (btnStartGame) {
+      btnStartGame.addEventListener('click', async () => {
+        if (!isHost) return;
+        const randomWordsText = getNextWordSet(300);
 
-      const roomRef = doc(db, "rooms", currentRoomCode);
-      await updateDoc(roomRef, {
-        status: "playing",
-        targetText: randomText,
-        winner: ""
-      });
-    });
-
-    // --- STREAMING_CHUNK:Binding real-time typing input and accuracy calculations... ---
-    // 5. TYPING INPUT HANDLER
-    typingInput.addEventListener('input', () => {
-      const typed = typingInput.value;
-
-      renderTypingDisplay(typed);
-
-      // Sound Cues
-      if (typed.length > 0) {
-        const lastCharIdx = typed.length - 1;
-        if (typed[lastCharIdx] === targetText[lastCharIdx]) {
-          playBeep(800, 0.04, 'sine');
-        } else {
-          playBeep(220, 0.08, 'sawtooth');
-        }
-      }
-
-      // Calculate Stats
-      let correctChars = 0;
-      for (let i = 0; i < typed.length; i++) {
-        if (typed[i] === targetText[i]) correctChars++;
-      }
-
-      const progress = Math.min(100, Math.floor((correctChars / targetText.length) * 100));
-      
-      const timeElapsedSec = (new Date() - startTime) / 1000;
-      const wordsTyped = correctChars / 5;
-      const wpm = timeElapsedSec > 0 ? Math.round((wordsTyped / timeElapsedSec) * 60) : 0;
-
-      const accuracy = typed.length > 0 ? Math.round((correctChars / typed.length) * 100) : 100;
-
-      // Local UI Stats
-      statWpm.innerText = wpm;
-      statAccuracy.innerText = accuracy + "%";
-      statProgress.innerText = progress + "%";
-
-      // Sync Firestore Realtime
-      if (currentRoomCode && currentUser) {
         const roomRef = doc(db, "rooms", currentRoomCode);
-        const updates = {
-          [`players.${currentUser.uid}.progress`]: progress,
-          [`players.${currentUser.uid}.wpm`]: wpm
-        };
+        await updateDoc(roomRef, {
+          status: "playing",
+          startTime: Date.now(),
+          targetText: randomWordsText,
+          winner: ""
+        });
+      });
+    }
 
-        if (typed === targetText) {
-          typingInput.disabled = true;
-          updates[`players.${currentUser.uid}.finished`] = true;
-          
-          getDoc(roomRef).then(snap => {
-            if (snap.exists() && snap.data().status === "playing") {
-              updateDoc(roomRef, {
-                ...updates,
-                status: "finished",
-                winner: snap.data().players[currentUser.uid]?.name || "Pemain Cepat"
-              });
-            }
-          });
-        } else {
-          updateDoc(roomRef, updates);
-        }
-      }
-    });
+    // 5. TYPING INPUT HANDLER
+    if (typingInput) {
+      typingInput.addEventListener('input', () => {
+        if (!targetWords.length || currentWordIndex >= targetWords.length) return;
 
-    // Render Text with Colors
-    function renderTypingDisplay(typed) {
-      let html = "";
-      for (let i = 0; i < targetText.length; i++) {
-        const char = targetText[i];
-        if (i < typed.length) {
-          if (typed[i] === char) {
-            html += `<span class="char-correct">${char}</span>`;
+        const currentTargetWord = targetWords[currentWordIndex];
+        let val = typingInput.value;
+
+        const isSpacePressed = val.endsWith(' ');
+        const cleanVal = val.trim();
+
+        renderTypingDisplay(val);
+
+        if (val.length > 0 && !isSpacePressed) {
+          const lastCharIdx = val.length - 1;
+          if (cleanVal[lastCharIdx] === currentTargetWord[lastCharIdx]) {
+            playBeep(800, 0.04, 'sine');
           } else {
-            html += `<span class="char-incorrect">${char}</span>`;
+            playBeep(220, 0.08, 'sawtooth');
           }
-        } else if (i === typed.length) {
-          html += `<span class="char-current">${char}</span>`;
+        }
+
+        const isLastWord = currentWordIndex === targetWords.length - 1;
+        const isWordMatch = cleanVal === currentTargetWord;
+
+        if ((isSpacePressed && isWordMatch) || (isLastWord && isWordMatch)) {
+          playBeep(950, 0.1, 'triangle');
+          correctTypedCharsCount += currentTargetWord.length + 1;
+          totalTypedCharsCount += currentTargetWord.length + 1;
+          correctWordsCount++;
+
+          currentWordIndex++;
+          typingInput.value = "";
+
+          if (currentWordIndex >= targetWords.length - 5) {
+            const newWords = getNextWordSet(50).split(/\s+/);
+            targetWords.push(...newWords);
+          }
+
+          renderTypingDisplay("");
+
+          const timeElapsedSec = (new Date() - startTime) / 1000;
+          const wordsTypedStandard = correctTypedCharsCount / 5;
+          const wpm = timeElapsedSec > 0 ? Math.round((wordsTypedStandard / timeElapsedSec) * 60) : 0;
+          const accuracy = totalTypedCharsCount > 0 ? Math.round((correctTypedCharsCount / totalTypedCharsCount) * 100) : 100;
+
+          if (statWpm) statWpm.innerText = wpm;
+          if (statAccuracy) statAccuracy.innerText = accuracy + "%";
+          const wordCountStat = document.getElementById('stat-word-count');
+          if (wordCountStat) wordCountStat.innerText = correctWordsCount;
+
+          if (currentRoomCode && currentUser) {
+            const roomRef = doc(db, "rooms", currentRoomCode);
+            updateDoc(roomRef, {
+              [`players.${currentUser.uid}.wordsCount`]: correctWordsCount,
+              [`players.${currentUser.uid}.wpm`]: wpm
+            });
+          }
+        } else if (isSpacePressed && !isWordMatch) {
+          playBeep(180, 0.15, 'sawtooth');
+          totalTypedCharsCount += cleanVal.length;
+          typingInput.value = "";
+          renderTypingDisplay("");
         } else {
-          html += `<span>${char}</span>`;
+          const timeElapsedSec = (new Date() - startTime) / 1000;
+          const wordsTypedStandard = (correctTypedCharsCount + Math.min(cleanVal.length, currentTargetWord.length)) / 5;
+          const wpm = timeElapsedSec > 0 ? Math.round((wordsTypedStandard / timeElapsedSec) * 60) : 0;
+
+          if (statWpm) statWpm.innerText = wpm;
+          const wordCountStat = document.getElementById('stat-word-count');
+          if (wordCountStat) wordCountStat.innerText = correctWordsCount;
+
+          if (currentRoomCode && currentUser) {
+            const roomRef = doc(db, "rooms", currentRoomCode);
+            updateDoc(roomRef, {
+              [`players.${currentUser.uid}.wordsCount`]: correctWordsCount,
+              [`players.${currentUser.uid}.wpm`]: wpm
+            });
+          }
+        }
+      });
+    }
+
+    // Render Display Kata Muncul Satu Per Satu
+    function renderTypingDisplay(currentInput) {
+      if (!typingTextDisplay) return;
+
+      if (!targetWords.length) {
+        typingTextDisplay.innerHTML = `<span class="text-slate-400 font-bold">Menyiapkan soal ketikan...</span>`;
+        return;
+      }
+
+      const activeWord = targetWords[currentWordIndex];
+      const nextWords = targetWords.slice(currentWordIndex + 1, currentWordIndex + 4).join(" ");
+      const prevWord = currentWordIndex > 0 ? targetWords[currentWordIndex - 1] : "";
+
+      let activeWordHtml = "";
+      const cleanInput = currentInput.trim();
+
+      for (let i = 0; i < activeWord.length; i++) {
+        const char = activeWord[i];
+        if (i < cleanInput.length) {
+          if (cleanInput[i] === char) {
+            activeWordHtml += `<span class="char-correct text-3xl sm:text-4xl font-extrabold">${char}</span>`;
+          } else {
+            activeWordHtml += `<span class="char-incorrect text-3xl sm:text-4xl font-extrabold">${char}</span>`;
+          }
+        } else if (i === cleanInput.length) {
+          activeWordHtml += `<span class="char-current text-3xl sm:text-4xl font-extrabold">${char}</span>`;
+        } else {
+          activeWordHtml += `<span class="text-slate-700 text-3xl sm:text-4xl font-extrabold">${char}</span>`;
         }
       }
-      typingTextDisplay.innerHTML = html;
+
+      typingTextDisplay.innerHTML = `
+        <div class="flex items-center gap-2 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+          <span>Kata Ke-${currentWordIndex + 1}</span>
+        </div>
+        <div class="bg-amber-100/80 border-2 border-amber-300 px-6 py-3 rounded-2xl shadow-sm mb-3 text-center transition-all">
+          <div class="font-fredoka tracking-wide flex justify-center gap-0.5">
+            ${activeWordHtml}
+          </div>
+        </div>
+        <div class="flex items-center justify-center gap-3 text-sm font-semibold text-slate-400">
+          ${prevWord ? `<span class="opacity-50 line-through">✓ ${prevWord}</span>` : ''}
+          ${nextWords ? `<span class="text-indigo-400">Selanjutnya: "${nextWords}..."</span>` : ''}
+        </div>
+      `;
     }
 
     // 6. LEAVE / RESET ROOM
     function leaveRoomLocal() {
+      stopTimer();
       if (roomUnsubscribe) roomUnsubscribe();
       currentRoomCode = null;
       showScreen(setupView);
     }
 
-    btnLeaveRoom.addEventListener('click', async () => {
-      if (currentRoomCode && currentUser) {
-        const roomRef = doc(db, "rooms", currentRoomCode);
-        await updateDoc(roomRef, {
-          [`players.${currentUser.uid}`]: deleteField()
-        });
-      }
-      leaveRoomLocal();
-    });
-
-    btnBackToLobby.addEventListener('click', async () => {
-      if (isHost && currentRoomCode) {
-        const roomRef = doc(db, "rooms", currentRoomCode);
-        await updateDoc(roomRef, { status: "waiting" });
-      } else {
+    if (btnLeaveRoom) {
+      btnLeaveRoom.addEventListener('click', async () => {
+        if (currentRoomCode && currentUser) {
+          const roomRef = doc(db, "rooms", currentRoomCode);
+          await updateDoc(roomRef, {
+            [`players.${currentUser.uid}`]: deleteField()
+          });
+        }
         leaveRoomLocal();
-      }
-    });
+      });
+    }
 
+    if (btnBackToLobby) {
+      btnBackToLobby.addEventListener('click', async () => {
+        if (isHost && currentRoomCode) {
+          const roomRef = doc(db, "rooms", currentRoomCode);
+          await updateDoc(roomRef, { status: "waiting" });
+        } else {
+          leaveRoomLocal();
+        }
+      });
+    }
   </script>
 </body>
 </html>
