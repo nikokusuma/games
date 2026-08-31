@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan Balon Huruf - Game Mengetik Anak</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts untuk Font Ceria -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome untuk ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            touch-action: manipulation;
+        }
+        .font-fredoka {
+            font-family: 'Fredoka One', cursive;
+        }
+
+        /* Animasi Awan Melayang */
+        @keyframes floatCloud {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100vw); }
+        }
+        .cloud-1 { animation: floatCloud 25s linear infinite; }
+        .cloud-2 { animation: floatCloud 35s linear infinite 5s; }
+        .cloud-3 { animation: floatCloud 20s linear infinite 12s; }
+
+        /* Style Balon */
+        .balloon {
+            position: absolute;
+            bottom: -100px;
+            width: 80px;
+            height: 98px;
+            border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Fredoka One', cursive;
+            font-size: 2.2rem;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            box-shadow: inset -10px -10px 20px rgba(0,0,0,0.15), inset 10px 10px 20px rgba(255,255,255,0.4);
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s ease;
+        }
+
+        /* Tali Balon */
+        .balloon::after {
+            content: "";
+            position: absolute;
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 14px;
+            background-color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Segitiga Bawah Balon */
+        .balloon::before {
+            content: "";
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 8px solid inherit;
+        }
+
+        /* Partikel Letusan Balon */
+        .pop-particle {
+            position: absolute;
+            pointer-events: none;
+            border-radius: 50%;
+            animation: popExplode 0.5s ease-out forwards;
+        }
+
+        @keyframes popExplode {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--dx), var(--dy)) scale(0);
+                opacity: 0;
+            }
+        }
+
+        /* Animasi Goyang Balon */
+        @keyframes wobble {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            25% { transform: translateX(-6px) rotate(-4deg); }
+            75% { transform: translateX(6px) rotate(4deg); }
+        }
+        .wobble {
+            animation: wobble 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-sky-300 via-sky-200 to-amber-100 h-screen w-screen overflow-hidden select-none relative">
+
+    <!-- Awan Latar Belakang -->
+    <div class="absolute inset-0 pointer-events-none overflow-hidden">
+        <i class="fa-solid fa-cloud text-white opacity-80 text-8xl absolute top-10 cloud-1"></i>
+        <i class="fa-solid fa-cloud text-white opacity-60 text-9xl absolute top-28 cloud-2"></i>
+        <i class="fa-solid fa-cloud text-white opacity-70 text-7xl absolute top-5 cloud-3"></i>
+    </div>
+
+    <!-- Rumput di Bagian Bawah -->
+    <div class="absolute bottom-0 w-full h-16 bg-emerald-500 rounded-t-3xl border-t-8 border-emerald-400 z-10 flex justify-around items-end pb-2">
+        <i class="fa-solid fa-seedling text-emerald-300 text-2xl"></i>
+        <i class="fa-solid fa-seedling text-emerald-300 text-3xl"></i>
+        <i class="fa-solid fa-flower text-pink-300 text-2xl"></i>
+        <i class="fa-solid fa-seedling text-emerald-300 text-3xl"></i>
+        <i class="fa-solid fa-flower text-yellow-300 text-2xl"></i>
+        <i class="fa-solid fa-seedling text-emerald-300 text-2xl"></i>
+    </div>
+
+    <!-- Header Panel Skor & Nyawa -->
+    <header class="relative z-20 p-4 max-w-4xl mx-auto flex justify-between items-center">
+        <!-- Skor -->
+        <div class="bg-white/90 backdrop-blur border-4 border-yellow-400 px-5 py-2 rounded-2xl shadow-lg flex items-center gap-3">
+            <i class="fa-solid fa-star text-yellow-400 text-3xl animate-bounce"></i>
+            <div>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Skor Kamu</p>
+                <p id="score-text" class="text-3xl font-fredoka text-amber-500">0 / 100</p>
+            </div>
+        </div>
+
+        <!-- Judul Ringkas -->
+        <div class="hidden md:block text-center">
+            <h1 class="font-fredoka text-3xl text-sky-700 drop-shadow-md">🎈 BALON HURUF 🎈</h1>
+            <p class="text-xs font-bold text-sky-800">Ketik huruf di kibor untuk memecahkan balon!</p>
+        </div>
+
+        <!-- Nyawa -->
+        <div class="bg-white/90 backdrop-blur border-4 border-rose-400 px-5 py-2 rounded-2xl shadow-lg flex items-center gap-3">
+            <div id="lives-container" class="flex gap-1 text-2xl text-rose-500">
+                <i class="fa-solid fa-heart"></i>
+                <i class="fa-solid fa-heart"></i>
+                <i class="fa-solid fa-heart"></i>
+                <i class="fa-solid fa-heart"></i>
+                <i class="fa-solid fa-heart"></i>
+            </div>
+        </div>
+    </header>
+
+    <!-- Area Permainan (Tempat Balon Terbang) -->
+    <main id="game-area" class="relative w-full h-[calc(100vh-120px)] overflow-hidden">
+        <!-- Balon-balon akan dirender di sini via JS -->
+    </main>
+
+    <!-- Modal Layar Awal (Start Screen) -->
+    <div id="start-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl border-8 border-sky-400 p-8 max-w-md w-full text-center shadow-2xl transform transition-all scale-100">
+            <div class="text-6xl mb-4 animate-bounce">🎈</div>
+            <h2 class="font-fredoka text-3xl text-sky-600 mb-2">Petualangan Balon Huruf</h2>
+            <p class="text-slate-600 font-semibold mb-6">
+                Pecahkan balon dengan menekan **huruf** yang ada di balon sebelum balon terbang tinggi ke langit!
+            </p>
+            <div class="bg-sky-50 p-4 rounded-2xl mb-6 text-left text-sm text-sky-800 space-y-2 border border-sky-200">
+                <p>🎯 <strong>Target:</strong> Kumpulkan 100 Poin</p>
+                <p>⏱️ <strong>Kemunculan:</strong> 1 Balon tiap 5 detik</p>
+                <p>❤️ <strong>Nyawa:</strong> 5 Kesempatan (Jangan biarkan melayang!)</p>
+            </div>
+            <button id="start-btn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-fredoka text-2xl py-4 rounded-2xl shadow-lg hover:shadow-xl transform active:scale-95 transition-all border-b-4 border-emerald-700">
+                Mulai Bermain! 🚀
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Game Over / Menang -->
+    <div id="game-over-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl border-8 p-8 max-w-md w-full text-center shadow-2xl transform transition-all" id="modal-border">
+            <div id="game-over-icon" class="text-7xl mb-4">🏆</div>
+            <h2 id="game-over-title" class="font-fredoka text-3xl mb-2">Selamat!</h2>
+            <p id="game-over-message" class="text-slate-600 font-semibold mb-6">Kamu berhasil mencapai 100 poin!</p>
+            
+            <div class="bg-amber-50 p-4 rounded-2xl mb-6 border border-amber-200">
+                <p class="text-xs text-amber-700 uppercase font-bold">Skor Akhir</p>
+                <p id="final-score" class="font-fredoka text-4xl text-amber-500">100</p>
+            </div>
+
+            <button id="restart-btn" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-fredoka text-2xl py-4 rounded-2xl shadow-lg hover:shadow-xl transform active:scale-95 transition-all border-b-4 border-sky-700">
+                Main Lagi 🔄
+            </button>
+        </div>
+    </div>
+
+    <!-- Web Audio API untuk Suara (Tanpa File Eksternal) -->
+    <script>
+        class SoundEffects {
+            constructor() {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            // Suara saat Balon Meletus (Pop)
+            playPop() {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.1);
+
+                gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.1);
+            }
+
+            // Suara saat Nyawa Berkurang (Missed)
+            playMiss() {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, this.ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(110, this.ctx.currentTime + 0.3);
+
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.3);
+            }
+
+            // Suara Kemenangan
+            playWin() {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const notes = [261.63, 329.63, 392.00, 523.25]; // C, E, G, C
+                notes.forEach((freq, index) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.2, this.ctx.currentTime + index * 0.12);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + index * 0.12 + 0.3);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(this.ctx.currentTime + index * 0.12);
+                    osc.stop(this.ctx.currentTime + index * 0.12 + 0.3);
+                });
+            }
+        }
+
+        const soundFX = new SoundEffects();
+
+        // Game State Variables
+        let score = 0;
+        let lives = 5;
+        const TARGET_SCORE = 100;
+        let activeBalloons = [];
+        let gameInterval = null;
+        let spawnInterval = null;
+        let isGameRunning = false;
+        let balloonIdCounter = 0;
+
+        // Warna-warni Balon
+        const balloonColors = [
+            '#ef4444', // Merah
+            '#3b82f6', // Biru
+            '#10b981', // Hijau
+            '#f59e0b', // Kuning/Oranye
+            '#8b5cf6', // Ungu
+            '#ec4899', // Pink
+            '#06b6d4'  // Cyan
+        ];
+
+        // Element DOM
+        const gameArea = document.getElementById('game-area');
+        const scoreText = document.getElementById('score-text');
+        const livesContainer = document.getElementById('lives-container');
+        const startModal = document.getElementById('start-modal');
+        const startBtn = document.getElementById('start-btn');
+        const gameOverModal = document.getElementById('game-over-modal');
+        const restartBtn = document.getElementById('restart-btn');
+
+        // Render Nyawa
+        function updateLivesDisplay() {
+            livesContainer.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                const heart = document.createElement('i');
+                if (i < lives) {
+                    heart.className = 'fa-solid fa-heart text-rose-500 scale-100 transition-transform';
+                } else {
+                    heart.className = 'fa-solid fa-heart text-slate-300 scale-90';
+                }
+                livesContainer.appendChild(heart);
+            }
+        }
+
+        // Mulai Game
+        function startGame() {
+            score = 0;
+            lives = 5;
+            activeBalloons.forEach(b => b.element.remove());
+            activeBalloons = [];
+            scoreText.textContent = `${score} / ${TARGET_SCORE}`;
+            updateLivesDisplay();
+
+            startModal.classList.add('hidden');
+            gameOverModal.classList.add('hidden');
+            isGameRunning = true;
+
+            // Spawn 1 balon pertama langsung
+            spawnBalloon();
+
+            // Interval Spawn tiap 5 detik (5000ms)
+            clearInterval(spawnInterval);
+            spawnInterval = setInterval(() => {
+                if (isGameRunning) {
+                    spawnBalloon();
+                }
+            }, 5000);
+
+            // Game Loop untuk Menggerakkan Balon ke Atas
+            clearInterval(gameInterval);
+            gameInterval = setInterval(updateGame, 1000 / 60); // 60 FPS
+        }
+
+        // Buat Balon Baru
+        function spawnBalloon() {
+            const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // Huruf A-Z
+            const color = balloonColors[Math.floor(Math.random() * balloonColors.length)];
+            
+            // Posisi X acak (dalam area game)
+            const padding = 60;
+            const maxX = gameArea.clientWidth - padding * 2;
+            const randomX = Math.random() * maxX + padding;
+
+            const balloonEl = document.createElement('div');
+            balloonEl.className = 'balloon wobble';
+            balloonEl.style.backgroundColor = color;
+            balloonEl.style.borderColor = color;
+            balloonEl.style.left = `${randomX}px`;
+            balloonEl.textContent = letter;
+
+            gameArea.appendChild(balloonEl);
+
+            const balloonObj = {
+                id: balloonIdCounter++,
+                element: balloonEl,
+                letter: letter,
+                x: randomX,
+                y: -100, // Mulai dari bawah layar
+                speed: 1.2 + Math.random() * 0.8, // Kecepatan terbang acak
+                color: color
+            };
+
+            activeBalloons.push(balloonObj);
+        }
+
+        // Game Loop Update
+        function updateGame() {
+            if (!isGameRunning) return;
+
+            const maxY = gameArea.clientHeight + 120;
+
+            for (let i = activeBalloons.length - 1; i >= 0; i--) {
+                const b = activeBalloons[i];
+                b.y += b.speed;
+                b.element.style.bottom = `${b.y}px`;
+
+                // Balon lolos sampai atas (Missed)
+                if (b.y > maxY) {
+                    soundFX.playMiss();
+                    b.element.remove();
+                    activeBalloons.splice(i, 1);
+                    decreaseLife();
+                }
+            }
+        }
+
+        // Nyawa Berkurang
+        function decreaseLife() {
+            lives--;
+            updateLivesDisplay();
+
+            // Efek Goyang Layar saat Miss
+            document.body.classList.add('translate-x-2');
+            setTimeout(() => document.body.classList.remove('translate-x-2'), 100);
+
+            if (lives <= 0) {
+                endGame(false);
+            }
+        }
+
+        // Efek Meletus
+        function createPopParticles(x, y, color) {
+            const particleCount = 12;
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'pop-particle';
+                particle.style.backgroundColor = color;
+                particle.style.width = `${Math.random() * 12 + 6}px`;
+                particle.style.height = particle.style.width;
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+
+                const angle = (Math.PI * 2 / particleCount) * i;
+                const velocity = 40 + Math.random() * 60;
+                const dx = Math.cos(angle) * velocity;
+                const dy = Math.sin(angle) * velocity;
+
+                particle.style.setProperty('--dx', `${dx}px`);
+                particle.style.setProperty('--dy', `${dy}px`);
+
+                gameArea.appendChild(particle);
+
+                setTimeout(() => particle.remove(), 500);
+            }
+        }
+
+        // Mengetik Huruf
+        window.addEventListener('keydown', (e) => {
+            if (!isGameRunning) return;
+
+            const typedLetter = e.key.toUpperCase();
+            if (typedLetter < 'A' || typedLetter > 'Z') return;
+
+            // Cari balon terendah yang memiliki huruf yang diketik
+            let targetIndex = -1;
+            let maxY = -999;
+
+            for (let i = 0; i < activeBalloons.length; i++) {
+                if (activeBalloons[i].letter === typedLetter) {
+                    if (activeBalloons[i].y > maxY) {
+                        maxY = activeBalloons[i].y;
+                        targetIndex = i;
+                    }
+                }
+            }
+
+            // Jika Huruf Cocok
+            if (targetIndex !== -1) {
+                const poppedBalloon = activeBalloons[targetIndex];
+                
+                // Ambil posisi balon untuk efek partikel
+                const rect = poppedBalloon.element.getBoundingClientRect();
+                const areaRect = gameArea.getBoundingClientRect();
+                const popX = rect.left - areaRect.left + rect.width / 2;
+                const popY = rect.top - areaRect.top + rect.height / 2;
+
+                createPopParticles(popX, popY, poppedBalloon.color);
+                soundFX.playPop();
+
+                poppedBalloon.element.remove();
+                activeBalloons.splice(targetIndex, 1);
+
+                // Tambah Skor
+                score++;
+                scoreText.textContent = `${score} / ${TARGET_SCORE}`;
+
+                // Cek Kemenangan
+                if (score >= TARGET_SCORE) {
+                    endGame(true);
+                }
+            }
+        });
+
+        // Akhir Permainan
+        function endGame(isWin) {
+            isGameRunning = false;
+            clearInterval(gameInterval);
+            clearInterval(spawnInterval);
+
+            const modalBorder = document.getElementById('modal-border');
+            const gameOverIcon = document.getElementById('game-over-icon');
+            const gameOverTitle = document.getElementById('game-over-title');
+            const gameOverMessage = document.getElementById('game-over-message');
+            const finalScore = document.getElementById('final-score');
+
+            finalScore.textContent = score;
+
+            if (isWin) {
+                soundFX.playWin();
+                modalBorder.className = 'bg-white rounded-3xl border-8 border-emerald-400 p-8 max-w-md w-full text-center shadow-2xl';
+                gameOverIcon.textContent = '🏆';
+                gameOverTitle.textContent = 'Luar Biasa! Menang!';
+                gameOverTitle.className = 'font-fredoka text-3xl text-emerald-600 mb-2';
+                gameOverMessage.textContent = 'Hebat sekali! Kamu berhasil meletuskan 100 balon!';
+            } else {
+                modalBorder.className = 'bg-white rounded-3xl border-8 border-rose-400 p-8 max-w-md w-full text-center shadow-2xl';
+                gameOverIcon.textContent = '🎈';
+                gameOverTitle.textContent = 'Game Over!';
+                gameOverTitle.className = 'font-fredoka text-3xl text-rose-600 mb-2';
+                gameOverMessage.textContent = 'Jangan menyerah! Ayo coba lagi dan dapatkan 100 poin!';
+            }
+
+            gameOverModal.classList.remove('hidden');
+        }
+
+        // Event Listener Tombol
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', startGame);
+    </script>
+</body>
+</html>
