@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan Pola Pintar - Matematika Kelas 1 SD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                        nunito: ['Nunito', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            yellow: '#FCD34D',
+                            pink: '#F472B6',
+                            purple: '#A78BFA',
+                            blue: '#60A5FA',
+                            green: '#34D399',
+                            orange: '#FB923C'
+                        }
+                    },
+                    animation: {
+                        'bounce-slow': 'bounce 2s infinite',
+                        'wiggle': 'wiggle 0.3s ease-in-out infinite',
+                        'pop': 'pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                    },
+                    keyframes: {
+                        wiggle: {
+                            '0%, 100%': { transform: 'rotate(-3deg)' },
+                            '50%': { transform: 'rotate(3deg)' },
+                        },
+                        pop: {
+                            '0%': { transform: 'scale(0.8)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #fef3c7 50%, #fce7f3 100%);
+            min-height: 100vh;
+            user-select: none;
+        }
+        .shape-card {
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .shape-card:hover {
+            transform: translateY(-5px) scale(1.05);
+        }
+        .shape-card:active {
+            transform: scale(0.95);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="text-slate-800 flex flex-col min-h-screen">
+    <!-- Navbar Header -->
+    <header class="bg-white/90 backdrop-blur-md border-b-4 border-yellow-400 sticky top-0 z-40 px-4 py-3 shadow-sm">
+        <div class="max-w-5xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 bg-yellow-400 rounded-2xl flex items-center justify-center text-2xl shadow-md transform rotate-3">
+                    🎨
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold text-slate-800 tracking-wide leading-none">Pola Pintar</h1>
+                    <p class="text-xs md:text-sm text-slate-500 font-semibold font-nunito">Matematika Kelas 1 SD</p>
+                </div>
+            </div>
+
+            <!-- Header Controls -->
+            <div class="flex items-center space-x-2 md:space-x-4">
+                <button id="sound-btn" onclick="toggleSound()" class="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 font-bold flex items-center space-x-1 shadow-sm transition">
+                    <span id="sound-icon">🔊</span>
+                </button>
+                <button onclick="openQuestionGrid()" class="px-3 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-bold rounded-xl text-sm flex items-center space-x-1 shadow-sm transition">
+                    <span>📋</span>
+                    <span class="hidden sm:inline">Daftar Soal</span>
+                </button>
+                <div class="bg-yellow-100 border-2 border-yellow-300 px-3 py-1.5 rounded-xl flex items-center space-x-1 font-bold text-yellow-800 text-sm md:text-base">
+                    <span>⭐</span>
+                    <span id="score-display">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-4xl w-full mx-auto p-4 flex flex-col justify-center">
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="bg-white/95 backdrop-blur rounded-3xl p-4 md:p-8 shadow-xl border-4 border-white relative overflow-hidden">
+            <!-- Level & Progress Bar -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-2 font-nunito">
+                    <span id="category-badge" class="px-3 py-1 bg-pink-100 text-pink-700 font-bold text-xs md:text-sm rounded-full border border-pink-200">
+                        Level 1: Pola Warna
+                    </span>
+                    <span id="question-counter" class="text-xs md:text-sm font-bold text-slate-500">
+                        Soal 1 dari 50
+                    </span>
+                </div>
+                <!-- Progress track -->
+                <div class="w-full bg-slate-100 rounded-full h-4 p-0.5 border border-slate-200">
+                    <div id="progress-bar" class="bg-gradient-to-r from-yellow-400 via-pink-400 to-indigo-500 h-full rounded-full transition-all duration-300" style="width: 2%"></div>
+                </div>
+            </div>
+
+            <!-- Instruction Card -->
+            <div class="text-center mb-6">
+                <h2 id="question-instruction" class="text-lg md:text-2xl font-bold text-slate-700">
+                    Manakah warna selanjutnya?
+                </h2>
+                <p id="question-subtext" class="text-xs md:text-sm text-slate-400 font-nunito mt-1">
+                    Amati urutan pola di bawah ini dan pilih jawaban yang tepat!
+                </p>
+            </div>
+
+            <!-- Pattern Sequence Canvas Area -->
+            <div class="bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl p-4 md:p-8 mb-8 flex flex-wrap items-center justify-center gap-2 md:gap-4 min-h-[140px] shadow-inner" id="pattern-container">
+                <!-- Dynamically injected pattern items -->
+            </div>
+
+            <!-- Option Buttons -->
+            <div class="mb-4">
+                <p class="text-center text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 font-nunito">Pilih Jawaban Kamu:</p>
+                <div id="options-container" class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                    <!-- Dynamically injected options -->
+                </div>
+            </div>
+
+            <!-- Feedback Message Container -->
+            <div id="feedback-box" class="hidden mt-4 p-3 rounded-2xl text-center font-bold text-sm md:text-base transition-all animate-pop"></div>
+        </div>
+    </main>
+
+    <!-- Grid Select Modal -->
+    <div id="grid-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden border-4 border-white animate-pop">
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-500 p-4 text-white flex justify-between items-center">
+                <div>
+                    <h3 class="text-xl font-bold">Pilih Nomor Soal (1 - 50)</h3>
+                    <p class="text-xs opacity-90 font-nunito">Pilih soal mana saja untuk dikerjakan!</p>
+                </div>
+                <button onclick="closeQuestionGrid()" class="w-9 h-9 bg-white/20 hover:bg-white/30 rounded-full font-bold text-xl flex items-center justify-center transition">✕</button>
+            </div>
+            
+            <div class="p-4 overflow-y-auto flex-grow">
+                <!-- Filter Tabs -->
+                <div class="flex flex-wrap gap-2 mb-4 font-nunito text-xs">
+                    <button onclick="filterGrid('all')" class="grid-filter-btn px-3 py-1.5 bg-indigo-600 text-white font-bold rounded-xl active-filter" data-filter="all">Semua (50)</button>
+                    <button onclick="filterGrid('l1')" class="grid-filter-btn px-3 py-1.5 bg-slate-100 text-slate-600 font-bold rounded-xl" data-filter="l1">1-10: Warna</button>
+                    <button onclick="filterGrid('l2')" class="grid-filter-btn px-3 py-1.5 bg-slate-100 text-slate-600 font-bold rounded-xl" data-filter="l2">11-20: Bentuk</button>
+                    <button onclick="filterGrid('l3')" class="grid-filter-btn px-3 py-1.5 bg-slate-100 text-slate-600 font-bold rounded-xl" data-filter="l3">21-30: Kombinasi</button>
+                    <button onclick="filterGrid('l4')" class="grid-filter-btn px-3 py-1.5 bg-slate-100 text-slate-600 font-bold rounded-xl" data-filter="l4">31-40: Ukuran/Jumlah</button>
+                    <button onclick="filterGrid('l5')" class="grid-filter-btn px-3 py-1.5 bg-slate-100 text-slate-600 font-bold rounded-xl" data-filter="l5">41-50: Tantangan</button>
+                </div>
+
+                <div id="grid-buttons" class="grid grid-cols-5 sm:grid-cols-10 gap-2">
+                    <!-- Dynamically injected 50 buttons -->
+                </div>
+            </div>
+
+            <div class="p-3 bg-slate-50 border-t text-center text-xs text-slate-500 font-nunito">
+                Hijau: Benar | Merah: Perlu Diulang | Abu-abu: Belum Dikerjakan
+            </div>
+        </div>
+    </div>
+
+    <!-- Final Score Modal -->
+    <div id="win-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center shadow-2xl border-4 border-yellow-300 animate-pop">
+            <div class="text-6xl mb-3 animate-bounce-slow">🏆</div>
+            <h2 class="text-2xl font-bold text-slate-800">Hebat Sekali!</h2>
+            <p class="text-slate-500 font-nunito text-sm mt-1">Kamu telah menyelesaikan latihan pola matematika!</p>
+            
+            <div class="my-6 bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-4">
+                <p class="text-xs font-bold text-yellow-700 font-nunito uppercase">Skor Akhir Kamu</p>
+                <div class="text-4xl font-extrabold text-yellow-600 my-1" id="final-score">0 / 50</div>
+                <div class="flex justify-center space-x-1 text-2xl" id="star-rating">
+                    ⭐⭐⭐⭐⭐
+                </div>
+            </div>
+
+            <div class="flex space-x-3">
+                <button onclick="restartGame()" class="flex-1 py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-2xl shadow-lg transition">
+                    🔄 Main Lagi
+                </button>
+                <button onclick="closeWinModal()" class="flex-1 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-2xl transition">
+                    📋 Lihat Soal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Canvas Confetti Overlay -->
+    <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
+
+    <script>
+        /* Web Audio API Synthesizer for sound effects */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let soundEnabled = true;
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'pop') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'correct') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                osc.start(now);
+                osc.stop(now + 0.35);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.setValueAtTime(180, now + 0.15);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'win') {
+                const notes = [400, 500, 600, 800, 1000];
+                notes.forEach((freq, idx) => {
+                    const noteOsc = audioCtx.createOscillator();
+                    const noteGain = audioCtx.createGain();
+                    noteOsc.connect(noteGain);
+                    noteGain.connect(audioCtx.destination);
+                    noteOsc.frequency.setValueAtTime(freq, now + idx * 0.1);
+                    noteGain.gain.setValueAtTime(0.2, now + idx * 0.1);
+                    noteGain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.2);
+                    noteOsc.start(now + idx * 0.1);
+                    noteOsc.stop(now + idx * 0.1 + 0.2);
+                });
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('sound-icon').innerText = soundEnabled ? '🔊' : '🔇';
+        }
+
+        // SVG Helper to render Shapes dynamically
+        function renderShapeSVG(shape, color, size = 64, extraClass = '') {
+            let svgContent = '';
+            const fill = color;
+            
+            switch (shape) {
+                case 'circle':
+                    svgContent = `<circle cx="32" cy="32" r="26" fill="${fill}" stroke="#334155" stroke-width="3"/>`;
+                    break;
+                case 'square':
+                    svgContent = `<rect x="8" y="8" width="48" height="48" rx="8" fill="${fill}" stroke="#334155" stroke-width="3"/>`;
+                    break;
+                case 'triangle':
+                    svgContent = `<polygon points="32,8 58,54 6,54" fill="${fill}" stroke="#334155" stroke-width="3" stroke-linejoin="round"/>`;
+                    break;
+                case 'star':
+                    svgContent = `<polygon points="32,6 39,23 58,23 42,35 48,53 32,41 16,53 22,35 6,23 25,23" fill="${fill}" stroke="#334155" stroke-width="3" stroke-linejoin="round"/>`;
+                    break;
+                case 'heart':
+                    svgContent = `<path d="M32 54 S8 36 8 22 A12 12 0 0 1 32 15 A12 12 0 0 1 56 22 C56 36 32 54 32 54 Z" fill="${fill}" stroke="#334155" stroke-width="3" stroke-linejoin="round"/>`;
+                    break;
+                case 'diamond':
+                    svgContent = `<polygon points="32,6 56,32 32,58 8,32" fill="${fill}" stroke="#334155" stroke-width="3" stroke-linejoin="round"/>`;
+                    break;
+                case 'hexagon':
+                    svgContent = `<polygon points="32,6 54,18 54,44 32,56 10,44 10,18" fill="${fill}" stroke="#334155" stroke-width="3" stroke-linejoin="round"/>`;
+                    break;
+                case 'oval':
+                    svgContent = `<ellipse cx="32" cy="32" rx="28" ry="18" fill="${fill}" stroke="#334155" stroke-width="3"/>`;
+                    break;
+                default:
+                    svgContent = `<circle cx="32" cy="32" r="26" fill="${fill}" stroke="#334155" stroke-width="3"/>`;
+            }
+
+            return `<svg width="${size}" height="${size}" viewBox="0 0 64 64" class="${extraClass} drop-shadow-md transition-transform">${svgContent}</svg>`;
+        }
+
+        const colors = {
+            red: '#EF4444',
+            blue: '#3B82F6',
+            yellow: '#EAB308',
+            green: '#22C55E',
+            purple: '#A855F7',
+            orange: '#F97316',
+            pink: '#EC4899',
+            cyan: '#06B6D4'
+        };
+
+        const questions = [];
+
+        // Helper to construct question items
+        function createQ(id, title, category, instruction, pattern, options, correctIdx, sizePattern = false) {
+            return {
+                id,
+                title,
+                category,
+                instruction,
+                pattern, // array of item objects
+                options, // array of option objects
+                correctIdx,
+                sizePattern
+            };
+        }
+
+        // -------------------------------------------------------------
+        // LEVEL 1: POLA WARNA (Soal 1 - 10)
+        // -------------------------------------------------------------
+        // Q1: Merah, Biru, Merah, Biru, ? (AB)
+        questions.push(createQ(1, "Level 1: Pola Warna", "Pola Warna", "Lengkapi pola warna berikut!",
+            [{s:'circle', c:colors.red}, {s:'circle', c:colors.blue}, {s:'circle', c:colors.red}, {s:'circle', c:colors.blue}, {s:'question'}],
+            [{s:'circle', c:colors.red}, {s:'circle', c:colors.blue}, {s:'circle', c:colors.yellow}, {s:'circle', c:colors.green}], 0));
+
+        // Q2: Hijau, Kuning, Hijau, Kuning, ? (AB)
+        questions.push(createQ(2, "Level 1: Pola Warna", "Pola Warna", "Warna apa setelah warna Kuning?",
+            [{s:'square', c:colors.green}, {s:'square', c:colors.yellow}, {s:'square', c:colors.green}, {s:'square', c:colors.yellow}, {s:'question'}],
+            [{s:'square', c:colors.yellow}, {s:'square', c:colors.green}, {s:'square', c:colors.red}, {s:'square', c:colors.purple}], 1));
+
+        // Q3: Ungu, Oranye, Ungu, Oranye, ? (AB)
+        questions.push(createQ(3, "Level 1: Pola Warna", "Pola Warna", "Pilih warna yang melanjutkan pola!",
+            [{s:'star', c:colors.purple}, {s:'star', c:colors.orange}, {s:'star', c:colors.purple}, {s:'star', c:colors.orange}, {s:'question'}],
+            [{s:'star', c:colors.orange}, {s:'star', c:colors.blue}, {s:'star', c:colors.purple}, {s:'star', c:colors.pink}], 2));
+
+        // Q4: Merah, Merah, Biru, Merah, Merah, ? (AABB)
+        questions.push(createQ(4, "Level 1: Pola Warna", "Pola Warna", "Perhatikan pola dua warna berurutan ini!",
+            [{s:'heart', c:colors.red}, {s:'heart', c:colors.red}, {s:'heart', c:colors.blue}, {s:'heart', c:colors.red}, {s:'heart', c:colors.red}, {s:'question'}],
+            [{s:'heart', c:colors.red}, {s:'heart', c:colors.blue}, {s:'heart', c:colors.green}, {s:'heart', c:colors.yellow}], 1));
+
+        // Q5: Merah, Kuning, Hijau, Merah, Kuning, ? (ABC)
+        questions.push(createQ(5, "Level 1: Pola Warna", "Pola Warna", "Ada 3 warna berulang! Lengkapi kotak kosong.",
+            [{s:'circle', c:colors.red}, {s:'circle', c:colors.yellow}, {s:'circle', c:colors.green}, {s:'circle', c:colors.red}, {s:'circle', c:colors.yellow}, {s:'question'}],
+            [{s:'circle', c:colors.red}, {s:'circle', c:colors.yellow}, {s:'circle', c:colors.green}, {s:'circle', c:colors.blue}], 2));
+
+        // Q6: Biru, Merah, Biru, Merah, Biru, ? (AB)
+        questions.push(createQ(6, "Level 1: Pola Warna", "Pola Warna", "Warna apa selanjutnya?",
+            [{s:'diamond', c:colors.blue}, {s:'diamond', c:colors.red}, {s:'diamond', c:colors.blue}, {s:'diamond', c:colors.red}, {s:'diamond', c:colors.blue}, {s:'question'}],
+            [{s:'diamond', c:colors.red}, {s:'diamond', c:colors.blue}, {s:'diamond', c:colors.yellow}, {s:'diamond', c:colors.green}], 0));
+
+        // Q7: Pink, Pink, Hijau, Pink, Pink, ? (AAB)
+        questions.push(createQ(7, "Level 1: Pola Warna", "Pola Warna", "Pink, Pink, Hijau... Selanjutnya?",
+            [{s:'triangle', c:colors.pink}, {s:'triangle', c:colors.pink}, {s:'triangle', c:colors.green}, {s:'triangle', c:colors.pink}, {s:'triangle', c:colors.pink}, {s:'question'}],
+            [{s:'triangle', c:colors.pink}, {s:'triangle', c:colors.green}, {s:'triangle', c:colors.blue}, {s:'triangle', c:colors.yellow}], 1));
+
+        // Q8: Oranye, Biru, Biru, Oranye, Biru, ? (ABB)
+        questions.push(createQ(8, "Level 1: Pola Warna", "Pola Warna", "Amati pola selang-seling ini!",
+            [{s:'square', c:colors.orange}, {s:'square', c:colors.blue}, {s:'square', c:colors.blue}, {s:'square', c:colors.orange}, {s:'square', c:colors.blue}, {s:'question'}],
+            [{s:'square', c:colors.orange}, {s:'square', c:colors.blue}, {s:'square', c:colors.red}, {s:'square', c:colors.purple}], 1));
+
+        // Q9: Kuning, Cyan, Merah, Kuning, Cyan, ? (ABC)
+        questions.push(createQ(9, "Level 1: Pola Warna", "Pola Warna", "Pola 3 warna berulang:",
+            [{s:'star', c:colors.yellow}, {s:'star', c:colors.cyan}, {s:'star', c:colors.red}, {s:'star', c:colors.yellow}, {s:'star', c:colors.cyan}, {s:'question'}],
+            [{s:'star', c:colors.yellow}, {s:'star', c:colors.cyan}, {s:'star', c:colors.red}, {s:'star', c:colors.green}], 2));
+
+        // Q10: Hijau, Hijau, Ungu, Ungu, Hijau, ? (AABB)
+        questions.push(createQ(10, "Level 1: Pola Warna", "Pola Warna", "Lengkapi pasangannya!",
+            [{s:'circle', c:colors.green}, {s:'circle', c:colors.green}, {s:'circle', c:colors.purple}, {s:'circle', c:colors.purple}, {s:'circle', c:colors.green}, {s:'question'}],
+            [{s:'circle', c:colors.green}, {s:'circle', c:colors.purple}, {s:'circle', c:colors.red}, {s:'circle', c:colors.blue}], 0));
+
+
+        // -------------------------------------------------------------
+        // LEVEL 2: POLA BENTUK (Soal 11 - 20)
+        // -------------------------------------------------------------
+        // Q11: Lingkaran, Persegi, Lingkaran, Persegi, ?
+        questions.push(createQ(11, "Level 2: Pola Bentuk", "Pola Bentuk", "Bentuk apa yang datang berikutnya?",
+            [{s:'circle', c:colors.blue}, {s:'square', c:colors.blue}, {s:'circle', c:colors.blue}, {s:'square', c:colors.blue}, {s:'question'}],
+            [{s:'circle', c:colors.blue}, {s:'square', c:colors.blue}, {s:'triangle', c:colors.blue}, {s:'star', c:colors.blue}], 0));
+
+        // Q12: Segitiga, Bintang, Segitiga, Bintang, ?
+        questions.push(createQ(12, "Level 2: Pola Bentuk", "Pola Bentuk", "Lengkapi urutan bentuk geometri ini!",
+            [{s:'triangle', c:colors.orange}, {s:'star', c:colors.orange}, {s:'triangle', c:colors.orange}, {s:'star', c:colors.orange}, {s:'question'}],
+            [{s:'star', c:colors.orange}, {s:'triangle', c:colors.orange}, {s:'circle', c:colors.orange}, {s:'heart', c:colors.orange}], 1));
+
+        // Q13: Hati, Lingkaran, Hati, Lingkaran, ?
+        questions.push(createQ(13, "Level 2: Pola Bentuk", "Pola Bentuk", "Mana bentuk yang tepat?",
+            [{s:'heart', c:colors.red}, {s:'circle', c:colors.red}, {s:'heart', c:colors.red}, {s:'circle', c:colors.red}, {s:'question'}],
+            [{s:'heart', c:colors.red}, {s:'circle', c:colors.red}, {s:'square', c:colors.red}, {s:'diamond', c:colors.red}], 0));
+
+        // Q14: Persegi, Segitiga, Lingkaran, Persegi, Segitiga, ?
+        questions.push(createQ(14, "Level 2: Pola Bentuk", "Pola Bentuk", "Pola 3 bentuk berulang:",
+            [{s:'square', c:colors.green}, {s:'triangle', c:colors.green}, {s:'circle', c:colors.green}, {s:'square', c:colors.green}, {s:'triangle', c:colors.green}, {s:'question'}],
+            [{s:'square', c:colors.green}, {s:'triangle', c:colors.green}, {s:'circle', c:colors.green}, {s:'star', c:colors.green}], 2));
+
+        // Q15: Bintang, Bintang, Hati, Bintang, Bintang, ?
+        questions.push(createQ(15, "Level 2: Pola Bentuk", "Pola Bentuk", "Bintang, Bintang, Hati...",
+            [{s:'star', c:colors.yellow}, {s:'star', c:colors.yellow}, {s:'heart', c:colors.yellow}, {s:'star', c:colors.yellow}, {s:'star', c:colors.yellow}, {s:'question'}],
+            [{s:'star', c:colors.yellow}, {s:'heart', c:colors.yellow}, {s:'circle', c:colors.yellow}, {s:'square', c:colors.yellow}], 1));
+
+        // Q16: Belah Ketupat, Lingkaran, Belah Ketupat, Lingkaran, ?
+        questions.push(createQ(16, "Level 2: Pola Bentuk", "Pola Bentuk", "Lengkapi urutan bentuk berikut!",
+            [{s:'diamond', c:colors.purple}, {s:'circle', c:colors.purple}, {s:'diamond', c:colors.purple}, {s:'circle', c:colors.purple}, {s:'question'}],
+            [{s:'diamond', c:colors.purple}, {s:'circle', c:colors.purple}, {s:'star', c:colors.purple}, {s:'triangle', c:colors.purple}], 0));
+
+        // Q17: Segi Enam, Persegi, Segi Enam, Persegi, ?
+        questions.push(createQ(17, "Level 2: Pola Bentuk", "Pola Bentuk", "Bentuk apa setelah Persegi?",
+            [{s:'hexagon', c:colors.cyan}, {s:'square', c:colors.cyan}, {s:'hexagon', c:colors.cyan}, {s:'square', c:colors.cyan}, {s:'question'}],
+            [{s:'square', c:colors.cyan}, {s:'hexagon', c:colors.cyan}, {s:'circle', c:colors.cyan}, {s:'heart', c:colors.cyan}], 1));
+
+        // Q18: Oval, Oval, Bintang, Oval, Oval, ?
+        questions.push(createQ(18, "Level 2: Pola Bentuk", "Pola Bentuk", "Perhatikan jumlah bangun di bawah ini!",
+            [{s:'oval', c:colors.pink}, {s:'oval', c:colors.pink}, {s:'star', c:colors.pink}, {s:'oval', c:colors.pink}, {s:'oval', c:colors.pink}, {s:'question'}],
+            [{s:'oval', c:colors.pink}, {s:'star', c:colors.pink}, {s:'heart', c:colors.pink}, {s:'triangle', c:colors.pink}], 1));
+
+        // Q19: Segitiga, Segitiga, Lingkaran, Segitiga, Segitiga, ?
+        questions.push(createQ(19, "Level 2: Pola Bentuk", "Pola Bentuk", "Segitiga, Segitiga, Lingkaran... Selanjutnya?",
+            [{s:'triangle', c:colors.red}, {s:'triangle', c:colors.red}, {s:'circle', c:colors.red}, {s:'triangle', c:colors.red}, {s:'triangle', c:colors.red}, {s:'question'}],
+            [{s:'triangle', c:colors.red}, {s:'circle', c:colors.red}, {s:'square', c:colors.red}, {s:'star', c:colors.red}], 1));
+
+        // Q20: Hati, Segitiga, Bintang, Hati, Segitiga, ?
+        questions.push(createQ(20, "Level 2: Pola Bentuk", "Pola Bentuk", "Lengkapi pola 3 gambar ini!",
+            [{s:'heart', c:colors.green}, {s:'triangle', c:colors.green}, {s:'star', c:colors.green}, {s:'heart', c:colors.green}, {s:'triangle', c:colors.green}, {s:'question'}],
+            [{s:'heart', c:colors.green}, {s:'triangle', c:colors.green}, {s:'star', c:colors.green}, {s:'circle', c:colors.green}], 2));
+
+
+        // -------------------------------------------------------------
+        // LEVEL 3: POLA KOMBINASI WARNA & BENTUK (Soal 21 - 30)
+        // -------------------------------------------------------------
+        // Q21: Lingkaran Merah, Persegi Biru, Lingkaran Merah, Persegi Biru, ?
+        questions.push(createQ(21, "Level 3: Kombinasi", "Pola Kombinasi", "Pilih bentuk dan warna yang tepat!",
+            [{s:'circle', c:colors.red}, {s:'square', c:colors.blue}, {s:'circle', c:colors.red}, {s:'square', c:colors.blue}, {s:'question'}],
+            [{s:'circle', c:colors.red}, {s:'square', c:colors.blue}, {s:'circle', c:colors.blue}, {s:'square', c:colors.red}], 0));
+
+        // Q22: Segitiga Hijau, Segitiga Kuning, Segitiga Hijau, Segitiga Kuning, ?
+        questions.push(createQ(22, "Level 3: Kombinasi", "Pola Kombinasi", "Segitiga mana yang melanjutkan pola?",
+            [{s:'triangle', c:colors.green}, {s:'triangle', c:colors.yellow}, {s:'triangle', c:colors.green}, {s:'triangle', c:colors.yellow}, {s:'question'}],
+            [{s:'triangle', c:colors.yellow}, {s:'triangle', c:colors.green}, {s:'circle', c:colors.green}, {s:'triangle', c:colors.red}], 1));
+
+        // Q23: Bintang Kuning, Lingkaran Biru, Bintang Kuning, Lingkaran Biru, ?
+        questions.push(createQ(23, "Level 3: Kombinasi", "Pola Kombinasi", "Lengkapi pola kombinasi berikut!",
+            [{s:'star', c:colors.yellow}, {s:'circle', c:colors.blue}, {s:'star', c:colors.yellow}, {s:'circle', c:colors.blue}, {s:'question'}],
+            [{s:'star', c:colors.yellow}, {s:'circle', c:colors.blue}, {s:'star', c:colors.blue}, {s:'circle', c:colors.yellow}], 0));
+
+        // Q24: Hati Pink, Hati Pink, Bintang Cyan, Hati Pink, Hati Pink, ?
+        questions.push(createQ(24, "Level 3: Kombinasi", "Pola Kombinasi", "Dua Hati Pink, Satu Bintang Cyan...",
+            [{s:'heart', c:colors.pink}, {s:'heart', c:colors.pink}, {s:'star', c:colors.cyan}, {s:'heart', c:colors.pink}, {s:'heart', c:colors.pink}, {s:'question'}],
+            [{s:'heart', c:colors.pink}, {s:'star', c:colors.cyan}, {s:'star', c:colors.pink}, {s:'heart', c:colors.cyan}], 1));
+
+        // Q25: Persegi Oranye, Lingkaran Hijau, Segitiga Merah, Persegi Oranye, Lingkaran Hijau, ?
+        questions.push(createQ(25, "Level 3: Kombinasi", "Pola Kombinasi", "Ada 3 bentuk berbeda dengan warna berbeda!",
+            [{s:'square', c:colors.orange}, {s:'circle', c:colors.green}, {s:'triangle', c:colors.red}, {s:'square', c:colors.orange}, {s:'circle', c:colors.green}, {s:'question'}],
+            [{s:'square', c:colors.orange}, {s:'circle', c:colors.green}, {s:'triangle', c:colors.red}, {s:'triangle', c:colors.green}], 2));
+
+        // Q26: Lingkaran Merah, Lingkaran Merah, Lingkaran Biru, Lingkaran Merah, Lingkaran Merah, ?
+        questions.push(createQ(26, "Level 3: Kombinasi", "Pola Kombinasi", "Perhatikan perubahan warnanya!",
+            [{s:'circle', c:colors.red}, {s:'circle', c:colors.red}, {s:'circle', c:colors.blue}, {s:'circle', c:colors.red}, {s:'circle', c:colors.red}, {s:'question'}],
+            [{s:'circle', c:colors.red}, {s:'circle', c:colors.blue}, {s:'circle', c:colors.yellow}, {s:'square', c:colors.blue}], 1));
+
+        // Q27: Belah Ketupat Ungu, Segitiga Kuning, Belah Ketupat Ungu, Segitiga Kuning, ?
+        questions.push(createQ(27, "Level 3: Kombinasi", "Pola Kombinasi", "Mana pasangan yang pas?",
+            [{s:'diamond', c:colors.purple}, {s:'triangle', c:colors.yellow}, {s:'diamond', c:colors.purple}, {s:'triangle', c:colors.yellow}, {s:'question'}],
+            [{s:'diamond', c:colors.purple}, {s:'triangle', c:colors.yellow}, {s:'diamond', c:colors.yellow}, {s:'triangle', c:colors.purple}], 0));
+
+        // Q28: Oval Hijau, Oval Hijau, Oval Oranye, Oval Hijau, Oval Hijau, ?
+        questions.push(createQ(28, "Level 3: Kombinasi", "Pola Kombinasi", "Dua Hijau, Satu Oranye...",
+            [{s:'oval', c:colors.green}, {s:'oval', c:colors.green}, {s:'oval', c:colors.orange}, {s:'oval', c:colors.green}, {s:'oval', c:colors.green}, {s:'question'}],
+            [{s:'oval', c:colors.green}, {s:'oval', c:colors.orange}, {s:'oval', c:colors.blue}, {s:'oval', c:colors.red}], 1));
+
+        // Q29: Bintang Merah, Persegi Biru, Lingkaran Kuning, Bintang Merah, Persegi Biru, ?
+        questions.push(createQ(29, "Level 3: Kombinasi", "Pola Kombinasi", "Lengkapi urutan 3 item ini!",
+            [{s:'star', c:colors.red}, {s:'square', c:colors.blue}, {s:'circle', c:colors.yellow}, {s:'star', c:colors.red}, {s:'square', c:colors.blue}, {s:'question'}],
+            [{s:'star', c:colors.red}, {s:'square', c:colors.blue}, {s:'circle', c:colors.yellow}, {s:'circle', c:colors.blue}], 2));
+
+        // Q30: Segi Enam Pink, Hati Merah, Segi Enam Pink, Hati Merah, ?
+        questions.push(createQ(30, "Level 3: Kombinasi", "Pola Kombinasi", "Gambar mana yang berikutnya?",
+            [{s:'hexagon', c:colors.pink}, {s:'heart', c:colors.red}, {s:'hexagon', c:colors.pink}, {s:'heart', c:colors.red}, {s:'question'}],
+            [{s:'hexagon', c:colors.pink}, {s:'heart', c:colors.red}, {s:'hexagon', c:colors.red}, {s:'heart', c:colors.pink}], 0));
+
+
+        // -------------------------------------------------------------
+        // LEVEL 4: POLA UKURAN & PERUMUSAN SEDERHANA (Soal 31 - 40)
+        // -------------------------------------------------------------
+        // Q31: Kecil, Besar, Kecil, Besar, ?
+        questions.push(createQ(31, "Level 4: Ukuran & Jumlah", "Pola Ukuran", "Perhatikan perbedaan ukurannya (Kecil & Besar)!",
+            [{s:'circle', c:colors.blue, scale:0.6}, {s:'circle', c:colors.blue, scale:1.1}, {s:'circle', c:colors.blue, scale:0.6}, {s:'circle', c:colors.blue, scale:1.1}, {s:'question'}],
+            [{s:'circle', c:colors.blue, scale:0.6}, {s:'circle', c:colors.blue, scale:1.1}, {s:'circle', c:colors.red, scale:0.6}, {s:'square', c:colors.blue, scale:1.1}], 0, true));
+
+        // Q32: Bintang Kecil, Bintang Kecil, Bintang Besar, Bintang Kecil, Bintang Kecil, ?
+        questions.push(createQ(32, "Level 4: Ukuran & Jumlah", "Pola Ukuran", "Dua kecil, satu besar...",
+            [{s:'star', c:colors.yellow, scale:0.6}, {s:'star', c:colors.yellow, scale:0.6}, {s:'star', c:colors.yellow, scale:1.2}, {s:'star', c:colors.yellow, scale:0.6}, {s:'star', c:colors.yellow, scale:0.6}, {s:'question'}],
+            [{s:'star', c:colors.yellow, scale:0.6}, {s:'star', c:colors.yellow, scale:1.2}, {s:'star', c:colors.blue, scale:0.6}, {s:'circle', c:colors.yellow, scale:1.2}], 1, true));
+
+        // Q33: Segitiga Sedang, Segitiga Besar, Segitiga Sedang, Segitiga Besar, ?
+        questions.push(createQ(33, "Level 4: Ukuran & Jumlah", "Pola Ukuran", "Pilih segitiga dengan ukuran yang pas!",
+            [{s:'triangle', c:colors.green, scale:0.7}, {s:'triangle', c:colors.green, scale:1.2}, {s:'triangle', c:colors.green, scale:0.7}, {s:'triangle', c:colors.green, scale:1.2}, {s:'question'}],
+            [{s:'triangle', c:colors.green, scale:0.7}, {s:'triangle', c:colors.green, scale:1.2}, {s:'triangle', c:colors.orange, scale:0.7}, {s:'square', c:colors.green, scale:1.2}], 0, true));
+
+        // Q34: Hati Kecil, Hati Besar, Hati Kecil, Hati Besar, ?
+        questions.push(createQ(34, "Level 4: Ukuran & Jumlah", "Pola Ukuran", "Ukuran Hati selanjutnya adalah?",
+            [{s:'heart', c:colors.pink, scale:0.6}, {s:'heart', c:colors.pink, scale:1.1}, {s:'heart', c:colors.pink, scale:0.6}, {s:'heart', c:colors.pink, scale:1.1}, {s:'question'}],
+            [{s:'heart', c:colors.pink, scale:0.6}, {s:'heart', c:colors.pink, scale:1.1}, {s:'heart', c:colors.red, scale:0.6}, {s:'star', c:colors.pink, scale:1.1}], 0, true));
+
+        // Q35: Persegi Kecil, Persegi Sedang, Persegi Besar, Persegi Kecil, Persegi Sedang, ?
+        questions.push(createQ(35, "Level 4: Ukuran & Jumlah", "Pola Ukuran", "Pola ukuran tumbuh: Kecil, Sedang, Besar...",
+            [{s:'square', c:colors.purple, scale:0.5}, {s:'square', c:colors.purple, scale:0.85}, {s:'square', c:colors.purple, scale:1.2}, {s:'square', c:colors.purple, scale:0.5}, {s:'square', c:colors.purple, scale:0.85}, {s:'question'}],
+            [{s:'square', c:colors.purple, scale:0.5}, {s:'square', c:colors.purple, scale:0.85}, {s:'square', c:colors.purple, scale:1.2}, {s:'circle', c:colors.purple, scale:1.2}], 2, true));
+
+        // Q36: Lingkaran Merah (Kecil), Lingkaran Merah (Besar), Lingkaran Merah (Kecil), Lingkaran Merah (Besar), ?
+        questions.push(createQ(36, "Level 4: Ukuran & Jumlah", "Pola Ukuran", "Mana Lingkaran yang ukurannya benar?",
+            [{s:'circle', c:colors.red, scale:0.6}, {s:'circle', c:colors.red, scale:1.2}, {s:'circle', c:colors.red, scale:0.6}, {s:'circle', c:colors.red, scale:1.2}, {s:'question'}],
+            [{s:'circle', c:colors.red, scale:0.6}, {s:'circle', c:colors.red, scale:1.2}, {s:'circle', c:colors.blue, scale:0.6}, {s:'square', c:colors.red, scale:0.6}], 0, true));
+
+        // Q37: Belah Ketupat Besar, Belah Ketupat Kecil, Belah Ketupat Besar, Belah Ketupat Kecil, ?
+        questions.push(createQ(37, "Level 4: Ukuran & Jumlah", "Pola Ukuran", "Besar, Kecil, Besar, Kecil...",
+            [{s:'diamond', c:colors.cyan, scale:1.2}, {s:'diamond', c:colors.cyan, scale:0.6}, {s:'diamond', c:colors.cyan, scale:1.2}, {s:'diamond', c:colors.cyan, scale:0.6}, {s:'question'}],
+            [{s:'diamond', c:colors.cyan, scale:1.2}, {s:'diamond', c:colors.cyan, scale:0.6}, {s:'diamond', c:colors.yellow, scale:1.2}, {s:'star', c:colors.cyan, scale:1.2}], 0, true));
+
+        // Q38: Segi Enam Kecil, Segi Enam Kecil, Segi Enam Besar, Segi Enam Kecil, Segi Enam Kecil, ?
+        questions.push(createQ(38, "Level 4: Ukuran & Jumlah", "Pola Ukuran", "Lengkapi pola ukuran Segi Enam!",
+            [{s:'hexagon', c:colors.orange, scale:0.6}, {s:'hexagon', c:colors.orange, scale:0.6}, {s:'hexagon', c:colors.orange, scale:1.2}, {s:'hexagon', c:colors.orange, scale:0.6}, {s:'hexagon', c:colors.orange, scale:0.6}, {s:'question'}],
+            [{s:'hexagon', c:colors.orange, scale:0.6}, {s:'hexagon', c:colors.orange, scale:1.2}, {s:'hexagon', c:colors.blue, scale:0.6}, {s:'circle', c:colors.orange, scale:1.2}], 1, true));
+
+        // Q39: Oval Besar, Oval Kecil, Oval Kecil, Oval Besar, Oval Kecil, ?
+        questions.push(createQ(39, "Level 4: Ukuran & Jumlah", "Pola Ukuran", "Besar, Kecil, Kecil...",
+            [{s:'oval', c:colors.pink, scale:1.2}, {s:'oval', c:colors.pink, scale:0.6}, {s:'oval', c:colors.pink, scale:0.6}, {s:'oval', c:colors.pink, scale:1.2}, {s:'oval', c:colors.pink, scale:0.6}, {s:'question'}],
+            [{s:'oval', c:colors.pink, scale:1.2}, {s:'oval', c:colors.pink, scale:0.6}, {s:'oval', c:colors.green, scale:0.6}, {s:'heart', c:colors.pink, scale:0.6}], 1, true));
+
+        // Q40: Bintang Kecil, Bintang Sedang, Bintang Besar, Bintang Kecil, Bintang Sedang, ?
+        questions.push(createQ(40, "Level 4: Ukuran & Jumlah", "Pola Ukuran", "Mana urutan ukuran Bintang berikutnya?",
+            [{s:'star', c:colors.yellow, scale:0.5}, {s:'star', c:colors.yellow, scale:0.85}, {s:'star', c:colors.yellow, scale:1.2}, {s:'star', c:colors.yellow, scale:0.5}, {s:'star', c:colors.yellow, scale:0.85}, {s:'question'}],
+            [{s:'star', c:colors.yellow, scale:0.5}, {s:'star', c:colors.yellow, scale:0.85}, {s:'star', c:colors.yellow, scale:1.2}, {s:'star', c:colors.red, scale:1.2}], 2, true));
+
+
+        // -------------------------------------------------------------
+        // LEVEL 5: TANTANGAN SUPER POLA (Soal 41 - 50)
+        // -------------------------------------------------------------
+        // Q41: Pola Hilang di Tengah (Merah, Biru, [?], Biru, Merah)
+        questions.push(createQ(41, "Level 5: Tantangan Super", "Tantangan Pola", "Ups! Ada yang hilang di tengah. Cari jawabannya!",
+            [{s:'circle', c:colors.red}, {s:'circle', c:colors.blue}, {s:'question'}, {s:'circle', c:colors.blue}, {s:'circle', c:colors.red}, {s:'circle', c:colors.blue}],
+            [{s:'circle', c:colors.red}, {s:'circle', c:colors.blue}, {s:'circle', c:colors.yellow}, {s:'circle', c:colors.green}], 0));
+
+        // Q42: Pola Hilang di Tengah Bentuk (Lingkaran, Segitiga, [?], Segitiga, Lingkaran)
+        questions.push(createQ(42, "Level 5: Tantangan Super", "Tantangan Pola", "Bentuk apa yang tersembunyi di tengah?",
+            [{s:'circle', c:colors.green}, {s:'triangle', c:colors.green}, {s:'question'}, {s:'triangle', c:colors.green}, {s:'circle', c:colors.green}, {s:'triangle', c:colors.green}],
+            [{s:'triangle', c:colors.green}, {s:'circle', c:colors.green}, {s:'square', c:colors.green}, {s:'star', c:colors.green}], 1));
+
+        // Q43: Pola 4 Varian: Merah, Biru, Hijau, Kuning, Merah, Biru, Hijau, ?
+        questions.push(createQ(43, "Level 5: Tantangan Super", "Tantangan Pola", "Ada 4 warna berbeda berurutan!",
+            [{s:'square', c:colors.red}, {s:'square', c:colors.blue}, {s:'square', c:colors.green}, {s:'square', c:colors.yellow}, {s:'square', c:colors.red}, {s:'square', c:colors.blue}, {s:'square', c:colors.green}, {s:'question'}],
+            [{s:'square', c:colors.red}, {s:'square', c:colors.blue}, {s:'square', c:colors.green}, {s:'square', c:colors.yellow}], 3));
+
+        // Q44: Pola Kebalikan (ABBA): Merah, Biru, Biru, Merah, Merah, Biru, ?
+        questions.push(createQ(44, "Level 5: Tantangan Super", "Tantangan Pola", "Pola simetris: Merah, Biru, Biru, Merah...",
+            [{s:'heart', c:colors.red}, {s:'heart', c:colors.blue}, {s:'heart', c:colors.blue}, {s:'heart', c:colors.red}, {s:'heart', c:colors.red}, {s:'heart', c:colors.blue}, {s:'question'}],
+            [{s:'heart', c:colors.red}, {s:'heart', c:colors.blue}, {s:'heart', c:colors.yellow}, {s:'heart', c:colors.green}], 1));
+
+        // Q45: Bintang Merah Kecil, Bintang Biru Besar, Bintang Merah Kecil, Bintang Biru Besar, ?
+        questions.push(createQ(45, "Level 5: Tantangan Super", "Tantangan Pola", "Gabungan bentuk, warna, dan ukuran!",
+            [{s:'star', c:colors.red, scale:0.6}, {s:'star', c:colors.blue, scale:1.2}, {s:'star', c:colors.red, scale:0.6}, {s:'star', c:colors.blue, scale:1.2}, {s:'question'}],
+            [{s:'star', c:colors.red, scale:0.6}, {s:'star', c:colors.blue, scale:1.2}, {s:'star', c:colors.red, scale:1.2}, {s:'star', c:colors.blue, scale:0.6}], 0, true));
+
+        // Q46: Hilang di posisi 2 (Segitiga, [?], Segitiga, Lingkaran, Segitiga, Lingkaran)
+        questions.push(createQ(46, "Level 5: Tantangan Super", "Tantangan Pola", "Mana gambar di tempat kosong nomor 2?",
+            [{s:'triangle', c:colors.purple}, {s:'question'}, {s:'triangle', c:colors.purple}, {s:'circle', c:colors.purple}, {s:'triangle', c:colors.purple}, {s:'circle', c:colors.purple}],
+            [{s:'triangle', c:colors.purple}, {s:'circle', c:colors.purple}, {s:'square', c:colors.purple}, {s:'star', c:colors.purple}], 1));
+
+        // Q47: Pola 3 Variasi Bentuk Kombinasi Warna
+        questions.push(createQ(47, "Level 5: Tantangan Super", "Tantangan Pola", "Cari pasangan yang hilang!",
+            [{s:'heart', c:colors.red}, {s:'diamond', c:colors.yellow}, {s:'hexagon', c:colors.cyan}, {s:'heart', c:colors.red}, {s:'diamond', c:colors.yellow}, {s:'question'}],
+            [{s:'heart', c:colors.red}, {s:'diamond', c:colors.yellow}, {s:'hexagon', c:colors.cyan}, {s:'square', c:colors.pink}], 2));
+
+        // Q48: Pola bertambah: 1 Merah, 2 Biru, 1 Merah, 2 Biru, 1 Merah, ?
+        questions.push(createQ(48, "Level 5: Tantangan Super", "Tantangan Pola", "Perhatikan urutan jumlah warnanya!",
+            [{s:'circle', c:colors.red}, {s:'circle', c:colors.blue}, {s:'circle', c:colors.blue}, {s:'circle', c:colors.red}, {s:'circle', c:colors.blue}, {s:'question'}],
+            [{s:'circle', c:colors.red}, {s:'circle', c:colors.blue}, {s:'circle', c:colors.yellow}, {s:'circle', c:colors.green}], 1));
+
+        // Q49: Pola Ukuran Berjenjang (Kecil, Besar, Kecil, Besar, Kecil, ?)
+        questions.push(createQ(49, "Level 5: Tantangan Super", "Tantangan Pola", "Lengkapi pola ukuran Segitiga!",
+            [{s:'triangle', c:colors.orange, scale:0.6}, {s:'triangle', c:colors.orange, scale:1.2}, {s:'triangle', c:colors.orange, scale:0.6}, {s:'triangle', c:colors.orange, scale:1.2}, {s:'triangle', c:colors.orange, scale:0.6}, {s:'question'}],
+            [{s:'triangle', c:colors.orange, scale:0.6}, {s:'triangle', c:colors.orange, scale:1.2}, {s:'square', c:colors.orange, scale:1.2}, {s:'triangle', c:colors.blue, scale:0.6}], 1, true));
+
+        // Q50: Super Kombinasi Akhir (Hati Pink Besar, Bintang Kuning Kecil, Hati Pink Besar, Bintang Kuning Kecil, ?)
+        questions.push(createQ(50, "Level 5: Tantangan Super", "Tantangan Pola", "Soal Terakhir! Tunjukkan kemampuan hebatmu!",
+            [{s:'heart', c:colors.pink, scale:1.2}, {s:'star', c:colors.yellow, scale:0.6}, {s:'heart', c:colors.pink, scale:1.2}, {s:'star', c:colors.yellow, scale:0.6}, {s:'question'}],
+            [{s:'heart', c:colors.pink, scale:1.2}, {s:'star', c:colors.yellow, scale:0.6}, {s:'heart', c:colors.pink, scale:0.6}, {s:'star', c:colors.yellow, scale:1.2}], 0, true));
+
+
+        let currentQuestionIdx = 0;
+        let score = 0;
+        let userAnswers = new Array(50).fill(null); // track status: null, true, false
+        let answeredCurrent = false;
+
+        // Initialize App
+        window.onload = function() {
+            renderQuestion(currentQuestionIdx);
+            buildQuestionGrid();
+        };
+
+        function renderQuestion(idx) {
+            answeredCurrent = false;
+            const q = questions[idx];
+            
+            // Update UI headers
+            document.getElementById('category-badge').innerText = q.title;
+            document.getElementById('question-counter').innerText = `Soal ${idx + 1} dari 50`;
+            document.getElementById('question-instruction').innerText = q.instruction;
+            
+            // Update Progress Bar
+            const progressPercent = ((idx + 1) / 50) * 100;
+            document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+
+            // Clear feedback box
+            const feedbackBox = document.getElementById('feedback-box');
+            feedbackBox.className = 'hidden mt-4 p-3 rounded-2xl text-center font-bold text-sm md:text-base transition-all animate-pop';
+            feedbackBox.innerText = '';
+
+            // Render Pattern Container
+            const patternContainer = document.getElementById('pattern-container');
+            patternContainer.innerHTML = '';
+
+            q.pattern.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = "flex flex-col items-center justify-center p-3 bg-white rounded-2xl shadow-sm border border-slate-200 min-w-[65px] min-h-[65px] md:min-w-[85px] md:min-h-[85px] transition-transform";
+                
+                if (item.s === 'question') {
+                    card.className += " border-2 border-dashed border-indigo-400 bg-indigo-50/50 animate-pulse";
+                    card.innerHTML = `<span class="text-3xl md:text-4xl font-extrabold text-indigo-500 font-fredoka">?</span>`;
+                } else {
+                    const scale = item.scale || 1;
+                    const size = Math.round(54 * scale);
+                    card.innerHTML = renderShapeSVG(item.s, item.c, size);
+                }
+                patternContainer.appendChild(card);
+            });
+
+            // Render Option Buttons
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            q.options.forEach((opt, optIdx) => {
+                const btn = document.createElement('button');
+                btn.className = "shape-card bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-indigo-300 rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm cursor-pointer focus:outline-none focus:ring-4 focus:ring-indigo-100 min-h-[90px] md:min-h-[110px]";
+                
+                const scale = opt.scale || 1;
+                const size = Math.round(56 * scale);
+                btn.innerHTML = renderShapeSVG(opt.s, opt.c, size);
+
+                btn.onclick = () => checkAnswer(optIdx);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedIdx) {
+            if (answeredCurrent) return;
+
+            const q = questions[currentQuestionIdx];
+            const feedbackBox = document.getElementById('feedback-box');
+            feedbackBox.classList.remove('hidden');
+
+            if (selectedIdx === q.correctIdx) {
+                // Correct Answer
+                playSound('correct');
+                triggerConfetti();
+                
+                if (userAnswers[currentQuestionIdx] !== true) {
+                    score += 1;
+                    userAnswers[currentQuestionIdx] = true;
+                    document.getElementById('score-display').innerText = score;
+                }
+
+                feedbackBox.className = 'mt-4 p-3 bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-2xl text-center font-bold text-sm md:text-base animate-pop';
+                feedbackBox.innerHTML = `✨ Hore! Jawabanmu Benar sekali! 🎉`;
+
+                answeredCurrent = true;
+
+                // Auto proceed after 1.4 seconds
+                setTimeout(() => {
+                    if (currentQuestionIdx < 49) {
+                        currentQuestionIdx++;
+                        renderQuestion(currentQuestionIdx);
+                    } else {
+                        showWinModal();
+                    }
+                }, 1400);
+
+            } else {
+                // Wrong Answer
+                playSound('wrong');
+                userAnswers[currentQuestionIdx] = false;
+
+                feedbackBox.className = 'mt-4 p-3 bg-rose-100 border border-rose-300 text-rose-800 rounded-2xl text-center font-bold text-sm md:text-base animate-pop';
+                feedbackBox.innerHTML = `❌ Ops! Hampir benar, ayo coba perhatikan laginya! 💪`;
+            }
+
+            updateQuestionGridStatus(currentQuestionIdx);
+        }
+
+        function openQuestionGrid() {
+            playSound('pop');
+            buildQuestionGrid();
+            document.getElementById('grid-modal').classList.remove('hidden');
+        }
+
+        function closeQuestionGrid() {
+            playSound('pop');
+            document.getElementById('grid-modal').classList.add('hidden');
+        }
+
+        function buildQuestionGrid() {
+            const gridContainer = document.getElementById('grid-buttons');
+            gridContainer.innerHTML = '';
+
+            for (let i = 0; i < 50; i++) {
+                const btn = document.createElement('button');
+                let statusClass = "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200";
+                
+                if (userAnswers[i] === true) {
+                    statusClass = "bg-emerald-500 text-white border-emerald-600 font-bold shadow-sm";
+                } else if (userAnswers[i] === false) {
+                    statusClass = "bg-rose-500 text-white border-rose-600 font-bold shadow-sm";
+                }
+
+                if (i === currentQuestionIdx) {
+                    statusClass += " ring-4 ring-yellow-400 font-extrabold scale-105";
+                }
+
+                btn.className = `h-11 rounded-xl text-sm border flex items-center justify-center font-nunito transition ${statusClass}`;
+                btn.innerText = i + 1;
+                btn.setAttribute('data-qnum', i + 1);
+                
+                btn.onclick = () => {
+                    currentQuestionIdx = i;
+                    renderQuestion(currentQuestionIdx);
+                    closeQuestionGrid();
+                };
+
+                gridContainer.appendChild(btn);
+            }
+        }
+
+        function updateQuestionGridStatus(idx) {
+            // Function to sync grid state
+        }
+
+        function filterGrid(filterGroup) {
+            playSound('pop');
+            const buttons = document.querySelectorAll('.grid-filter-btn');
+            buttons.forEach(b => {
+                if (b.getAttribute('data-filter') === filterGroup) {
+                    b.className = "grid-filter-btn px-3 py-1.5 bg-indigo-600 text-white font-bold rounded-xl active-filter";
+                } else {
+                    b.className = "grid-filter-btn px-3 py-1.5 bg-slate-100 text-slate-600 font-bold rounded-xl";
+                }
+            });
+
+            const gridBtns = document.querySelectorAll('#grid-buttons button');
+            gridBtns.forEach(btn => {
+                const qNum = parseInt(btn.getAttribute('data-qnum'));
+                let show = false;
+
+                if (filterGroup === 'all') show = true;
+                else if (filterGroup === 'l1' && qNum >= 1 && qNum <= 10) show = true;
+                else if (filterGroup === 'l2' && qNum >= 11 && qNum <= 20) show = true;
+                else if (filterGroup === 'l3' && qNum >= 21 && qNum <= 30) show = true;
+                else if (filterGroup === 'l4' && qNum >= 31 && qNum <= 40) show = true;
+                else if (filterGroup === 'l5' && qNum >= 41 && qNum <= 50) show = true;
+
+                if (show) {
+                    btn.classList.remove('hidden');
+                } else {
+                    btn.classList.add('hidden');
+                }
+            });
+        }
+
+        function showWinModal() {
+            playSound('win');
+            triggerConfetti();
+            document.getElementById('final-score').innerText = `${score} / 50`;
+            
+            // Calculate stars
+            let stars = "⭐⭐⭐⭐⭐";
+            if (score < 25) stars = "⭐⭐⭐";
+            else if (score < 40) stars = "⭐⭐⭐⭐";
+            
+            document.getElementById('star-rating').innerText = stars;
+            document.getElementById('win-modal').classList.remove('hidden');
+        }
+
+        function closeWinModal() {
+            playSound('pop');
+            document.getElementById('win-modal').classList.add('hidden');
+            openQuestionGrid();
+        }
+
+        function restartGame() {
+            playSound('pop');
+            score = 0;
+            currentQuestionIdx = 0;
+            userAnswers = new Array(50).fill(null);
+            document.getElementById('score-display').innerText = '0';
+            document.getElementById('win-modal').classList.add('hidden');
+            renderQuestion(0);
+        }
+
+        // Simple HTML5 Canvas Confetti animation
+        function triggerConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const pieces = [];
+            const colorsList = ['#EF4444', '#3B82F6', '#EAB308', '#22C55E', '#EC4899', '#A855F7'];
+
+            for (let i = 0; i < 70; i++) {
+                pieces.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    size: Math.random() * 8 + 6,
+                    color: colorsList[Math.floor(Math.random() * colorsList.length)],
+                    speedY: Math.random() * 5 + 3,
+                    speedX: Math.random() * 4 - 2,
+                    rotation: Math.random() * 360
+                });
+            }
+
+            let animationFrame;
+            let startTime = Date.now();
+
+            function update() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                pieces.forEach(p => {
+                    p.y += p.speedY;
+                    p.x += p.speedX;
+                    p.rotation += 3;
+
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rotation * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                    ctx.restore();
+                });
+
+                if (Date.now() - startTime < 2000) {
+                    animationFrame = requestAnimationFrame(update);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    cancelAnimationFrame(animationFrame);
+                }
+            }
+
+            update();
+        }
+
+        window.addEventListener('resize', () => {
+            const canvas = document.getElementById('confetti-canvas');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
