@@ -73,8 +73,8 @@
 
             <!-- Profile Badge & Player Tag -->
             <div id="playerBadge" class="hidden items-center space-x-2 bg-gray-900 border border-squidPink/30 px-3 py-1.5 rounded-full">
-                <span id="playerAvatar" class="w-7 h-7 rounded-full bg-squidPink flex items-center justify-center text-xs font-bold text-white">456</span>
-                <span id="playerDisplayName" class="mono-font text-sm text-squidGold font-semibold">Peserta #456</span>
+                <span id="playerAvatar" class="w-7 h-7 rounded-full bg-squidPink flex items-center justify-center text-xs font-bold text-white">#000</span>
+                <span id="playerDisplayName" class="mono-font text-sm text-squidGold font-semibold">Peserta #000</span>
                 <button onclick="rerollPlayerName()" title="Acak Ulang Nama" class="text-xs text-gray-400 hover:text-white ml-1 transition">
                     <i class="fa-solid fa-dice"></i>
                 </button>
@@ -93,7 +93,7 @@
                 </div>
                 <h2 class="squid-font text-5xl md:text-6xl text-white uppercase tracking-wide">SELAMAT DATANG DI PERMAINAN</h2>
                 <p class="text-gray-400 text-sm max-w-md mx-auto">
-                    Identitas Anda di-generate secara acak. Bergabunglah dengan arena permainan bersama pemain lainnya!
+                    Nomor identitas (1-456) akan diberikan secara acak begitu Anda masuk ke arena room!
                 </p>
             </div>
 
@@ -102,10 +102,10 @@
                 <span class="text-xs text-gray-400 uppercase tracking-widest font-mono">Identitas Peserta Anda</span>
                 <div class="flex items-center justify-center space-x-3">
                     <div id="cardAvatar" class="w-12 h-12 rounded-full bg-squidPink text-white text-lg font-bold flex items-center justify-center shadow-lg">
-                        #000
+                        #---
                     </div>
                     <div class="text-left">
-                        <div id="cardPlayerName" class="text-xl font-mono text-squidGold font-bold">Peserta #000</div>
+                        <div id="cardPlayerName" class="text-xl font-mono text-squidGold font-bold">Peserta #---</div>
                         <div class="text-xs text-squidTeal font-mono">STATUS: SIAP BERTANDING</div>
                     </div>
                 </div>
@@ -172,19 +172,20 @@
         <!-- IN-GAME VIEW -->
         <div id="viewGame" class="hidden space-y-4">
             <!-- Game HUD -->
-            <div class="bg-squidCard border border-gray-800 rounded-2xl p-4 flex justify-between items-center">
+            <div class="bg-squidCard border border-gray-800 rounded-2xl p-4 flex justify-between items-center shadow-lg">
                 <div>
-                    <span id="gameTitle" class="squid-font text-2xl text-squidPink">PERMAINAN 1: LAMPU MERAH LAMPU HIJAU</span>
-                    <div class="text-xs text-gray-400 font-mono">Bertahan hidup untuk menang</div>
+                    <span id="gameTitle" class="squid-font text-2xl text-squidPink">BABAK 1: LAMPU MERAH LAMPU HIJAU</span>
+                    <div id="gameSubtitle" class="text-xs text-gray-400 font-mono">Bertahan hidup untuk melangkah ke babak berikutnya</div>
                 </div>
                 <div class="text-right">
-                    <span class="text-xs text-gray-400 font-mono">PESERTA HIDUP</span>
-                    <div id="aliveCount" class="mono-font text-2xl text-squidTeal font-bold">0 / 0</div>
+                    <span class="text-xs text-gray-400 font-mono">HADIAH TERKUMPUL</span>
+                    <div id="prizePool" class="mono-font text-xl text-squidGold font-bold">₩ 45.6 MILIAR</div>
+                    <span class="text-[10px] text-squidTeal font-mono">PESERTA: <span id="aliveCount">0 / 0</span></span>
                 </div>
             </div>
 
             <!-- Game Arena Canvas / Interactive Zone -->
-            <div id="gameArena" class="bg-gray-900 border border-gray-800 rounded-2xl min-h-[350px] p-4 flex flex-col justify-center items-center relative overflow-hidden">
+            <div id="gameArena" class="bg-gray-900 border border-gray-800 rounded-2xl min-h-[400px] p-6 flex flex-col justify-center items-center relative overflow-hidden shadow-2xl">
                 <!-- Dynamic Content per game phase -->
             </div>
         </div>
@@ -193,7 +194,7 @@
 
     <!-- Footer -->
     <footer class="border-t border-gray-800 py-3 text-center text-xs text-gray-500 font-mono">
-        SQUID GAME MULTIPLAYER &bull; NO SERVER 404 ERROR &bull; SYSTEM AUTO GENERATED ID
+        SQUID GAME MULTIPLAYER &bull; CONCEPT RESTORED &bull; SYSTEM AUTO GENERATED ID
     </footer>
 
     <!-- Toast Notification -->
@@ -202,11 +203,11 @@
         <span id="toastMessage">Pesan Toast</span>
     </div>
 
-    <!-- Firebase SDK Modules -->
+    <!-- Firebase SDK Modules (Fixed 404 URL version to 10.13.1) -->
     <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js';
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js';
 
         // Firebase Configuration & Setup
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'squid-game-app';
@@ -214,7 +215,6 @@
         let auth = null;
         let currentUser = null;
 
-        // Firebase Initialization with custom token safety
         try {
             if (typeof __firebase_config !== 'undefined') {
                 const firebaseConfig = JSON.parse(__firebase_config);
@@ -223,49 +223,65 @@
                 db = getFirestore(app);
             }
         } catch (e) {
-            console.warn("Firebase tidak diizinkan atau tidak ada konfigurasi, menggunakan mode simulasi lokal:", e);
+            console.warn("Firebase fallback ke mode lokal:", e);
         }
 
-        // Random Player Name Generator List
         const SAMPLE_NAMES = [
             "Seong Gi-hun", "Cho Sang-woo", "Kang Sae-byeok", 
             "Oh Il-nam", "Abdul Ali", "Jang Deok-su", 
             "Han Mi-nyeo", "Ji-yeong", "Hwang Jun-ho"
         ];
 
-        // Global State Variables
         window.playerState = {
             id: null,
             name: '',
             number: '',
             roomCode: null,
             isHost: false,
-            status: 'ALIVE' // ALIVE, ELIMINATED, WINNER
+            status: 'ALIVE',
+            gamePhase: 1
         };
 
         window.roomState = {
             code: null,
             hostId: null,
-            status: 'WAITING', // WAITING, IN_GAME, FINISHED
+            status: 'WAITING',
             gamePhase: 1,
             players: {}
         };
 
         let roomUnsubscribe = null;
         let playersUnsubscribe = null;
+        let dollInterval = null;
+        let gameTimer = null;
 
-        // Generate Random Player Profile
-        window.generateRandomPlayer = function() {
-            const num = Math.floor(Math.random() * 899) + 100; // 100 - 998
+        // Function to assign random player number between 1 and 456 when entering a room
+        window.assignRoomPlayerNumber = function() {
+            const randomNum = Math.floor(Math.random() * 456) + 1;
+            const formattedNum = `#${String(randomNum).padStart(3, '0')}`;
             const randomChar = SAMPLE_NAMES[Math.floor(Math.random() * SAMPLE_NAMES.length)];
-            window.playerState.number = `#${num}`;
-            window.playerState.name = `Peserta #${num} (${randomChar.split(' ')[0]})`;
+            
+            window.playerState.number = formattedNum;
+            window.playerState.name = `Peserta ${formattedNum} (${randomChar.split(' ')[0]})`;
+            updatePlayerUI();
+            return formattedNum;
+        };
+
+        window.generateRandomPlayer = function() {
+            // Temporary initial display before joining room
+            const randomChar = SAMPLE_NAMES[Math.floor(Math.random() * SAMPLE_NAMES.length)];
+            window.playerState.number = `#---`;
+            window.playerState.name = `Calon Peserta (${randomChar.split(' ')[0]})`;
             updatePlayerUI();
         };
 
         window.rerollPlayerName = function() {
-            window.generateRandomPlayer();
-            showToast("Nama peserta baru telah di-generate!", "info");
+            if (window.playerState.roomCode) {
+                window.assignRoomPlayerNumber();
+            } else {
+                window.generateRandomPlayer();
+            }
+            showToast("Identitas peserta dikonfirmasi!", "info");
         };
 
         function updatePlayerUI() {
@@ -277,7 +293,6 @@
             document.getElementById('playerBadge').classList.add('flex');
         }
 
-        // Audio Effects (Web Audio API - No 404 image/sound requests)
         function playTone(freq, duration = 0.2, type = 'sine') {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -294,7 +309,6 @@
             } catch (e) {}
         }
 
-        // Initialize App & Auth
         window.onload = async function() {
             window.generateRandomPlayer();
             window.playerState.id = 'usr_' + Math.random().toString(36).substring(2, 9);
@@ -313,12 +327,11 @@
                         }
                     });
                 } catch (err) {
-                    console.warn("Auth Fallback ke ID lokal:", err);
+                    console.warn("Auth Fallback lokal:", err);
                 }
             }
         };
 
-        // UI Toast Helper
         window.showToast = function(msg, type = "info") {
             const toast = document.getElementById('toast');
             const toastMsg = document.getElementById('toastMessage');
@@ -326,9 +339,9 @@
 
             toastMsg.innerText = msg;
             if (type === "error") {
-                toastIcon.className = "fa-solid fa-triangle-exclamation text-squidPink";
+                toastIcon.className = "fa-solid fa-skull text-squidPink";
             } else if (type === "success") {
-                toastIcon.className = "fa-solid fa-circle-check text-squidTeal";
+                toastIcon.className = "fa-solid fa-trophy text-squidTeal";
             } else {
                 toastIcon.className = "fa-solid fa-circle-info text-squidGold";
             }
@@ -340,15 +353,16 @@
             }, 3000);
         };
 
-        // CREATE ROOM - Fixes Server respond with 404
         window.createRoom = async function() {
             const code = Math.floor(100000 + Math.random() * 900000).toString();
             window.playerState.isHost = true;
             window.playerState.roomCode = code;
 
+            // Generate player number randomly between 1 and 456 when entering room
+            window.assignRoomPlayerNumber();
+
             if (db && currentUser) {
                 try {
-                    // Strict Firestore Path Rules
                     const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code);
                     await setDoc(roomRef, {
                         code: code,
@@ -370,18 +384,16 @@
 
                     listenToRoom(code);
                 } catch (e) {
-                    console.error("Firebase Room Creation Error:", e);
                     setupLocalRoom(code);
                 }
             } else {
                 setupLocalRoom(code);
             }
 
-            showToast(`Room #${code} Berhasil Dibuat!`, "success");
+            showToast(`Arena #${code} Berhasil Dibuat! Nomor Anda: ${window.playerState.number}`, "success");
             switchView('viewWaitingRoom');
         };
 
-        // JOIN ROOM
         window.joinRoom = async function() {
             const input = document.getElementById('inputRoomCode');
             const code = input.value.trim().toUpperCase();
@@ -393,6 +405,9 @@
 
             window.playerState.isHost = false;
             window.playerState.roomCode = code;
+
+            // Generate player number randomly between 1 and 456 when entering room
+            window.assignRoomPlayerNumber();
 
             if (db && currentUser) {
                 try {
@@ -416,18 +431,16 @@
 
                     listenToRoom(code);
                 } catch (e) {
-                    console.error("Join Room Error:", e);
                     setupLocalRoom(code);
                 }
             } else {
                 setupLocalRoom(code);
             }
 
-            showToast(`Berhasil bergabung ke room #${code}`, "success");
+            showToast(`Berhasil bergabung ke arena #${code}. Nomor Anda: ${window.playerState.number}`, "success");
             switchView('viewWaitingRoom');
         };
 
-        // Local Simulation Fallback (If DB connection issues occur)
         function setupLocalRoom(code) {
             window.roomState.code = code;
             window.roomState.hostId = window.playerState.id;
@@ -443,26 +456,24 @@
             renderWaitingRoom();
         }
 
-        // Real-time Firestore Listeners
         function listenToRoom(code) {
             document.getElementById('displayRoomCode').innerText = code;
 
             if (!db) return;
 
-            // Listen to Room status
             const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code);
             roomUnsubscribe = onSnapshot(roomRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     window.roomState.status = data.status;
+                    window.roomState.gamePhase = data.gamePhase || 1;
                     if (data.status === 'IN_GAME') {
                         switchView('viewGame');
                         renderGameArena();
                     }
                 }
-            }, (err) => console.error("Room snapshot error:", err));
+            }, (err) => console.error(err));
 
-            // Listen to Players list
             const playersCol = collection(db, 'artifacts', appId, 'public', 'data', 'players');
             playersUnsubscribe = onSnapshot(playersCol, (snapshot) => {
                 const roomPlayers = {};
@@ -474,10 +485,9 @@
                 });
                 window.roomState.players = roomPlayers;
                 renderWaitingRoom();
-            }, (err) => console.error("Players snapshot error:", err));
+            }, (err) => console.error(err));
         }
 
-        // Render Waiting Room UI
         function renderWaitingRoom() {
             document.getElementById('displayRoomCode').innerText = window.playerState.roomCode || '------';
             const listContainer = document.getElementById('playersList');
@@ -510,22 +520,26 @@
             });
         }
 
-        // LEAVE ROOM
         window.leaveRoom = function() {
             if (roomUnsubscribe) roomUnsubscribe();
             if (playersUnsubscribe) playersUnsubscribe();
+            if (dollInterval) clearInterval(dollInterval);
+            if (gameTimer) clearInterval(gameTimer);
 
             window.playerState.roomCode = null;
             window.playerState.isHost = false;
+            generateRandomPlayer();
             switchView('viewLobby');
-            showToast("Anda telah keluar dari room", "info");
+            showToast("Anda telah keluar dari arena", "info");
         };
 
-        // START GAME
         window.startGame = async function() {
+            window.roomState.gamePhase = 1;
+            window.playerState.status = 'ALIVE';
+
             if (db && window.playerState.roomCode) {
                 const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', window.playerState.roomCode);
-                await updateDoc(roomRef, { status: 'IN_GAME' });
+                await updateDoc(roomRef, { status: 'IN_GAME', gamePhase: 1 });
             } else {
                 window.roomState.status = 'IN_GAME';
                 switchView('viewGame');
@@ -533,7 +547,6 @@
             }
         };
 
-        // SWITCH VIEW UTILITY
         function switchView(viewId) {
             ['viewLobby', 'viewWaitingRoom', 'viewGame'].forEach(id => {
                 document.getElementById(id).classList.add('hidden');
@@ -541,85 +554,59 @@
             document.getElementById(viewId).classList.remove('hidden');
         }
 
-        // GAME ARENA LOGIC (Red Light Green Light Mini-Game)
-        let isDollLooking = false;
-        let pPosition = 0;
-
+        // SQUID GAME MULTI-STAGE CONTROLLER
         function renderGameArena() {
-            const arena = document.getElementById('gameArena');
+            if (dollInterval) clearInterval(dollInterval);
+            if (gameTimer) clearInterval(gameTimer);
+
             const players = Object.values(window.roomState.players || {});
             document.getElementById('aliveCount').innerText = `${players.length} / ${players.length}`;
 
+            switch (window.roomState.gamePhase) {
+                case 1:
+                    renderPhase1_RedLightGreenLight();
+                    break;
+                default:
+                    renderPhase1_RedLightGreenLight();
+            }
+        }
+
+        // ==========================================
+        // BABAK 1: LAMPU MERAH LAMPU HIJAU
+        // ==========================================
+        let isDollLooking = false;
+        let pPosition = 0;
+
+        function renderPhase1_RedLightGreenLight() {
+            document.getElementById('gameTitle').innerText = "BABAK 1: LAMPU MERAH LAMPU HIJAU";
+            document.getElementById('gameSubtitle').innerText = "Bergerak saat lampu hijau, diam total saat boneka menatap!";
+            
+            pPosition = 0;
+            const arena = document.getElementById('gameArena');
             arena.innerHTML = `
-                <div class="w-full flex flex-col items-center space-y-4">
-                    <!-- Boneka Squid Game -->
-                    <div id="dollContainer" class="text-center transition-all duration-300 transform">
-                        <div id="dollFace" class="w-20 h-20 bg-squidGold text-squidDark rounded-full flex flex-col items-center justify-center font-bold shadow-xl border-4 border-squidPink mx-auto">
-                            <i class="fa-solid fa-robot text-3xl"></i>
-                            <span id="dollStatusText" class="text-[10px] font-mono mt-1 font-extrabold">HIJAU</span>
+                <div class="w-full flex flex-col items-center space-y-5">
+                    <!-- Boneka Raksasa -->
+                    <div id="dollContainer" class="text-center transition-transform duration-300">
+                        <div id="dollFace" class="w-24 h-24 bg-squidGold text-squidDark rounded-full flex flex-col items-center justify-center font-bold shadow-2xl border-4 border-squidPink mx-auto transition-all">
+                            <i class="fa-solid fa-robot text-4xl"></i>
+                            <span id="dollStatusText" class="text-xs font-mono mt-1 font-extrabold tracking-wider">HIJAU</span>
                         </div>
                     </div>
 
-                    <!-- Visual Progress Bar -->
-                    <div class="w-full bg-gray-800 rounded-full h-4 overflow-hidden border border-gray-700 relative">
-                        <div id="playerProgress" class="bg-squidTeal h-full transition-all duration-200" style="width: 5%"></div>
+                    <!-- Progress Lari -->
+                    <div class="w-full max-w-md bg-gray-800 rounded-full h-5 overflow-hidden border border-gray-700 relative shadow-inner">
+                        <div id="playerProgress" class="bg-squidTeal h-full transition-all duration-150" style="width: 5%"></div>
                     </div>
 
-                    <!-- Game Control Button -->
-                    <div class="pt-4 text-center">
-                        <button id="btnStep" onclick="takeStep()" class="px-8 py-4 bg-squidPink hover:bg-squidPink/90 text-white rounded-2xl squid-font text-3xl tracking-wider custom-glow transition transform active:scale-95">
-                            LARI! (TAP/KLIK)
+                    <!-- Kontrol Lari -->
+                    <div class="pt-2 text-center">
+                        <button id="btnStep" onclick="takeStepRLGL()" class="px-10 py-4 bg-squidPink hover:bg-squidPink/90 text-white rounded-2xl squid-font text-3xl tracking-wider custom-glow transition transform active:scale-95">
+                            LARI! (TAP FAST)
                         </button>
-                        <p class="text-xs text-gray-400 font-mono mt-2">BERHENTI KETIKA BONEKA MENATAP SEBELUM TEREKSEKUSI!</p>
                     </div>
                 </div>
             `;
-
-            startDollLoop();
         }
-
-        function startDollLoop() {
-            const statusText = document.getElementById('dollStatusText');
-            const dollFace = document.getElementById('dollFace');
-
-            setInterval(() => {
-                isDollLooking = !isDollLooking;
-                if (isDollLooking) {
-                    if (statusText) statusText.innerText = "MERAH!";
-                    if (dollFace) {
-                        dollFace.classList.remove('bg-squidGold');
-                        dollFace.classList.add('bg-squidPink', 'scale-110');
-                    }
-                    playTone(800, 0.3, 'sawtooth');
-                } else {
-                    if (statusText) statusText.innerText = "HIJAU!";
-                    if (dollFace) {
-                        dollFace.classList.remove('bg-squidPink', 'scale-110');
-                        dollFace.classList.add('bg-squidGold');
-                    }
-                    playTone(400, 0.2, 'sine');
-                }
-            }, Math.floor(Math.random() * 2000) + 1500);
-        }
-
-        window.takeStep = function() {
-            if (isDollLooking) {
-                playTone(150, 0.5, 'square');
-                showToast("ANDA TERELIMINASI KARENA BERGERAK SANGAT CERDOH!", "error");
-                pPosition = 0;
-            } else {
-                pPosition = Math.min(100, pPosition + 8);
-                playTone(500, 0.1);
-            }
-
-            const progressBar = document.getElementById('playerProgress');
-            if (progressBar) progressBar.style.width = `${pPosition}%`;
-
-            if (pPosition >= 100) {
-                playTone(1000, 0.5);
-                showToast("SELAMAT! ANDA BERHASIL MELEWATI GARIS FINISH!", "success");
-            }
-        };
     </script>
 </body>
 </html>
