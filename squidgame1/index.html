@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Squid Game Online Multiplayer</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;700&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        squidPink: '#ff007a',
+                        squidPinkDark: '#cc0062',
+                        squidTeal: '#037a76',
+                        squidDark: '#0b0e14',
+                        squidCard: '#161b26',
+                        squidGold: '#ffd700',
+                    },
+                    fontFamily: {
+                        teko: ['Teko', 'sans-serif'],
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0b0e14;
+            color: #ffffff;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow-x: hidden;
+        }
+        .squid-font {
+            font-family: 'Teko', sans-serif;
+            letter-spacing: 2px;
+        }
+        .glass-panel {
+            background: rgba(22, 27, 38, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 0, 122, 0.2);
+        }
+        .glass-panel-teal {
+            background: rgba(3, 122, 118, 0.15);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(3, 122, 118, 0.4);
+        }
+        .squid-btn {
+            background: linear-gradient(135deg, #ff007a, #cc0062);
+            transition: all 0.2s ease;
+        }
+        .squid-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(255, 0, 122, 0.6);
+        }
+        .squid-btn-teal {
+            background: linear-gradient(135deg, #037a76, #02524f);
+            transition: all 0.2s ease;
+        }
+        .squid-btn-teal:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(3, 122, 118, 0.6);
+        }
+        .shimmer {
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .pulse-pink {
+            animation: pulsePink 2s infinite;
+        }
+        @keyframes pulsePink {
+            0%, 100% { box-shadow: 0 0 10px rgba(255,0,122,0.4); }
+            50% { box-shadow: 0 0 25px rgba(255,0,122,0.8); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between items-center p-3 md:p-6 selection:bg-squidPink selection:text-white">
+
+    <!-- Top Header -->
+    <header class="w-full max-w-5xl flex justify-between items-center py-4 px-6 glass-panel rounded-2xl mb-6 shadow-2xl">
+        <div class="flex items-center space-x-3">
+            <div class="flex space-x-1 items-center">
+                <!-- Squid Shapes Icons -->
+                <div class="w-4 h-4 border-2 border-squidPink rounded-full"></div>
+                <div class="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[14px] border-b-squidPink"></div>
+                <div class="w-3.5 h-3.5 border-2 border-squidPink"></div>
+            </div>
+            <h1 class="text-2xl md:text-3xl font-bold tracking-wider squid-font text-white uppercase">
+                SQUID <span class="text-squidPink">GAME</span> ONLINE
+            </h1>
+        </div>
+
+        <div id="header-status" class="hidden flex items-center space-x-4">
+            <div class="bg-black/50 px-3 py-1.5 rounded-xl border border-squidPink/30 flex items-center space-x-2">
+                <span class="text-xs text-gray-400">ROOM:</span>
+                <span id="display-room-code" class="text-squidPink font-mono font-bold tracking-widest text-sm">------</span>
+            </div>
+            <div id="player-badge" class="hidden bg-squidTeal/30 px-3 py-1.5 rounded-xl border border-squidTeal/50 text-xs font-bold text-teal-300">
+                PLAYER <span id="display-player-num" class="text-white text-sm font-mono font-black">#---</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="w-full max-w-5xl flex-1 flex flex-col justify-center items-center">
+
+        <!-- Notification / Status Banner -->
+        <div id="toast-message" class="hidden fixed top-24 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-xl bg-squidPink text-white font-semibold shadow-2xl transition-all duration-300 text-center max-w-md">
+            Pesan Toast
+        </div>
+
+        <!-- 1. ENTRY / LOBBY SELECTION VIEW -->
+        <section id="view-entry" class="w-full max-w-lg glass-panel p-8 rounded-3xl shadow-2xl text-center space-y-6">
+            <div class="space-y-2">
+                <h2 class="text-4xl font-bold squid-font tracking-wide">SELAMAT DATANG</h2>
+                <p class="text-gray-400 text-sm">Pilih peran Anda untuk memulai permainan. Maksimal 100 Pemain.</p>
+            </div>
+
+            <!-- Role Selection Buttons -->
+            <div class="grid grid-cols-2 gap-4">
+                <button id="btn-select-player" onclick="showPlayerForm()" class="py-4 px-4 rounded-2xl border-2 border-squidPink/40 bg-squidPink/10 hover:bg-squidPink/20 text-white font-bold transition flex flex-col items-center space-y-2">
+                    <span class="text-3xl">👤</span>
+                    <span>IKUT REMAN</span>
+                    <span class="text-xs text-squidPink font-normal">Menjadi Peserta</span>
+                </button>
+                <button id="btn-select-host" onclick="showHostForm()" class="py-4 px-4 rounded-2xl border-2 border-squidTeal/40 bg-squidTeal/10 hover:bg-squidTeal/20 text-white font-bold transition flex flex-col items-center space-y-2">
+                    <span class="text-3xl">🎭</span>
+                    <span>HOST ROOM</span>
+                    <span class="text-xs text-teal-400 font-normal">Penyelenggara Game</span>
+                </button>
+            </div>
+
+            <!-- Player Form -->
+            <form id="form-player" onsubmit="joinAsPlayer(event)" class="space-y-4 text-left pt-4 border-t border-gray-800 hidden">
+                <div>
+                    <label class="block text-xs text-gray-400 font-medium mb-1">NAMA LENGKAP / ALIAS</label>
+                    <input type="text" id="player-name-input" maxlength="20" required placeholder="Masukkan nama Anda..." class="w-full px-4 py-3 rounded-xl bg-black/50 border border-gray-700 text-white focus:outline-none focus:border-squidPink transition">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 font-medium mb-1">KODE ROOM (6 DIGIT)</label>
+                    <input type="text" id="player-room-input" maxlength="6" required placeholder="Contoh: 8X92KA" class="w-full px-4 py-3 rounded-xl bg-black/50 border border-gray-700 text-white focus:outline-none focus:border-squidPink font-mono uppercase tracking-widest transition">
+                </div>
+                <button type="submit" class="w-full py-4 rounded-xl squid-btn font-bold text-lg text-white shadow-lg">
+                    MASUK GAME (#001 - #456)
+                </button>
+            </form>
+
+            <!-- Host Form -->
+            <div id="form-host" class="space-y-4 text-left pt-4 border-t border-gray-800 hidden">
+                <p class="text-xs text-gray-400 text-center">Sebagai Host, Anda mengendalikan jalannya 3 Game dari Control Panel tanpa ikut bermain.</p>
+                <button onclick="createRoomAsHost()" class="w-full py-4 rounded-xl squid-btn-teal font-bold text-lg text-white shadow-lg">
+                    BUAT ROOM BARU
+                </button>
+            </div>
+        </section>
+
+        <!-- 2. LOBBY WAITING ROOM (PLAYER & HOST) -->
+        <section id="view-lobby" class="w-full max-w-4xl glass-panel p-6 md:p-8 rounded-3xl shadow-2xl hidden space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-center border-b border-gray-800 pb-6 gap-4">
+                <div>
+                    <span class="text-xs text-squidPink font-mono font-bold tracking-widest uppercase">RUANG TUNGGU PESERTA</span>
+                    <h2 class="text-3xl font-bold squid-font">KODE ROOM: <span id="lobby-room-code" class="text-squidPink font-mono">------</span></h2>
+                    <p class="text-xs text-gray-400">Bagikan kode ini kepada calon peserta lain (Maks 100 Player).</p>
+                </div>
+                <div class="flex items-center space-x-4 bg-black/40 px-6 py-3 rounded-2xl border border-gray-800">
+                    <div class="text-center">
+                        <div class="text-xs text-gray-400">PESERTA TERDAFTAR</div>
+                        <div class="text-3xl font-bold font-mono text-squidPink"><span id="lobby-count">0</span>/100</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Prize Pool Display -->
+            <div class="bg-gradient-to-r from-yellow-950/40 via-yellow-900/20 to-yellow-950/40 border border-yellow-500/30 rounded-2xl p-4 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span class="text-3xl">💰</span>
+                    <div>
+                        <div class="text-xs text-yellow-400 font-bold tracking-wider">TOTAL HADIAH AKHIR</div>
+                        <div class="text-2xl font-bold text-yellow-300 font-mono">45.6 MILIAR WON</div>
+                    </div>
+                </div>
+                <span class="text-xs text-gray-400 italic">3 Game Berturut-turut</span>
+            </div>
+
+            <!-- Player List Grid -->
+            <div>
+                <h3 class="text-sm font-bold text-gray-400 mb-3 flex items-center justify-between">
+                    <span>DAFTAR PESERTA</span>
+                    <span class="text-xs font-normal text-gray-500">Nomor Acak #001 - #456</span>
+                </h3>
+                <div id="lobby-player-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-h-72 overflow-y-auto p-1">
+                    <!-- Player Cards inserted dynamically -->
+                </div>
+            </div>
+
+            <!-- Controls (Only visible to Host) -->
+            <div id="host-lobby-controls" class="hidden border-t border-gray-800 pt-6 flex flex-col md:flex-row gap-4 justify-between items-center">
+                <p class="text-xs text-teal-400">Anda adalah Host. Tekan tombol saat semua pemain sudah bergabung.</p>
+                <button onclick="hostStartGame1()" class="w-full md:w-auto px-8 py-4 rounded-xl squid-btn font-bold text-lg text-white shadow-xl pulse-pink">
+                    MULAI GAME 1: MENEBAK POLA 🚀
+                </button>
+            </div>
+            
+            <div id="player-waiting-notice" class="hidden border-t border-gray-800 pt-4 text-center">
+                <p class="text-sm text-gray-400 animate-pulse">Menunggu Host memulai permainan...</p>
+            </div>
+        </section>
+
+        <!-- 3. GAME 1: MENEBAK POLA (PATTERN MEMORY) -->
+        <section id="view-game1" class="w-full max-w-3xl glass-panel p-6 md:p-8 rounded-3xl shadow-2xl hidden space-y-6 text-center">
+            <div class="space-y-1">
+                <span class="px-3 py-1 bg-squidPink/20 text-squidPink border border-squidPink/30 text-xs font-bold rounded-full">GAME 1 DARI 3</span>
+                <h2 class="text-4xl font-bold squid-font">TEBAK POLA BERIKUTNYA</h2>
+                <p class="text-xs text-gray-300 max-w-md mx-auto">Perhatikan urutan simbol yang muncul secara bergantian, lalu tebak simbol ke berapa yang akan muncul berikutnya!</p>
+            </div>
+
+            <!-- Status Level Bar -->
+            <div class="flex justify-between items-center bg-black/50 px-6 py-3 rounded-2xl border border-gray-800">
+                <div class="text-left">
+                    <div class="text-xs text-gray-400">LEVEL SAAT INI</div>
+                    <div class="text-xl font-bold text-squidPink font-mono"><span id="g1-level-num">1</span> / 5</div>
+                </div>
+                <div id="g1-timer-box" class="text-right">
+                    <div class="text-xs text-gray-400">WAKTU MENGAMATI</div>
+                    <div id="g1-timer" class="text-xl font-bold text-yellow-400 font-mono">--s</div>
+                </div>
+            </div>
+
+            <!-- Display Screen for Pattern Sequence -->
+            <div class="bg-black/80 border-2 border-squidPink/40 rounded-3xl p-8 min-h-[160px] flex flex-col items-center justify-center space-y-4 shadow-inner">
+                <div id="g1-phase-status" class="text-xs font-mono text-gray-400 uppercase tracking-widest">MEMUTAR POLA...</div>
+                
+                <!-- Display active sequence symbol -->
+                <div id="g1-symbol-display" class="text-7xl transition-all duration-300 transform scale-100">
+                    ❓
+                </div>
+
+                <div id="g1-sequence-dots" class="flex space-x-2 pt-2">
+                    <!-- Dots showing progress -->
+                </div>
+            </div>
+
+            <!-- Player Interaction Panel -->
+            <div id="g1-player-controls" class="space-y-4 hidden">
+                <p class="text-sm text-yellow-300 font-bold">Simbol apa yang akan muncul SELANJUTNYA?</p>
+                <div class="grid grid-cols-4 gap-3">
+                    <button onclick="g1SubmitAnswer('🔴')" class="py-4 bg-red-950/50 border border-red-500/40 hover:bg-red-900/60 rounded-2xl text-3xl transition active:scale-95 shadow-md">🔴</button>
+                    <button onclick="g1SubmitAnswer('🔺')" class="py-4 bg-pink-950/50 border border-pink-500/40 hover:bg-pink-900/60 rounded-2xl text-3xl transition active:scale-95 shadow-md">🔺</button>
+                    <button onclick="g1SubmitAnswer('⬛')" class="py-4 bg-gray-900 border border-gray-600 hover:bg-gray-800 rounded-2xl text-3xl transition active:scale-95 shadow-md">⬛</button>
+                    <button onclick="g1SubmitAnswer('⭐')" class="py-4 bg-yellow-950/50 border border-yellow-500/40 hover:bg-yellow-900/60 rounded-2xl text-3xl transition active:scale-95 shadow-md">⭐</button>
+                </div>
+            </div>
+
+            <!-- Host Game Controls -->
+            <div id="g1-host-controls" class="hidden border-t border-gray-800 pt-4 flex justify-between items-center">
+                <span class="text-xs text-teal-400">Panel Host: Kontrol jalannya pola</span>
+                <button id="g1-host-next-btn" onclick="g1HostNextStep()" class="px-6 py-3 bg-squidTeal hover:bg-teal-700 text-white font-bold rounded-xl text-sm">
+                    TAYANGKAN POLA SAAT INI ▶
+                </button>
+            </div>
+
+            <div id="g1-waiting-message" class="hidden text-sm text-gray-400 italic">
+                Menunggu giliran tebakan...
+            </div>
+        </section>
+
+        <!-- 4. GAME 2: JEMBATAN KACA TRIVIA (GLASS BRIDGE) -->
+        <section id="view-game2" class="w-full max-w-3xl glass-panel p-6 md:p-8 rounded-3xl shadow-2xl hidden space-y-6 text-center">
+            <div class="space-y-1">
+                <span class="px-3 py-1 bg-squidPink/20 text-squidPink border border-squidPink/30 text-xs font-bold rounded-full">GAME 2 DARI 3</span>
+                <h2 class="text-4xl font-bold squid-font">JEMBATAN KACA TRIVIA</h2>
+                <p class="text-xs text-gray-300 max-w-md mx-auto">Pilih kaca KIRI atau KANAN berdasarkan jawaban pertanyaan trivia. Salah memilih = Kaca Pecah & Gugur!</p>
+            </div>
+
+            <!-- Status Level Bar -->
+            <div class="flex justify-between items-center bg-black/50 px-6 py-3 rounded-2xl border border-gray-800">
+                <div class="text-left">
+                    <div class="text-xs text-gray-400">LANGKAH JEMBATAN</div>
+                    <div class="text-xl font-bold text-squidPink font-mono">LANGKAH <span id="g2-level-num">1</span> / 5</div>
+                </div>
+                <div class="text-right">
+                    <div class="text-xs text-gray-400">STATUS PEMAIN</div>
+                    <div id="g2-player-status" class="text-xs font-bold text-green-400">BERHASIL SELAMAT</div>
+                </div>
+            </div>
+
+            <!-- Question Box -->
+            <div class="bg-black/60 border border-squidPink/30 p-6 rounded-2xl text-left space-y-2">
+                <span id="g2-question-tag" class="text-xs font-bold text-yellow-400 tracking-wider">PERTANYAAN #1</span>
+                <h3 id="g2-question-text" class="text-lg md:text-xl font-bold text-white">Memuat Pertanyaan Trivia...</h3>
+            </div>
+
+            <!-- Glass Tile Choices (Left / Right) -->
+            <div class="grid grid-cols-2 gap-6 pt-2">
+                <!-- Left Glass Tile -->
+                <button id="g2-btn-left" onclick="g2ChooseGlass('LEFT')" class="group relative py-8 px-4 rounded-2xl border-2 border-teal-500/40 bg-teal-950/20 hover:bg-teal-900/40 transition flex flex-col items-center justify-center space-y-3 shadow-lg active:scale-95">
+                    <span class="text-xs text-teal-400 font-bold tracking-widest uppercase">JEMBATAN KACA KIRI</span>
+                    <span id="g2-option-left" class="text-sm font-semibold text-white group-hover:text-yellow-300">Pilihan A</span>
+                    <div class="w-full h-1 bg-teal-500/30 rounded-full group-hover:bg-teal-400"></div>
+                </button>
+
+                <!-- Right Glass Tile -->
+                <button id="g2-btn-right" onclick="g2ChooseGlass('RIGHT')" class="group relative py-8 px-4 rounded-2xl border-2 border-pink-500/40 bg-pink-950/20 hover:bg-pink-900/40 transition flex flex-col items-center justify-center space-y-3 shadow-lg active:scale-95">
+                    <span class="text-xs text-pink-400 font-bold tracking-widest uppercase">JEMBATAN KACA KANAN</span>
+                    <span id="g2-option-right" class="text-sm font-semibold text-white group-hover:text-yellow-300">Pilihan B</span>
+                    <div class="w-full h-1 bg-pink-500/30 rounded-full group-hover:bg-pink-400"></div>
+                </button>
+            </div>
+
+            <!-- Host Control for Glass Bridge -->
+            <div id="g2-host-controls" class="hidden border-t border-gray-800 pt-4 flex justify-between items-center">
+                <span class="text-xs text-teal-400">Panel Host: Kontrol Jembatan</span>
+                <button onclick="g2HostNextLevel()" class="px-6 py-3 bg-squidTeal hover:bg-teal-700 text-white font-bold rounded-xl text-sm">
+                    LANJUT LANGKAH BERIKUTNYA ▶
+                </button>
+            </div>
+        </section>
+
+        <!-- 5. GAME 3: GUNTING BATU KERTAS TOURNAMENT (RPS BRACKET) -->
+        <section id="view-game3" class="w-full max-w-3xl glass-panel p-6 md:p-8 rounded-3xl shadow-2xl hidden space-y-6 text-center">
+            <div class="space-y-1">
+                <span class="px-3 py-1 bg-squidPink/20 text-squidPink border border-squidPink/30 text-xs font-bold rounded-full">GAME FINAL 3 DARI 3</span>
+                <h2 class="text-4xl font-bold squid-font">GUNTING BATU KERTAS FINAL</h2>
+                <p class="text-xs text-gray-300 max-w-md mx-auto">Turnamen eliminasi 1v1 secara langsung. Pemain yang kalah akan tereliminasi hingga tersisa 1 PEMENANG AKHIR!</p>
+            </div>
+
+            <!-- Matchup Status Box -->
+            <div class="bg-black/70 border-2 border-squidPink/40 rounded-3xl p-6 space-y-4">
+                <div class="text-xs text-gray-400 font-mono tracking-widest">BABAK TURNAMEN SAAT INI</div>
+                
+                <div class="flex justify-around items-center">
+                    <!-- Player 1 -->
+                    <div class="text-center space-y-1">
+                        <div id="g3-p1-num" class="text-2xl font-bold font-mono text-squidPink">#---</div>
+                        <div id="g3-p1-name" class="text-xs text-gray-300 font-medium">Player 1</div>
+                        <div id="g3-p1-choice" class="text-4xl pt-2">❓</div>
+                    </div>
+
+                    <div class="text-3xl font-bold squid-font text-yellow-400">VS</div>
+
+                    <!-- Player 2 -->
+                    <div class="text-center space-y-1">
+                        <div id="g3-p2-num" class="text-2xl font-bold font-mono text-teal-400">#---</div>
+                        <div id="g3-p2-name" class="text-xs text-gray-300 font-medium">Player 2</div>
+                        <div id="g3-p2-choice" class="text-4xl pt-2">❓</div>
+                    </div>
+                </div>
+
+                <div id="g3-round-result" class="text-sm font-bold text-yellow-300 min-h-[24px]">
+                    Menyiapkan Pasangan Tanding...
+                </div>
+            </div>
+
+            <!-- RPS Action Buttons -->
+            <div id="g3-player-actions" class="hidden space-y-3">
+                <p class="text-xs text-gray-400">PILIH STRATEGI ANDA:</p>
+                <div class="grid grid-cols-3 gap-4">
+                    <button onclick="g3Choose('SCISSORS')" class="py-5 bg-pink-950/40 border border-pink-500/50 hover:bg-pink-900/60 rounded-2xl flex flex-col items-center justify-center space-y-2 transition active:scale-95 shadow-md">
+                        <span class="text-4xl">✌️</span>
+                        <span class="text-xs font-bold text-pink-300">GUNTING</span>
+                    </button>
+                    <button onclick="g3Choose('ROCK')" class="py-5 bg-gray-900 border border-gray-600 hover:bg-gray-800 rounded-2xl flex flex-col items-center justify-center space-y-2 transition active:scale-95 shadow-md">
+                        <span class="text-4xl">✊</span>
+                        <span class="text-xs font-bold text-gray-300">BATU</span>
+                    </button>
+                    <button onclick="g3Choose('PAPER')" class="py-5 bg-teal-950/40 border border-teal-500/50 hover:bg-teal-900/60 rounded-2xl flex flex-col items-center justify-center space-y-2 transition active:scale-95 shadow-md">
+                        <span class="text-4xl">✋</span>
+                        <span class="text-xs font-bold text-teal-300">KERTAS</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Spectator / Eliminated View Notice -->
+            <div id="g3-spectator-notice" class="hidden text-xs text-gray-400 bg-black/40 p-3 rounded-xl">
+                👀 Anda sedang menonton pertandingan peserta yang tersisa...
+            </div>
+
+            <!-- Host Controls -->
+            <div id="g3-host-controls" class="hidden border-t border-gray-800 pt-4 flex justify-between items-center">
+                <span class="text-xs text-teal-400">Panel Host: Kontrol Turnamen</span>
+                <button onclick="g3HostProcessRound()" class="px-6 py-3 bg-squidTeal hover:bg-teal-700 text-white font-bold rounded-xl text-sm">
+                    PROSES HASIL / BABAK SELANJUTNYA ▶
+                </button>
+            </div>
+        </section>
+
+        <!-- 6. GAME OVER / WINNER CELEBRATION -->
+        <section id="view-eliminated" class="w-full max-w-lg glass-panel p-8 rounded-3xl shadow-2xl hidden text-center space-y-6 border-red-500/50">
+            <div class="w-20 h-20 mx-auto bg-red-950/60 border-2 border-red-500 rounded-full flex items-center justify-center text-4xl text-red-500">
+                ❌
+            </div>
+            <div class="space-y-2">
+                <h2 class="text-4xl font-bold text-red-500 squid-font">TERELIMINASI</h2>
+                <p class="text-sm text-gray-300">Peserta <span id="elim-player-num" class="font-mono font-bold text-white">#---</span> telah gugur dari permainan.</p>
+            </div>
+            <p class="text-xs text-gray-400">Terima kasih telah berpartisipasi dalam Squid Game.</p>
+            <button onclick="resetToHome()" class="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-xl text-xs">
+                KEMBALI KE MENU UTAMA
+            </button>
+        </section>
+
+        <section id="view-winner" class="w-full max-w-lg glass-panel p-8 rounded-3xl shadow-2xl hidden text-center space-y-6 border-yellow-500/60">
+            <div class="w-24 h-24 mx-auto bg-yellow-950/60 border-2 border-yellow-500 rounded-full flex items-center justify-center text-5xl">
+                🏆
+            </div>
+            <div class="space-y-2">
+                <span class="px-3 py-1 bg-yellow-500/20 text-yellow-400 text-xs font-bold rounded-full border border-yellow-500/30">PEMENANG TUNGGAL SQUID GAME</span>
+                <h2 class="text-5xl font-bold text-yellow-400 squid-font">SELAMAT!</h2>
+                <p class="text-lg font-bold text-white">PESERTA <span id="winner-player-num" class="font-mono text-yellow-300">#---</span> (<span id="winner-player-name">---</span>)</p>
+            </div>
+            <div class="bg-yellow-950/40 border border-yellow-500/40 p-4 rounded-2xl">
+                <div class="text-xs text-yellow-400">MEMENANGKAN HADIAH UTAMA</div>
+                <div class="text-3xl font-bold font-mono text-yellow-300 pt-1">45.600.000.000 WON</div>
+            </div>
+            <button onclick="resetToHome()" class="px-8 py-4 squid-btn font-bold text-white rounded-xl text-sm shadow-xl">
+                MAIN LAGI 🔄
+            </button>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full max-w-5xl text-center py-4 text-xs text-gray-600">
+        Squid Game Online Multiplayer &bull; 100 Real-Time Players Firestore Engine
+    </footer>
+
+    <!-- JS Logic inside script tag with valid JS comments -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, doc, setDoc, getDoc, updateDoc, 
+            onSnapshot, collection, query, where, getDocs 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables injected or default fallback
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'squid-game-app-default';
+        
+        // 🔑 SILAKAN GANTI ISI OBJECT KREDENSIAL DI BAWAH INI DENGAN FIREBASE CONSOLE ANDA:
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "PASTE_API_KEY_ANDA_DI_SINI",
+            authDomain: "PROJECT_ID_ANDA.firebaseapp.com",
+            projectId: "PROJECT_ID_ANDA",
+            storageBucket: "PROJECT_ID_ANDA.appspot.com",
+            messagingSenderId: "SENDER_ID_ANDA",
+            appId: "APP_ID_ANDA"
+        };
+
+        // Check if user has updated config or default dummy exists
+        let isConfigValid = true;
+        if (firebaseConfig.apiKey === "PASTE_API_KEY_ANDA_DI_SINI") {
+            isConfigValid = false;
+            console.warn("Menggunakan Firebase fallback offline mode / Harap masukkan kredensial Firebase Anda.");
+        }
+
+        // Initialize Firebase app & database
+        let app, auth, db;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            // Menggunakan database bawaan (default)
+            db = getFirestore(app); 
+        } catch (err) {
+            console.error("Firebase init error:", err);
+        }
+
+        let state = {
+            role: null, // 'HOST' or 'PLAYER'
+            roomCode: null,
+            userId: null,
+            playerNumber: null, // e.g. "045"
+            playerName: "",
+            isEliminated: false,
+            roomData: null,
+            unsubscribeRoom: null,
+            unsubscribePlayers: null,
+            playersList: [],
+            currentStep: 'ENTRY'
+        };
+
+        const AudioEngine = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+            playBeep(freq = 440, duration = 0.15, type = 'sine') {
+                try {
+                    this.init();
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e){}
+            },
+            playEliminatedSound() {
+                try {
+                    this.init();
+                    this.playBeep(150, 0.4, 'sawtooth');
+                    setTimeout(() => this.playBeep(100, 0.6, 'sawtooth'), 200);
+                } catch(e){}
+            },
+            playSuccessSound() {
+                try {
+                    this.init();
+                    this.playBeep(523.25, 0.1, 'triangle');
+                    setTimeout(() => this.playBeep(659.25, 0.2, 'triangle'), 100);
+                } catch(e){}
+            }
+        };
+
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast-message');
+            toast.textContent = msg;
+            toast.className = `fixed top-24 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-xl font-semibold shadow-2xl transition-all duration-300 text-center max-w-md ${
+                isError ? 'bg-red-600 text-white' : 'bg-squidPink text-white'
+            }`;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
+        function switchView(viewId) {
+            const views = ['view-entry', 'view-lobby', 'view-game1', 'view-game2', 'view-game3', 'view-eliminated', 'view-winner'];
+            views.forEach(v => {
+                const el = document.getElementById(v);
+                if (el) el.classList.add('hidden');
+            });
+            const target = document.getElementById(viewId);
+            if (target) target.classList.remove('hidden');
+
+            // Header status update
+            const headerStatus = document.getElementById('header-status');
+            if (state.roomCode) {
+                headerStatus.classList.remove('hidden');
+                document.getElementById('display-room-code').textContent = state.roomCode;
+                if (state.playerNumber) {
+                    document.getElementById('player-badge').classList.remove('hidden');
+                    document.getElementById('display-player-num').textContent = `#${state.playerNumber}`;
+                }
+            } else {
+                headerStatus.classList.add('hidden');
+            }
+        }
+
+        // Setup Forms Visibility
+        window.showPlayerForm = () => {
+            document.getElementById('form-player').classList.remove('hidden');
+            document.getElementById('form-host').classList.add('hidden');
+        };
+
+        window.showHostForm = () => {
+            document.getElementById('form-host').classList.remove('hidden');
+            document.getElementById('form-player').classList.add('hidden');
+        };
+
+        async function ensureAuth() {
+            if (!auth) return "guest-" + Math.random().toString(36).substring(2, 9);
+            if (auth.currentUser) return auth.currentUser.uid;
+            try {
+                const cred = await signInAnonymously(auth);
+                return cred.user.uid;
+            } catch (err) {
+                console.warn("Auth fallback mode active:", err);
+                return "user-" + Math.floor(Math.random() * 100000);
+            }
+        }
+
+        function generateRandomCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let res = '';
+            for (let i = 0; i < 6; i++) {
+                res += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return res;
+        }
+
+        function generateUniquePlayerNumber(existingNumbers) {
+            const used = new Set(existingNumbers);
+            let num;
+            do {
+                num = Math.floor(Math.random() * 456) + 1;
+            } while (used.has(num) && used.size < 456);
+            return String(num).padStart(3, '0');
+        }
+
+        window.createRoomAsHost = async () => {
+            if (!isConfigValid) {
+                showToast("Harap ganti firebaseConfig dengan kredensial Firebase Anda!", true);
+            }
+            AudioEngine.init();
+            state.userId = await ensureAuth();
+            state.role = 'HOST';
+            state.roomCode = generateRandomCode();
+
+            const roomRef = doc(db, 'rooms', state.roomCode);
+            const initialRoomData = {
+                hostId: state.userId,
+                status: 'LOBBY', // LOBBY, GAME1, GAME2, GAME3, FINISHED
+                g1: { level: 1, sequence: ['🔴', '🔺', '⬛', '⭐', '🔴'], currentShowingIndex: 0 },
+                g2: { level: 1, correctDoor: 'LEFT' },
+                g3: { round: 1, currentMatch: null, winnerId: null },
+                createdAt: Date.now()
+            };
+
+            try {
+                await setDoc(roomRef, initialRoomData);
+                listenToRoom(state.roomCode);
+                switchView('view-lobby');
+                document.getElementById('host-lobby-controls').classList.remove('hidden');
+                document.getElementById('player-waiting-notice').classList.add('hidden');
+                document.getElementById('lobby-room-code').textContent = state.roomCode;
+                showToast(`Room ${state.roomCode} Berhasil Dibuat!`);
+            } catch (err) {
+                showToast("Gagal membuat room. Periksa aturan Firestore.", true);
+                console.error(err);
+            }
+        };
+
+        window.joinAsPlayer = async (e) => {
+            e.preventDefault();
+            if (!isConfigValid) {
+                showToast("Harap masukkan kredensial Firebase milik Anda!", true);
+            }
+            AudioEngine.init();
+            const name = document.getElementById('player-name-input').value.trim();
+            const code = document.getElementById('player-room-input').value.trim().toUpperCase();
+
+            if (!name || !code) return;
+
+            state.userId = await ensureAuth();
+            state.role = 'PLAYER';
+            state.playerName = name;
+            state.roomCode = code;
+
+            try {
+                const roomRef = doc(db, 'rooms', code);
+                const roomSnap = await getDoc(roomRef);
+
+                if (!roomSnap.exists()) {
+                    showToast("Room tidak ditemukan!", true);
+                    return;
+                }
+
+                if (roomSnap.data().status !== 'LOBBY') {
+                    showToast("Game sudah berlangsung!", true);
+                    return;
+                }
+
+                // Check active players count (Max 100)
+                const playersRef = collection(db, 'rooms', code, 'players');
+                const playersSnap = await getDocs(playersRef);
+                if (playersSnap.size >= 100) {
+                    showToast("Room sudah penuh (Maksimal 100 pemain)!", true);
+                    return;
+                }
+
+                const existingNumbers = playersSnap.docs.map(d => parseInt(d.data().number));
+                state.playerNumber = generateUniquePlayerNumber(existingNumbers);
+
+                // Register player in firestore
+                const playerDocRef = doc(db, 'rooms', code, 'players', state.userId);
+                await setDoc(playerDocRef, {
+                    id: state.userId,
+                    name: state.playerName,
+                    number: state.playerNumber,
+                    status: 'ALIVE', // ALIVE, ELIMINATED
+                    g1Answer: null,
+                    g2Answer: null,
+                    g3Choice: null,
+                    joinedAt: Date.now()
+                });
+
+                listenToRoom(code);
+                document.getElementById('host-lobby-controls').classList.add('hidden');
+                document.getElementById('player-waiting-notice').classList.remove('hidden');
+                document.getElementById('lobby-room-code').textContent = state.roomCode;
+                switchView('view-lobby');
+                showToast(`Berhasil Masuk! Anda Peserta #${state.playerNumber}`);
+            } catch (err) {
+                showToast("Gagal bergabung ke room.", true);
+                console.error(err);
+            }
+        };
+
+        function listenToRoom(roomCode) {
+            if (state.unsubscribeRoom) state.unsubscribeRoom();
+            if (state.unsubscribePlayers) state.unsubscribePlayers();
+
+            // Listen to main room state changes
+            const roomRef = doc(db, 'rooms', roomCode);
+            state.unsubscribeRoom = onSnapshot(roomRef, (docSnap) => {
+                if (!docSnap.exists()) return;
+                state.roomData = docSnap.data();
+                handleRoomStateUpdate(state.roomData);
+            });
+
+            // Listen to players subcollection
+            const playersRef = collection(db, 'rooms', roomCode, 'players');
+            state.unsubscribePlayers = onSnapshot(playersRef, (querySnap) => {
+                state.playersList = querySnap.docs.map(d => d.data());
+                updatePlayersLobbyUI(state.playersList);
+                
+                // Check if current user got eliminated
+                if (state.role === 'PLAYER') {
+                    const me = state.playersList.find(p => p.id === state.userId);
+                    if (me && me.status === 'ELIMINATED' && !state.isEliminated) {
+                        state.isEliminated = true;
+                        AudioEngine.playEliminatedSound();
+                        document.getElementById('elim-player-num').textContent = `#${state.playerNumber}`;
+                        switchView('view-eliminated');
+                    }
+                }
+            });
+        }
+
+        function updatePlayersLobbyUI(players) {
+            document.getElementById('lobby-count').textContent = players.length;
+            const container = document.getElementById('lobby-player-list');
+            container.innerHTML = '';
+
+            players.sort((a,b) => parseInt(a.number) - parseInt(b.number)).forEach(p => {
+                const isMe = p.id === state.userId;
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-xl border flex flex-col justify-between transition-all ${
+                    p.status === 'ELIMINATED' 
+                        ? 'bg-red-950/20 border-red-800/40 opacity-50 line-through'
+                        : isMe 
+                            ? 'bg-squidPink/20 border-squidPink shadow-lg' 
+                            : 'bg-black/40 border-gray-800'
+                }`;
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs font-mono font-bold text-squidPink">#${p.number}</span>
+                        <span class="text-[10px] ${p.status === 'ALIVE' ? 'text-green-400 font-bold' : 'text-red-500'}">${p.status}</span>
+                    </div>
+                    <div class="text-xs font-semibold truncate text-gray-200">${p.name}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function handleRoomStateUpdate(roomData) {
+            if (!roomData || state.isEliminated) return;
+
+            switch (roomData.status) {
+                case 'LOBBY':
+                    switchView('view-lobby');
+                    break;
+                case 'GAME1':
+                    switchView('view-game1');
+                    renderGame1(roomData.g1);
+                    break;
+                case 'GAME2':
+                    switchView('view-game2');
+                    renderGame2(roomData.g2);
+                    break;
+                case 'GAME3':
+                    switchView('view-game3');
+                    renderGame3(roomData.g3);
+                    break;
+                case 'FINISHED':
+                    if (roomData.g3 && roomData.g3.winnerId) {
+                        const winner = state.playersList.find(p => p.id === roomData.g3.winnerId);
+                        if (winner) {
+                            document.getElementById('winner-player-num').textContent = `#${winner.number}`;
+                            document.getElementById('winner-player-name').textContent = winner.name;
+                            switchView('view-winner');
+                            AudioEngine.playSuccessSound();
+                        }
+                    }
+                    break;
+            }
+        }
+
+        const G1_LEVEL_PATTERNS = [
+            ['🔴', '🔺', '⬛', '⭐', '🔴'],            // Level 1 (Answer: 🔴)
+            ['🔺', '🔺', '⬛', '🔴', '⭐'],            // Level 2 (Answer: ⭐)
+            ['⭐', '🔴', '⭐', '🔴', '⭐'],            // Level 3 (Answer: ⭐)
+            ['⬛', '🔺', '🔴', '⭐', '⬛'],            // Level 4 (Answer: ⬛)
+            ['🔴', '⬛', '🔺', '⭐', '🔴']             // Level 5 (Answer: 🔴)
+        ];
+
+        window.hostStartGame1 = async () => {
+            const roomRef = doc(db, 'rooms', state.roomCode);
+            await updateDoc(roomRef, {
+                status: 'GAME1',
+                'g1.level': 1,
+                'g1.sequence': G1_LEVEL_PATTERNS[0],
+                'g1.step': 'DISPLAYING'
+            });
+        };
+
+        function renderGame1(g1Data) {
+            document.getElementById('g1-level-num').textContent = g1Data.level || 1;
+            
+            if (state.role === 'HOST') {
+                document.getElementById('g1-host-controls').classList.remove('hidden');
+                document.getElementById('g1-player-controls').classList.add('hidden');
+            } else {
+                document.getElementById('g1-host-controls').classList.add('hidden');
+                if (g1Data.step === 'GUESSING') {
+                    document.getElementById('g1-player-controls').classList.remove('hidden');
+                    document.getElementById('g1-waiting-message').classList.add('hidden');
+                } else {
+                    document.getElementById('g1-player-controls').classList.add('hidden');
+                    document.getElementById('g1-waiting-message').classList.remove('hidden');
+                }
+            }
+
+            // Display Pattern symbol
+            const seq = g1Data.sequence || G1_LEVEL_PATTERNS[0];
+            const currentIdx = g1Data.currentShowingIndex || 0;
+            const symbolDisp = document.getElementById('g1-symbol-display');
+            
+            if (g1Data.step === 'GUESSING') {
+                symbolDisp.textContent = '❓';
+                document.getElementById('g1-phase-status').textContent = "WAKTU MENEBAK SIMBOL BERIKUTNYA!";
+            } else {
+                symbolDisp.textContent = seq[currentIdx] || '❓';
+                document.getElementById('g1-phase-status').textContent = `MENGAMATI POLA (URUTAN ${currentIdx + 1}/${seq.length - 1})`;
+                AudioEngine.playBeep(400 + currentIdx * 100, 0.1);
+            }
+        }
+
+        window.g1HostNextStep = async () => {
+            const roomRef = doc(db, 'rooms', state.roomCode);
+            const currentLevel = state.roomData.g1.level || 1;
+            const currentSeq = G1_LEVEL_PATTERNS[currentLevel - 1];
+            let currentIdx = (state.roomData.g1.currentShowingIndex || 0) + 1;
+
+            if (currentIdx >= currentSeq.length - 1) {
+                // Time for player guessing phase
+                await updateDoc(roomRef, {
+                    'g1.step': 'GUESSING',
+                    'g1.currentShowingIndex': currentIdx
+                });
+            } else {
+                await updateDoc(roomRef, {
+                    'g1.step': 'DISPLAYING',
+                    'g1.currentShowingIndex': currentIdx
+                });
+            }
+        };
+
+        window.g1SubmitAnswer = async (choice) => {
+            const currentLevel = state.roomData.g1.level || 1;
+            const fullPattern = G1_LEVEL_PATTERNS[currentLevel - 1];
+            const correctAnswer = fullPattern[fullPattern.length - 1];
+
+            document.getElementById('g1-player-controls').classList.add('hidden');
+            document.getElementById('g1-waiting-message').textContent = `Jawaban Anda (${choice}) telah terkirim. Menunggu hasil...`;
+            document.getElementById('g1-waiting-message').classList.remove('hidden');
+
+            if (choice !== correctAnswer) {
+                // Eliminate player
+                const playerRef = doc(db, 'rooms', state.roomCode, 'players', state.userId);
+                await updateDoc(playerRef, { status: 'ELIMINATED' });
+            } else {
+                AudioEngine.playSuccessSound();
+                showToast("Tebakan Anda Benar! Selamat.");
+            }
+        };
+
+        const G2_QUESTIONS = [
+            { q: "Siapakah pencipta dan sutradara serial 'Squid Game'?", left: "Hwang Dong-hyuk", right: "Bong Joon-ho", correct: "LEFT" },
+            { q: "Berapa total jumlah awal peserta dalam permainan Squid Game?", left: "400 Pemain", right: "456 Pemain", correct: "RIGHT" },
+            { q: "Berapa nominal total hadiah uang tunai dalam Squid Game?", left: "45.6 Miliar Won", right: "50 Miliar Won", correct: "LEFT" },
+            { q: "Apa nama boneka raksasa di permainan pertama 'Red Light, Green Light'?", left: "Mugunghwa", right: "Younghee", correct: "RIGHT" },
+            { q: "LANGKAH 5 (FINAL INTUISI): Pilih kaca temper yang kuat berdasarkan intuisi Anda!", left: "KACA KIRI", right: "KACA KANAN", correct: Math.random() > 0.5 ? "LEFT" : "RIGHT" }
+        ];
+
+        function renderGame2(g2Data) {
+            const level = g2Data.level || 1;
+            document.getElementById('g2-level-num').textContent = level;
+            
+            const qObj = G2_QUESTIONS[level - 1];
+            document.getElementById('g2-question-tag').textContent = `LANGKAH #${level} DARI 5`;
+            document.getElementById('g2-question-text').textContent = qObj.q;
+            document.getElementById('g2-option-left').textContent = qObj.left;
+            document.getElementById('g2-option-right').textContent = qObj.right;
+
+            if (state.role === 'HOST') {
+                document.getElementById('g2-host-controls').classList.remove('hidden');
+            }
+        }
+
+        window.g2ChooseGlass = async (side) => {
+            const level = state.roomData.g2.level || 1;
+            const qObj = G2_QUESTIONS[level - 1];
+
+            if (side !== qObj.correct) {
+                // Eliminate player on wrong glass step
+                const playerRef = doc(db, 'rooms', state.roomCode, 'players', state.userId);
+                await updateDoc(playerRef, { status: 'ELIMINATED' });
+            } else {
+                AudioEngine.playSuccessSound();
+                showToast("Kaca Kokoh! Anda Berhasil Melangkah Ke Depan.");
+            }
+        };
+
+        window.g2HostNextLevel = async () => {
+            const roomRef = doc(db, 'rooms', state.roomCode);
+            const currentLevel = state.roomData.g2.level || 1;
+
+            if (currentLevel >= 5) {
+                // Move to Game 3 Final RPS
+                await updateDoc(roomRef, {
+                    status: 'GAME3',
+                    'g3.round': 1
+                });
+            } else {
+                await updateDoc(roomRef, {
+                    'g2.level': currentLevel + 1
+                });
+            }
+        };
+
+        function renderGame3(g3Data) {
+            const alivePlayers = state.playersList.filter(p => p.status === 'ALIVE');
+            
+            if (alivePlayers.length === 1) {
+                // We have a winner!
+                const roomRef = doc(db, 'rooms', state.roomCode);
+                updateDoc(roomRef, {
+                    status: 'FINISHED',
+                    'g3.winnerId': alivePlayers[0].id
+                });
+                return;
+            }
+
+            if (state.role === 'HOST') {
+                document.getElementById('g3-host-controls').classList.remove('hidden');
+            }
+
+            // Match pairing logic: pair top 2 active players
+            if (alivePlayers.length >= 2) {
+                const p1 = alivePlayers[0];
+                const p2 = alivePlayers[1];
+
+                document.getElementById('g3-p1-num').textContent = `#${p1.number}`;
+                document.getElementById('g3-p1-name').textContent = p1.name;
+                document.getElementById('g3-p2-num').textContent = `#${p2.number}`;
+                document.getElementById('g3-p2-name').textContent = p2.name;
+
+                const isP1 = state.userId === p1.id;
+                const isP2 = state.userId === p2.id;
+
+                if (isP1 || isP2) {
+                    document.getElementById('g3-player-actions').classList.remove('hidden');
+                    document.getElementById('g3-spectator-notice').classList.add('hidden');
+                } else {
+                    document.getElementById('g3-player-actions').classList.add('hidden');
+                    document.getElementById('g3-spectator-notice').classList.remove('hidden');
+                }
+            }
+        }
+
+        window.g3Choose = async (choice) => {
+            const meRef = doc(db, 'rooms', state.roomCode, 'players', state.userId);
+            await updateDoc(meRef, { g3Choice: choice });
+            showToast(`Pilihan ${choice} Terkirim!`);
+            document.getElementById('g3-player-actions').classList.add('hidden');
+        };
+
+        window.g3HostProcessRound = async () => {
+            const alivePlayers = state.playersList.filter(p => p.status === 'ALIVE');
+            if (alivePlayers.length < 2) return;
+
+            const p1 = alivePlayers[0];
+            const p2 = alivePlayers[1];
+
+            const c1 = p1.g3Choice;
+            const c2 = p2.g3Choice;
+
+            if (!c1 || !c2) {
+                showToast("Kedua pemain belum selesai memilih!", true);
+                return;
+            }
+
+            // Display Choices
+            const emojiMap = { ROCK: '✊', PAPER: '✋', SCISSORS: '✌️' };
+            document.getElementById('g3-p1-choice').textContent = emojiMap[c1] || '❓';
+            document.getElementById('g3-p2-choice').textContent = emojiMap[c2] || '❓';
+
+            // Determine winner: ROCK > SCISSORS, SCISSORS > PAPER, PAPER > ROCK
+            let resultText = "";
+            let loserId = null;
+
+            if (c1 === c2) {
+                resultText = "HASIL SERI! ULANGI BABAK INI.";
+                // Reset choices
+                await updateDoc(doc(db, 'rooms', state.roomCode, 'players', p1.id), { g3Choice: null });
+                await updateDoc(doc(db, 'rooms', state.roomCode, 'players', p2.id), { g3Choice: null });
+            } else if (
+                (c1 === 'ROCK' && c2 === 'SCISSORS') ||
+                (c1 === 'SCISSORS' && c2 === 'PAPER') ||
+                (c1 === 'PAPER' && c2 === 'ROCK')
+            ) {
+                resultText = `PESERTA #${p1.number} MENANG! PESERTA #${p2.number} TERELIMINASI.`;
+                loserId = p2.id;
+            } else {
+                resultText = `PESERTA #${p2.number} MENANG! PESERTA #${p1.number} TERELIMINASI.`;
+                loserId = p1.id;
+            }
+
+            document.getElementById('g3-round-result').textContent = resultText;
+
+            if (loserId) {
+                await updateDoc(doc(db, 'rooms', state.roomCode, 'players', loserId), { status: 'ELIMINATED' });
+                await updateDoc(doc(db, 'rooms', state.roomCode, 'players', p1.id), { g3Choice: null });
+                await updateDoc(doc(db, 'rooms', state.roomCode, 'players', p2.id), { g3Choice: null });
+            }
+        };
+
+        window.resetToHome = () => {
+            location.reload();
+        };
+    </script>
+</body>
+</html>
