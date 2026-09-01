@@ -129,7 +129,7 @@
             <div class="grid grid-cols-2 gap-4">
                 <button id="btn-select-player" onclick="showPlayerForm()" class="py-4 px-4 rounded-2xl border-2 border-squidPink/40 bg-squidPink/10 hover:bg-squidPink/20 text-white font-bold transition flex flex-col items-center space-y-2">
                     <span class="text-3xl">👤</span>
-                    <span>IKUT REMAN</span>
+                    <span>IKUT BERMAIN</span>
                     <span class="text-xs text-squidPink font-normal">Menjadi Peserta</span>
                 </button>
                 <button id="btn-select-host" onclick="showHostForm()" class="py-4 px-4 rounded-2xl border-2 border-squidTeal/40 bg-squidTeal/10 hover:bg-squidTeal/20 text-white font-bold transition flex flex-col items-center space-y-2">
@@ -435,7 +435,7 @@
     <!-- JS Logic inside script tag with valid JS comments -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { 
             getFirestore, doc, setDoc, getDoc, updateDoc, 
             onSnapshot, collection, query, where, getDocs 
@@ -445,18 +445,14 @@
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'squid-game-app-default';
         
         // 🔑 SILAKAN GANTI ISI OBJECT KREDENSIAL DI BAWAH INI DENGAN FIREBASE CONSOLE ANDA:
-        // Import the functions you need from the SDKs you need
-
-
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyD62O-bzSKDltxHsXOFt3yA8dCGFQ88VK4",
-  authDomain: "squidgame1-dabd7.firebaseapp.com",
-  projectId: "squidgame1-dabd7",
-  storageBucket: "squidgame1-dabd7.firebasestorage.app",
-  messagingSenderId: "899930097480",
-  appId: "1:899930097480:web:2a9116d636cc390522957d"
-};
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "PASTE_API_KEY_ANDA_DI_SINI",
+            authDomain: "PROJECT_ID_ANDA.firebaseapp.com",
+            projectId: "PROJECT_ID_ANDA",
+            storageBucket: "PROJECT_ID_ANDA.appspot.com",
+            messagingSenderId: "SENDER_ID_ANDA",
+            appId: "APP_ID_ANDA"
+        };
 
         // Check if user has updated config or default dummy exists
         let isConfigValid = true;
@@ -470,7 +466,6 @@ const firebaseConfig = {
         try {
             app = initializeApp(firebaseConfig);
             auth = getAuth(app);
-            // Menggunakan database bawaan (default)
             db = getFirestore(app); 
         } catch (err) {
             console.error("Firebase init error:", err);
@@ -489,6 +484,19 @@ const firebaseConfig = {
             playersList: [],
             currentStep: 'ENTRY'
         };
+
+        // Helper function for strict Firestore artifact pathing
+        function getRoomDocRef(roomCode) {
+            return doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode);
+        }
+
+        function getPlayersCollectionRef(roomCode) {
+            return collection(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode, 'players');
+        }
+
+        function getPlayerDocRef(roomCode, playerId) {
+            return doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode, 'players', playerId);
+        }
 
         const AudioEngine = {
             ctx: null,
@@ -578,8 +586,13 @@ const firebaseConfig = {
             if (!auth) return "guest-" + Math.random().toString(36).substring(2, 9);
             if (auth.currentUser) return auth.currentUser.uid;
             try {
-                const cred = await signInAnonymously(auth);
-                return cred.user.uid;
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    const cred = await signInWithCustomToken(auth, __initial_auth_token);
+                    return cred.user.uid;
+                } else {
+                    const cred = await signInAnonymously(auth);
+                    return cred.user.uid;
+                }
             } catch (err) {
                 console.warn("Auth fallback mode active:", err);
                 return "user-" + Math.floor(Math.random() * 100000);
@@ -613,7 +626,7 @@ const firebaseConfig = {
             state.role = 'HOST';
             state.roomCode = generateRandomCode();
 
-            const roomRef = doc(db, 'rooms', state.roomCode);
+            const roomRef = getRoomDocRef(state.roomCode);
             const initialRoomData = {
                 hostId: state.userId,
                 status: 'LOBBY', // LOBBY, GAME1, GAME2, GAME3, FINISHED
@@ -632,8 +645,8 @@ const firebaseConfig = {
                 document.getElementById('lobby-room-code').textContent = state.roomCode;
                 showToast(`Room ${state.roomCode} Berhasil Dibuat!`);
             } catch (err) {
-                showToast("Gagal membuat room. Periksa aturan Firestore.", true);
-                console.error(err);
+                showToast("Gagal membuat room. Periksa izin Firestore / aturan keamanan.", true);
+                console.error("Firestore create room error:", err);
             }
         };
 
@@ -654,7 +667,7 @@ const firebaseConfig = {
             state.roomCode = code;
 
             try {
-                const roomRef = doc(db, 'rooms', code);
+                const roomRef = getRoomDocRef(code);
                 const roomSnap = await getDoc(roomRef);
 
                 if (!roomSnap.exists()) {
@@ -668,7 +681,7 @@ const firebaseConfig = {
                 }
 
                 // Check active players count (Max 100)
-                const playersRef = collection(db, 'rooms', code, 'players');
+                const playersRef = getPlayersCollectionRef(code);
                 const playersSnap = await getDocs(playersRef);
                 if (playersSnap.size >= 100) {
                     showToast("Room sudah penuh (Maksimal 100 pemain)!", true);
@@ -679,7 +692,7 @@ const firebaseConfig = {
                 state.playerNumber = generateUniquePlayerNumber(existingNumbers);
 
                 // Register player in firestore
-                const playerDocRef = doc(db, 'rooms', code, 'players', state.userId);
+                const playerDocRef = getPlayerDocRef(code, state.userId);
                 await setDoc(playerDocRef, {
                     id: state.userId,
                     name: state.playerName,
@@ -699,7 +712,7 @@ const firebaseConfig = {
                 showToast(`Berhasil Masuk! Anda Peserta #${state.playerNumber}`);
             } catch (err) {
                 showToast("Gagal bergabung ke room.", true);
-                console.error(err);
+                console.error("Firestore join room error:", err);
             }
         };
 
@@ -708,15 +721,15 @@ const firebaseConfig = {
             if (state.unsubscribePlayers) state.unsubscribePlayers();
 
             // Listen to main room state changes
-            const roomRef = doc(db, 'rooms', roomCode);
+            const roomRef = getRoomDocRef(roomCode);
             state.unsubscribeRoom = onSnapshot(roomRef, (docSnap) => {
                 if (!docSnap.exists()) return;
                 state.roomData = docSnap.data();
                 handleRoomStateUpdate(state.roomData);
-            });
+            }, (err) => console.error("Room snapshot error:", err));
 
             // Listen to players subcollection
-            const playersRef = collection(db, 'rooms', roomCode, 'players');
+            const playersRef = getPlayersCollectionRef(roomCode);
             state.unsubscribePlayers = onSnapshot(playersRef, (querySnap) => {
                 state.playersList = querySnap.docs.map(d => d.data());
                 updatePlayersLobbyUI(state.playersList);
@@ -731,7 +744,7 @@ const firebaseConfig = {
                         switchView('view-eliminated');
                     }
                 }
-            });
+            }, (err) => console.error("Players snapshot error:", err));
         }
 
         function updatePlayersLobbyUI(players) {
@@ -802,7 +815,7 @@ const firebaseConfig = {
         ];
 
         window.hostStartGame1 = async () => {
-            const roomRef = doc(db, 'rooms', state.roomCode);
+            const roomRef = getRoomDocRef(state.roomCode);
             await updateDoc(roomRef, {
                 status: 'GAME1',
                 'g1.level': 1,
@@ -844,7 +857,7 @@ const firebaseConfig = {
         }
 
         window.g1HostNextStep = async () => {
-            const roomRef = doc(db, 'rooms', state.roomCode);
+            const roomRef = getRoomDocRef(state.roomCode);
             const currentLevel = state.roomData.g1.level || 1;
             const currentSeq = G1_LEVEL_PATTERNS[currentLevel - 1];
             let currentIdx = (state.roomData.g1.currentShowingIndex || 0) + 1;
@@ -874,7 +887,7 @@ const firebaseConfig = {
 
             if (choice !== correctAnswer) {
                 // Eliminate player
-                const playerRef = doc(db, 'rooms', state.roomCode, 'players', state.userId);
+                const playerRef = getPlayerDocRef(state.roomCode, state.userId);
                 await updateDoc(playerRef, { status: 'ELIMINATED' });
             } else {
                 AudioEngine.playSuccessSound();
@@ -911,7 +924,7 @@ const firebaseConfig = {
 
             if (side !== qObj.correct) {
                 // Eliminate player on wrong glass step
-                const playerRef = doc(db, 'rooms', state.roomCode, 'players', state.userId);
+                const playerRef = getPlayerDocRef(state.roomCode, state.userId);
                 await updateDoc(playerRef, { status: 'ELIMINATED' });
             } else {
                 AudioEngine.playSuccessSound();
@@ -920,7 +933,7 @@ const firebaseConfig = {
         };
 
         window.g2HostNextLevel = async () => {
-            const roomRef = doc(db, 'rooms', state.roomCode);
+            const roomRef = getRoomDocRef(state.roomCode);
             const currentLevel = state.roomData.g2.level || 1;
 
             if (currentLevel >= 5) {
@@ -941,7 +954,7 @@ const firebaseConfig = {
             
             if (alivePlayers.length === 1) {
                 // We have a winner!
-                const roomRef = doc(db, 'rooms', state.roomCode);
+                const roomRef = getRoomDocRef(state.roomCode);
                 updateDoc(roomRef, {
                     status: 'FINISHED',
                     'g3.winnerId': alivePlayers[0].id
@@ -977,7 +990,7 @@ const firebaseConfig = {
         }
 
         window.g3Choose = async (choice) => {
-            const meRef = doc(db, 'rooms', state.roomCode, 'players', state.userId);
+            const meRef = getPlayerDocRef(state.roomCode, state.userId);
             await updateDoc(meRef, { g3Choice: choice });
             showToast(`Pilihan ${choice} Terkirim!`);
             document.getElementById('g3-player-actions').classList.add('hidden');
@@ -1010,8 +1023,8 @@ const firebaseConfig = {
             if (c1 === c2) {
                 resultText = "HASIL SERI! ULANGI BABAK INI.";
                 // Reset choices
-                await updateDoc(doc(db, 'rooms', state.roomCode, 'players', p1.id), { g3Choice: null });
-                await updateDoc(doc(db, 'rooms', state.roomCode, 'players', p2.id), { g3Choice: null });
+                await updateDoc(getPlayerDocRef(state.roomCode, p1.id), { g3Choice: null });
+                await updateDoc(getPlayerDocRef(state.roomCode, p2.id), { g3Choice: null });
             } else if (
                 (c1 === 'ROCK' && c2 === 'SCISSORS') ||
                 (c1 === 'SCISSORS' && c2 === 'PAPER') ||
@@ -1027,9 +1040,9 @@ const firebaseConfig = {
             document.getElementById('g3-round-result').textContent = resultText;
 
             if (loserId) {
-                await updateDoc(doc(db, 'rooms', state.roomCode, 'players', loserId), { status: 'ELIMINATED' });
-                await updateDoc(doc(db, 'rooms', state.roomCode, 'players', p1.id), { g3Choice: null });
-                await updateDoc(doc(db, 'rooms', state.roomCode, 'players', p2.id), { g3Choice: null });
+                await updateDoc(getPlayerDocRef(state.roomCode, loserId), { status: 'ELIMINATED' });
+                await updateDoc(getPlayerDocRef(state.roomCode, p1.id), { g3Choice: null });
+                await updateDoc(getPlayerDocRef(state.roomCode, p2.id), { g3Choice: null });
             }
         };
 
