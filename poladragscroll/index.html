@@ -129,7 +129,7 @@
         <span class="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-emerald-400 animate-scroll-hint">
           <i class="fa-solid fa-computer-mouse"></i>
         </span>
-        <span><b>Scroll Mouse / Roda Spin</b> di atas benda untuk perbaiki arah</span>
+        <span><b>Scroll Mouse / Tap</b> di atas benda untuk perbaiki arah</span>
       </div>
     </div>
 
@@ -199,7 +199,7 @@
 
         <div class="p-3 bg-slate-800/60 rounded-xl border border-slate-700/50 flex gap-3 items-start">
           <div class="text-indigo-400 font-bold text-base">3</div>
-          <p><b>Scroll Arah Benda:</b> Arahkan kursor mouse ke benda yang ada di slot, lalu <b>Gunakan Scroll Wheel (Gulir Mouse)</b> ke atas/bawah untuk memutar benda hingga rotasinya sesuai!</p>
+          <p><b>Scroll Arah Benda:</b> Arahkan kursor mouse ke benda yang ada di slot, lalu <b>Gunakan Scroll Wheel (Gulir Mouse)</b> atau <b>Klik/Tap</b> untuk memutar benda hingga rotasinya sesuai!</p>
         </div>
 
         <p class="text-xs text-slate-400 italic bg-indigo-950/40 p-2 rounded border border-indigo-900/40">
@@ -269,32 +269,25 @@
   <!-- GAME LOGIC JAVASCRIPT -->
   <script>
     /* ===================================================================
-       DATABASE 25 LEVEL GAME PERBAIKAN POLA
+       DATABASE BENDA & 25 LEVEL GAME PERBAIKAN POLA
        =================================================================== */
     
-    // Daftar Bentuk SVG / Icon yang digunakan
+    // baseRotate memastikan posisi 0 derajat SELALU menghadap lurus ke ATAS (0°)
     const SHAPES = {
-      ARROW: { name: 'Arrow', icon: 'fa-arrow-up', color: 'text-indigo-400' },
-      ROCKET: { name: 'Rocket', icon: 'fa-rocket', color: 'text-rose-400' },
-      FISH: { name: 'Fish', icon: 'fa-fish', color: 'text-cyan-400' },
-      POINTER: { name: 'Pointer', icon: 'fa-location-arrow', color: 'text-amber-400' },
-      KEY: { name: 'Key', icon: 'fa-key', color: 'text-emerald-400' },
-      PLANE: { name: 'Plane', icon: 'fa-plane', color: 'text-blue-400' },
-      CAR: { name: 'Car', icon: 'fa-car', color: 'text-purple-400' },
-      LIGHTBULB: { name: 'Bulb', icon: 'fa-lightbulb', color: 'text-yellow-400' },
-      HAND: { name: 'Hand', icon: 'fa-hand-point-up', color: 'text-orange-400' },
-      TRIANGLE: { name: 'Triangle', icon: 'fa-caret-up', color: 'text-teal-400' }
+      ARROW: { name: 'Arrow', icon: 'fa-arrow-up', color: 'text-indigo-400', baseRotate: 0 },
+      ROCKET: { name: 'Rocket', icon: 'fa-rocket', color: 'text-rose-400', baseRotate: -45 },
+      FISH: { name: 'Fish', icon: 'fa-fish', color: 'text-cyan-400', baseRotate: -90 },
+      POINTER: { name: 'Pointer', icon: 'fa-location-arrow', color: 'text-amber-400', baseRotate: -45 },
+      KEY: { name: 'Key', icon: 'fa-key', color: 'text-emerald-400', baseRotate: -45 },
+      PLANE: { name: 'Plane', icon: 'fa-plane', color: 'text-blue-400', baseRotate: 0 },
+      CAR: { name: 'Car', icon: 'fa-car', color: 'text-purple-400', baseRotate: -90 },
+      LIGHTBULB: { name: 'Bulb', icon: 'fa-lightbulb', color: 'text-yellow-400', baseRotate: 0 },
+      HAND: { name: 'Hand', icon: 'fa-hand-point-up', color: 'text-orange-400', baseRotate: 0 },
+      TRIANGLE: { name: 'Triangle', icon: 'fa-caret-up', color: 'text-teal-400', baseRotate: 0 }
     };
 
-    /**
-     * Struktur Level:
-     * - title: Nama level
-     * - goalText: Petunjuk logika pola
-     * - pattern: Array objek slot { shape: SHAPES.X, rotation: [0, 90, 180, 270], isMissing: boolean }
-     * - trayExtra: Objek pilihan tambahan di rak untuk mengecoh/melatih ketelitian
-     */
     const LEVELS_DATA = [
-      // LEVEL 1 - 5: POLA ROTASI DASAR (Satu Jenis Benda, Step Rotasi 90°)
+      // LEVEL 1 - 5
       {
         id: 1,
         title: "Level 1: Rotasi Panah Berputar",
@@ -310,7 +303,7 @@
       {
         id: 2,
         title: "Level 2: Peluncuran Roket Alternatif",
-        goalText: "Pola rokets selang-seling: Atas (0°) - Kanan (90°) - Atas (0°) - Kanan (90°)",
+        goalText: "Pola roket selang-seling: Atas (0°) - Kanan (90°) - Atas (0°) - Kanan (90°)",
         pattern: [
           { shape: SHAPES.ROCKET, rotation: 0, isMissing: false },
           { shape: SHAPES.ROCKET, rotation: 90, isMissing: false },
@@ -356,7 +349,7 @@
         trayExtra: [SHAPES.CAR]
       },
 
-      // LEVEL 6 - 10: POLA SELANG-SELING DUA BENDA
+      // LEVEL 6 - 10
       {
         id: 6,
         title: "Level 6: Kombinasi Pesawat & Roket",
@@ -419,7 +412,7 @@
         trayExtra: [SHAPES.CAR]
       },
 
-      // LEVEL 11 - 15: POLA TIGA BENDA & PERUBAHAN AROUND 5 SLOTS
+      // LEVEL 11 - 15
       {
         id: 11,
         title: "Level 11: Urutan Tiga Benda (A-B-C)",
@@ -486,7 +479,7 @@
         trayExtra: [SHAPES.HAND]
       },
 
-      // LEVEL 16 - 20: POLA KOMPLEKS (6 - 7 SLOTS, 3 MISSING)
+      // LEVEL 16 - 20
       {
         id: 16,
         title: "Level 16: Pola Tangan & Penunjuk Ganda",
@@ -559,7 +552,7 @@
         trayExtra: [SHAPES.ARROW, SHAPES.HAND]
       },
 
-      // LEVEL 21 - 25: LEVEL EXPERT (8 SLOTS, BANYAK SLOT HILANG & ROTASI KHUSUS)
+      // LEVEL 21 - 25
       {
         id: 21,
         title: "Level 21: Master Rotasi Kebalikan",
@@ -641,11 +634,12 @@
        STATE GAME & SYSTEM
        =================================================================== */
     let currentLevelIndex = 0;
-    let currentBoardState = []; // Array slot tempat item ditempatkan
+    let currentBoardState = [];
     let soundEnabled = true;
     let unlockedLevels = parseInt(localStorage.getItem('pola_unlocked') || '1');
+    let isDroppingFlag = false; // Flag penahan click event yang terpicu bersamaan saat drop
 
-    // Audio Synthesizer (Web Audio API) tanpa file eksternal
+    // Audio Synthesizer
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     let audioCtx = null;
 
@@ -679,7 +673,6 @@
           osc.start(now);
           osc.stop(now + 0.08);
         } else if (type === 'win') {
-          // Melodi Kemenangan
           const notes = [440, 554.37, 659.25, 880];
           notes.forEach((freq, idx) => {
             const noteOsc = audioCtx.createOscillator();
@@ -703,7 +696,7 @@
           osc.stop(now + 0.2);
         }
       } catch (e) {
-        console.log("Audio not allowed yet");
+        console.log("Audio play error");
       }
     }
 
@@ -780,37 +773,35 @@
         slotEl.dataset.slotIndex = slotIdx;
 
         if (slot.isMissing) {
-          // Event Listener Drag & Drop pada slot
           slotEl.addEventListener('dragover', handleDragOver);
           slotEl.addEventListener('dragleave', handleDragLeave);
           slotEl.addEventListener('drop', handleDrop);
 
           if (slot.placedShape) {
-            // Jika sudah ada benda yang ditarik ke slot ini
             const pieceEl = createPieceElement(slot.placedShape, slot.currentRotation, true);
             slotEl.appendChild(pieceEl);
 
-            // Tampilkan petunjuk icon scroll di pojok slot
             const scrollBadge = document.createElement('div');
-            scrollBadge.className = "absolute -top-2 -right-2 bg-emerald-500 text-slate-950 text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow flex items-center gap-1 animate-pulse";
-            scrollBadge.innerHTML = `<i class="fa-solid fa-rotate"></i> Scroll`;
+            scrollBadge.className = "absolute -top-2 -right-2 bg-emerald-500 text-slate-950 text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow flex items-center gap-1 animate-pulse pointer-events-none";
+            scrollBadge.innerHTML = `<i class="fa-solid fa-rotate"></i> Putar`;
             slotEl.appendChild(scrollBadge);
 
-            // TAMBAHKAN EVENT SCROLL WHEEL UNTUK MEMUTAR BENDA
+            // Scroll Wheel Listener
             slotEl.addEventListener('wheel', (e) => handleSlotWheel(e, slotIdx), { passive: false });
 
-            // Klik/Tap fallback untuk layar sentuh / mobile
-            slotEl.addEventListener('click', () => rotateSlotItem(slotIdx, 45));
+            // Click / Tap Listener (dengan proteksi pemicu otomatis pasca drop)
+            slotEl.addEventListener('click', (e) => {
+              if (isDroppingFlag) return;
+              rotateSlotItem(slotIdx, 45);
+            });
 
           } else {
-            // Slot kosong dengan tanda tanya
             slotEl.innerHTML = `
               <div class="text-2xl font-extrabold text-indigo-400/40 select-none">?</div>
               <div class="text-[10px] text-slate-500 font-semibold mt-1">Drop Sini</div>
             `;
           }
         } else {
-          // Slot bawaan (Fixed/Tersedia)
           const pieceEl = createPieceElement(slot.placedShape, slot.currentRotation, false);
           slotEl.appendChild(pieceEl);
 
@@ -831,31 +822,34 @@
       trayContainer.innerHTML = '';
       const levelData = LEVELS_DATA[currentLevelIndex];
 
-      // Kumpulkan item yang dibutuhkan dari slot missing + item ekstra
       const missingShapes = levelData.pattern.filter(p => p.isMissing).map(p => p.shape);
       const allTrayShapes = [...missingShapes, ...(levelData.trayExtra || [])];
 
-      // Acak urutan di rak agar lebih menarik
+      // Acak posisi item di rak
       allTrayShapes.sort(() => Math.random() - 0.5);
 
-      allTrayShapes.forEach((shape, idx) => {
+      allTrayShapes.forEach((shape) => {
         const itemBox = document.createElement('div');
         itemBox.className = "w-16 h-16 sm:w-20 sm:h-20 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-indigo-500 rounded-xl flex items-center justify-center cursor-grab active:cursor-grabbing transition shadow-md hover:scale-105 group relative";
         itemBox.draggable = true;
         itemBox.dataset.shapeName = shape.name;
 
-        // Visual Icon
+        // Visual Icon dengan koreksi baseRotate agar 0° selalu menghadap Atas
+        const iconWrapper = document.createElement('div');
+        iconWrapper.className = "flex items-center justify-center pointer-events-none";
+        iconWrapper.style.transform = `rotate(${shape.baseRotate || 0}deg)`;
+
         const iconEl = document.createElement('i');
-        iconEl.className = `fa-solid ${shape.icon} ${shape.color} text-2xl sm:text-3xl pointer-events-none group-hover:scale-110 transition`;
-        itemBox.appendChild(iconEl);
+        iconEl.className = `fa-solid ${shape.icon} ${shape.color} text-2xl sm:text-3xl group-hover:scale-110 transition`;
+        iconWrapper.appendChild(iconEl);
+        itemBox.appendChild(iconWrapper);
 
         // Tooltip
         const tip = document.createElement('span');
         tip.className = "absolute -bottom-6 text-[10px] text-slate-400 font-medium opacity-0 group-hover:opacity-100 transition";
-        tip.textContent = "Tarik me slot";
+        tip.textContent = "Tarik";
         itemBox.appendChild(tip);
 
-        // Event Drag Start
         itemBox.addEventListener('dragstart', (e) => {
           e.dataTransfer.setData('text/plain', shape.name);
           e.dataTransfer.effectAllowed = 'copy';
@@ -872,7 +866,10 @@
     function createPieceElement(shape, rotation, isInteractive) {
       const wrapper = document.createElement('div');
       wrapper.className = `rotate-transition flex items-center justify-center w-full h-full ${isInteractive ? 'cursor-pointer' : ''}`;
-      wrapper.style.transform = `rotate(${rotation}deg)`;
+      
+      // Total rotasi menggabungkan koreksi baseRotate dan rotasi pemain
+      const totalRotation = (rotation + (shape.baseRotate || 0)) % 360;
+      wrapper.style.transform = `rotate(${totalRotation}deg)`;
 
       const icon = document.createElement('i');
       icon.className = `fa-solid ${shape.icon} ${shape.color} text-3xl sm:text-4xl drop-shadow-md`;
@@ -902,55 +899,50 @@
       const shapeName = e.dataTransfer.getData('text/plain');
       const slotIndex = parseInt(slotEl.dataset.slotIndex);
 
-      // Cari bentuk berdasarkan nama
       const shapeObj = Object.values(SHAPES).find(s => s.name === shapeName);
 
       if (shapeObj && slotIndex !== undefined) {
+        isDroppingFlag = true; // Aktifkan flag pengunci click
+        
         currentBoardState[slotIndex].placedShape = shapeObj;
-        // Pertahankan rotasi saat ini atau reset ke 0 jika baru dipasang
+        currentBoardState[slotIndex].currentRotation = 0; // Awal penempatan = 0°
+        
         renderSlots();
         playSound('drop');
+
+        // Reset flag penahan setelah 250ms
+        setTimeout(() => {
+          isDroppingFlag = false;
+        }, 250);
       }
     }
 
-    /**
-     * SCROLL WHEEL ROTATION MECHANIC
-     * Memutar arah benda saat pengguna melakukan scroll di atas slot
-     */
     function handleSlotWheel(e, slotIndex) {
-      e.preventDefault(); // Mencegah halaman ikut scroll saat memutar benda
-
-      // Deteksi arah scroll
+      e.preventDefault();
       const delta = e.deltaY;
-      const step = 45; // Putar 45 derajat setiap langkah scroll
+      const step = 45;
 
       if (delta > 0) {
-        // Scroll ke bawah = Putar Searah Jarum Jam
         rotateSlotItem(slotIndex, step);
       } else if (delta < 0) {
-        // Scroll ke atas = Putar Berlawanan Jarum Jam
         rotateSlotItem(slotIndex, -step);
       }
     }
 
-    /**
-     * Memutar benda pada slot tertentu sebesar degreeStep
-     */
     function rotateSlotItem(slotIndex, degreeStep) {
       const slot = currentBoardState[slotIndex];
       if (!slot || !slot.placedShape) return;
 
-      // Normalisasi derajat rotasi (0 - 359)
       let newRotation = (slot.currentRotation + degreeStep) % 360;
       if (newRotation < 0) newRotation += 360;
 
       slot.currentRotation = newRotation;
 
-      // Update tampilan visual slot tanpa re-render penuh
       const slotEl = slotsContainer.children[slotIndex];
       const pieceWrapper = slotEl.querySelector('.rotate-transition');
       if (pieceWrapper) {
-        pieceWrapper.style.transform = `rotate(${newRotation}deg)`;
+        const totalRotation = (newRotation + (slot.placedShape.baseRotate || 0)) % 360;
+        pieceWrapper.style.transform = `rotate(${totalRotation}deg)`;
       }
 
       playSound('rotate');
@@ -968,10 +960,12 @@
           if (!slot.placedShape) {
             isIncomplete = true;
           } else {
-            // Periksa Jenis Bentuk
             const isShapeCorrect = slot.placedShape.name === slot.targetShape.name;
-            // Periksa Arah/Rotasi (Toleransi Modulo 360)
-            const isRotationCorrect = (slot.currentRotation % 360) === (slot.targetRotation % 360);
+            
+            // Normalisasi sudut ke rentang 0-359 derajat
+            const currentRotNorm = ((slot.currentRotation % 360) + 360) % 360;
+            const targetRotNorm = ((slot.targetRotation % 360) + 360) % 360;
+            const isRotationCorrect = currentRotNorm === targetRotNorm;
 
             if (!isShapeCorrect || !isRotationCorrect) {
               allCorrect = false;
@@ -990,7 +984,6 @@
         playSound('win');
         createConfetti();
         
-        // Simpan progress unlock level berikutnya
         if (currentLevelIndex + 1 >= unlockedLevels && unlockedLevels < 25) {
           unlockedLevels = currentLevelIndex + 2;
           localStorage.setItem('pola_unlocked', unlockedLevels.toString());
@@ -1004,7 +997,6 @@
         playSound('error');
         showToast("Pola belum sesuai! Periksa kembali jenis benda dan arah rotasinya.");
         
-        // Animasi Shake pada slot yang salah
         slotsContainer.classList.add('animate-bounce');
         setTimeout(() => slotsContainer.classList.remove('animate-bounce'), 600);
       }
@@ -1014,16 +1006,13 @@
        MODAL & UI NAVIGATION EVENT LISTENERS
        =================================================================== */
     function setupEventListeners() {
-      // Tombol Periksa Jawaban
       document.getElementById('btnCheckPattern').addEventListener('click', checkPatternAnswer);
 
-      // Reset Level
       document.getElementById('btnReset').addEventListener('click', () => {
         loadLevel(currentLevelIndex);
         showToast("Level diulangi");
       });
 
-      // Sound Toggle
       const btnSound = document.getElementById('btnSoundToggle');
       const soundIcon = document.getElementById('soundIcon');
       btnSound.addEventListener('click', () => {
@@ -1037,19 +1026,16 @@
         }
       });
 
-      // Help Modal
       document.getElementById('btnHelp').addEventListener('click', () => helpModal.classList.remove('hidden'));
       document.getElementById('btnCloseHelp').addEventListener('click', () => helpModal.classList.add('hidden'));
       document.getElementById('btnGotIt').addEventListener('click', () => helpModal.classList.add('hidden'));
 
-      // Levels Modal
       document.getElementById('btnOpenLevels').addEventListener('click', () => {
         renderLevelGrid();
         levelsModal.classList.remove('hidden');
       });
       document.getElementById('btnCloseLevels').addEventListener('click', () => levelsModal.classList.add('hidden'));
 
-      // Win Modal Actions
       document.getElementById('btnRetryWin').addEventListener('click', () => {
         winModal.classList.add('hidden');
         loadLevel(currentLevelIndex);
@@ -1065,9 +1051,6 @@
       });
     }
 
-    /**
-     * Render Modal Grid 25 Level
-     */
     function renderLevelGrid() {
       levelGrid.innerHTML = '';
 
@@ -1101,9 +1084,6 @@
       });
     }
 
-    /**
-     * Custom Toast Notification
-     */
     function showToast(message) {
       const existingToast = document.getElementById('customToast');
       if (existingToast) existingToast.remove();
@@ -1119,9 +1099,6 @@
       }, 3000);
     }
 
-    /**
-     * Effect Particle Confetti Kemenangan
-     */
     function createConfetti() {
       const colors = ['#f43f5e', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
       for (let i = 0; i < 40; i++) {
