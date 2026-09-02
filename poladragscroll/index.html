@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perbaiki Pola - Game Puzzle Drag, Drop & Scroll</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+    
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    .bg-grid-pattern {
+      background-size: 30px 30px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    }
+
+    /* Slot Target Drop styling */
+    .slot-box {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .slot-box.drag-over {
+      border-color: #3b82f6;
+      background-color: rgba(59, 130, 246, 0.15);
+      transform: scale(1.05);
+    }
+
+    /* Animasi rotasi halus */
+    .rotate-transition {
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* Pulsa hint untuk scroll */
+    @keyframes scrollHint {
+      0%, 100% { transform: translateY(0); opacity: 0.8; }
+      50% { transform: translateY(-4px); opacity: 1; }
+    }
+
+    .animate-scroll-hint {
+      animation: scrollHint 1.5s infinite ease-in-out;
+    }
+
+    /* Particle confetti */
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: #f00;
+      opacity: 0;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between bg-grid-pattern overflow-x-hidden selection:bg-indigo-500 selection:text-white">
+
+  <!-- TOP HEADER / NAVBAR -->
+  <header class="w-full bg-slate-900/80 backdrop-blur-md border-b border-slate-800 p-4 sticky top-0 z-30">
+    <div class="max-w-5xl mx-auto flex items-center justify-between gap-4">
+      <!-- Title & Level Info -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-500/30">
+          <i class="fa-solid fa-puzzle-piece"></i>
+        </div>
+        <div>
+          <h1 class="text-lg md:text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-slate-400">
+            Perbaiki Pola
+          </h1>
+          <p class="text-xs text-indigo-400 font-medium hidden sm:block">Drag & Drop + Scroll Wheel</p>
+        </div>
+      </div>
+
+      <!-- Level Status & Controls -->
+      <div class="flex items-center gap-2 sm:gap-4">
+        <!-- Level Badge -->
+        <button id="btnOpenLevels" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 text-sm font-semibold transition hover:scale-105">
+          <i class="fa-solid fa-layer-group text-indigo-400"></i>
+          <span>Level <span id="currentLevelText" class="text-indigo-400 font-bold">1</span>/25</span>
+          <i class="fa-solid fa-chevron-down text-xs text-slate-400"></i>
+        </button>
+
+        <!-- Sound Toggle -->
+        <button id="btnSoundToggle" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 flex items-center justify-center text-slate-300 transition">
+          <i id="soundIcon" class="fa-solid fa-volume-high"></i>
+        </button>
+
+        <!-- Reset Button -->
+        <button id="btnReset" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 flex items-center justify-center text-slate-300 transition hover:rotate-180 duration-300" title="Ulangi Level">
+          <i class="fa-solid fa-rotate-right"></i>
+        </button>
+
+        <!-- Petunjuk / Help Button -->
+        <button id="btnHelp" class="w-9 h-9 rounded-lg bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center text-white transition shadow-md shadow-indigo-600/30" title="Petunjuk Cara Bermain">
+          <i class="fa-solid fa-circle-question"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN GAME AREA -->
+  <main class="max-w-5xl w-full mx-auto p-4 flex-1 flex flex-col justify-center items-center gap-6 my-4">
+    
+    <!-- LEVEL BANNER & HINT DESCRIPTION -->
+    <div class="w-full text-center space-y-2">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-950/80 border border-indigo-800/50 text-indigo-300 text-xs font-semibold uppercase tracking-wider">
+        <i class="fa-solid fa-lightbulb text-amber-400"></i>
+        <span id="levelGoalText">Analisis urutan & lengkapi pola yang hilang</span>
+      </div>
+      <h2 id="levelTitle" class="text-xl md:text-2xl font-bold text-slate-100">Level 1: Pola Rotasi Sederhana</h2>
+    </div>
+
+    <!-- PETUNJUK INTERAKSI / CONTROL GUIDANCE BAR -->
+    <div class="w-full max-w-2xl bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex flex-wrap items-center justify-around gap-3 text-xs text-slate-300 shadow-inner">
+      <div class="flex items-center gap-2">
+        <span class="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-indigo-400">
+          <i class="fa-solid fa-hand-pointer"></i>
+        </span>
+        <span><b>Drag & Drop</b> benda dari rak</span>
+      </div>
+      <div class="w-px h-6 bg-slate-800 hidden sm:block"></div>
+      <div class="flex items-center gap-2">
+        <span class="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-emerald-400 animate-scroll-hint">
+          <i class="fa-solid fa-computer-mouse"></i>
+        </span>
+        <span><b>Scroll Mouse / Roda Spin</b> di atas benda untuk perbaiki arah</span>
+      </div>
+    </div>
+
+    <!-- PATTERN BOARD SLOTS CONTAINER -->
+    <div class="w-full bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-2xl backdrop-blur-xl flex flex-col items-center justify-center gap-6 min-h-[260px]">
+      <div class="text-xs uppercase font-bold text-slate-400 tracking-wider flex items-center gap-2">
+        <i class="fa-solid fa-cubes text-indigo-400"></i> PAPAN POLA (Susun & Putar)
+      </div>
+
+      <!-- Slots Grid -->
+      <div id="slotsContainer" class="flex flex-wrap items-center justify-center gap-3 sm:gap-4 w-full">
+        <!-- Generasi slot oleh JS -->
+      </div>
+    </div>
+
+    <!-- ITEM TRAY (PIECES SELECTION) -->
+    <div class="w-full bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-xl flex flex-col items-center gap-3">
+      <div class="text-xs uppercase font-bold text-slate-400 tracking-wider flex items-center gap-2">
+        <i class="fa-solid fa-boxes-stacked text-indigo-400"></i> RAK BENDA (Tarik dari sini)
+      </div>
+
+      <!-- Items Grid Tray -->
+      <div id="trayContainer" class="flex flex-wrap items-center justify-center gap-4 min-h-[90px] p-2 w-full">
+        <!-- Generasi item oleh JS -->
+      </div>
+    </div>
+
+    <!-- SUBMIT / VERIFY BUTTON -->
+    <div class="flex items-center gap-3">
+      <button id="btnCheckPattern" class="px-8 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-extrabold text-base rounded-xl shadow-lg shadow-emerald-600/30 transition transform hover:scale-105 active:scale-95 flex items-center gap-3">
+        <i class="fa-solid fa-circle-check text-xl"></i>
+        <span>PERIKSA JAWABAN</span>
+      </button>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="w-full border-t border-slate-900 bg-slate-950 p-4 text-center text-xs text-slate-500">
+    <p>Aplikasi Perbaikan Pola - 25 Level Puzzle Interaktif (Drag & Drop + Scroll)</p>
+  </footer>
+
+  <!-- MODAL: PETUNJUK CARA BERMAIN -->
+  <div id="helpModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative space-y-4">
+      <button id="btnCloseHelp" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center text-xl font-bold">
+          <i class="fa-solid fa-circle-info"></i>
+        </div>
+        <h3 class="text-lg font-bold text-white">Cara Bermain</h3>
+      </div>
+
+      <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+        <div class="p-3 bg-slate-800/60 rounded-xl border border-slate-700/50 flex gap-3 items-start">
+          <div class="text-indigo-400 font-bold text-base">1</div>
+          <p><b>Amati Pola:</b> Perhatikan bentuk, warna, dan arah rotasi dari benda-benda yang sudah terpasang.</p>
+        </div>
+
+        <div class="p-3 bg-slate-800/60 rounded-xl border border-slate-700/50 flex gap-3 items-start">
+          <div class="text-indigo-400 font-bold text-base">2</div>
+          <p><b>Drag & Drop:</b> Tarik benda yang tepat dari Rak Benda bawah ke slot kosong bertanda tanya (<b>?</b>).</p>
+        </div>
+
+        <div class="p-3 bg-slate-800/60 rounded-xl border border-slate-700/50 flex gap-3 items-start">
+          <div class="text-indigo-400 font-bold text-base">3</div>
+          <p><b>Scroll Arah Benda:</b> Arahkan kursor mouse ke benda yang ada di slot, lalu <b>Gunakan Scroll Wheel (Gulir Mouse)</b> ke atas/bawah untuk memutar benda hingga rotasinya sesuai!</p>
+        </div>
+
+        <p class="text-xs text-slate-400 italic bg-indigo-950/40 p-2 rounded border border-indigo-900/40">
+          <i class="fa-solid fa-mobile-screen mr-1"></i> *Catatan HP/Touchscreen: Anda juga dapat mengetuk benda di slot untuk memutarnya.
+        </p>
+      </div>
+
+      <button id="btnGotIt" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition">
+        Saya Mengerti!
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: LEVEL SELECTOR (25 LEVEL) -->
+  <div id="levelsModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative space-y-4 max-h-[90vh] flex flex-col">
+      
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-3">
+          <i class="fa-solid fa-layer-group text-indigo-400 text-xl"></i>
+          <h3 class="text-lg font-bold text-white">Pilih Level (1 - 25)</h3>
+        </div>
+        <button id="btnCloseLevels" class="text-slate-400 hover:text-white text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Level Grid Scrollable -->
+      <div id="levelGrid" class="grid grid-cols-5 sm:grid-cols-5 gap-3 overflow-y-auto p-1 flex-1">
+        <!-- Generasi 25 level di JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: WIN / LEVEL COMPLETED -->
+  <div id="winModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl text-center space-y-5 relative overflow-hidden">
+      
+      <!-- Sparkle Background effect -->
+      <div class="w-24 h-24 rounded-full bg-emerald-500/20 text-emerald-400 mx-auto flex items-center justify-center text-5xl shadow-xl shadow-emerald-500/20 animate-bounce">
+        <i class="fa-solid fa-trophy"></i>
+      </div>
+
+      <div>
+        <h3 class="text-2xl font-extrabold text-white">Pola Berhasil Diperbaiki!</h3>
+        <p id="winMessage" class="text-sm text-slate-300 mt-1">Luar biasa! Rotasi dan posisi benda sudah sangat sempurna.</p>
+      </div>
+
+      <!-- Star Rating -->
+      <div class="flex justify-center gap-2 text-3xl text-amber-400">
+        <i class="fa-solid fa-star"></i>
+        <i class="fa-solid fa-star"></i>
+        <i class="fa-solid fa-star"></i>
+      </div>
+
+      <div class="flex items-center justify-center gap-3 pt-2">
+        <button id="btnRetryWin" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-sm transition">
+          <i class="fa-solid fa-rotate-left mr-1"></i> Ulangi
+        </button>
+        <button id="btnNextLevel" class="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold rounded-xl shadow-lg shadow-emerald-500/30 text-sm transition">
+          Level Berikutnya <i class="fa-solid fa-arrow-right ml-1"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME LOGIC JAVASCRIPT -->
+  <script>
+    /* ===================================================================
+       DATABASE 25 LEVEL GAME PERBAIKAN POLA
+       =================================================================== */
+    
+    // Daftar Bentuk SVG / Icon yang digunakan
+    const SHAPES = {
+      ARROW: { name: 'Arrow', icon: 'fa-arrow-up', color: 'text-indigo-400' },
+      ROCKET: { name: 'Rocket', icon: 'fa-rocket', color: 'text-rose-400' },
+      FISH: { name: 'Fish', icon: 'fa-fish', color: 'text-cyan-400' },
+      POINTER: { name: 'Pointer', icon: 'fa-location-arrow', color: 'text-amber-400' },
+      KEY: { name: 'Key', icon: 'fa-key', color: 'text-emerald-400' },
+      PLANE: { name: 'Plane', icon: 'fa-plane', color: 'text-blue-400' },
+      CAR: { name: 'Car', icon: 'fa-car', color: 'text-purple-400' },
+      LIGHTBULB: { name: 'Bulb', icon: 'fa-lightbulb', color: 'text-yellow-400' },
+      HAND: { name: 'Hand', icon: 'fa-hand-point-up', color: 'text-orange-400' },
+      TRIANGLE: { name: 'Triangle', icon: 'fa-caret-up', color: 'text-teal-400' }
+    };
+
+    /**
+     * Struktur Level:
+     * - title: Nama level
+     * - goalText: Petunjuk logika pola
+     * - pattern: Array objek slot { shape: SHAPES.X, rotation: [0, 90, 180, 270], isMissing: boolean }
+     * - trayExtra: Objek pilihan tambahan di rak untuk mengecoh/melatih ketelitian
+     */
+    const LEVELS_DATA = [
+      // LEVEL 1 - 5: POLA ROTASI DASAR (Satu Jenis Benda, Step Rotasi 90°)
+      {
+        id: 1,
+        title: "Level 1: Rotasi Panah Berputar",
+        goalText: "Perhatikan arah panah yang berputar searah jarum jam (0° -> 90° -> 180° -> 270°)",
+        pattern: [
+          { shape: SHAPES.ARROW, rotation: 0, isMissing: false },
+          { shape: SHAPES.ARROW, rotation: 90, isMissing: false },
+          { shape: SHAPES.ARROW, rotation: 180, isMissing: true },
+          { shape: SHAPES.ARROW, rotation: 270, isMissing: false }
+        ],
+        trayExtra: [SHAPES.ROCKET]
+      },
+      {
+        id: 2,
+        title: "Level 2: Peluncuran Roket Alternatif",
+        goalText: "Pola rokets selang-seling: Atas (0°) - Kanan (90°) - Atas (0°) - Kanan (90°)",
+        pattern: [
+          { shape: SHAPES.ROCKET, rotation: 0, isMissing: false },
+          { shape: SHAPES.ROCKET, rotation: 90, isMissing: false },
+          { shape: SHAPES.ROCKET, rotation: 0, isMissing: false },
+          { shape: SHAPES.ROCKET, rotation: 90, isMissing: true }
+        ],
+        trayExtra: [SHAPES.ARROW]
+      },
+      {
+        id: 3,
+        title: "Level 3: Arah Ikan Berenang",
+        goalText: "Ikan berenang bolak-balik: Kiri (270°) - Kanan (90°) - Kiri (270°) - Kanan (90°)",
+        pattern: [
+          { shape: SHAPES.FISH, rotation: 270, isMissing: false },
+          { shape: SHAPES.FISH, rotation: 90, isMissing: true },
+          { shape: SHAPES.FISH, rotation: 270, isMissing: false },
+          { shape: SHAPES.FISH, rotation: 90, isMissing: false }
+        ],
+        trayExtra: [SHAPES.KEY]
+      },
+      {
+        id: 4,
+        title: "Level 4: Rotasi Terbalik Kunci",
+        goalText: "Kunci berubah arah terbalik: Atas (0°) - Bawah (180°) - Atas (0°) - Bawah (180°)",
+        pattern: [
+          { shape: SHAPES.KEY, rotation: 0, isMissing: false },
+          { shape: SHAPES.KEY, rotation: 180, isMissing: false },
+          { shape: SHAPES.KEY, rotation: 0, isMissing: true },
+          { shape: SHAPES.KEY, rotation: 180, isMissing: false }
+        ],
+        trayExtra: [SHAPES.POINTER]
+      },
+      {
+        id: 5,
+        title: "Level 5: Kompas Penunjuk Arah",
+        goalText: "Rotasi berlawanan jarum jam: Atas (0°) -> Kiri (270°) -> Bawah (180°) -> Kanan (90°)",
+        pattern: [
+          { shape: SHAPES.POINTER, rotation: 0, isMissing: false },
+          { shape: SHAPES.POINTER, rotation: 270, isMissing: true },
+          { shape: SHAPES.POINTER, rotation: 180, isMissing: false },
+          { shape: SHAPES.POINTER, rotation: 90, isMissing: false }
+        ],
+        trayExtra: [SHAPES.CAR]
+      },
+
+      // LEVEL 6 - 10: POLA SELANG-SELING DUA BENDA
+      {
+        id: 6,
+        title: "Level 6: Kombinasi Pesawat & Roket",
+        goalText: "Pola ganda: Pesawat (0°) - Roket (90°) - Pesawat (0°) - Roket (90°)",
+        pattern: [
+          { shape: SHAPES.PLANE, rotation: 0, isMissing: false },
+          { shape: SHAPES.ROCKET, rotation: 90, isMissing: false },
+          { shape: SHAPES.PLANE, rotation: 0, isMissing: true },
+          { shape: SHAPES.ROCKET, rotation: 90, isMissing: false }
+        ],
+        trayExtra: [SHAPES.ARROW]
+      },
+      {
+        id: 7,
+        title: "Level 7: Mobil & Kunci Berpasangan",
+        goalText: "Pola arah berlawanan: Mobil Kanan (90°) - Kunci Kiri (270°) - Mobil Kanan (90°) - ...",
+        pattern: [
+          { shape: SHAPES.CAR, rotation: 90, isMissing: false },
+          { shape: SHAPES.KEY, rotation: 270, isMissing: false },
+          { shape: SHAPES.CAR, rotation: 90, isMissing: false },
+          { shape: SHAPES.KEY, rotation: 270, isMissing: true }
+        ],
+        trayExtra: [SHAPES.FISH]
+      },
+      {
+        id: 8,
+        title: "Level 8: 2 Slot Hilang - Rotasi 4 Langkah",
+        goalText: "Lengkapi 2 slot hilang dengan rotasi bertahap 90°",
+        pattern: [
+          { shape: SHAPES.HAND, rotation: 0, isMissing: false },
+          { shape: SHAPES.HAND, rotation: 90, isMissing: true },
+          { shape: SHAPES.HAND, rotation: 180, isMissing: false },
+          { shape: SHAPES.HAND, rotation: 270, isMissing: true }
+        ],
+        trayExtra: [SHAPES.ARROW]
+      },
+      {
+        id: 9,
+        title: "Level 9: Penunjuk Segitiga Beruntun",
+        goalText: "Segitiga berputar: Atas (0°) - Kanan (90°) - Bawah (180°) - Kiri (270°) - Atas (0°)",
+        pattern: [
+          { shape: SHAPES.TRIANGLE, rotation: 0, isMissing: false },
+          { shape: SHAPES.TRIANGLE, rotation: 90, isMissing: true },
+          { shape: SHAPES.TRIANGLE, rotation: 180, isMissing: false },
+          { shape: SHAPES.TRIANGLE, rotation: 270, isMissing: false },
+          { shape: SHAPES.TRIANGLE, rotation: 0, isMissing: false }
+        ],
+        trayExtra: [SHAPES.POINTER]
+      },
+      {
+        id: 10,
+        title: "Level 10: Lampu & Kunci Cermin",
+        goalText: "Bentuk bergantian dengan rotasi simetris vertikal (0° & 180°)",
+        pattern: [
+          { shape: SHAPES.LIGHTBULB, rotation: 0, isMissing: false },
+          { shape: SHAPES.KEY, rotation: 180, isMissing: false },
+          { shape: SHAPES.LIGHTBULB, rotation: 0, isMissing: true },
+          { shape: SHAPES.KEY, rotation: 180, isMissing: true }
+        ],
+        trayExtra: [SHAPES.CAR]
+      },
+
+      // LEVEL 11 - 15: POLA TIGA BENDA & PERUBAHAN AROUND 5 SLOTS
+      {
+        id: 11,
+        title: "Level 11: Urutan Tiga Benda (A-B-C)",
+        goalText: "Pola urutan benda: Panah -> Roket -> Pesawat (Semua arah Atas 0°)",
+        pattern: [
+          { shape: SHAPES.ARROW, rotation: 0, isMissing: false },
+          { shape: SHAPES.ROCKET, rotation: 0, isMissing: false },
+          { shape: SHAPES.PLANE, rotation: 0, isMissing: true },
+          { shape: SHAPES.ARROW, rotation: 0, isMissing: false },
+          { shape: SHAPES.ROCKET, rotation: 0, isMissing: true }
+        ],
+        trayExtra: [SHAPES.FISH]
+      },
+      {
+        id: 12,
+        title: "Level 12: Rotasi Bertahap 45 Derajat",
+        goalText: "Rotasi sudut miring bertahap 45° searah jarum jam (0° -> 45° -> 90° -> 135°)",
+        pattern: [
+          { shape: SHAPES.POINTER, rotation: 0, isMissing: false },
+          { shape: SHAPES.POINTER, rotation: 45, isMissing: true },
+          { shape: SHAPES.POINTER, rotation: 90, isMissing: false },
+          { shape: SHAPES.POINTER, rotation: 135, isMissing: false },
+          { shape: SHAPES.POINTER, rotation: 180, isMissing: true }
+        ],
+        trayExtra: [SHAPES.TRIANGLE]
+      },
+      {
+        id: 13,
+        title: "Level 13: Mobil Balap Berlawanan",
+        goalText: "Arah Mobil bertambah 90° setiap langkah: 0° -> 90° -> 180° -> 270° -> 0°",
+        pattern: [
+          { shape: SHAPES.CAR, rotation: 0, isMissing: false },
+          { shape: SHAPES.CAR, rotation: 90, isMissing: false },
+          { shape: SHAPES.CAR, rotation: 180, isMissing: true },
+          { shape: SHAPES.CAR, rotation: 270, isMissing: false },
+          { shape: SHAPES.CAR, rotation: 0, isMissing: true }
+        ],
+        trayExtra: [SHAPES.PLANE]
+      },
+      {
+        id: 14,
+        title: "Level 14: Pola Cermin Ganda (A-B-B-A)",
+        goalText: "Pola cermin: Panah(0°) - Ikan(90°) - Ikan(90°) - Panah(0°)",
+        pattern: [
+          { shape: SHAPES.ARROW, rotation: 0, isMissing: false },
+          { shape: SHAPES.FISH, rotation: 90, isMissing: true },
+          { shape: SHAPES.FISH, rotation: 90, isMissing: false },
+          { shape: SHAPES.ARROW, rotation: 0, isMissing: true }
+        ],
+        trayExtra: [SHAPES.KEY]
+      },
+      {
+        id: 15,
+        title: "Level 15: Sirkuit 6 Benda",
+        goalText: "Pola berkelanjutan: Roket berputar bertahap 90° dari 0° sampai 270°",
+        pattern: [
+          { shape: SHAPES.ROCKET, rotation: 0, isMissing: false },
+          { shape: SHAPES.ROCKET, rotation: 90, isMissing: false },
+          { shape: SHAPES.ROCKET, rotation: 180, isMissing: true },
+          { shape: SHAPES.ROCKET, rotation: 270, isMissing: false },
+          { shape: SHAPES.ROCKET, rotation: 0, isMissing: true },
+          { shape: SHAPES.ROCKET, rotation: 90, isMissing: false }
+        ],
+        trayExtra: [SHAPES.HAND]
+      },
+
+      // LEVEL 16 - 20: POLA KOMPLEKS (6 - 7 SLOTS, 3 MISSING)
+      {
+        id: 16,
+        title: "Level 16: Pola Tangan & Penunjuk Ganda",
+        goalText: "Tangan (Up 0°) -> Penunjuk (Right 90°) -> Tangan (Down 180°) -> ...",
+        pattern: [
+          { shape: SHAPES.HAND, rotation: 0, isMissing: false },
+          { shape: SHAPES.POINTER, rotation: 90, isMissing: true },
+          { shape: SHAPES.HAND, rotation: 180, isMissing: false },
+          { shape: SHAPES.POINTER, rotation: 270, isMissing: true },
+          { shape: SHAPES.HAND, rotation: 0, isMissing: false },
+          { shape: SHAPES.POINTER, rotation: 90, isMissing: true }
+        ],
+        trayExtra: [SHAPES.ARROW, SHAPES.KEY]
+      },
+      {
+        id: 17,
+        title: "Level 17: Penerbangan Matriks",
+        goalText: "Pesawat berputar 180° selang-seling (0° dan 180°)",
+        pattern: [
+          { shape: SHAPES.PLANE, rotation: 0, isMissing: false },
+          { shape: SHAPES.PLANE, rotation: 180, isMissing: true },
+          { shape: SHAPES.PLANE, rotation: 0, isMissing: false },
+          { shape: SHAPES.PLANE, rotation: 180, isMissing: false },
+          { shape: SHAPES.PLANE, rotation: 0, isMissing: true },
+          { shape: SHAPES.PLANE, rotation: 180, isMissing: false }
+        ],
+        trayExtra: [SHAPES.CAR]
+      },
+      {
+        id: 18,
+        title: "Level 18: Pola Trio Rotasi Bertingkat",
+        goalText: "3 Benda berbeda (Panah, Roket, Ikan) semuanya menghadap Kanan (90°)",
+        pattern: [
+          { shape: SHAPES.ARROW, rotation: 90, isMissing: false },
+          { shape: SHAPES.ROCKET, rotation: 90, isMissing: true },
+          { shape: SHAPES.FISH, rotation: 90, isMissing: false },
+          { shape: SHAPES.ARROW, rotation: 90, isMissing: true },
+          { shape: SHAPES.ROCKET, rotation: 90, isMissing: false },
+          { shape: SHAPES.FISH, rotation: 90, isMissing: true }
+        ],
+        trayExtra: [SHAPES.POINTER, SHAPES.LIGHTBULB]
+      },
+      {
+        id: 19,
+        title: "Level 19: Gelombang Rotasi 45° & 135°",
+        goalText: "Sudut diagonal: 45° -> 135° -> 45° -> 135° -> 45°",
+        pattern: [
+          { shape: SHAPES.KEY, rotation: 45, isMissing: false },
+          { shape: SHAPES.KEY, rotation: 135, isMissing: true },
+          { shape: SHAPES.KEY, rotation: 45, isMissing: false },
+          { shape: SHAPES.KEY, rotation: 135, isMissing: true },
+          { shape: SHAPES.KEY, rotation: 45, isMissing: false },
+          { shape: SHAPES.KEY, rotation: 135, isMissing: true }
+        ],
+        trayExtra: [SHAPES.TRIANGLE]
+      },
+      {
+        id: 20,
+        title: "Level 20: Pola Bintang Berulang (7 Slot)",
+        goalText: "Pola Segitiga berputar melingkar sempurna 0° -> 90° -> 180° -> 270° -> 0°...",
+        pattern: [
+          { shape: SHAPES.TRIANGLE, rotation: 0, isMissing: false },
+          { shape: SHAPES.TRIANGLE, rotation: 90, isMissing: true },
+          { shape: SHAPES.TRIANGLE, rotation: 180, isMissing: false },
+          { shape: SHAPES.TRIANGLE, rotation: 270, isMissing: true },
+          { shape: SHAPES.TRIANGLE, rotation: 0, isMissing: false },
+          { shape: SHAPES.TRIANGLE, rotation: 90, isMissing: false },
+          { shape: SHAPES.TRIANGLE, rotation: 180, isMissing: true }
+        ],
+        trayExtra: [SHAPES.ARROW, SHAPES.HAND]
+      },
+
+      // LEVEL 21 - 25: LEVEL EXPERT (8 SLOTS, BANYAK SLOT HILANG & ROTASI KHUSUS)
+      {
+        id: 21,
+        title: "Level 21: Master Rotasi Kebalikan",
+        goalText: "Pola rotasi berlawanan: 0° -> 270° -> 180° -> 90° -> 0° ...",
+        pattern: [
+          { shape: SHAPES.POINTER, rotation: 0, isMissing: false },
+          { shape: SHAPES.POINTER, rotation: 270, isMissing: true },
+          { shape: SHAPES.POINTER, rotation: 180, isMissing: false },
+          { shape: SHAPES.POINTER, rotation: 90, isMissing: true },
+          { shape: SHAPES.POINTER, rotation: 0, isMissing: false },
+          { shape: SHAPES.POINTER, rotation: 270, isMissing: false },
+          { shape: SHAPES.POINTER, rotation: 180, isMissing: true }
+        ],
+        trayExtra: [SHAPES.CAR]
+      },
+      {
+        id: 22,
+        title: "Level 22: Simfoni Cahaya & Mobil",
+        goalText: "Alternasi Lampu(0°) & Mobil(180°) sepanjang 7 slot",
+        pattern: [
+          { shape: SHAPES.LIGHTBULB, rotation: 0, isMissing: false },
+          { shape: SHAPES.CAR, rotation: 180, isMissing: true },
+          { shape: SHAPES.LIGHTBULB, rotation: 0, isMissing: false },
+          { shape: SHAPES.CAR, rotation: 180, isMissing: true },
+          { shape: SHAPES.LIGHTBULB, rotation: 0, isMissing: true },
+          { shape: SHAPES.CAR, rotation: 180, isMissing: false },
+          { shape: SHAPES.LIGHTBULB, rotation: 0, isMissing: false }
+        ],
+        trayExtra: [SHAPES.KEY, SHAPES.FISH]
+      },
+      {
+        id: 23,
+        title: "Level 23: Pola Tangan Penunjuk Komposisi",
+        goalText: "Rotasi bertambah +90° untuk setiap slot bergantian Tangan & Panah",
+        pattern: [
+          { shape: SHAPES.HAND, rotation: 0, isMissing: false },
+          { shape: SHAPES.ARROW, rotation: 90, isMissing: true },
+          { shape: SHAPES.HAND, rotation: 180, isMissing: false },
+          { shape: SHAPES.ARROW, rotation: 270, isMissing: true },
+          { shape: SHAPES.HAND, rotation: 0, isMissing: true },
+          { shape: SHAPES.ARROW, rotation: 90, isMissing: false },
+          { shape: SHAPES.HAND, rotation: 180, isMissing: true }
+        ],
+        trayExtra: [SHAPES.POINTER, SHAPES.ROCKET]
+      },
+      {
+        id: 24,
+        title: "Level 24: Tantangan Miring 45 Derajat",
+        goalText: "Urutan miring: 45° -> 90° -> 135° -> 180° -> 225° -> 270°",
+        pattern: [
+          { shape: SHAPES.PLANE, rotation: 45, isMissing: false },
+          { shape: SHAPES.PLANE, rotation: 90, isMissing: true },
+          { shape: SHAPES.PLANE, rotation: 135, isMissing: false },
+          { shape: SHAPES.PLANE, rotation: 180, isMissing: true },
+          { shape: SHAPES.PLANE, rotation: 225, isMissing: false },
+          { shape: SHAPES.PLANE, rotation: 270, isMissing: true }
+        ],
+        trayExtra: [SHAPES.FISH, SHAPES.TRIANGLE]
+      },
+      {
+        id: 25,
+        title: "Level 25: Mahakarya Pola Terakhir",
+        goalText: "Pola 8 Slot Akhir: Kombinasi 4 jenis benda dengan rotasi 0° dan 180°",
+        pattern: [
+          { shape: SHAPES.ROCKET, rotation: 0, isMissing: false },
+          { shape: SHAPES.KEY, rotation: 180, isMissing: true },
+          { shape: SHAPES.FISH, rotation: 0, isMissing: false },
+          { shape: SHAPES.CAR, rotation: 180, isMissing: true },
+          { shape: SHAPES.ROCKET, rotation: 0, isMissing: true },
+          { shape: SHAPES.KEY, rotation: 180, isMissing: false },
+          { shape: SHAPES.FISH, rotation: 0, isMissing: true },
+          { shape: SHAPES.CAR, rotation: 180, isMissing: false }
+        ],
+        trayExtra: [SHAPES.ARROW, SHAPES.POINTER, SHAPES.HAND]
+      }
+    ];
+
+    /* ===================================================================
+       STATE GAME & SYSTEM
+       =================================================================== */
+    let currentLevelIndex = 0;
+    let currentBoardState = []; // Array slot tempat item ditempatkan
+    let soundEnabled = true;
+    let unlockedLevels = parseInt(localStorage.getItem('pola_unlocked') || '1');
+
+    // Audio Synthesizer (Web Audio API) tanpa file eksternal
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      try {
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+
+        if (type === 'drop') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(300, now);
+          osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+          osc.start(now);
+          osc.stop(now + 0.1);
+        } else if (type === 'rotate') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(400, now);
+          osc.frequency.setValueAtTime(520, now + 0.05);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+          osc.start(now);
+          osc.stop(now + 0.08);
+        } else if (type === 'win') {
+          // Melodi Kemenangan
+          const notes = [440, 554.37, 659.25, 880];
+          notes.forEach((freq, idx) => {
+            const noteOsc = audioCtx.createOscillator();
+            const noteGain = audioCtx.createGain();
+            noteOsc.type = 'sine';
+            noteOsc.frequency.setValueAtTime(freq, now + idx * 0.1);
+            noteGain.gain.setValueAtTime(0.25, now + idx * 0.1);
+            noteGain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.25);
+            noteOsc.connect(noteGain);
+            noteGain.connect(audioCtx.destination);
+            noteOsc.start(now + idx * 0.1);
+            noteOsc.stop(now + idx * 0.1 + 0.25);
+          });
+        } else if (type === 'error') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.setValueAtTime(180, now + 0.1);
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+          osc.start(now);
+          osc.stop(now + 0.2);
+        }
+      } catch (e) {
+        console.log("Audio not allowed yet");
+      }
+    }
+
+    /* ===================================================================
+       INITIALIZATION & DOM ELEMENTS
+       =================================================================== */
+    const slotsContainer = document.getElementById('slotsContainer');
+    const trayContainer = document.getElementById('trayContainer');
+    const currentLevelText = document.getElementById('currentLevelText');
+    const levelTitle = document.getElementById('levelTitle');
+    const levelGoalText = document.getElementById('levelGoalText');
+    const levelGrid = document.getElementById('levelGrid');
+
+    const helpModal = document.getElementById('helpModal');
+    const levelsModal = document.getElementById('levelsModal');
+    const winModal = document.getElementById('winModal');
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadLevel(currentLevelIndex);
+      setupEventListeners();
+      renderLevelGrid();
+    });
+
+    /* ===================================================================
+       RENDER & LOAD LEVEL LOGIC
+       =================================================================== */
+    function loadLevel(index) {
+      currentLevelIndex = index;
+      const levelData = LEVELS_DATA[index];
+
+      // Update UI Header
+      currentLevelText.textContent = index + 1;
+      levelTitle.textContent = levelData.title;
+      levelGoalText.textContent = levelData.goalText;
+
+      // Inisialisasi state board
+      currentBoardState = levelData.pattern.map(p => {
+        if (p.isMissing) {
+          return {
+            isMissing: true,
+            placedShape: null,
+            currentRotation: 0,
+            targetShape: p.shape,
+            targetRotation: p.rotation
+          };
+        } else {
+          return {
+            isMissing: false,
+            placedShape: p.shape,
+            currentRotation: p.rotation,
+            targetShape: p.shape,
+            targetRotation: p.rotation
+          };
+        }
+      });
+
+      renderSlots();
+      renderTray();
+    }
+
+    /**
+     * Render Slot Paparan Pola
+     */
+    function renderSlots() {
+      slotsContainer.innerHTML = '';
+
+      currentBoardState.forEach((slot, slotIdx) => {
+        const slotEl = document.createElement('div');
+        slotEl.className = `slot-box relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex flex-col items-center justify-center border-2 ${
+          slot.isMissing 
+            ? 'border-dashed border-indigo-500/50 bg-slate-900/80 shadow-inner' 
+            : 'border-slate-700 bg-slate-800/80'
+        }`;
+        slotEl.dataset.slotIndex = slotIdx;
+
+        if (slot.isMissing) {
+          // Event Listener Drag & Drop pada slot
+          slotEl.addEventListener('dragover', handleDragOver);
+          slotEl.addEventListener('dragleave', handleDragLeave);
+          slotEl.addEventListener('drop', handleDrop);
+
+          if (slot.placedShape) {
+            // Jika sudah ada benda yang ditarik ke slot ini
+            const pieceEl = createPieceElement(slot.placedShape, slot.currentRotation, true);
+            slotEl.appendChild(pieceEl);
+
+            // Tampilkan petunjuk icon scroll di pojok slot
+            const scrollBadge = document.createElement('div');
+            scrollBadge.className = "absolute -top-2 -right-2 bg-emerald-500 text-slate-950 text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow flex items-center gap-1 animate-pulse";
+            scrollBadge.innerHTML = `<i class="fa-solid fa-rotate"></i> Scroll`;
+            slotEl.appendChild(scrollBadge);
+
+            // TAMBAHKAN EVENT SCROLL WHEEL UNTUK MEMUTAR BENDA
+            slotEl.addEventListener('wheel', (e) => handleSlotWheel(e, slotIdx), { passive: false });
+
+            // Klik/Tap fallback untuk layar sentuh / mobile
+            slotEl.addEventListener('click', () => rotateSlotItem(slotIdx, 45));
+
+          } else {
+            // Slot kosong dengan tanda tanya
+            slotEl.innerHTML = `
+              <div class="text-2xl font-extrabold text-indigo-400/40 select-none">?</div>
+              <div class="text-[10px] text-slate-500 font-semibold mt-1">Drop Sini</div>
+            `;
+          }
+        } else {
+          // Slot bawaan (Fixed/Tersedia)
+          const pieceEl = createPieceElement(slot.placedShape, slot.currentRotation, false);
+          slotEl.appendChild(pieceEl);
+
+          const fixedBadge = document.createElement('div');
+          fixedBadge.className = "absolute top-1 left-1 text-[9px] text-slate-500 font-bold uppercase tracking-wider";
+          fixedBadge.textContent = "Tetap";
+          slotEl.appendChild(fixedBadge);
+        }
+
+        slotsContainer.appendChild(slotEl);
+      });
+    }
+
+    /**
+     * Render Rak Benda (Tray Pilihan)
+     */
+    function renderTray() {
+      trayContainer.innerHTML = '';
+      const levelData = LEVELS_DATA[currentLevelIndex];
+
+      // Kumpulkan item yang dibutuhkan dari slot missing + item ekstra
+      const missingShapes = levelData.pattern.filter(p => p.isMissing).map(p => p.shape);
+      const allTrayShapes = [...missingShapes, ...(levelData.trayExtra || [])];
+
+      // Acak urutan di rak agar lebih menarik
+      allTrayShapes.sort(() => Math.random() - 0.5);
+
+      allTrayShapes.forEach((shape, idx) => {
+        const itemBox = document.createElement('div');
+        itemBox.className = "w-16 h-16 sm:w-20 sm:h-20 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-indigo-500 rounded-xl flex items-center justify-center cursor-grab active:cursor-grabbing transition shadow-md hover:scale-105 group relative";
+        itemBox.draggable = true;
+        itemBox.dataset.shapeName = shape.name;
+
+        // Visual Icon
+        const iconEl = document.createElement('i');
+        iconEl.className = `fa-solid ${shape.icon} ${shape.color} text-2xl sm:text-3xl pointer-events-none group-hover:scale-110 transition`;
+        itemBox.appendChild(iconEl);
+
+        // Tooltip
+        const tip = document.createElement('span');
+        tip.className = "absolute -bottom-6 text-[10px] text-slate-400 font-medium opacity-0 group-hover:opacity-100 transition";
+        tip.textContent = "Tarik me slot";
+        itemBox.appendChild(tip);
+
+        // Event Drag Start
+        itemBox.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('text/plain', shape.name);
+          e.dataTransfer.effectAllowed = 'copy';
+          playSound('drop');
+        });
+
+        trayContainer.appendChild(itemBox);
+      });
+    }
+
+    /**
+     * Helper pembuat elemen visual Icon/Piece
+     */
+    function createPieceElement(shape, rotation, isInteractive) {
+      const wrapper = document.createElement('div');
+      wrapper.className = `rotate-transition flex items-center justify-center w-full h-full ${isInteractive ? 'cursor-pointer' : ''}`;
+      wrapper.style.transform = `rotate(${rotation}deg)`;
+
+      const icon = document.createElement('i');
+      icon.className = `fa-solid ${shape.icon} ${shape.color} text-3xl sm:text-4xl drop-shadow-md`;
+      wrapper.appendChild(icon);
+
+      return wrapper;
+    }
+
+    /* ===================================================================
+       EVENT HANDLERS: DRAG, DROP & SCROLL ROTATION
+       =================================================================== */
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      e.currentTarget.classList.add('drag-over');
+    }
+
+    function handleDragLeave(e) {
+      e.currentTarget.classList.remove('drag-over');
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      const slotEl = e.currentTarget;
+      slotEl.classList.remove('drag-over');
+
+      const shapeName = e.dataTransfer.getData('text/plain');
+      const slotIndex = parseInt(slotEl.dataset.slotIndex);
+
+      // Cari bentuk berdasarkan nama
+      const shapeObj = Object.values(SHAPES).find(s => s.name === shapeName);
+
+      if (shapeObj && slotIndex !== undefined) {
+        currentBoardState[slotIndex].placedShape = shapeObj;
+        // Pertahankan rotasi saat ini atau reset ke 0 jika baru dipasang
+        renderSlots();
+        playSound('drop');
+      }
+    }
+
+    /**
+     * SCROLL WHEEL ROTATION MECHANIC
+     * Memutar arah benda saat pengguna melakukan scroll di atas slot
+     */
+    function handleSlotWheel(e, slotIndex) {
+      e.preventDefault(); // Mencegah halaman ikut scroll saat memutar benda
+
+      // Deteksi arah scroll
+      const delta = e.deltaY;
+      const step = 45; // Putar 45 derajat setiap langkah scroll
+
+      if (delta > 0) {
+        // Scroll ke bawah = Putar Searah Jarum Jam
+        rotateSlotItem(slotIndex, step);
+      } else if (delta < 0) {
+        // Scroll ke atas = Putar Berlawanan Jarum Jam
+        rotateSlotItem(slotIndex, -step);
+      }
+    }
+
+    /**
+     * Memutar benda pada slot tertentu sebesar degreeStep
+     */
+    function rotateSlotItem(slotIndex, degreeStep) {
+      const slot = currentBoardState[slotIndex];
+      if (!slot || !slot.placedShape) return;
+
+      // Normalisasi derajat rotasi (0 - 359)
+      let newRotation = (slot.currentRotation + degreeStep) % 360;
+      if (newRotation < 0) newRotation += 360;
+
+      slot.currentRotation = newRotation;
+
+      // Update tampilan visual slot tanpa re-render penuh
+      const slotEl = slotsContainer.children[slotIndex];
+      const pieceWrapper = slotEl.querySelector('.rotate-transition');
+      if (pieceWrapper) {
+        pieceWrapper.style.transform = `rotate(${newRotation}deg)`;
+      }
+
+      playSound('rotate');
+    }
+
+    /* ===================================================================
+       VERIFIKASI LOGIKA PERBAIKAN POLA
+       =================================================================== */
+    function checkPatternAnswer() {
+      let allCorrect = true;
+      let isIncomplete = false;
+
+      currentBoardState.forEach(slot => {
+        if (slot.isMissing) {
+          if (!slot.placedShape) {
+            isIncomplete = true;
+          } else {
+            // Periksa Jenis Bentuk
+            const isShapeCorrect = slot.placedShape.name === slot.targetShape.name;
+            // Periksa Arah/Rotasi (Toleransi Modulo 360)
+            const isRotationCorrect = (slot.currentRotation % 360) === (slot.targetRotation % 360);
+
+            if (!isShapeCorrect || !isRotationCorrect) {
+              allCorrect = false;
+            }
+          }
+        }
+      });
+
+      if (isIncomplete) {
+        playSound('error');
+        showToast("Lengkapi semua slot kosong (<b>?</b>) terlebih dahulu!");
+        return;
+      }
+
+      if (allCorrect) {
+        playSound('win');
+        createConfetti();
+        
+        // Simpan progress unlock level berikutnya
+        if (currentLevelIndex + 1 >= unlockedLevels && unlockedLevels < 25) {
+          unlockedLevels = currentLevelIndex + 2;
+          localStorage.setItem('pola_unlocked', unlockedLevels.toString());
+        }
+
+        setTimeout(() => {
+          winModal.classList.remove('hidden');
+        }, 400);
+
+      } else {
+        playSound('error');
+        showToast("Pola belum sesuai! Periksa kembali jenis benda dan arah rotasinya.");
+        
+        // Animasi Shake pada slot yang salah
+        slotsContainer.classList.add('animate-bounce');
+        setTimeout(() => slotsContainer.classList.remove('animate-bounce'), 600);
+      }
+    }
+
+    /* ===================================================================
+       MODAL & UI NAVIGATION EVENT LISTENERS
+       =================================================================== */
+    function setupEventListeners() {
+      // Tombol Periksa Jawaban
+      document.getElementById('btnCheckPattern').addEventListener('click', checkPatternAnswer);
+
+      // Reset Level
+      document.getElementById('btnReset').addEventListener('click', () => {
+        loadLevel(currentLevelIndex);
+        showToast("Level diulangi");
+      });
+
+      // Sound Toggle
+      const btnSound = document.getElementById('btnSoundToggle');
+      const soundIcon = document.getElementById('soundIcon');
+      btnSound.addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        if (soundEnabled) {
+          soundIcon.className = 'fa-solid fa-volume-high';
+          showToast("Suara Diaktifkan");
+        } else {
+          soundIcon.className = 'fa-solid fa-volume-xmark text-slate-500';
+          showToast("Suara Dimatikan");
+        }
+      });
+
+      // Help Modal
+      document.getElementById('btnHelp').addEventListener('click', () => helpModal.classList.remove('hidden'));
+      document.getElementById('btnCloseHelp').addEventListener('click', () => helpModal.classList.add('hidden'));
+      document.getElementById('btnGotIt').addEventListener('click', () => helpModal.classList.add('hidden'));
+
+      // Levels Modal
+      document.getElementById('btnOpenLevels').addEventListener('click', () => {
+        renderLevelGrid();
+        levelsModal.classList.remove('hidden');
+      });
+      document.getElementById('btnCloseLevels').addEventListener('click', () => levelsModal.classList.add('hidden'));
+
+      // Win Modal Actions
+      document.getElementById('btnRetryWin').addEventListener('click', () => {
+        winModal.classList.add('hidden');
+        loadLevel(currentLevelIndex);
+      });
+
+      document.getElementById('btnNextLevel').addEventListener('click', () => {
+        winModal.classList.add('hidden');
+        if (currentLevelIndex + 1 < LEVELS_DATA.length) {
+          loadLevel(currentLevelIndex + 1);
+        } else {
+          showToast("Selamat! Anda telah menyelesaikan seluruh 25 Level!");
+        }
+      });
+    }
+
+    /**
+     * Render Modal Grid 25 Level
+     */
+    function renderLevelGrid() {
+      levelGrid.innerHTML = '';
+
+      LEVELS_DATA.forEach((lvl, idx) => {
+        const isUnlocked = idx + 1 <= unlockedLevels;
+        const isCurrent = idx === currentLevelIndex;
+
+        const btn = document.createElement('button');
+        btn.className = `h-14 rounded-xl border flex flex-col items-center justify-center font-bold text-sm transition relative overflow-hidden ${
+          isCurrent 
+            ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-600/40 ring-2 ring-indigo-400' 
+            : isUnlocked 
+              ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200' 
+              : 'bg-slate-900 border-slate-800/80 text-slate-600 cursor-not-allowed opacity-60'
+        }`;
+
+        if (isUnlocked) {
+          btn.innerHTML = `
+            <span>${idx + 1}</span>
+            <span class="text-[9px] font-normal ${isCurrent ? 'text-indigo-200' : 'text-slate-400'}">Lvl ${idx + 1}</span>
+          `;
+          btn.addEventListener('click', () => {
+            loadLevel(idx);
+            levelsModal.classList.add('hidden');
+          });
+        } else {
+          btn.innerHTML = `<i class="fa-solid fa-lock text-xs text-slate-600"></i>`;
+        }
+
+        levelGrid.appendChild(btn);
+      });
+    }
+
+    /**
+     * Custom Toast Notification
+     */
+    function showToast(message) {
+      const existingToast = document.getElementById('customToast');
+      if (existingToast) existingToast.remove();
+
+      const toast = document.createElement('div');
+      toast.id = 'customToast';
+      toast.className = 'fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-900 border border-slate-700 text-slate-100 text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-xl shadow-2xl z-50 flex items-center gap-2 transition duration-300 animate-bounce';
+      toast.innerHTML = `<i class="fa-solid fa-circle-info text-indigo-400"></i> <span>${message}</span>`;
+
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+
+    /**
+     * Effect Particle Confetti Kemenangan
+     */
+    function createConfetti() {
+      const colors = ['#f43f5e', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
+      for (let i = 0; i < 40; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti rounded-full z-50';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.left = Math.random() * 100 + 'vw';
+        confetti.style.top = '-10px';
+        confetti.style.width = Math.random() * 8 + 6 + 'px';
+        confetti.style.height = confetti.style.width;
+
+        document.body.appendChild(confetti);
+
+        const duration = Math.random() * 2 + 1.5;
+        confetti.animate([
+          { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+          { transform: `translateY(${window.innerHeight}px) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+        ], {
+          duration: duration * 1000,
+          easing: 'cubic-bezier(0.25, 1, 0.5, 1)'
+        });
+
+        setTimeout(() => confetti.remove(), duration * 1000);
+      }
+    }
+  </script>
+</body>
+</html>
