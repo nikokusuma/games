@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Labirin Bersyarat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            user-select: none;
+        }
+
+        .heading-font {
+            font-family: 'Fredoka', cursive;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        .block-card {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .block-card:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+        }
+        .block-card:active {
+            transform: translateY(0);
+        }
+
+        .executing-block {
+            box-shadow: 0 0 15px #38bdf8;
+            border-color: #38bdf8 !important;
+            transform: scale(1.03);
+        }
+
+        canvas {
+            image-rendering: pixelated;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+    <!-- Header Navbar -->
+    <header class="bg-slate-800/80 backdrop-blur-md border-b border-slate-700 sticky top-0 z-30 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-600 text-white p-2.5 rounded-xl shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid me-0 fa-compass text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="heading-font text-2xl font-bold bg-gradient-to-r from-indigo-400 via-sky-400 to-emerald-400 bg-clip-text text-transparent">
+                        Labirin Logika
+                    </h1>
+                    <p class="text-xs text-slate-400">Pemrograman Balok Perintah Bersyarat</p>
+                </div>
+            </div>
+
+            <!-- Level Selector & Status -->
+            <div class="flex items-center space-x-2 bg-slate-900/80 p-1.5 rounded-2xl border border-slate-700">
+                <span class="text-xs font-semibold px-2 text-slate-400">Level:</span>
+                <div id="levelButtons" class="flex space-x-1">
+                    <!-- Dynamic Level Buttons populated by JS -->
+                </div>
+            </div>
+
+            <!-- Sound & Info Controls -->
+            <div class="flex items-center space-x-2">
+                <button id="soundToggleBtn" onclick="toggleSound()" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-xl text-sm font-semibold transition flex items-center gap-2">
+                    <i id="soundIcon" class="fa-solid fa-volume-high text-emerald-400"></i>
+                    <span class="hidden sm:inline">Suara</span>
+                </button>
+                <button onclick="openHelpModal()" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-sm font-semibold transition flex items-center gap-2 text-white">
+                    <i class="fa-solid fa-circle-question"></i>
+                    <span class="hidden sm:inline">Bantuan</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="max-w-7xl mx-auto w-full p-4 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+        
+        <!-- Left Column: Canvas & Controls -->
+        <section class="lg:col-span-6 flex flex-col gap-4">
+            <!-- Game Canvas Container -->
+            <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-xl flex flex-col items-center justify-center relative">
+                <!-- Top Status Bar in Canvas -->
+                <div class="w-full flex justify-between items-center mb-3 text-sm px-1">
+                    <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-1 bg-indigo-950 text-indigo-300 rounded-lg font-bold border border-indigo-800/50 flex items-center gap-1.5">
+                            <i class="fa-solid fa-border-all"></i> Grid: <span id="gridSizeLabel">4x4</span>
+                        </span>
+                        <span class="px-2.5 py-1 bg-amber-950 text-amber-300 rounded-lg font-bold border border-amber-800/50 flex items-center gap-1.5">
+                            <i class="fa-solid fa-footsteps"></i> Langkah: <span id="stepCounter">0</span>
+                        </span>
+                    </div>
+                    <div class="text-slate-400 text-xs hidden sm:block">
+                        Arah Karakter: <span id="directionLabel" class="text-sky-400 font-bold">Timur (➡️)</span>
+                    </div>
+                </div>
+
+                <!-- Canvas -->
+                <div class="relative w-full aspect-square max-w-[480px] bg-slate-900 rounded-xl overflow-hidden border-2 border-slate-700 flex items-center justify-center">
+                    <canvas id="mazeCanvas" class="w-full h-full block"></canvas>
+                </div>
+
+                <!-- Execution Speed Control & Canvas Footer -->
+                <div class="w-full mt-4 flex items-center justify-between gap-4 bg-slate-900/60 p-3 rounded-xl border border-slate-700/50 text-xs sm:text-sm">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-gauge-high text-sky-400"></i>
+                        <span class="text-slate-300">Kecepatan:</span>
+                    </div>
+                    <div class="flex items-center gap-2 flex-grow max-w-[200px]">
+                        <input type="range" id="speedSlider" min="100" max="800" step="50" value="400" class="w-full accent-indigo-500 cursor-pointer">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Execution Action Controls -->
+            <div class="grid grid-cols-3 gap-3">
+                <button id="runBtn" onclick="runProgram()" class="py-3.5 px-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 text-base transition active:scale-95">
+                    <i class="fa-solid fa-play"></i> Jalankan
+                </button>
+                <button id="stopBtn" onclick="stopProgram()" disabled class="py-3.5 px-4 bg-slate-700 text-slate-400 font-bold rounded-xl flex items-center justify-center gap-2 text-base transition cursor-not-allowed">
+                    <i class="fa-solid fa-square"></i> Stop
+                </button>
+                <button id="resetBtn" onclick="resetMaze()" class="py-3.5 px-4 bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold rounded-xl flex items-center justify-center gap-2 text-base transition active:scale-95 border border-slate-600">
+                    <i class="fa-solid fa-rotate-right"></i> Reset
+                </button>
+            </div>
+        </section>
+
+        <!-- Right Column: Command Palette & Program Workspace -->
+        <section class="lg:col-span-6 flex flex-col gap-4">
+            
+            <!-- Command Block Drawer (Palette) -->
+            <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-xl">
+                <h2 class="heading-font text-lg font-bold text-sky-300 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-cubes"></i> Pilihan Balok Perintah
+                    <span class="text-xs font-normal text-slate-400">(Klik balok untuk menambah)</span>
+                </h2>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <!-- Move Command -->
+                    <div onclick="addBlock('MOVE')" class="block-card p-3 bg-blue-600/20 border border-blue-500/40 hover:border-blue-400 rounded-xl flex items-center gap-3">
+                        <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white font-bold">
+                            <i class="fa-solid fa-arrow-up"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-sm text-blue-200">Maju 1 Langkah</div>
+                            <div class="text-[11px] text-blue-300/70">Gerak lurus sesuai arah panah</div>
+                        </div>
+                    </div>
+
+                    <!-- Turn Left -->
+                    <div onclick="addBlock('TURN_LEFT')" class="block-card p-3 bg-amber-600/20 border border-amber-500/40 hover:border-amber-400 rounded-xl flex items-center gap-3">
+                        <div class="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center text-white font-bold">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-sm text-amber-200">Belok Kiri</div>
+                            <div class="text-[11px] text-amber-300/70">Putar badan 90° ke kiri</div>
+                        </div>
+                    </div>
+
+                    <!-- Turn Right -->
+                    <div onclick="addBlock('TURN_RIGHT')" class="block-card p-3 bg-orange-600/20 border border-orange-500/40 hover:border-orange-400 rounded-xl flex items-center gap-3">
+                        <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center text-white font-bold">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-sm text-orange-200">Belok Kanan</div>
+                            <div class="text-[11px] text-orange-300/70">Putar badan 90° ke kanan</div>
+                        </div>
+                    </div>
+
+                    <!-- Condition: If Path Left -->
+                    <div onclick="addBlock('IF_LEFT_PATH')" class="block-card p-3 bg-purple-600/20 border border-purple-500/40 hover:border-purple-400 rounded-xl flex items-center gap-3">
+                        <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center text-white font-bold">
+                            <i class="fa-solid fa-code-branch text-sm"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-sm text-purple-200">Jika Ada Jalur Kiri</div>
+                            <div class="text-[11px] text-purple-300/70">Otomatis Belok Kiri</div>
+                        </div>
+                    </div>
+
+                    <!-- Condition: If Path Right -->
+                    <div onclick="addBlock('IF_RIGHT_PATH')" class="block-card p-3 bg-fuchsia-600/20 border border-fuchsia-500/40 hover:border-fuchsia-400 rounded-xl flex items-center gap-3">
+                        <div class="w-8 h-8 bg-fuchsia-500 rounded-lg flex items-center justify-center text-white font-bold">
+                            <i class="fa-solid fa-code-branch text-sm flip-x"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-sm text-fuchsia-200">Jika Ada Jalur Kanan</div>
+                            <div class="text-[11px] text-fuchsia-300/70">Otomatis Belok Kanan</div>
+                        </div>
+                    </div>
+
+                    <!-- Condition: If Obstacle Ahead -->
+                    <div onclick="addBlock('IF_WALL_AHEAD')" class="block-card p-3 bg-rose-600/20 border border-rose-500/40 hover:border-rose-400 rounded-xl flex items-center gap-3">
+                        <div class="w-8 h-8 bg-rose-500 rounded-lg flex items-center justify-center text-white font-bold">
+                            <i class="fa-solid fa-ban text-sm"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-sm text-rose-200">Jika Depan Halangan</div>
+                            <div class="text-[11px] text-rose-300/70">Belok Kanan Otomatis</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workspace / Program Sequence Area -->
+            <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-xl flex-grow flex flex-col">
+                <div class="flex justify-between items-center mb-3">
+                    <div class="flex items-center gap-2">
+                        <h2 class="heading-font text-lg font-bold text-emerald-300">
+                            <i class="fa-solid fa-rectangle-list"></i> Urutan Perintah Anda
+                        </h2>
+                        <span id="blockCountBadge" class="bg-slate-700 text-slate-300 text-xs px-2 py-0.5 rounded-full font-semibold">0 balok</span>
+                    </div>
+                    
+                    <!-- Loop toggle option -->
+                    <div class="flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-700">
+                        <input type="checkbox" id="loopCheckbox" class="w-4 h-4 accent-emerald-500 rounded cursor-pointer">
+                        <label for="loopCheckbox" class="text-xs font-semibold text-slate-300 cursor-pointer flex items-center gap-1">
+                            <i class="fa-solid fa-repeat text-emerald-400"></i> Ulangi Otomatis
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Program List Droppable Area -->
+                <div id="workspace" class="bg-slate-900/80 rounded-xl border-2 border-dashed border-slate-700 p-3 min-h-[220px] max-h-[320px] overflow-y-auto flex flex-col gap-2 flex-grow">
+                    <!-- Program blocks dynamically inserted here -->
+                </div>
+
+                <!-- Workspace Footer Action -->
+                <div class="mt-3 flex justify-between items-center text-xs text-slate-400">
+                    <span>Atur logika agar karakter mencapai garis Finish (🏁).</span>
+                    <button onclick="clearWorkspace()" class="text-rose-400 hover:text-rose-300 font-bold flex items-center gap-1 px-2 py-1 rounded hover:bg-rose-950/30 transition">
+                        <i class="fa-solid fa-trash-can"></i> Hapus Semua
+                    </button>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Victory Modal -->
+    <div id="victoryModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 border-2 border-emerald-500/50 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl relative transform transition-all scale-100">
+            <div class="w-20 h-20 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl shadow-lg shadow-emerald-500/20">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <h3 class="heading-font text-2xl font-bold text-white mb-1">Hore! Level Selesai! 🎉</h3>
+            <p id="victoryMessage" class="text-slate-300 text-sm mb-6">Kamu berhasil memandu karakter keluar dari labirin bersyarat ini.</p>
+            
+            <div class="flex flex-col gap-3">
+                <button id="nextLevelBtn" onclick="nextLevel()" class="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 text-base transition">
+                    Lanjut Ke Level Berikutnya <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+                <button onclick="closeModal('victoryModal')" class="w-full py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-300 font-semibold rounded-xl text-sm transition">
+                    Coba Lagi Level Ini
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Failure / Crash Modal -->
+    <div id="failureModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 border-2 border-rose-500/50 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl relative transform transition-all scale-100">
+            <div class="w-20 h-20 bg-rose-500/20 text-rose-400 border border-rose-500/40 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl shadow-lg shadow-rose-500/20">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="heading-font text-2xl font-bold text-white mb-1">Aduh, Menabrak! 💥</h3>
+            <p id="failureMessage" class="text-slate-300 text-sm mb-6">Karakter menabrak tembok labirin. Periksa kembali urutan dan kondisi balok perintahmu!</p>
+            
+            <div class="flex flex-col gap-2">
+                <button onclick="closeModal('failureModal'); resetMaze();" class="w-full py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl shadow-lg shadow-rose-600/30 text-base transition">
+                    <i class="fa-solid fa-wrench mr-1"></i> Perbaiki Program
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-3xl p-6 max-w-lg w-full shadow-2xl relative">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="heading-font text-xl font-bold text-sky-400 flex items-center gap-2">
+                    <i class="fa-solid fa-book-open"></i> Cara Bermain
+                </h3>
+                <button onclick="closeModal('helpModal')" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="text-sm text-slate-300 space-y-3 leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
+                <p><strong>Tujuan:</strong> Pandu karakter (🤖/🎯) menuju lokasi Finish (🏁) tanpa menabrak tembok.</p>
+                
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 space-y-2">
+                    <div class="font-bold text-indigo-300 text-xs uppercase tracking-wider">Navigasi Karakter:</div>
+                    <ul class="list-disc list-inside space-y-1 text-xs">
+                        <li>Indikator **Panah** pada karakter menunjukkan arah badan menghadap.</li>
+                        <li><strong>Maju 1 Langkah:</strong> Bergerak sesuai arah panah saat ini.</li>
+                        <li><strong>Belok Kiri / Kanan:</strong> Memutar arah panah 90 derajat.</li>
+                    </ul>
+                </div>
+
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 space-y-2">
+                    <div class="font-bold text-purple-300 text-xs uppercase tracking-wider">Perintah Bersyarat (Logika):</div>
+                    <ul class="list-disc list-inside space-y-1 text-xs">
+                        <li><strong>Jika Ada Jalur Kiri:</strong> Memeriksa apakah ada jalan terbuka di sebelah kiri. Jika ada, karakter otomatis belok kiri.</li>
+                        <li><strong>Jika Depan Halangan:</strong> Memeriksa jika ada tembok langsung di depan. Jika ada tembok, karakter otomatis belok kanan.</li>
+                        <li><strong>Ulangi Otomatis:</strong> Centang opsi ini agar urutan balok diulang secara terus menerus hingga mencapai tujuan!</li>
+                    </ul>
+                </div>
+            </div>
+            <button onclick="closeModal('helpModal')" class="w-full mt-5 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition">
+                Paham, Siap Bermain!
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /*
+         * MAZE LOGIC ENGINE & PROGRAMMING WORKSPACE
+         */
+
+        // Audio Context Setup for Sound Effects
+        let audioCtx = null;
+        let soundEnabled = true;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'step') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(150, now + 0.08);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'turn') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.linearRampToValueAtTime(600, now + 0.06);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.06);
+                    osc.start(now);
+                    osc.stop(now + 0.06);
+                } else if (type === 'win') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                    osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                    osc.frequency.setValueAtTime(1046.50, now + 0.3); // C6
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.6);
+                    osc.start(now);
+                    osc.stop(now + 0.6);
+                } else if (type === 'crash') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.linearRampToValueAtTime(60, now + 0.25);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                }
+            } catch (e) {
+                console.log("Audio not allowed or supported yet");
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('soundIcon');
+            if (soundEnabled) {
+                icon.className = "fa-solid fa-volume-high text-emerald-400";
+            } else {
+                icon.className = "fa-solid fa-volume-xmark text-rose-400";
+            }
+        }
+
+        // Direction Constants: 0: NORTH (Up), 1: EAST (Right), 2: SOUTH (Down), 3: WEST (Left)
+        const DIR_OFFSETS = [
+            { r: -1, c: 0 }, // NORTH
+            { r: 0, c: 1 },  // EAST
+            { r: 1, c: 0 },  // SOUTH
+            { r: 0, c: -1 }  // WEST
+        ];
+        const DIR_NAMES = ["Utara (⬆️)", "Timur (➡️)", "Selatan (⬇️)", "Barat (⬅️)"];
+
+        // Level Maze Definitions
+        // 0 = Path, 1 = Wall, 2 = Start, 3 = Finish Goal
+        const LEVELS = [
+            // Level 1: 4x4 Grid
+            {
+                id: 1,
+                gridSize: 4,
+                startDir: 1, // Facing EAST
+                map: [
+                    [2, 0, 0, 1],
+                    [1, 1, 0, 1],
+                    [1, 1, 0, 0],
+                    [1, 1, 1, 3]
+                ]
+            },
+            // Level 2: 5x5 Grid
+            {
+                id: 2,
+                gridSize: 5,
+                startDir: 1, // Facing EAST
+                map: [
+                    [2, 0, 1, 1, 1],
+                    [1, 0, 0, 0, 1],
+                    [1, 1, 1, 0, 1],
+                    [1, 0, 0, 0, 1],
+                    [1, 0, 1, 0, 3]
+                ]
+            },
+            // Level 3: 6x6 Grid
+            {
+                id: 3,
+                gridSize: 6,
+                startDir: 1, // Facing EAST
+                map: [
+                    [2, 0, 0, 0, 1, 1],
+                    [1, 1, 1, 0, 1, 1],
+                    [1, 0, 0, 0, 0, 1],
+                    [1, 0, 1, 1, 0, 1],
+                    [1, 0, 0, 1, 0, 0],
+                    [1, 1, 1, 1, 1, 3]
+                ]
+            },
+            // Level 4: 7x7 Grid
+            {
+                id: 4,
+                gridSize: 7,
+                startDir: 1, // Facing EAST
+                map: [
+                    [2, 0, 0, 1, 1, 1, 1],
+                    [1, 1, 0, 0, 0, 0, 1],
+                    [1, 0, 0, 1, 1, 0, 1],
+                    [1, 0, 1, 1, 0, 0, 1],
+                    [1, 0, 0, 0, 0, 1, 1],
+                    [1, 1, 1, 1, 0, 0, 0],
+                    [1, 1, 1, 1, 1, 1, 3]
+                ]
+            },
+            // Level 5: 8x8 Grid
+            {
+                id: 5,
+                gridSize: 8,
+                startDir: 1, // Facing EAST
+                map: [
+                    [2, 0, 0, 0, 1, 1, 1, 1],
+                    [1, 1, 1, 0, 1, 0, 0, 1],
+                    [1, 0, 0, 0, 0, 0, 1, 1],
+                    [1, 0, 1, 1, 1, 0, 1, 1],
+                    [1, 0, 0, 0, 1, 0, 0, 1],
+                    [1, 1, 1, 0, 1, 1, 0, 1],
+                    [1, 0, 0, 0, 0, 0, 0, 0],
+                    [1, 1, 1, 1, 1, 1, 1, 3]
+                ]
+            }
+        ];
+
+        // Game State Variables
+        let currentLevelIdx = 0;
+        let mapGrid = [];
+        let gridSize = 4;
+        let playerPos = { r: 0, c: 0 };
+        let playerDir = 1; // 0: N, 1: E, 2: S, 3: W
+        let startPos = { r: 0, c: 0 };
+        let goalPos = { r: 0, c: 0 };
+        let stepsTaken = 0;
+
+        let programSequence = []; // Array of command block IDs
+        let isExecuting = false;
+        let executionTimer = null;
+        let currentExecIndex = 0;
+
+        // Canvas Elements
+        const canvas = document.getElementById('mazeCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Block Type Metadata Configuration
+        const BLOCK_TYPES = {
+            'MOVE': {
+                label: 'Maju 1 Langkah',
+                icon: 'fa-arrow-up',
+                colorClass: 'bg-blue-600 border-blue-400 text-blue-100',
+                badgeBg: 'bg-blue-500'
+            },
+            'TURN_LEFT': {
+                label: 'Belok Kiri',
+                icon: 'fa-rotate-left',
+                colorClass: 'bg-amber-600 border-amber-400 text-amber-100',
+                badgeBg: 'bg-amber-500'
+            },
+            'TURN_RIGHT': {
+                label: 'Belok Kanan',
+                icon: 'fa-rotate-right',
+                colorClass: 'bg-orange-600 border-orange-400 text-orange-100',
+                badgeBg: 'bg-orange-500'
+            },
+            'IF_LEFT_PATH': {
+                label: 'Jika Path Kiri ➔ Belok Kiri',
+                icon: 'fa-code-branch',
+                colorClass: 'bg-purple-600 border-purple-400 text-purple-100',
+                badgeBg: 'bg-purple-500'
+            },
+            'IF_RIGHT_PATH': {
+                label: 'Jika Path Kanan ➔ Belok Kanan',
+                icon: 'fa-code-branch',
+                colorClass: 'bg-fuchsia-600 border-fuchsia-400 text-fuchsia-100',
+                badgeBg: 'bg-fuchsia-500'
+            },
+            'IF_WALL_AHEAD': {
+                label: 'Jika Depan Halangan ➔ Belok Kanan',
+                icon: 'fa-ban',
+                colorClass: 'bg-rose-600 border-rose-400 text-rose-100',
+                badgeBg: 'bg-rose-500'
+            }
+        };
+
+        // Initialize App on DOM Load
+        window.onload = function() {
+            renderLevelButtons();
+            loadLevel(0, true);
+            window.addEventListener('resize', resizeCanvas);
+        };
+
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const size = container.clientWidth;
+            canvas.width = size;
+            canvas.height = size;
+            drawMaze();
+        }
+
+        function renderLevelButtons() {
+            const container = document.getElementById('levelButtons');
+            container.innerHTML = '';
+            LEVELS.forEach((lvl, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `w-8 h-8 rounded-lg text-xs font-bold transition flex items-center justify-center ${
+                    idx === currentLevelIdx 
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/50 ring-2 ring-indigo-400' 
+                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'
+                }`;
+                btn.innerText = lvl.id;
+                btn.onclick = () => {
+                    if (isExecuting) stopProgram();
+                    loadLevel(idx, true); // Reset blocks when changing level from selector
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function loadLevel(idx, resetBlocks = true) {
+            currentLevelIdx = idx;
+            renderLevelButtons();
+
+            if (resetBlocks) {
+                programSequence = [];
+                renderWorkspace();
+            }
+
+            const lvlData = LEVELS[idx];
+            gridSize = lvlData.gridSize;
+            mapGrid = JSON.parse(JSON.stringify(lvlData.map)); // Deep copy
+            playerDir = lvlData.startDir;
+            stepsTaken = 0;
+
+            // Locate Start and Goal
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    if (mapGrid[r][c] === 2) {
+                        startPos = { r, c };
+                        playerPos = { r, c };
+                    } else if (mapGrid[r][c] === 3) {
+                        goalPos = { r, c };
+                    }
+                }
+            }
+
+            document.getElementById('gridSizeLabel').innerText = `${gridSize}x${gridSize}`;
+            updateDirectionUI();
+            updateStepCounter();
+
+            setTimeout(resizeCanvas, 50);
+        }
+
+        function updateDirectionUI() {
+            document.getElementById('directionLabel').innerText = DIR_NAMES[playerDir];
+        }
+
+        function updateStepCounter() {
+            document.getElementById('stepCounter').innerText = stepsTaken;
+        }
+
+        /*
+         * CANVAS DRAWING ROUTINES
+         */
+        function drawMaze() {
+            if (!ctx) return;
+            const width = canvas.width;
+            const cellSize = width / gridSize;
+
+            ctx.clearRect(0, 0, width, width);
+
+            // Draw Grid Cells
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    const x = c * cellSize;
+                    const y = r * cellSize;
+                    const cellType = mapGrid[r][c];
+
+                    if (cellType === 1) { // Wall Block
+                        ctx.fillStyle = '#1e293b'; // Slate 800
+                        ctx.fillRect(x, y, cellSize, cellSize);
+
+                        // Wall Texture Pattern/Border
+                        ctx.strokeStyle = '#334155';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(x + 2, y + 2, cellSize - 4, cellSize - 4);
+                    } else { // Floor Path
+                        ctx.fillStyle = (r + c) % 2 === 0 ? '#0f172a' : '#111827';
+                        ctx.fillRect(x, y, cellSize, cellSize);
+
+                        // Subtle grid lines
+                        ctx.strokeStyle = '#1e293b';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(x, y, cellSize, cellSize);
+                    }
+
+                    // Start Cell Indicator
+                    if (r === startPos.r && c === startPos.c) {
+                        ctx.fillStyle = 'rgba(99, 102, 241, 0.2)';
+                        ctx.fillRect(x, y, cellSize, cellSize);
+                    }
+
+                    // Goal Cell Indicator (Finish Line Flag)
+                    if (cellType === 3) {
+                        ctx.fillStyle = 'rgba(16, 185, 129, 0.2)';
+                        ctx.fillRect(x, y, cellSize, cellSize);
+
+                        // Draw Finish Flag Icon
+                        ctx.font = `${cellSize * 0.5}px "Font Awesome 6 Free"`;
+                        ctx.fillStyle = '#10b981';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('🏁', x + cellSize / 2, y + cellSize / 2);
+                    }
+                }
+            }
+
+            // Draw Player Character
+            drawPlayer(cellSize);
+        }
+
+        function drawPlayer(cellSize) {
+            const px = playerPos.c * cellSize + cellSize / 2;
+            const py = playerPos.r * cellSize + cellSize / 2;
+            const radius = cellSize * 0.35;
+
+            ctx.save();
+            ctx.translate(px, py);
+
+            // Player Outer Aura Glow
+            const gradient = ctx.createRadialGradient(0, 0, radius * 0.2, 0, 0, radius * 1.3);
+            gradient.addColorStop(0, 'rgba(56, 189, 248, 0.8)');
+            gradient.addColorStop(1, 'rgba(56, 189, 248, 0)');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(0, 0, radius * 1.3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Player Circle Base
+            ctx.fillStyle = '#0284c7'; // Sky 600
+            ctx.strokeStyle = '#38bdf8'; // Sky 400
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(0, 0, radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Character Robot Center Core
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(0, 0, radius * 0.35, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Rotate Canvas for Dynamic Direction Arrow Pointer
+            // 0: NORTH (-90deg), 1: EAST (0deg), 2: SOUTH (90deg), 3: WEST (180deg)
+            const angleDeg = (playerDir - 1) * 90;
+            ctx.rotate((angleDeg * Math.PI) / 180);
+
+            // Draw Prominent Pointer Arrow Overlay
+            ctx.fillStyle = '#f59e0b'; // Amber 500 Arrow Color
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+
+            ctx.beginPath();
+            ctx.moveTo(radius * 0.9, 0);                 // Tip of arrow
+            ctx.lineTo(-radius * 0.5, -radius * 0.55);   // Left wing
+            ctx.lineTo(-radius * 0.2, 0);                // Inner center notch
+            ctx.lineTo(-radius * 0.5, radius * 0.55);    // Right wing
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        /*
+         * PROGRAM WORKSPACE MANAGEMENT
+         */
+        function addBlock(type) {
+            if (isExecuting) return;
+            programSequence.push(type);
+            renderWorkspace();
+            playSound('step');
+        }
+
+        function removeBlock(index) {
+            if (isExecuting) return;
+            programSequence.splice(index, 1);
+            renderWorkspace();
+            playSound('turn');
+        }
+
+        function clearWorkspace() {
+            if (isExecuting) return;
+            programSequence = [];
+            renderWorkspace();
+        }
+
+        function renderWorkspace() {
+            const workspace = document.getElementById('workspace');
+            const badge = document.getElementById('blockCountBadge');
+            badge.innerText = `${programSequence.length} balok`;
+
+            if (programSequence.length === 0) {
+                workspace.innerHTML = `
+                    <div class="h-full flex flex-col items-center justify-center text-slate-500 py-8 text-center">
+                        <i class="fa-solid fa-hand-pointer text-3xl mb-2 text-slate-600"></i>
+                        <p class="text-sm">Belum ada perintah.</p>
+                        <p class="text-xs text-slate-600 mt-1">Klik balok perintah di atas untuk menyusun program.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            workspace.innerHTML = '';
+            programSequence.forEach((type, index) => {
+                const config = BLOCK_TYPES[type];
+                const blockEl = document.createElement('div');
+                blockEl.id = `block-${index}`;
+                blockEl.className = `p-2.5 rounded-xl border ${config.colorClass} flex items-center justify-between transition-all duration-200`;
+
+                blockEl.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="w-6 h-6 rounded-lg ${config.badgeBg} text-white text-xs font-bold flex items-center justify-center">
+                            ${index + 1}
+                        </span>
+                        <i class="fa-solid ${config.icon} text-sm"></i>
+                        <span class="text-xs sm:text-sm font-bold">${config.label}</span>
+                    </div>
+                    <button onclick="removeBlock(${index})" class="text-slate-300 hover:text-rose-300 w-6 h-6 rounded hover:bg-black/20 flex items-center justify-center transition">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                `;
+                workspace.appendChild(blockEl);
+            });
+        }
+
+        /*
+         * PROGRAM EXECUTION LOGIC
+         */
+        function runProgram() {
+            if (programSequence.length === 0) {
+                alertModal("Urutan Kosong!", "Silakan tambahkan minimal satu balok perintah terlebih dahulu.");
+                return;
+            }
+
+            isExecuting = true;
+            currentExecIndex = 0;
+            document.getElementById('runBtn').disabled = true;
+            document.getElementById('runBtn').classList.add('opacity-50', 'cursor-not-allowed');
+            
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('stopBtn').classList.remove('text-slate-400', 'cursor-not-allowed');
+            document.getElementById('stopBtn').classList.add('bg-rose-600', 'text-white', 'hover:bg-rose-500');
+
+            executeNextStep();
+        }
+
+        function stopProgram() {
+            isExecuting = false;
+            if (executionTimer) clearTimeout(executionTimer);
+
+            document.getElementById('runBtn').disabled = false;
+            document.getElementById('runBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('stopBtn').className = "py-3.5 px-4 bg-slate-700 text-slate-400 font-bold rounded-xl flex items-center justify-center gap-2 text-base transition cursor-not-allowed";
+
+            // Remove execution highlight class
+            document.querySelectorAll('#workspace > div').forEach(el => el.classList.remove('executing-block'));
+        }
+
+        function resetMaze() {
+            stopProgram();
+            loadLevel(currentLevelIdx, false); // Keep current blocks on manual reset
+        }
+
+        // Helper functions to check maze path relative to current player orientation
+        function isWallInDirection(dir) {
+            const offset = DIR_OFFSETS[dir];
+            const targetR = playerPos.r + offset.r;
+            const targetC = playerPos.c + offset.c;
+
+            // Check grid bounds
+            if (targetR < 0 || targetR >= gridSize || targetC < 0 || targetC >= gridSize) {
+                return true; // Out of bounds is treated as wall
+            }
+
+            return mapGrid[targetR][targetC] === 1;
+        }
+
+        function executeNextStep() {
+            if (!isExecuting) return;
+
+            // Loop checking: if end of sequence reached and loop box checked, loop back!
+            if (currentExecIndex >= programSequence.length) {
+                const isLoopEnabled = document.getElementById('loopCheckbox').checked;
+                if (isLoopEnabled) {
+                    currentExecIndex = 0;
+                } else {
+                    stopProgram();
+                    // Check if player failed to reach finish
+                    if (playerPos.r !== goalPos.r || playerPos.c !== goalPos.c) {
+                        showModal('failureModal');
+                        document.getElementById('failureMessage').innerText = "Program selesai, namun karakter belum mencapai titik Finish (🏁). Coba gunakan opsi 'Ulangi Otomatis' atau perbaiki balok perintah.";
+                    }
+                    return;
+                }
+            }
+
+            // Highlight currently executing block
+            document.querySelectorAll('#workspace > div').forEach((el, idx) => {
+                if (idx === currentExecIndex) el.classList.add('executing-block');
+                else el.classList.remove('executing-block');
+            });
+
+            const command = programSequence[currentExecIndex];
+            currentExecIndex++;
+
+            const delay = 900 - parseInt(document.getElementById('speedSlider').value);
+
+            // Execute Instruction Logic
+            let stepDelay = delay;
+
+            switch (command) {
+                case 'MOVE':
+                    moveForward();
+                    break;
+                case 'TURN_LEFT':
+                    playerDir = (playerDir + 3) % 4; // Turn Left (counter-clockwise)
+                    updateDirectionUI();
+                    playSound('turn');
+                    drawMaze();
+                    break;
+                case 'TURN_RIGHT':
+                    playerDir = (playerDir + 1) % 4; // Turn Right (clockwise)
+                    updateDirectionUI();
+                    playSound('turn');
+                    drawMaze();
+                    break;
+                case 'IF_LEFT_PATH':
+                    // Conditional: Check if left path is clear (NOT wall)
+                    const leftDir = (playerDir + 3) % 4;
+                    if (!isWallInDirection(leftDir)) {
+                        playerDir = leftDir;
+                        updateDirectionUI();
+                        playSound('turn');
+                        drawMaze();
+                    }
+                    break;
+                case 'IF_RIGHT_PATH':
+                    // Conditional: Check if right path is clear (NOT wall)
+                    const rightDir = (playerDir + 1) % 4;
+                    if (!isWallInDirection(rightDir)) {
+                        playerDir = rightDir;
+                        updateDirectionUI();
+                        playSound('turn');
+                        drawMaze();
+                    }
+                    break;
+                case 'IF_WALL_AHEAD':
+                    // Conditional: Check if front path has wall
+                    if (isWallInDirection(playerDir)) {
+                        playerDir = (playerDir + 1) % 4; // Auto turn right
+                        updateDirectionUI();
+                        playSound('turn');
+                        drawMaze();
+                    }
+                    break;
+            }
+
+            // Check Win / Lose after movement step
+            if (playerPos.r === goalPos.r && playerPos.c === goalPos.c) {
+                stopProgram();
+                playSound('win');
+                document.getElementById('victoryMessage').innerText = `Luar biasa! Karakter berhasil sampai ke Finish dalam ${stepsTaken} langkah!`;
+                showModal('victoryModal');
+                return;
+            }
+
+            // Continue Execution Loop
+            executionTimer = setTimeout(executeNextStep, stepDelay);
+        }
+
+        function moveForward() {
+            const offset = DIR_OFFSETS[playerDir];
+            const nextR = playerPos.r + offset.r;
+            const nextC = playerPos.c + offset.c;
+
+            // Wall Collision Test
+            if (nextR < 0 || nextR >= gridSize || nextC < 0 || nextC >= gridSize || mapGrid[nextR][nextC] === 1) {
+                playSound('crash');
+                stopProgram();
+                document.getElementById('failureMessage').innerText = "Aduh! Karakter menabrak tembok labirin.";
+                showModal('failureModal');
+                return;
+            }
+
+            // Valid Move
+            playerPos.r = nextR;
+            playerPos.c = nextC;
+            stepsTaken++;
+            updateStepCounter();
+            playSound('step');
+            drawMaze();
+        }
+
+        function nextLevel() {
+            closeModal('victoryModal');
+            if (currentLevelIdx < LEVELS.length - 1) {
+                loadLevel(currentLevelIdx + 1, true); // Automatically clear block workspace when moving to next level
+            } else {
+                alertModal("Selamat! 🏆", "Kamu telah menyelesaikan semua level Labirin Bersyarat!");
+            }
+        }
+
+        /*
+         * MODAL DIALOG HANDLERS
+         */
+        function showModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function openHelpModal() {
+            showModal('helpModal');
+        }
+
+        function alertModal(title, message) {
+            document.getElementById('failureMessage').innerText = `${title}: ${message}`;
+            showModal('failureModal');
+        }
+    </script>
+</body>
+</html>
