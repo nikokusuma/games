@@ -3,30 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Petualangan Logika & Pola - Kelas 4 SD</title>
+    <title>Petualangan Logika & Koding - Kelas 4 SD</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;700;800&display=swap');
         
         body {
             font-family: 'Nunito', sans-serif;
-            background-color: #f0fdf4;
+            background-color: #f0f9ff;
         }
 
-        h1, h2, h3, .font-fredoka {
+        h1, h2, h3, .font-heading {
             font-family: 'Fredoka', cursive;
         }
 
-        /* Print styles specific for A4 evaluation report */
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e0f2fe;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #0284c7;
+            border-radius: 10px;
+        }
+
+        /* Print A4 Layout Specific Styling */
         @media print {
-            @page {
-                size: A4 portrait;
-                margin: 1cm;
-            }
             body {
-                background: #ffffff !important;
-                color: #000000 !important;
+                background: white !important;
+                color: black !important;
             }
             .no-print {
                 display: none !important;
@@ -34,740 +44,543 @@
             .print-only {
                 display: block !important;
             }
-            .page-break {
-                page-break-before: always;
+            @page {
+                size: A4 portrait;
+                margin: 12mm;
             }
-            .a4-card {
-                border: 2px solid #15803d !important;
-                box-shadow: none !important;
+            .page-a4 {
                 width: 100% !important;
                 max-width: 100% !important;
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
                 margin: 0 !important;
-                padding: 1.2rem !important;
             }
-        }
-
-        .bounce-hover:hover {
-            transform: translateY(-3px);
-            transition: all 0.2s ease;
-        }
-
-        .pulse-slow {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .7; }
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between text-slate-800">
+<body class="min-h-screen text-slate-800 flex flex-col">
 
-    <!-- HEADER / NAVBAR -->
-    <header class="bg-emerald-600 text-white p-4 shadow-lg no-print">
-        <div class="max-w-5xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="bg-white text-emerald-600 p-2 rounded-xl text-2xl shadow-inner">
+    <!-- Header & Navigation -->
+    <header class="bg-indigo-600 text-white shadow-lg sticky top-0 z-50 no-print">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-amber-400 p-2 rounded-xl text-indigo-900 font-bold text-xl shadow-inner">
                     <i class="fa-solid fa-brain"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl md:text-2xl font-bold tracking-wide">Petualangan Logika & Pola</h1>
-                    <p class="text-xs text-emerald-100">Modul Pembelajaran Komputasional Kelas 4 SD</p>
+                    <h1 class="text-xl md:text-2xl font-bold tracking-wide">Petualangan Logika</h1>
+                    <p class="text-xs text-indigo-200">Media Pembelajaran Interactive Kelas 4 SD</p>
                 </div>
             </div>
-            <div class="flex items-center gap-4">
-                <div class="bg-emerald-700/80 px-4 py-2 rounded-xl border border-emerald-500/50 flex items-center gap-2">
-                    <i class="fa-solid fa-user-graduate text-yellow-300"></i>
-                    <span id="header-student-name" class="font-bold text-sm">Siswa SD</span>
+
+            <!-- Stats Bar -->
+            <div class="flex items-center space-x-4 bg-indigo-700/60 px-4 py-1.5 rounded-full border border-indigo-500">
+                <div class="flex items-center space-x-1">
+                    <i class="fa-solid fa-star text-amber-300"></i>
+                    <span id="global-score" class="font-bold text-lg">100</span>
+                </div>
+                <div class="h-4 w-px bg-indigo-400"></div>
+                <div class="flex items-center space-x-1 text-rose-300">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span id="global-errors" class="font-bold text-lg">0</span>
+                    <span class="text-xs">Salah</span>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- MAIN CONTENT AREA -->
-    <main class="max-w-5xl mx-auto w-full p-4 flex-grow">
+    <!-- Main Container -->
+    <main class="flex-grow max-w-6xl w-full mx-auto p-4 md:p-6 flex flex-col">
 
-        <!-- WELCOME & USER REGISTRATION SCREEN -->
-        <section id="screen-welcome" class="bg-white rounded-3xl p-6 md:p-10 shadow-xl border-4 border-emerald-200 text-center my-6">
-            <div class="max-w-lg mx-auto space-y-6">
-                <div class="inline-block p-4 bg-emerald-100 rounded-full text-emerald-600 text-5xl mb-2">
-                    <i class="fa-solid fa-rocket"></i>
-                </div>
-                <h2 class="text-3xl font-bold text-emerald-800">Selamat Datang, Detektif Logika!</h2>
-                <p class="text-slate-600 text-base">
-                    Selesaikan 3 tantangan seru: Menyusun Pola Simbol, Memprogram Labirin Kunci, dan Cari Kata Komputasional ACAR (Diacak Setiap Main).
-                </p>
-                
-                <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 text-left text-xs text-amber-900 flex items-center gap-2">
-                    <i class="fa-solid fa-triangle-exclamation text-amber-600 text-lg"></i>
-                    <span><b>Perhatian:</b> Setiap kesalahan jawaban atau instruksi yang salah akan mencatat <b>poin pengurangan skor</b> pada laporan evaluasi!</span>
-                </div>
-
-                <form id="form-start" onsubmit="startGame(event)" class="space-y-4 text-left bg-emerald-50 p-6 rounded-2xl border border-emerald-200">
-                    <div>
-                        <label class="block text-sm font-bold text-emerald-800 mb-1">Nama Lengkap Siswa:</label>
-                        <input type="text" id="input-name" required placeholder="Contoh: Budi Pratama" class="w-full px-4 py-3 rounded-xl border-2 border-emerald-300 focus:outline-none focus:border-emerald-600 font-semibold text-slate-800">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-emerald-800 mb-1">Kelas / No. Absen:</label>
-                        <input type="text" id="input-class" required placeholder="Contoh: 4A / 12" class="w-full px-4 py-3 rounded-xl border-2 border-emerald-300 focus:outline-none focus:border-emerald-600 font-semibold text-slate-800">
-                    </div>
-                    <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg bounce-hover text-lg flex items-center justify-center gap-2">
-                        Mulai Petualangan <i class="fa-solid fa-play"></i>
-                    </button>
-                </form>
-            </div>
-        </section>
-
-        <!-- PROGRESS BAR -->
-        <div id="game-progress" class="hidden mb-6 no-print">
-            <div class="flex justify-between items-center mb-2 font-bold text-sm text-emerald-800">
-                <span id="current-game-title">Game 1: Teka-Teki Pola Gambar</span>
-                <span>Progres Game: <span id="progress-step">1</span>/3</span>
-            </div>
-            <div class="w-full bg-slate-200 h-4 rounded-full overflow-hidden p-0.5">
-                <div id="progress-bar-fill" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 33%"></div>
-            </div>
-        </div>
-
-        <!-- GAME 1: TEKA-TEKI POLA GAMBAR (10 SOAL) -->
-        <section id="game-1" class="hidden bg-white rounded-3xl p-6 md:p-8 shadow-xl border-4 border-emerald-200">
-            <div class="bg-amber-50 border border-amber-200 p-4 rounded-2xl mb-6 flex items-start gap-3">
-                <i class="fa-solid fa-lightbulb text-amber-500 text-2xl mt-1"></i>
-                <div>
-                    <h3 class="font-bold text-amber-900">Tugas Game 1: Teka-Teki Pola Gambar & Simbol</h3>
-                    <p class="text-sm text-amber-800">Amati urutan simbol, angka, warna, atau huruf di bawah. Temukan polanya, lalu pilih simbol yang tepat untuk mengisi kotak bergambar tanda tanya (❓)! <br><span class="text-xs font-semibold text-rose-700">* Peringatan: Pilihan salah akan mencatat kesalahan & mengurangi skor (-5 poin).</span></p>
+        <!-- Student Info Input Modal / Header -->
+        <section id="student-bar" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-wrap items-center justify-between gap-4 no-print">
+            <div class="flex items-center space-x-3 w-full md:w-auto">
+                <i class="fa-solid fa-user-astronaut text-2xl text-indigo-500"></i>
+                <div class="flex-grow">
+                    <label class="block text-xs font-bold text-slate-400 uppercase">Nama Siswa:</label>
+                    <input type="text" id="student-name" value="Siswa Kelas 4" class="font-bold text-slate-700 border-b border-indigo-300 focus:outline-none focus:border-indigo-600 px-1 py-0.5 w-48" placeholder="Masukkan Nama...">
                 </div>
             </div>
 
-            <div class="text-center my-6">
-                <div class="flex justify-between items-center mb-2 px-2">
-                    <span class="text-xs font-bold text-slate-500">SOAL <span id="g1-question-num">1</span> DARI 10</span>
-                    <span class="text-xs font-bold text-rose-600 bg-rose-50 px-3 py-1 rounded-full border border-rose-200"><i class="fa-solid fa-circle-exclamation"></i> Kesalahan: <span id="g1-mistakes-counter">0</span></span>
-                </div>
-                
-                <!-- Pola Display Container -->
-                <div id="g1-pattern-container" class="flex flex-wrap items-center justify-center gap-2 md:gap-3 my-6 p-4 bg-slate-50 rounded-2xl border border-slate-200 min-h-[110px]">
-                    <!-- Standard Pattern elements injected here -->
-                </div>
-
-                <!-- Answer Options -->
-                <p class="font-bold text-slate-700 mb-4">Pilih simbol/jawaban selanjutnya yang benar:</p>
-                <div id="g1-options-container" class="flex flex-wrap justify-center gap-3">
-                    <!-- Option Buttons Injected here -->
-                </div>
-            </div>
-
-            <!-- Feedback Message -->
-            <div id="g1-feedback" class="hidden p-4 rounded-xl text-center font-bold mb-4"></div>
-
-            <div class="flex justify-end border-t pt-4">
-                <button id="g1-next-btn" onclick="nextGame1Question()" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-6 rounded-xl shadow bounce-hover">
-                    Lanjut <i class="fa-solid fa-arrow-right ml-1"></i>
+            <!-- Game Navigation Tabs -->
+            <div class="flex space-x-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+                <button onclick="switchTab('game1')" id="tab-game1" class="tab-btn px-4 py-2 rounded-xl text-sm font-bold flex items-center space-x-2 bg-indigo-600 text-white shadow-md transition-all">
+                    <i class="fa-solid fa-shapes"></i>
+                    <span>1. Teka-Teki Pola</span>
+                </button>
+                <button onclick="switchTab('game2')" id="tab-game2" class="tab-btn px-4 py-2 rounded-xl text-sm font-bold flex items-center space-x-2 bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">
+                    <i class="fa-solid fa-route"></i>
+                    <span>2. Labirin Bersyarat</span>
+                </button>
+                <button onclick="switchTab('game3')" id="tab-game3" class="tab-btn px-4 py-2 rounded-xl text-sm font-bold flex items-center space-x-2 bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">
+                    <i class="fa-solid fa-arrow-down-a-z"></i>
+                    <span>3. Cari Kata</span>
+                </button>
+                <button onclick="switchTab('eval')" id="tab-eval" class="tab-btn px-4 py-2 rounded-xl text-sm font-bold flex items-center space-x-2 bg-emerald-600 text-white hover:bg-emerald-700 shadow-md transition-all">
+                    <i class="fa-solid fa-file-invoice"></i>
+                    <span>Hasil & PDF</span>
                 </button>
             </div>
         </section>
 
-        <!-- GAME 2: LABIRIN BERSYARAT (LOGIC BLOCKS) -->
-        <section id="game-2" class="hidden bg-white rounded-3xl p-6 md:p-8 shadow-xl border-4 border-emerald-200">
-            <div class="bg-blue-50 border border-blue-200 p-4 rounded-2xl mb-6 flex items-start justify-between gap-3">
-                <div class="flex items-start gap-3">
-                    <i class="fa-solid fa-robot text-blue-500 text-2xl mt-1"></i>
-                    <div>
-                        <h3 class="font-bold text-blue-900">Tugas Game 2 (Logika Bercabang & Bersyarat):</h3>
-                        <p class="text-sm text-blue-800">Susun perintah agar Robot mengambil <b>Kunci (🔑)</b> dengan blok logika <code>JIKA di KUNCI ➔ Ambil</code> sebelum pergi ke <b>Pintu Keluar (🚪)</b>!</p>
+        <!-- ==================== GAME 1: TEKA TEKI POLA ==================== -->
+        <section id="sec-game1" class="game-section flex-grow flex flex-col">
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex-grow flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <span class="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Game 1: Abstraksi & Sekuens</span>
+                            <h2 class="text-2xl font-bold text-slate-800 mt-1">Teka-Teki Pola Gambar & Logika</h2>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-sm font-bold text-slate-400">Soal</span>
+                            <div class="text-xl font-black text-indigo-600"><span id="g1-current-lvl">1</span>/10</div>
+                        </div>
+                    </div>
+
+                    <p class="text-slate-600 mb-6 text-sm md:text-base">Perhatikan urutan simbol di bawah ini. Pilih simbol yang tepat untuk mengisi kotak kosong **[ ? ]** sesuai aturan pola!</p>
+
+                    <!-- Question Container -->
+                    <div class="bg-slate-50 border-2 border-dashed border-indigo-200 rounded-2xl p-6 mb-8 flex flex-wrap justify-center items-center gap-3 md:gap-4 min-h-[140px]" id="g1-pattern-container">
+                        <!-- Pola akan di-render lewat JS -->
+                    </div>
+
+                    <!-- Options Container -->
+                    <div class="max-w-md mx-auto">
+                        <p class="text-center font-bold text-slate-500 mb-3 text-xs uppercase tracking-wider">Pilih Jawabannya:</p>
+                        <div class="grid grid-cols-2 gap-4" id="g1-options-container">
+                            <!-- Tombol pilihan via JS -->
+                        </div>
                     </div>
                 </div>
-                <div class="flex flex-col items-end gap-1 flex-shrink-0">
-                    <div class="bg-rose-50 text-rose-700 font-bold text-xs px-3 py-1.5 rounded-full border border-rose-200">
-                        Percobaan Gagal: <span id="g2-mistakes-counter">0</span>
-                    </div>
-                    <button onclick="regenerateMaze()" class="text-blue-700 hover:text-blue-900 underline text-xs font-bold flex items-center gap-1 mt-1">
-                        <i class="fa-solid fa-rotate-right"></i> Acak Labirin
-                    </button>
+
+                <!-- Game 1 Footer Info -->
+                <div class="mt-8 pt-4 border-t border-slate-100 flex justify-between items-center text-sm text-slate-500">
+                    <span id="g1-hint" class="italic text-indigo-600 font-semibold"><i class="fa-solid fa-lightbulb mr-1"></i> Petunjuk: Amati perubahan bentuk atau angka!</span>
+                    <span id="g1-score-status" class="font-bold text-slate-700">Skor Pola: <span id="g1-score">0</span>/100</span>
                 </div>
             </div>
+        </section>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Maze Canvas / Grid Visualizer -->
-                <div class="bg-slate-100 p-4 rounded-2xl border border-slate-300 flex flex-col items-center justify-center">
-                    <div class="font-bold text-slate-700 mb-2">Area Labirin:</div>
-                    <div id="maze-grid" class="grid grid-cols-5 gap-1 bg-slate-300 p-2 rounded-xl">
-                        <!-- 5x5 Grid generated by JS -->
+        <!-- ==================== GAME 2: LABIRIN BERSYARAT ==================== -->
+        <section id="sec-game2" class="game-section hidden flex-grow flex flex-col">
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex-grow flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Game 2: Algoritma Bercabang (If-Then)</span>
+                        <h2 class="text-2xl font-bold text-slate-800 mt-1">Labirin Bersyarat</h2>
                     </div>
-                    <div class="flex gap-4 mt-3 text-xs font-semibold text-slate-600">
-                        <span class="flex items-center gap-1"><span class="text-xl">🤖</span> Robot</span>
-                        <span class="flex items-center gap-1"><span class="text-xl">🔑</span> Kunci</span>
-                        <span class="flex items-center gap-1"><span class="text-xl">🚪</span> Pintu</span>
-                        <span class="flex items-center gap-1"><span class="w-3 h-3 bg-slate-700 inline-block rounded"></span> Tembok</span>
-                    </div>
+                    <button onclick="resetMazeGame()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-xl transition-all flex items-center space-x-1">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        <span>Acak Labirin Baru</span>
+                    </button>
                 </div>
 
-                <!-- Logic Block Construction Area -->
-                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-300 flex flex-col justify-between">
-                    <div>
-                        <h4 class="font-bold text-slate-800 mb-2">Susun Blok Perintah (Algoritma):</h4>
-                        <p class="text-xs text-slate-500 mb-3">Klik tombol perintah untuk memasukkannya ke dalam urutan langkah robot.</p>
+                <p class="text-slate-600 mb-4 text-sm">Atur balok instruksi agar karakter **mengambil Kunci (<i class="fa-solid fa-key text-amber-500"></i>)** terlebih dahulu sebelum pergi menuju **Pintu Keluar (<i class="fa-solid fa-door-open text-emerald-600"></i>)**!</p>
 
-                        <!-- Available Blocks Buttons -->
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <button onclick="addLogicBlock('ATAS')" class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded-lg shadow flex items-center gap-1">
-                                <i class="fa-solid fa-arrow-up"></i> Ke Atas
-                            </button>
-                            <button onclick="addLogicBlock('BAWAH')" class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded-lg shadow flex items-center gap-1">
-                                <i class="fa-solid fa-arrow-down"></i> Ke Bawah
-                            </button>
-                            <button onclick="addLogicBlock('KIRI')" class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded-lg shadow flex items-center gap-1">
-                                <i class="fa-solid fa-arrow-left"></i> Ke Kiri
-                            </button>
-                            <button onclick="addLogicBlock('KANAN')" class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded-lg shadow flex items-center gap-1">
-                                <i class="fa-solid fa-arrow-right"></i> Ke Kanan
-                            </button>
-                            <button onclick="addLogicBlock('IF_KEY')" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold py-2 px-3 rounded-lg shadow flex items-center gap-1">
-                                <i class="fa-solid fa-key"></i> JIKA di KUNCI ➔ Ambil
-                            </button>
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+                    <!-- Maze Canvas / Display (5 Cols) -->
+                    <div class="lg:col-span-5 flex flex-col items-center justify-center bg-slate-900 rounded-2xl p-4 shadow-inner relative min-h-[320px]">
+                        <div id="maze-grid" class="grid grid-cols-5 gap-1.5 p-2 bg-slate-800 rounded-xl border border-slate-700">
+                            <!-- Grid 5x5 di-generate via JS -->
                         </div>
+                        <div class="mt-3 text-xs text-slate-400 flex items-center space-x-4">
+                            <span><i class="fa-solid fa-robot text-sky-400"></i> Robot (+ Panah Arah)</span>
+                            <span><i class="fa-solid fa-key text-amber-400"></i> Kunci</span>
+                            <span><i class="fa-solid fa-door-closed text-emerald-400"></i> Pintu</span>
+                            <span><i class="fa-solid fa-square text-slate-700"></i> Tembok</span>
+                        </div>
+                    </div>
 
-                        <!-- Sequence Box -->
-                        <div class="bg-white p-3 rounded-xl border-2 border-dashed border-slate-300 min-h-[160px] max-h-[200px] overflow-y-auto space-y-2" id="block-sequence-container">
-                            <div class="text-xs text-slate-400 text-center py-6" id="empty-block-msg">
-                                Belum ada perintah. Klik tombol di atas.
+                    <!-- Panel Balok Kode Instruksi & Area Kerja (7 Cols) -->
+                    <div class="lg:col-span-7 flex flex-col justify-between space-y-4">
+                        <div class="space-y-3">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Pilih Balok Instruksi:</h3>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="addBlock('MOVE')" class="bg-sky-500 hover:bg-sky-600 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center space-x-2 shadow-sm transition-all text-left">
+                                    <i class="fa-solid fa-arrow-up text-sm"></i>
+                                    <span>Maju 1 Langkah</span>
+                                </button>
+                                <button onclick="addBlock('TURN_LEFT')" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center space-x-2 shadow-sm transition-all text-left">
+                                    <i class="fa-solid fa-rotate-left text-sm"></i>
+                                    <span>Belok Kiri</span>
+                                </button>
+                                <button onclick="addBlock('TURN_RIGHT')" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center space-x-2 shadow-sm transition-all text-left">
+                                    <i class="fa-solid fa-rotate-right text-sm"></i>
+                                    <span>Belok Kanan</span>
+                                </button>
+                                <button onclick="addBlock('IF_KEY')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center space-x-2 shadow-sm transition-all text-left border-2 border-amber-300">
+                                    <i class="fa-solid fa-code-branch text-sm"></i>
+                                    <span>JIKA Ada Kunci MAKA Ambil</span>
+                                </button>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="mt-4 flex gap-2">
-                        <button onclick="runMazeProgram()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-play"></i> Jalankan Program
-                        </button>
-                        <button onclick="resetMazeProgram()" class="bg-slate-400 hover:bg-slate-500 text-white font-bold py-2 px-4 rounded-xl shadow">
-                            Reset
+                        <!-- Workspace area -->
+                        <div class="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-3 flex-grow flex flex-col justify-between min-h-[180px]">
+                            <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-200">
+                                <span class="text-xs font-bold text-slate-500 uppercase"><i class="fa-solid fa-list-ol mr-1"></i> Area Program:</span>
+                                <button onclick="clearWorkspace()" class="text-xs text-rose-500 hover:text-rose-700 font-bold flex items-center space-x-1">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                    <span>Hapus Semua</span>
+                                </button>
+                            </div>
+
+                            <div id="blocks-list" class="space-y-2 overflow-y-auto max-h-[220px] pr-1">
+                                <!-- Block items inserted here -->
+                            </div>
+                            <div id="empty-workspace-msg" class="text-center py-8 text-slate-400 text-xs italic">
+                                Klik balok instruksi di atas untuk mulai menyusun algoritma!
+                            </div>
+                        </div>
+
+                        <!-- Action Button -->
+                        <button id="btn-run-maze" onclick="runMazeProgram()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 w-full text-sm">
+                            <i class="fa-solid fa-play"></i>
+                            <span>Jalankan Program Robot</span>
                         </button>
                     </div>
                 </div>
-            </div>
-
-            <!-- Feedback Message -->
-            <div id="g2-feedback" class="hidden p-4 rounded-xl text-center font-bold mt-4"></div>
-
-            <div class="flex justify-end border-t pt-4 mt-4">
-                <button id="g2-next-btn" onclick="finishGame2()" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-xl shadow bounce-hover">
-                    Lanjut Ke Game 3 <i class="fa-solid fa-arrow-right ml-1"></i>
-                </button>
             </div>
         </section>
 
-        <!-- GAME 3: CARI KATA BERPIKIR KOMPUTASIONAL (RANDOMIZED WORD SEARCH) -->
-        <section id="game-3" class="hidden bg-white rounded-3xl p-6 md:p-8 shadow-xl border-4 border-emerald-200">
-            <div class="bg-purple-50 border border-purple-200 p-4 rounded-2xl mb-6 flex items-start gap-3">
-                <i class="fa-solid fa-shuffle text-purple-600 text-2xl mt-1"></i>
-                <div>
-                    <h3 class="font-bold text-purple-900">Tugas Game 3 (Cari Kata Acak Komputasional):</h3>
-                    <p class="text-sm text-purple-800">Grid kata ini <b>diacak secara otomatis setiap kali dimainkan!</b> Temukan 5 kata kunci secara <b>mendatar (horizontal)</b> atau <b>menurun (vertikal)</b>: <b>POLA, KODING, ABSTRAKSI, LOGARITMA, DEKOMPOSISI</b>.</p>
+        <!-- ==================== GAME 3: CARI KATA ==================== -->
+        <section id="sec-game3" class="game-section hidden flex-grow flex flex-col">
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex-grow flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <span class="bg-purple-100 text-purple-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Game 3: Vocab Informatika</span>
+                        <h2 class="text-2xl font-bold text-slate-800 mt-1">Mencari Kata Berpikir Komputasional</h2>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="text-right">
+                            <span class="text-xs text-slate-400 block font-bold">Waktu WSC</span>
+                            <span id="word-timer" class="font-mono text-indigo-600 font-bold text-lg">00:00</span>
+                        </div>
+                        <button onclick="initWordSearch()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-xl transition-all">
+                            <i class="fa-solid fa-shuffle mr-1"></i> Acak Kata
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-                
-                <!-- Target Words List & Stats -->
-                <div class="bg-purple-50/80 p-4 rounded-2xl border border-purple-200">
-                    <div class="flex justify-between items-center border-b border-purple-200 pb-2 mb-3">
-                        <span class="font-bold text-sm text-purple-900">Daftar Kata (5):</span>
-                        <div class="bg-purple-200 text-purple-900 text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1">
-                            <i class="fa-regular fa-clock"></i> <span id="g3-timer">00:00</span>
+                <p class="text-slate-600 mb-4 text-sm">Cari **5 Kata Kunci** dalam matriks huruf! Tarik mouse atau geser layar (drag) dari huruf awal ke huruf akhir kata secara mendatar atau menurun.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                    <!-- Word Grid (8 Cols) -->
+                    <div class="md:col-span-8 flex justify-center bg-slate-50 p-4 rounded-2xl border border-slate-200 overflow-x-auto">
+                        <div id="word-search-grid" class="grid gap-1 select-none touch-none">
+                            <!-- Grid Kata di-generate via JS -->
                         </div>
                     </div>
 
-                    <ul id="word-list-container" class="space-y-2 text-sm font-bold">
-                        <!-- Word badges generated dynamically -->
-                    </ul>
-
-                    <div class="mt-4 pt-3 border-t border-purple-200 flex justify-between items-center text-xs">
-                        <span class="font-bold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">Salah Pilih: <span id="g3-mistakes-counter">0</span></span>
-                        <button onclick="regenerateGame3Grid()" class="text-purple-700 hover:text-purple-900 underline font-bold flex items-center gap-1">
-                            <i class="fa-solid fa-rotate-right"></i> Acak Ulang Grid
-                        </button>
-                    </div>
-
-                    <div class="mt-3 text-xs text-purple-700 bg-purple-100/60 p-2.5 rounded-xl border border-purple-200">
-                        <i class="fa-solid fa-circle-info mr-1"></i> Cara Bermain: Klik <b>huruf pertama</b> lalu klik <b>huruf terakhir</b> dari kata yang kamu temukan!
-                    </div>
-                </div>
-
-                <!-- Word Search Grid Container -->
-                <div class="md:col-span-2 flex flex-col items-center">
-                    <div id="word-search-grid" class="grid grid-cols-11 gap-1 bg-purple-900 p-2.5 rounded-2xl shadow-inner select-none max-w-full overflow-x-auto">
-                        <!-- 11x11 Grid cells generated dynamically by JS -->
-                    </div>
-                    <div id="word-selection-hint" class="text-xs font-bold text-slate-600 mt-3 min-h-[20px] bg-slate-100 px-4 py-1.5 rounded-full border border-slate-200">
-                        Klik huruf awal dan akhir kata.
+                    <!-- Target Words Checklist (4 Cols) -->
+                    <div class="md:col-span-4 bg-purple-50/50 p-4 rounded-2xl border border-purple-100">
+                        <h3 class="font-bold text-purple-900 text-sm uppercase mb-3 flex items-center space-x-2">
+                            <i class="fa-solid fa-list-check"></i>
+                            <span>Daftar Kata (5):</span>
+                        </h3>
+                        <ul id="target-words-list" class="space-y-2">
+                            <!-- List Kata via JS -->
+                        </ul>
+                        <div class="mt-4 p-3 bg-white rounded-xl text-xs text-slate-500 border border-purple-100">
+                            <i class="fa-solid fa-circle-info text-purple-500 mr-1"></i> Total kata ditemukan: <span id="words-found-count" class="font-bold text-purple-700">0</span>/5
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Feedback Message -->
-            <div id="g3-feedback" class="hidden p-4 rounded-xl text-center font-bold mt-4"></div>
-
-            <div class="flex justify-end border-t pt-4 mt-6">
-                <button id="g3-next-btn" onclick="finishAllGames()" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-xl shadow bounce-hover text-lg">
-                    Lihat Hasil & Catatan Evaluasi <i class="fa-solid fa-award ml-1"></i>
-                </button>
             </div>
         </section>
 
-        <!-- EVALUATION & PRINTABLE REPORT SCREEN (A4 FIT) -->
-        <section id="screen-report" class="hidden my-4">
-            
-            <!-- PRINT BUTTON (HIDDEN DURING PRINTING) -->
-            <div class="no-print mb-6 flex justify-between items-center bg-white p-4 rounded-2xl shadow-md border border-slate-200">
+        <!-- ==================== EVALUASI & CETAK PDF ==================== -->
+        <section id="sec-eval" class="game-section hidden flex-grow flex flex-col">
+            <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 page-a4 flex-grow flex flex-col justify-between">
                 <div>
-                    <h3 class="font-bold text-slate-800">Selamat! Seluruh Permainan Selesai</h3>
-                    <p class="text-xs text-slate-500">Cetak dokumen ini untuk diserahkan kepada Guru atau Orang Tua.</p>
-                </div>
-                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg flex items-center gap-2 bounce-hover">
-                    <i class="fa-solid fa-print text-lg"></i> Cetak Hasil Evaluasi (PDF A4)
-                </button>
-            </div>
+                    <!-- Print Header -->
+                    <div class="border-b-2 border-indigo-600 pb-4 mb-6 flex justify-between items-end">
+                        <div>
+                            <h2 class="text-2xl font-bold text-indigo-900 font-heading">LEMBAR EVALUASI BERPIKIR KOMPUTASIONAL</h2>
+                            <p class="text-xs text-slate-500">Mata Pelajaran Informatika / Logika - Kelas 4 SD</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs text-slate-400 block uppercase font-bold">Tanggal Pembelajaran</span>
+                            <span id="eval-date" class="text-xs font-bold text-slate-700">07/09/2026</span>
+                        </div>
+                    </div>
 
-            <!-- REPORT CARD (DESIGNED FOR EXACT A4 PRINT) -->
-            <div class="a4-card bg-white p-6 md:p-8 rounded-3xl shadow-2xl border-4 border-emerald-600 max-w-4xl mx-auto">
-                
-                <!-- REPORT HEADER -->
-                <div class="flex justify-between items-center border-b-2 border-emerald-600 pb-3 mb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="bg-emerald-600 text-white p-3 rounded-2xl text-2xl">
-                            <i class="fa-solid fa-graduation-cap"></i>
+                    <!-- Student Profile & Score Summary Cards -->
+                    <div class="grid grid-cols-3 gap-4 mb-6">
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                            <span class="text-[10px] uppercase font-bold text-slate-400 block">Nama Peserta Didik</span>
+                            <span id="eval-student-name" class="font-bold text-slate-800 text-base">Siswa Kelas 4</span>
+                        </div>
+                        <div class="bg-indigo-50 p-3 rounded-xl border border-indigo-100">
+                            <span class="text-[10px] uppercase font-bold text-indigo-400 block">Nilai Akhir (Skor)</span>
+                            <span id="eval-final-score" class="font-black text-indigo-600 text-2xl">100</span>
+                        </div>
+                        <div class="bg-rose-50 p-3 rounded-xl border border-rose-100">
+                            <span class="text-[10px] uppercase font-bold text-rose-400 block">Total Kesalahan</span>
+                            <span id="eval-total-errors" class="font-black text-rose-600 text-2xl">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Detail Per Game Table -->
+                    <h3 class="font-bold text-slate-800 text-sm mb-3 font-heading uppercase tracking-wide">Rincian Capaian Indikator Game:</h3>
+                    <div class="overflow-x-auto mb-6">
+                        <table class="w-full text-xs text-left border-collapse border border-slate-200">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-700 uppercase font-bold">
+                                    <th class="p-2.5 border border-slate-200">Modul Permainan</th>
+                                    <th class="p-2.5 border border-slate-200">Indikator Keberhasilan</th>
+                                    <th class="p-2.5 border border-slate-200 text-center">Status</th>
+                                    <th class="p-2.5 border border-slate-200 text-center">Kesalahan</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200 text-slate-600">
+                                <tr>
+                                    <td class="p-2.5 border border-slate-200 font-bold">1. Teka-Teki Pola Gambar</td>
+                                    <td class="p-2.5 border border-slate-200">Menyelesaikan sekuens gambar, warna, angka, & kombinasi 3 pola.</td>
+                                    <td id="eval-g1-status" class="p-2.5 border border-slate-200 text-center font-bold text-amber-600">Belum Selesai</td>
+                                    <td id="eval-g1-err" class="p-2.5 border border-slate-200 text-center">0 kali</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 border border-slate-200 font-bold">2. Labirin Bersyarat</td>
+                                    <td class="p-2.5 border border-slate-200">Menyusun algoritma bercabang (kondisi mengambil kunci sebelum ke pintu).</td>
+                                    <td id="eval-g2-status" class="p-2.5 border border-slate-200 text-center font-bold text-amber-600">Belum Selesai</td>
+                                    <td id="eval-g2-err" class="p-2.5 border border-slate-200 text-center">0 kali</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 border border-slate-200 font-bold">3. Pencarian Kata Vocab</td>
+                                    <td class="p-2.5 border border-slate-200">Menemukan 5 kata konsep berpikirkomputasional pada grid acak.</td>
+                                    <td id="eval-g3-status" class="p-2.5 border border-slate-200 text-center font-bold text-amber-600">Belum Selesai</td>
+                                    <td id="eval-g3-err" class="p-2.5 border border-slate-200 text-center">0 kali</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Teacher / Parent Feedback Box -->
+                    <div class="border border-slate-200 rounded-xl p-4 bg-slate-50 mb-6">
+                        <h4 class="font-bold text-xs uppercase text-slate-500 mb-1">Catatan Evaluasi / Umpan Balik Guru:</h4>
+                        <p id="eval-notes" class="text-xs text-slate-700 italic">Anak menunjukkan pemahaman mendasar mengenai pola abstrak dan eksekusi instruksi bersyarat.</p>
+                    </div>
+                </div>
+
+                <!-- Print Footer / Signatures -->
+                <div>
+                    <div class="grid grid-cols-2 gap-8 text-center text-xs text-slate-600 pt-4 mt-4 border-t border-slate-200">
+                        <div>
+                            <p class="mb-12">Orang Tua / Wali Siswa</p>
+                            <p class="font-bold border-t border-slate-300 pt-1 w-36 mx-auto">( .................................... )</p>
                         </div>
                         <div>
-                            <h2 class="text-xl md:text-2xl font-bold text-emerald-900 uppercase tracking-wide">Laporan Evaluasi Pembelajaran</h2>
-                            <p class="text-xs text-slate-600 font-semibold">Berpikir Komputasional, Logika Bercabang & Pola • Kelas 4 SD</p>
+                            <p class="mb-12">Guru Kelas / Pendamping</p>
+                            <p class="font-bold border-t border-slate-300 pt-1 w-36 mx-auto">( .................................... )</p>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <span class="inline-block bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full border border-emerald-300">TANGGAL: <span id="report-date">--/--/----</span></span>
+
+                    <!-- Print Action Button (Hidden on Print) -->
+                    <div class="mt-6 text-center no-print">
+                        <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-3 rounded-xl shadow-lg transition-all flex items-center space-x-2 mx-auto">
+                            <i class="fa-solid fa-print"></i>
+                            <span>Cetak PDF Laporan A4 (1 Halaman)</span>
+                        </button>
                     </div>
                 </div>
-
-                <!-- STUDENT INFO & OVERALL SCORE -->
-                <div class="grid grid-cols-4 gap-3 mb-4 bg-emerald-50/70 p-4 rounded-2xl border border-emerald-200">
-                    <div>
-                        <p class="text-xs font-bold text-slate-500">NAMA SISWA:</p>
-                        <p id="report-student-name" class="font-bold text-base text-slate-800">-</p>
-                    </div>
-                    <div>
-                        <p class="text-xs font-bold text-slate-500">KELAS / ABSEN:</p>
-                        <p id="report-student-class" class="font-bold text-base text-slate-800">-</p>
-                    </div>
-                    <div>
-                        <p class="text-xs font-bold text-slate-500">TOTAL KESALAHAN:</p>
-                        <p id="report-total-mistakes" class="font-bold text-base text-rose-600">0 Kesalahan</p>
-                    </div>
-                    <div class="text-center bg-white p-2 rounded-xl border border-emerald-300 shadow-sm">
-                        <p class="text-xs font-bold text-emerald-700">AKHIR SKOR:</p>
-                        <p id="report-total-score" class="font-fredoka text-2xl md:text-3xl font-bold text-emerald-600">0 / 100</p>
-                    </div>
-                </div>
-
-                <!-- INDIKATOR EVALUASI PER GAME -->
-                <h3 class="font-bold text-slate-800 text-sm mb-2 flex items-center gap-2">
-                    <i class="fa-solid fa-list-check text-emerald-600"></i> Rincian Indikator Keterampilan Logika & Catatan Kesalahan:
-                </h3>
-
-                <div class="space-y-2.5 mb-4">
-                    <!-- Indikator 1 -->
-                    <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 flex justify-between items-center text-xs">
-                        <div class="pr-3">
-                            <h4 class="font-bold text-slate-800 text-sm">Game 1: Teka-Teki Pola Gambar (10 Soal)</h4>
-                            <p class="text-slate-600">Mampu menggeneralisasi dan memprediksi pola bentuk, angka, warna, huruf, dan kombinasi variables.</p>
-                            <p class="text-rose-700 font-bold mt-0.5" id="report-g1-details">Kesalahan: 0 kali (-0 poin)</p>
-                        </div>
-                        <div class="text-right flex-shrink-0">
-                            <span id="score-g1" class="font-bold text-xs px-3 py-1.5 rounded-lg bg-emerald-200 text-emerald-900">0 / 100</span>
-                        </div>
-                    </div>
-
-                    <!-- Indikator 2 -->
-                    <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 flex justify-between items-center text-xs">
-                        <div class="pr-3">
-                            <h4 class="font-bold text-slate-800 text-sm">Game 2: Labirin Bersyarat (Logika Bercabang)</h4>
-                            <p class="text-slate-600">Menyusun algoritma sekuensial dan menerapkan blok percabangan logika (JIKA di kunci ➔ Ambil kunci).</p>
-                            <p class="text-rose-700 font-bold mt-0.5" id="report-g2-details">Percobaan Gagal: 0 kali (-0 poin)</p>
-                        </div>
-                        <div class="text-right flex-shrink-0">
-                            <span id="score-g2" class="font-bold text-xs px-3 py-1.5 rounded-lg bg-emerald-200 text-emerald-900">0 / 100</span>
-                        </div>
-                    </div>
-
-                    <!-- Indikator 3 -->
-                    <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 flex justify-between items-center text-xs">
-                        <div class="pr-3">
-                            <h4 class="font-bold text-slate-800 text-sm">Game 3: Cari Kata Komputasional Acak</h4>
-                            <p class="text-slate-600">Kecepatan & ketelitian menemukan kata istilah komputasional dalam grid acak. <span id="report-g3-time" class="font-semibold text-purple-700"></span></p>
-                            <p class="text-rose-700 font-bold mt-0.5" id="report-g3-details">Salah Pilih Kata: 0 kali (-0 poin)</p>
-                        </div>
-                        <div class="text-right flex-shrink-0">
-                            <span id="score-g3" class="font-bold text-xs px-3 py-1.5 rounded-lg bg-emerald-200 text-emerald-900">0 / 100</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- CATATAN EVALUASI KESALAHAN & PREDIKAT -->
-                <div class="grid grid-cols-2 gap-3 mb-4 text-xs">
-                    <div class="p-3.5 rounded-xl border border-emerald-300 bg-emerald-50/50">
-                        <h4 class="font-bold text-emerald-800 mb-1">PREDIKAT & CAPAIAN:</h4>
-                        <p id="report-predikat" class="font-bold text-emerald-700 text-sm">Sangat Baik (A)</p>
-                        <p id="report-catatan" class="text-slate-600 mt-1">Siswa telah memahami konsep pola berulang dan alur logika bersyarat dengan baik.</p>
-                    </div>
-                    <div class="p-3.5 rounded-xl border border-slate-300 bg-slate-50">
-                        <h4 class="font-bold text-slate-700 mb-1">ANALISIS KESALAHAN & REKOMENDASI:</h4>
-                        <p id="report-mistakes-summary" class="text-slate-600">Siswa menjawab dengan cermat tanpa banyak melakukan trial-error.</p>
-                    </div>
-                </div>
-
-                <!-- TANDA TANGAN SECTION (FOR A4 PRINT) -->
-                <div class="grid grid-cols-2 gap-8 text-center pt-2 border-t border-slate-300">
-                    <div>
-                        <p class="text-xs font-semibold text-slate-500 mb-10">Orang Tua / Wali Siswa</p>
-                        <p class="text-xs border-t border-slate-400 inline-block px-8 pt-1 text-slate-700 font-bold">( ............................................ )</p>
-                    </div>
-                    <div>
-                        <p class="text-xs font-semibold text-slate-500 mb-10">Guru Pendamping / Wali Kelas</p>
-                        <p class="text-xs border-t border-slate-400 inline-block px-8 pt-1 text-slate-700 font-bold">( ............................................ )</p>
-                    </div>
-                </div>
-
             </div>
         </section>
 
     </main>
 
-    <!-- FOOTER -->
-    <footer class="bg-slate-100 border-t border-slate-200 py-3 text-center text-xs text-slate-500 no-print">
-        Media Pembelajaran Interaktif Berpikir Komputasional - Kelas 4 SD
-    </footer>
-
-    <!-- GAME LOGIC SCRIPT -->
+    <!-- Global State Script & Logic -->
     <script>
-        // GLOBAL STATE
-        let studentData = {
-            name: '',
-            classInfo: '',
-            
-            // Score tracking
-            scoreG1: 100,
-            scoreG2: 100,
-            scoreG3: 100,
-            
-            // Mistake tracking
-            mistakesG1: 0,
-            mistakesG2: 0,
-            mistakesG3: 0,
-
-            g3SecondsTaken: 0,
-            date: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+        // ================= GLOBAL STATE =================
+        const state = {
+            score: 100,
+            totalErrors: 0,
+            gameErrors: { g1: 0, g2: 0, g3: 0 },
+            gameStatus: { g1: false, g2: false, g3: false }
         };
 
-        // --- NAVIGATION & GAME START ---
-        function startGame(e) {
-            e.preventDefault();
-            const nameInput = document.getElementById('input-name').value.trim();
-            const classInput = document.getElementById('input-class').value.trim();
+        // Date Set
+        document.getElementById('eval-date').innerText = new Date().toLocaleDateString('id-ID', {
+            day: '2-digit', month: '2-digit', year: 'numeric'
+        });
 
-            if (!nameInput || !classInput) return;
+        // Tab Switch Logic
+        function switchTab(tabId) {
+            document.querySelectorAll('.game-section').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
+                btn.classList.add('bg-slate-100', 'text-slate-600');
+            });
 
-            studentData.name = nameInput;
-            studentData.classInfo = classInput;
-
-            document.getElementById('header-student-name').innerText = nameInput;
-            document.getElementById('screen-welcome').classList.add('hidden');
-            document.getElementById('game-progress').classList.remove('hidden');
-            
-            // Show Game 1
-            document.getElementById('game-1').classList.remove('hidden');
-            initGame1();
-        }
-
-        function updateProgress(step, title) {
-            document.getElementById('progress-step').innerText = step;
-            document.getElementById('current-game-title').innerText = title;
-            const percentage = (step / 3) * 100;
-            document.getElementById('progress-bar-fill').style.width = percentage + '%';
-        }
-
-        // ==========================================
-        // GAME 1 LOGIC: TEKA-TEKI POLA (10 SOAL)
-        // ==========================================
-        const g1Questions = [
-            {
-                sequence: ['⭐', '🌙', '☀️', '⭐', '🌙', '?'],
-                correct: '☀️',
-                options: ['⭐', '🌙', '☀️', '☁️']
-            },
-            {
-                sequence: ['2', '4', '6', '8', '10', '?'],
-                correct: '12',
-                options: ['11', '12', '14', '16']
-            },
-            {
-                sequence: ['🔴', '🔴', '🔵', '🔵', '🔴', '?'],
-                correct: '🔴',
-                options: ['🔴', '🔵', '🟢', '🟡']
-            },
-            {
-                sequence: ['A', 'C', 'E', 'G', 'I', '?'],
-                correct: 'K',
-                options: ['J', 'K', 'L', 'M']
-            },
-            {
-                sequence: ['🔺1', '🟦2', '🟢3', '🔺4', '🟦5', '?'],
-                correct: '🟢6',
-                options: ['🔺6', '🟦6', '🟢6', '🟢7']
-            },
-            {
-                sequence: ['🔴⭐', '🔵🌙', '🟢☀️', '🔴⭐', '🔵🌙', '?'],
-                correct: '🟢☀️',
-                options: ['🔴⭐', '🔵🌙', '🟢☀️', '🟡⭐']
-            },
-            {
-                sequence: ['3', '6', '12', '24', '?'],
-                correct: '48',
-                options: ['30', '36', '48', '50']
-            },
-            {
-                sequence: ['A1', 'B2', 'C3', 'D4', '?'],
-                correct: 'E5',
-                options: ['E4', 'E5', 'F5', 'D5']
-            },
-            {
-                sequence: ['🔴🔺1', '🔵🟦2', '🟢⭐3', '🔴🔺4', '🔵🟦5', '?'],
-                correct: '🟢⭐6',
-                options: ['🔴🔺6', '🔵🟦6', '🟢⭐6', '🟢⭐7']
-            },
-            {
-                sequence: ['🔤', '🔢', '🎨', '🔤', '🔢', '?'],
-                correct: '🎨',
-                options: ['🔤', '🔢', '🎨', '🎵']
+            document.getElementById(`sec-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-slate-100', 'text-slate-600');
+                activeBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
             }
+
+            // Update Eval Name & Data dynamically
+            updateEvaluationData();
+        }
+
+        function registerError(gameKey) {
+            state.totalErrors++;
+            state.gameErrors[gameKey]++;
+            state.score = Math.max(0, state.score - 5); // Deduct 5 points per error
+            
+            document.getElementById('global-score').innerText = state.score;
+            document.getElementById('global-errors').innerText = state.totalErrors;
+        }
+
+        // ================= GAME 1: TEKA TEKI POLA =================
+        const g1Questions = [
+            // 1. Shapes
+            { pattern: ['⭐', '🌙', '☀️', '⭐', '🌙', '?'], answer: '☀️', options: ['☀️', '⭐', '🌙', '☁️'], hint: 'Pola berulang 3 gambar: Bintang, Bulan, Matahari' },
+            // 2. Colors / Emojis
+            { pattern: ['🔴', '🔵', '🔴', '🔵', '🔴', '?'], answer: '🔵', options: ['🔴', '🔵', '🟢', '🟡'], hint: 'Pola warna berselang-seling Merah dan Biru' },
+            // 3. Numbers
+            { pattern: ['2', '4', '6', '8', '10', '?'], answer: '12', options: ['11', '12', '14', '13'], hint: 'Pola angka loncat 2' },
+            // 4. Letters
+            { pattern: ['A', 'C', 'E', 'G', '?'], answer: 'I', options: ['H', 'I', 'J', 'F'], hint: 'Pola melompati 1 huruf dalam abjad' },
+            // 5. Shapes & Direction
+            { pattern: ['⬆️', '➡️', '⬇️', '⬅️', '⬆️', '?'], answer: '➡️', options: ['⬆️', '⬇️', '➡️', '↖️'], hint: 'Pola putaran searah jarum jam' },
+            // 6. Number Sequence Decrease
+            { pattern: ['20', '17', '14', '11', '?'], answer: '8', options: ['9', '8', '7', '10'], hint: 'Pola pengurangan 3 angka berturut-turut' },
+            // 7. Combination (Shape + Number)
+            { pattern: ['1⭐', '2🌙', '3⭐', '4🌙', '?'], answer: '5⭐', options: ['5⭐', '5🌙', '4⭐', '6⭐'], hint: 'Angka bertambah + Simbol bergantian' },
+            // 8. 3-Pattern Combination (Shape, Color, Count)
+            { pattern: ['🔴⬛', '🔵⬛⬛', '🔴⬛', '🔵⬛⬛', '?'], answer: '🔴⬛', options: ['🔴⬛', '🔵⬛', '🔵⬛⬛', '🔴⬛⬛'], hint: 'Perhatikan urutan warna dan jumlah kotak hitam!' },
+            // 9. Letter-Number Pairing
+            { pattern: ['A1', 'B2', 'C3', 'D4', '?'], answer: 'E5', options: ['E5', 'E4', 'F5', 'D5'], hint: 'Urutan abjad dan angka berjalan sejajar' },
+            // 10. Complex Abstrak Pattern
+            { pattern: ['🟢', '🟡', '🟡', '🟢', '🟡', '🟡', '🟢', '?'], answer: '🟡', options: ['🟢', '🟡', '🔴', '🔵'], hint: 'Pola 1 Hijau diikuti 2 Kuning!' }
         ];
 
         let g1CurrentIdx = 0;
-        let g1QuestionAnswered = false;
+        let g1CorrectCount = 0;
 
-        function initGame1() {
-            g1CurrentIdx = 0;
-            studentData.mistakesG1 = 0;
-            document.getElementById('g1-mistakes-counter').innerText = '0';
-            renderGame1Question();
-        }
-
-        function renderGame1Question() {
-            g1QuestionAnswered = false;
+        function loadG1Question() {
             const q = g1Questions[g1CurrentIdx];
-            document.getElementById('g1-question-num').innerText = g1CurrentIdx + 1;
-            
-            const patternContainer = document.getElementById('g1-pattern-container');
-            patternContainer.innerHTML = '';
+            document.getElementById('g1-current-lvl').innerText = g1CurrentIdx + 1;
+            document.getElementById('g1-hint').innerHTML = `<i class="fa-solid fa-lightbulb mr-1"></i> ${q.hint}`;
 
-            q.sequence.forEach(symbol => {
-                const box = document.createElement('div');
-                if (symbol === '?') {
-                    box.className = 'px-4 py-3 min-w-[56px] min-h-[56px] bg-amber-200 border-4 border-dashed border-amber-500 rounded-2xl flex items-center justify-center text-xl md:text-2xl font-bold text-amber-800 animate-pulse';
-                    box.innerText = '?';
+            const container = document.getElementById('g1-pattern-container');
+            container.innerHTML = '';
+
+            q.pattern.forEach(item => {
+                const el = document.createElement('div');
+                if (item === '?') {
+                    el.className = 'w-12 h-12 md:w-16 md:h-16 bg-amber-200 border-4 border-amber-400 rounded-2xl flex items-center justify-center font-black text-amber-800 text-2xl shadow-md animate-pulse';
+                    el.innerText = '?';
                 } else {
-                    box.className = 'px-4 py-3 min-w-[56px] min-h-[56px] bg-white border-2 border-slate-300 rounded-2xl flex items-center justify-center text-xl md:text-2xl font-bold shadow-sm text-slate-800';
-                    box.innerText = symbol;
+                    el.className = 'w-12 h-12 md:w-16 md:h-16 bg-white border-2 border-slate-200 rounded-2xl flex items-center justify-center font-bold text-slate-800 text-xl shadow-sm';
+                    el.innerText = item;
                 }
-                patternContainer.appendChild(box);
+                container.appendChild(el);
             });
 
-            const optionsContainer = document.getElementById('g1-options-container');
-            optionsContainer.innerHTML = '';
+            // Options
+            const optsContainer = document.getElementById('g1-options-container');
+            optsContainer.innerHTML = '';
+            
+            // Shuffle options
+            const shuffledOpts = [...q.options].sort(() => Math.random() - 0.5);
 
-            q.options.forEach(opt => {
+            shuffledOpts.forEach(opt => {
                 const btn = document.createElement('button');
-                btn.className = 'px-5 py-3 min-w-[64px] min-h-[56px] bg-emerald-50 hover:bg-emerald-100 border-2 border-emerald-400 rounded-2xl text-xl font-bold text-emerald-900 flex items-center justify-center shadow bounce-hover transition-all';
+                btn.className = 'bg-slate-100 hover:bg-indigo-50 border-2 border-slate-200 hover:border-indigo-400 text-slate-800 font-bold py-3 px-4 rounded-2xl text-xl shadow-sm transition-all flex items-center justify-center';
                 btn.innerText = opt;
-                btn.onclick = (e) => checkGame1Answer(opt, e.target);
-                optionsContainer.appendChild(btn);
+                btn.onclick = () => checkG1Answer(opt);
+                optsContainer.appendChild(btn);
+            });
+        }
+
+        function checkG1Answer(selected) {
+            const q = g1Questions[g1CurrentIdx];
+            if (selected === q.answer) {
+                g1CorrectCount++;
+                document.getElementById('g1-score').innerText = Math.round((g1CorrectCount / 10) * 100);
+                
+                if (g1CurrentIdx < g1Questions.length - 1) {
+                    g1CurrentIdx++;
+                    loadG1Question();
+                } else {
+                    state.gameStatus.g1 = true;
+                    showFeedbackModal('Luar Biasa! 🎉', 'Kamu berhasil menyelesaikan seluruh 10 Soal Teka-Teki Pola!');
+                }
+            } else {
+                registerError('g1');
+                showFeedbackModal('Kurang Tepat 😅', 'Coba perhatikan lagi petunjuk polanya ya!', false);
+            }
+        }
+
+        // ================= GAME 2: LABIRIN BERSYARAT =================
+        const MAZE_SIZE = 5;
+        let mazeGrid = []; // 0: Empty, 1: Wall, 'K': Key, 'E': Exit, 'P': Player
+        let playerPos = { r: 0, c: 0 };
+        let playerDir = 0; // 0: Right, 1: Down, 2: Left, 3: Up
+        let hasKey = false;
+        let programBlocks = [];
+
+        function generateSolvableMaze() {
+            // Generate basic empty grid with border walls or inner blocks
+            mazeGrid = Array(MAZE_SIZE).fill(null).map(() => Array(MAZE_SIZE).fill(0));
+            
+            playerPos = { r: 0, c: 0 };
+            playerDir = 0;
+            hasKey = false;
+
+            // Add simple random inner obstacles (walls) while keeping path clear
+            const obstacles = [
+                {r: 0, c: 2}, {r: 1, c: 4}, {r: 2, c: 1}, {r: 3, c: 3}
+            ];
+
+            // Randomly choose 2-3 obstacles
+            obstacles.sort(() => Math.random() - 0.5).slice(0, 3).forEach(o => {
+                mazeGrid[o.r][o.c] = 1;
             });
 
-            document.getElementById('g1-feedback').classList.add('hidden');
-            document.getElementById('g1-next-btn').classList.add('hidden');
-        }
+            // Set Key and Exit positions
+            mazeGrid[0][0] = 'P';
+            mazeGrid[2][4] = 'K';
+            mazeGrid[4][4] = 'E';
 
-        function checkGame1Answer(selected, btnElement) {
-            if (g1QuestionAnswered) return;
-
-            const q = g1Questions[g1CurrentIdx];
-            const feedbackEl = document.getElementById('g1-feedback');
-            feedbackEl.classList.remove('hidden');
-
-            if (selected === q.correct) {
-                g1QuestionAnswered = true;
-                feedbackEl.className = 'p-3 rounded-xl text-center font-bold mb-4 bg-emerald-100 text-emerald-800 border border-emerald-300';
-                feedbackEl.innerHTML = '<i class="fa-solid fa-circle-check text-xl mr-1"></i> Tepat Sekali! Kamu menemukan polanya.';
-
-                // Disable all option buttons
-                const btns = document.querySelectorAll('#g1-options-container button');
-                btns.forEach(b => b.disabled = true);
-                
-                document.getElementById('g1-next-btn').classList.remove('hidden');
-            } else {
-                // Record mistake!
-                studentData.mistakesG1++;
-                document.getElementById('g1-mistakes-counter').innerText = studentData.mistakesG1;
-
-                // Visual feedback for wrong attempt
-                btnElement.classList.remove('bg-emerald-50', 'hover:bg-emerald-100', 'border-emerald-400');
-                btnElement.classList.add('bg-rose-100', 'border-rose-500', 'text-rose-700');
-                btnElement.disabled = true;
-
-                feedbackEl.className = 'p-3 rounded-xl text-center font-bold mb-4 bg-rose-100 text-rose-800 border border-rose-300';
-                feedbackEl.innerHTML = `<i class="fa-solid fa-circle-xmark text-xl mr-1"></i> Jawaban ${selected} kurang tepat! (Kesalahan tercatat). Coba pilihan lain!`;
-            }
-        }
-
-        function nextGame1Question() {
-            g1CurrentIdx++;
-            if (g1CurrentIdx < g1Questions.length) {
-                renderGame1Question();
-            } else {
-                // Calculate G1 score: base 100 - (5 points deducted per mistake), min 30
-                studentData.scoreG1 = Math.max(30, 100 - (studentData.mistakesG1 * 5));
-
-                // Transition to Game 2
-                document.getElementById('game-1').classList.add('hidden');
-                document.getElementById('game-2').classList.remove('hidden');
-                updateProgress(2, 'Game 2: Labirin Bersyarat (Logika)');
-                initGame2();
-            }
-        }
-
-        // ==========================================
-        // GAME 2 LOGIC: LABIRIN BERSYARAT
-        // ==========================================
-        let mazeMap = [];
-        let robotStartPos = { x: 0, y: 0 };
-        let robotState = { x: 0, y: 0, dir: 1, hasKey: false };
-        let userLogicBlocks = [];
-
-        function generateRandomizedMaze() {
-            const rows = 5;
-            const cols = 5;
-            let grid = Array.from({ length: rows }, () => Array(cols).fill(0));
-            
-            robotStartPos = { x: 0, y: 0 };
-            
-            // Randomize Key and Door positions
-            let keyPos, doorPos;
-            do {
-                keyPos = { x: Math.floor(Math.random() * cols), y: Math.floor(Math.random() * rows) };
-            } while (keyPos.x === 0 && keyPos.y === 0);
-            
-            do {
-                doorPos = { x: Math.floor(Math.random() * cols), y: Math.floor(Math.random() * rows) };
-            } while ((doorPos.x === 0 && doorPos.y === 0) || (doorPos.x === keyPos.x && doorPos.y === keyPos.y));
-            
-            // Guarantee path: Robot Start -> Key -> Door
-            let pathCells = new Set();
-            pathCells.add(`${robotStartPos.y},${robotStartPos.x}`);
-            
-            // Step 1: Start -> Key
-            let curr = { ...robotStartPos };
-            while (curr.x !== keyPos.x || curr.y !== keyPos.y) {
-                let moves = [];
-                if (curr.x < keyPos.x) moves.push({ x: curr.x + 1, y: curr.y });
-                if (curr.x > keyPos.x) moves.push({ x: curr.x - 1, y: curr.y });
-                if (curr.y < keyPos.y) moves.push({ x: curr.y + 1, y: curr.y });
-                if (curr.y > keyPos.y) moves.push({ x: curr.y - 1, y: curr.y });
-                
-                let next = moves[Math.floor(Math.random() * moves.length)];
-                curr = next;
-                pathCells.add(`${curr.y},${curr.x}`);
-            }
-            
-            // Step 2: Key -> Door
-            curr = { ...keyPos };
-            while (curr.x !== doorPos.x || curr.y !== doorPos.y) {
-                let moves = [];
-                if (curr.x < doorPos.x) moves.push({ x: curr.x + 1, y: curr.y });
-                if (curr.x > doorPos.x) moves.push({ x: curr.x - 1, y: curr.y });
-                if (curr.y < doorPos.y) moves.push({ x: curr.y + 1, y: curr.y });
-                if (curr.y > doorPos.y) moves.push({ x: curr.y - 1, y: curr.y });
-                
-                let next = moves[Math.floor(Math.random() * moves.length)];
-                curr = next;
-                pathCells.add(`${curr.y},${curr.x}`);
-            }
-            
-            // Fill non-path cells with random walls (~35% chance)
-            for (let r = 0; r < rows; r++) {
-                for (let c = 0; c < cols; c++) {
-                    if (!pathCells.has(`${r},${c}`)) {
-                        grid[r][c] = Math.random() < 0.35 ? 1 : 0;
-                    } else {
-                        grid[r][c] = 0; // Open path guaranteed
-                    }
-                }
-            }
-            
-            grid[robotStartPos.y][robotStartPos.x] = 'R';
-            grid[keyPos.y][keyPos.x] = 'K';
-            grid[doorPos.y][doorPos.x] = 'D';
-            
-            mazeMap = grid;
-        }
-
-        function initGame2() {
-            userLogicBlocks = [];
-            studentData.mistakesG2 = 0;
-            document.getElementById('g2-mistakes-counter').innerText = '0';
-            generateRandomizedMaze();
-            resetMazeState();
-            renderUserBlocks();
-        }
-
-        function regenerateMaze() {
-            generateRandomizedMaze();
-            resetMazeProgram();
-        }
-
-        function resetMazeState() {
-            robotState = { x: robotStartPos.x, y: robotStartPos.y, dir: 1, hasKey: false };
             renderMaze();
-            document.getElementById('g2-feedback').classList.add('hidden');
-            document.getElementById('g2-next-btn').classList.add('hidden');
         }
 
         function renderMaze() {
             const gridEl = document.getElementById('maze-grid');
             gridEl.innerHTML = '';
 
-            for (let r = 0; r < 5; r++) {
-                for (let c = 0; c < 5; c++) {
+            for (let r = 0; r < MAZE_SIZE; r++) {
+                for (let c = 0; c < MAZE_SIZE; c++) {
                     const cell = document.createElement('div');
-                    cell.className = 'w-12 h-12 md:w-14 md:h-14 rounded-lg flex items-center justify-center text-xl md:text-2xl font-bold relative ';
+                    cell.className = 'w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center text-xl font-bold transition-all';
 
-                    if (r === robotState.y && c === robotState.x) {
-                        cell.classList.add('bg-blue-100', 'border-2', 'border-blue-500');
-                        cell.innerText = '🤖';
-                        if (robotState.hasKey) {
-                            const keyBadge = document.createElement('span');
-                            keyBadge.className = 'absolute top-0 right-0 text-xs';
-                            keyBadge.innerText = '🔑';
-                            cell.appendChild(keyBadge);
-                        }
-                    } else if (mazeMap[r][c] === 1) {
-                        cell.classList.add('bg-slate-700');
-                    } else if (mazeMap[r][c] === 'K' && !robotState.hasKey) {
-                        cell.classList.add('bg-amber-100', 'border', 'border-amber-300');
-                        cell.innerText = '🔑';
-                    } else if (mazeMap[r][c] === 'D') {
-                        cell.classList.add('bg-emerald-100', 'border', 'border-emerald-400');
-                        cell.innerText = '🚪';
+                    if (r === playerPos.r && c === playerPos.c) {
+                        cell.classList.add('bg-sky-500', 'text-white', 'shadow-md', 'ring-4', 'ring-sky-300', 'relative');
+                        // Indikator robot lengkap dengan panah penunjuk arah hadap
+                        const dirIcons = ['fa-arrow-right', 'fa-arrow-down', 'fa-arrow-left', 'fa-arrow-up'];
+                        cell.innerHTML = `
+                            <div class="relative flex items-center justify-center w-full h-full">
+                                <i class="fa-solid fa-robot text-xl"></i>
+                                <div class="absolute -top-1.5 -right-1.5 bg-amber-400 text-slate-900 text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-slate-900 shadow font-extrabold" title="Arah Robot">
+                                    <i class="fa-solid ${dirIcons[playerDir]}"></i>
+                                </div>
+                            </div>
+                        `;
+                    } else if (mazeGrid[r][c] === 1) {
+                        cell.classList.add('bg-slate-700', 'border', 'border-slate-600');
+                    } else if (r === 2 && c === 4 && !hasKey) {
+                        cell.classList.add('bg-amber-900/40', 'border', 'border-amber-500/50', 'text-amber-400');
+                        cell.innerHTML = `<i class="fa-solid fa-key animate-bounce"></i>`;
+                    } else if (r === 4 && c === 4) {
+                        cell.classList.add('bg-emerald-900/40', 'border', 'border-emerald-500/50', 'text-emerald-400');
+                        cell.innerHTML = hasKey ? `<i class="fa-solid fa-door-open"></i>` : `<i class="fa-solid fa-door-closed"></i>`;
                     } else {
-                        cell.classList.add('bg-white', 'border', 'border-slate-200');
+                        cell.classList.add('bg-slate-800/60', 'border', 'border-slate-700/50');
                     }
 
                     gridEl.appendChild(cell);
@@ -775,482 +588,468 @@
             }
         }
 
-        function addLogicBlock(type) {
-            userLogicBlocks.push(type);
-            renderUserBlocks();
+        function addBlock(type) {
+            programBlocks.push(type);
+            renderWorkspace();
         }
 
-        function removeLogicBlock(idx) {
-            userLogicBlocks.splice(idx, 1);
-            renderUserBlocks();
+        function clearWorkspace() {
+            programBlocks = [];
+            renderWorkspace();
         }
 
-        function renderUserBlocks() {
-            const container = document.getElementById('block-sequence-container');
-            container.innerHTML = '';
+        function renderWorkspace() {
+            const listEl = document.getElementById('blocks-list');
+            const emptyMsg = document.getElementById('empty-workspace-msg');
+            listEl.innerHTML = '';
 
-            if (userLogicBlocks.length === 0) {
-                container.innerHTML = `<div class="text-xs text-slate-400 text-center py-6" id="empty-block-msg">Belum ada perintah. Klik tombol di atas.</div>`;
-                return;
+            if (programBlocks.length === 0) {
+                emptyMsg.classList.remove('hidden');
+            } else {
+                emptyMsg.classList.add('hidden');
+                programBlocks.forEach((b, idx) => {
+                    const bEl = document.createElement('div');
+                    bEl.className = 'flex items-center justify-between p-2.5 rounded-xl font-bold text-xs shadow-sm text-white ';
+                    
+                    if (b === 'MOVE') {
+                        bEl.classList.add('bg-sky-500');
+                        bEl.innerHTML = `<span><i class="fa-solid fa-arrow-up mr-1.5"></i> Maju 1 Langkah</span>`;
+                    } else if (b === 'TURN_LEFT') {
+                        bEl.classList.add('bg-indigo-500');
+                        bEl.innerHTML = `<span><i class="fa-solid fa-rotate-left mr-1.5"></i> Belok Kiri</span>`;
+                    } else if (b === 'TURN_RIGHT') {
+                        bEl.classList.add('bg-indigo-500');
+                        bEl.innerHTML = `<span><i class="fa-solid fa-rotate-right mr-1.5"></i> Belok Kanan</span>`;
+                    } else if (b === 'IF_KEY') {
+                        bEl.classList.add('bg-amber-500', 'border-2', 'border-amber-300');
+                        bEl.innerHTML = `<span><i class="fa-solid fa-code-branch mr-1.5"></i> JIKA Berada di Kunci MAKA Ambil Kunci</span>`;
+                    }
+
+                    const delBtn = document.createElement('button');
+                    delBtn.className = 'text-white/80 hover:text-white ml-2';
+                    delBtn.innerHTML = `<i class="fa-solid fa-xmark"></i>`;
+                    delBtn.onclick = () => {
+                        programBlocks.splice(idx, 1);
+                        renderWorkspace();
+                    };
+
+                    bEl.appendChild(delBtn);
+                    listEl.appendChild(bEl);
+                });
             }
-
-            userLogicBlocks.forEach((block, idx) => {
-                const el = document.createElement('div');
-                el.className = 'flex items-center justify-between p-2 rounded-lg text-xs font-bold text-white shadow-sm';
-                
-                if (block === 'ATAS') {
-                    el.classList.add('bg-blue-500');
-                    el.innerHTML = `<span><i class="fa-solid fa-arrow-up mr-1"></i> Ke Atas</span>`;
-                } else if (block === 'BAWAH') {
-                    el.classList.add('bg-blue-500');
-                    el.innerHTML = `<span><i class="fa-solid fa-arrow-down mr-1"></i> Ke Bawah</span>`;
-                } else if (block === 'KIRI') {
-                    el.classList.add('bg-blue-500');
-                    el.innerHTML = `<span><i class="fa-solid fa-arrow-left mr-1"></i> Ke Kiri</span>`;
-                } else if (block === 'KANAN') {
-                    el.classList.add('bg-blue-500');
-                    el.innerHTML = `<span><i class="fa-solid fa-arrow-right mr-1"></i> Ke Kanan</span>`;
-                } else if (block === 'IF_KEY') {
-                    el.classList.add('bg-amber-500');
-                    el.innerHTML = `<span><i class="fa-solid fa-code-branch mr-1"></i> JIKA Ada Kunci ➔ Ambil Kunci</span>`;
-                }
-
-                const delBtn = document.createElement('button');
-                delBtn.className = 'text-white hover:text-rose-200 ml-2';
-                delBtn.innerHTML = `<i class="fa-solid fa-xmark"></i>`;
-                delBtn.onclick = () => removeLogicBlock(idx);
-
-                el.appendChild(delBtn);
-                container.appendChild(el);
-            });
-        }
-
-        function resetMazeProgram() {
-            userLogicBlocks = [];
-            resetMazeState();
-            renderUserBlocks();
         }
 
         async function runMazeProgram() {
-            resetMazeState();
-            const feedbackEl = document.getElementById('g2-feedback');
-            
-            if (userLogicBlocks.length === 0) {
-                feedbackEl.classList.remove('hidden');
-                feedbackEl.className = 'p-4 rounded-xl text-center font-bold mt-4 bg-amber-100 text-amber-800 border border-amber-300';
-                feedbackEl.innerText = 'Tambahkan setidaknya satu instruksi perintah!';
+            if (programBlocks.length === 0) {
+                showFeedbackModal('Program Kosong', 'Tambahkan balok instruksi terlebih dahulu!', false);
                 return;
             }
 
-            let containsIfBlock = userLogicBlocks.includes('IF_KEY');
+            // Reset player status
+            playerPos = { r: 0, c: 0 };
+            playerDir = 0;
+            hasKey = false;
+            renderMaze();
 
-            for (let block of userLogicBlocks) {
-                await new Promise(r => setTimeout(r, 320));
+            const btn = document.getElementById('btn-run-maze');
+            btn.disabled = true;
 
-                let nextX = robotState.x;
-                let nextY = robotState.y;
+            let containsConditionalBlock = false;
 
-                if (block === 'ATAS') nextY--;
-                else if (block === 'BAWAH') nextY++;
-                else if (block === 'KIRI') nextX--;
-                else if (block === 'KANAN') nextX++;
-                else if (block === 'IF_KEY') {
-                    if (mazeMap[robotState.y][robotState.x] === 'K') {
-                        robotState.hasKey = true;
+            for (let i = 0; i < programBlocks.length; i++) {
+                const block = programBlocks[i];
+
+                if (block === 'MOVE') {
+                    let nextR = playerPos.r;
+                    let nextC = playerPos.c;
+
+                    if (playerDir === 0) nextC++; // Right
+                    else if (playerDir === 1) nextR++; // Down
+                    else if (playerDir === 2) nextC--; // Left
+                    else if (playerDir === 3) nextR--; // Up
+
+                    // Check bounds & wall
+                    if (nextR >= 0 && nextR < MAZE_SIZE && nextC >= 0 && nextC < MAZE_SIZE && mazeGrid[nextR][nextC] !== 1) {
+                        playerPos = { r: nextR, c: nextC };
+                    } else {
+                        registerError('g2');
+                        showFeedbackModal('Robot Menabrak! 💥', 'Robot menabrak tembok atau keluar batas labirin.', false);
+                        btn.disabled = false;
+                        return;
                     }
-                }
-
-                if (['ATAS', 'BAWAH', 'KIRI', 'KANAN'].includes(block)) {
-                    if (nextX >= 0 && nextX < 5 && nextY >= 0 && nextY < 5 && mazeMap[nextY][nextX] !== 1) {
-                        robotState.x = nextX;
-                        robotState.y = nextY;
+                } else if (block === 'TURN_LEFT') {
+                    playerDir = (playerDir + 3) % 4;
+                } else if (block === 'TURN_RIGHT') {
+                    playerDir = (playerDir + 1) % 4;
+                } else if (block === 'IF_KEY') {
+                    containsConditionalBlock = true;
+                    if (playerPos.r === 2 && playerPos.c === 4) {
+                        hasKey = true;
                     }
                 }
 
                 renderMaze();
+                await new Promise(res => setTimeout(res, 400));
             }
 
-            // Check final condition
-            feedbackEl.classList.remove('hidden');
-            if (mazeMap[robotState.y][robotState.x] === 'D') {
-                if (robotState.hasKey && containsIfBlock) {
-                    studentData.scoreG2 = Math.max(40, 100 - (studentData.mistakesG2 * 10));
-                    feedbackEl.className = 'p-4 rounded-xl text-center font-bold mt-4 bg-emerald-100 text-emerald-800 border border-emerald-300';
-                    feedbackEl.innerHTML = '<i class="fa-solid fa-circle-check text-xl mr-1"></i> Luar Biasa! Robot mengambil kunci dan berhasil ke pintu keluar!';
-                    document.getElementById('g2-next-btn').classList.remove('hidden');
-                } else if (!robotState.hasKey) {
-                    studentData.mistakesG2++;
-                    document.getElementById('g2-mistakes-counter').innerText = studentData.mistakesG2;
-                    feedbackEl.className = 'p-4 rounded-xl text-center font-bold mt-4 bg-rose-100 text-rose-800 border border-rose-300';
-                    feedbackEl.innerText = 'Pintu Terkunci! Percobaan gagal tercatat (-10 poin). Kamu harus mengambil KUNCI dulu.';
-                } else if (!containsIfBlock) {
-                    studentData.mistakesG2++;
-                    document.getElementById('g2-mistakes-counter').innerText = studentData.mistakesG2;
-                    feedbackEl.className = 'p-4 rounded-xl text-center font-bold mt-4 bg-amber-100 text-amber-800 border border-amber-300';
-                    feedbackEl.innerText = 'Robot ke pintu tanpa blok logika syarat (JIKA di KUNCI ➔ Ambil)! Percobaan gagal tercatat.';
+            btn.disabled = false;
+
+            // Check Success Condition
+            if (playerPos.r === 4 && playerPos.c === 4) {
+                if (hasKey && containsConditionalBlock) {
+                    state.gameStatus.g2 = true;
+                    showFeedbackModal('Misi Berhasil! 🤖🗝️', 'Robot sukses mengambil kunci menggunakan syarat (IF) dan keluar labirin!');
+                } else if (!hasKey) {
+                    registerError('g2');
+                    showFeedbackModal('Pintu Terkunci! 🔒', 'Kamu sampai ke pintu keluar tapi LUPA mengambil kunci! Gunakan balok syarat JIKA.', false);
+                } else if (!containsConditionalBlock) {
+                    registerError('g2');
+                    showFeedbackModal('Syarat Belum Terpenuhi', 'Program harus menyertakan balok kondisional (JIKA Ada Kunci MAKA Ambil)!', false);
                 }
             } else {
-                studentData.mistakesG2++;
-                document.getElementById('g2-mistakes-counter').innerText = studentData.mistakesG2;
-                feedbackEl.className = 'p-4 rounded-xl text-center font-bold mt-4 bg-rose-100 text-rose-800 border border-rose-300';
-                feedbackEl.innerText = 'Robot belum sampai ke pintu keluar. Percobaan gagal tercatat! Periksa kembali alur langkahmu.';
+                registerError('g2');
+                showFeedbackModal('Belum Sampai 🏁', 'Robot belum mencapai Pintu Keluar.', false);
             }
         }
 
-        function finishGame2() {
-            document.getElementById('game-2').classList.add('hidden');
-            document.getElementById('game-3').classList.remove('hidden');
-            updateProgress(3, 'Game 3: Cari Kata Komputasional');
-            initGame3();
+        function resetMazeGame() {
+            clearWorkspace();
+            generateSolvableMaze();
         }
 
-        // ==========================================
-        // GAME 3 LOGIC: CARI KATA (RANDOMIZED WORD SEARCH)
-        // Words: POLA, KODING, ABSTRAKSI, LOGARITMA, DEKOMPOSISI
-        // ==========================================
-        const targetWordsList = ['DEKOMPOSISI', 'ABSTRAKSI', 'LOGARITMA', 'KODING', 'POLA'];
-        
-        let targetWords = [];
-        let wordSearchGridData = []; // 11x11 Grid
-        let selectedStartCell = null;
-        let g3TimerInterval = null;
-        let g3Seconds = 0;
+        // ================= GAME 3: CARI KATA INFORMATIKA =================
+        const targetWords = ['POLA', 'KODING', 'ABSTRAKSI', 'ALGORITMA', 'DEKOMPOSISI'];
+        const GRID_DIM = 12;
+        let wordGrid = [];
+        let foundWords = [];
+        let wordTimerInterval = null;
+        let wordSeconds = 0;
 
-        function initGame3() {
-            g3Seconds = 0;
-            studentData.mistakesG3 = 0;
-            document.getElementById('g3-mistakes-counter').innerText = '0';
+        // Mouse & Touch Drag Selection State
+        let isDragging = false;
+        let dragStart = null;
+        let activeSelection = [];
+        let foundCellsSet = new Set(); // Stores key "r-c" for solved cells
+
+        function initWordSearch() {
+            foundWords = [];
+            activeSelection = [];
+            foundCellsSet.clear();
+            isDragging = false;
+            dragStart = null;
+            document.getElementById('words-found-count').innerText = '0';
             
-            generateRandomizedWordSearch();
-            renderWordList();
-            renderWordSearchGrid();
-            startG3Timer();
-            
-            document.getElementById('g3-feedback').classList.add('hidden');
-            document.getElementById('g3-next-btn').classList.add('hidden');
-        }
+            // Build Empty Grid
+            wordGrid = Array(GRID_DIM).fill(null).map(() => Array(GRID_DIM).fill(''));
 
-        function regenerateGame3Grid() {
-            selectedStartCell = null;
-            document.getElementById('word-selection-hint').innerText = 'Grid diacak ulang! Klik huruf awal dan akhir kata.';
-            generateRandomizedWordSearch();
-            renderWordList();
-            renderWordSearchGrid();
-        }
-
-        // --- RANDOM WORD SEARCH GRID GENERATOR ---
-        function generateRandomizedWordSearch() {
-            const size = 11;
-            // Initialize 11x11 empty matrix
-            wordSearchGridData = Array.from({ length: size }, () => Array(size).fill(''));
-
-            targetWords = targetWordsList.map(wordStr => ({
-                id: wordStr,
-                name: wordStr,
-                length: wordStr.length,
-                found: false,
-                placedCoords: [] // Array of {r, c}
-            }));
-
-            // Place each target word randomly (horizontal or vertical)
-            targetWords.forEach(wordObj => {
+            // Place Target Words Randomly (Horizontal or Vertical)
+            targetWords.forEach(word => {
                 let placed = false;
                 let attempts = 0;
-
-                while (!placed && attempts < 300) {
+                while (!placed && attempts < 100) {
                     attempts++;
-                    const isHorizontal = Math.random() < 0.5;
-                    const r = isHorizontal 
-                        ? Math.floor(Math.random() * size)
-                        : Math.floor(Math.random() * (size - wordObj.length + 1));
-                    
-                    const c = isHorizontal
-                        ? Math.floor(Math.random() * (size - wordObj.length + 1))
-                        : Math.floor(Math.random() * size);
+                    const isHoriz = Math.random() > 0.5;
+                    const maxR = isHoriz ? GRID_DIM : GRID_DIM - word.length + 1;
+                    const maxC = isHoriz ? GRID_DIM - word.length + 1 : GRID_DIM;
 
-                    // Check if placement is valid
+                    if (maxR <= 0 || maxC <= 0) continue;
+
+                    const r = Math.floor(Math.random() * maxR);
+                    const c = Math.floor(Math.random() * maxC);
+
+                    // Check space
                     let canPlace = true;
-                    for (let i = 0; i < wordObj.length; i++) {
-                        const currR = isHorizontal ? r : r + i;
-                        const currC = isHorizontal ? c + i : c;
-                        const existingChar = wordSearchGridData[currR][currC];
-
-                        if (existingChar !== '' && existingChar !== wordObj.name[i]) {
+                    for (let i = 0; i < word.length; i++) {
+                        const currR = isHoriz ? r : r + i;
+                        const currC = isHoriz ? c + i : c;
+                        if (wordGrid[currR] && wordGrid[currR][currC] !== '' && wordGrid[currR][currC] !== word[i]) {
                             canPlace = false;
                             break;
                         }
                     }
 
                     if (canPlace) {
-                        wordObj.placedCoords = [];
-                        for (let i = 0; i < wordObj.length; i++) {
-                            const currR = isHorizontal ? r : r + i;
-                            const currC = isHorizontal ? c + i : c;
-                            wordSearchGridData[currR][currC] = wordObj.name[i];
-                            wordObj.placedCoords.push({ r: currR, c: currC });
+                        for (let i = 0; i < word.length; i++) {
+                            const currR = isHoriz ? r : r + i;
+                            const currC = isHoriz ? c + i : c;
+                            wordGrid[currR][currC] = word[i];
                         }
                         placed = true;
                     }
                 }
             });
 
-            // Fill remaining empty cells with random uppercase letters
-            const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            for (let r = 0; r < size; r++) {
-                for (let c = 0; c < size; c++) {
-                    if (wordSearchGridData[r][c] === '') {
-                        const randomChar = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
-                        wordSearchGridData[r][c] = randomChar;
+            // Fill Random Letters
+            const abc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            for (let r = 0; r < GRID_DIM; r++) {
+                for (let c = 0; c < GRID_DIM; c++) {
+                    if (wordGrid[r][c] === '') {
+                        wordGrid[r][c] = abc[Math.floor(Math.random() * abc.length)];
                     }
                 }
             }
+
+            renderWordGrid();
+            renderTargetWordsList();
+            setupGlobalDragListeners();
+            startWordTimer();
         }
 
-        function startG3Timer() {
-            if (g3TimerInterval) clearInterval(g3TimerInterval);
-            g3TimerInterval = setInterval(() => {
-                g3Seconds++;
-                const mins = String(Math.floor(g3Seconds / 60)).padStart(2, '0');
-                const secs = String(g3Seconds % 60).padStart(2, '0');
-                document.getElementById('g3-timer').innerText = `${mins}:${secs}`;
+        function startWordTimer() {
+            clearInterval(wordTimerInterval);
+            wordSeconds = 0;
+            wordTimerInterval = setInterval(() => {
+                wordSeconds++;
+                const m = String(Math.floor(wordSeconds / 60)).padStart(2, '0');
+                const s = String(wordSeconds % 60).padStart(2, '0');
+                document.getElementById('word-timer').innerText = `${m}:${s}`;
             }, 1000);
         }
 
-        function renderWordList() {
-            const container = document.getElementById('word-list-container');
-            container.innerHTML = '';
-
-            targetWords.forEach(w => {
-                const li = document.createElement('li');
-                li.className = w.found 
-                    ? 'p-2 rounded-xl bg-emerald-100 text-emerald-800 border border-emerald-300 flex justify-between items-center line-through opacity-80 transition-all'
-                    : 'p-2 rounded-xl bg-white text-purple-900 border border-purple-200 flex justify-between items-center shadow-sm transition-all';
-                
-                li.innerHTML = `<span>${w.name}</span> ${w.found ? '<i class="fa-solid fa-check text-emerald-600"></i>' : '<span class="text-xs text-purple-400">(' + w.length + ' huruf)</span>'}`;
-                container.appendChild(li);
-            });
-        }
-
-        function renderWordSearchGrid() {
+        function renderWordGrid() {
             const gridEl = document.getElementById('word-search-grid');
+            gridEl.style.gridTemplateColumns = `repeat(${GRID_DIM}, minmax(0, 1fr))`;
             gridEl.innerHTML = '';
 
-            for (let r = 0; r < 11; r++) {
-                for (let c = 0; c < 11; c++) {
-                    const btn = document.createElement('button');
-                    btn.dataset.row = r;
-                    btn.dataset.col = c;
-                    btn.className = 'w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 bg-purple-800 hover:bg-purple-700 text-white font-bold text-xs sm:text-sm rounded-lg flex items-center justify-center transition-all cursor-pointer';
-                    btn.innerText = wordSearchGridData[r][c];
-                    btn.onclick = () => handleCellClick(r, c);
+            for (let r = 0; r < GRID_DIM; r++) {
+                for (let c = 0; c < GRID_DIM; c++) {
+                    const btn = document.createElement('div');
+                    btn.id = `cell-${r}-${c}`;
+                    btn.dataset.r = r;
+                    btn.dataset.c = c;
+                    btn.className = 'cell-item w-7 h-7 md:w-8 md:h-8 bg-white border border-slate-200 rounded-lg font-bold text-slate-700 text-xs md:text-sm flex items-center justify-center shadow-sm cursor-pointer select-none transition-colors';
+                    btn.innerText = wordGrid[r][c];
+
+                    // Mouse Events
+                    btn.addEventListener('mousedown', (e) => handleDragStart(r, c, e));
+                    btn.addEventListener('mouseenter', () => handleDragMove(r, c));
+
                     gridEl.appendChild(btn);
                 }
             }
 
-            // Re-highlight found words if any
-            targetWords.filter(w => w.found).forEach(w => {
-                w.placedCoords.forEach(coord => {
-                    const cellBtn = document.querySelector(`button[data-row="${coord.r}"][data-col="${coord.c}"]`);
-                    if (cellBtn) {
-                        cellBtn.className = 'w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 bg-emerald-500 text-white font-bold text-xs sm:text-sm rounded-lg flex items-center justify-center shadow-md';
-                        cellBtn.disabled = true;
+            // Touch events on container
+            gridEl.addEventListener('touchstart', handleTouchStart, { passive: false });
+            gridEl.addEventListener('touchmove', handleTouchMove, { passive: false });
+            gridEl.addEventListener('touchend', handleDragEnd);
+        }
+
+        function setupGlobalDragListeners() {
+            document.removeEventListener('mouseup', handleDragEnd);
+            document.addEventListener('mouseup', handleDragEnd);
+        }
+
+        function handleDragStart(r, c, e) {
+            if (e) e.preventDefault();
+            isDragging = true;
+            dragStart = { r, c };
+            updateSelection(r, c);
+        }
+
+        function handleDragMove(r, c) {
+            if (!isDragging || !dragStart) return;
+            updateSelection(r, c);
+        }
+
+        function handleTouchStart(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const target = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (target && target.dataset && target.dataset.r !== undefined) {
+                const r = parseInt(target.dataset.r);
+                const c = parseInt(target.dataset.c);
+                handleDragStart(r, c, null);
+            }
+        }
+
+        function handleTouchMove(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            const target = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (target && target.dataset && target.dataset.r !== undefined) {
+                const r = parseInt(target.dataset.r);
+                const c = parseInt(target.dataset.c);
+                handleDragMove(r, c);
+            }
+        }
+
+        function updateSelection(endR, endC) {
+            const startR = dragStart.r;
+            const startC = dragStart.c;
+
+            const dr = endR - startR;
+            const dc = endC - startC;
+
+            // Determine if horizontal, vertical, or diagonal line
+            let isLine = false;
+            let stepR = 0;
+            let stepC = 0;
+
+            if (startR === endR) { // Horizontal
+                isLine = true;
+                stepC = dc > 0 ? 1 : -1;
+            } else if (startC === endC) { // Vertical
+                isLine = true;
+                stepR = dr > 0 ? 1 : -1;
+            } else if (Math.abs(dr) === Math.abs(dc)) { // Diagonal
+                isLine = true;
+                stepR = dr > 0 ? 1 : -1;
+                stepC = dc > 0 ? 1 : -1;
+            }
+
+            if (!isLine) return; // Keep previous valid selection or do nothing
+
+            // Build intermediate cells path
+            activeSelection = [];
+            let currR = startR;
+            let currC = startC;
+            const length = Math.max(Math.abs(dr), Math.abs(dc)) + 1;
+
+            for (let i = 0; i < length; i++) {
+                activeSelection.push({ r: currR, c: currC });
+                currR += stepR;
+                currC += stepC;
+            }
+
+            highlightGrid();
+        }
+
+        function highlightGrid() {
+            // Reset cell styles (keep solved cells highlighted)
+            for (let r = 0; r < GRID_DIM; r++) {
+                for (let c = 0; c < GRID_DIM; c++) {
+                    const el = document.getElementById(`cell-${r}-${c}`);
+                    if (!el) continue;
+                    
+                    const key = `${r}-${c}`;
+                    if (foundCellsSet.has(key)) {
+                        el.className = 'cell-item w-7 h-7 md:w-8 md:h-8 bg-emerald-500 text-white font-black rounded-lg text-xs md:text-sm flex items-center justify-center shadow-sm select-none';
+                    } else {
+                        el.className = 'cell-item w-7 h-7 md:w-8 md:h-8 bg-white border border-slate-200 rounded-lg font-bold text-slate-700 text-xs md:text-sm flex items-center justify-center shadow-sm cursor-pointer select-none transition-colors';
                     }
-                });
+                }
+            }
+
+            // Highlight currently dragged selection
+            activeSelection.forEach(cell => {
+                const el = document.getElementById(`cell-${cell.r}-${cell.c}`);
+                if (el && !foundCellsSet.has(`${cell.r}-${cell.c}`)) {
+                    el.className = 'cell-item w-7 h-7 md:w-8 md:h-8 bg-purple-600 text-white font-black rounded-lg text-xs md:text-sm flex items-center justify-center shadow-md select-none scale-105';
+                }
             });
         }
 
-        function handleCellClick(r, c) {
-            const hintEl = document.getElementById('word-selection-hint');
-            
-            if (!selectedStartCell) {
-                selectedStartCell = { r, c };
-                highlightCell(r, c, 'bg-amber-400 text-slate-900 font-extrabold ring-2 ring-amber-300');
-                hintEl.innerText = `Huruf awal [${wordSearchGridData[r][c]}] dipilih. Klik huruf akhir kata!`;
-            } else {
-                const start = selectedStartCell;
-                const end = { r, c };
-                selectedStartCell = null;
+        function handleDragEnd() {
+            if (!isDragging) return;
+            isDragging = false;
 
-                // Extract word formed
-                const formedWord = extractWordFromGrid(start, end);
-                
-                let match = null;
-                if (formedWord) {
-                    match = targetWords.find(w => (w.name === formedWord || w.name === reverseString(formedWord)) && !w.found);
-                }
+            if (activeSelection.length > 0) {
+                const str = activeSelection.map(cell => wordGrid[cell.r][cell.c]).join('');
+                const reversedStr = str.split('').reverse().join('');
 
-                if (match) {
-                    match.found = true;
-                    markWordAsFound(start, end);
-                    renderWordList();
-                    hintEl.innerText = `Hebat! Kamu menemukan kata ${match.name}!`;
-                    checkGame3Completion();
+                targetWords.forEach(target => {
+                    if (!foundWords.includes(target) && (str === target || reversedStr === target)) {
+                        foundWords.push(target);
+                        document.getElementById('words-found-count').innerText = foundWords.length;
+
+                        // Lock selected cells as permanently found
+                        activeSelection.forEach(cell => {
+                            foundCellsSet.add(`${cell.r}-${cell.c}`);
+                        });
+
+                        renderTargetWordsList();
+
+                        if (foundWords.length === targetWords.length) {
+                            clearInterval(wordTimerInterval);
+                            state.gameStatus.g3 = true;
+                            showFeedbackModal('Hebat Sekali! 🔍', `Kamu berhasil menemukan ke-5 kata informatika dalam waktu ${document.getElementById('word-timer').innerText}!`);
+                        }
+                    }
+                });
+            }
+
+            activeSelection = [];
+            dragStart = null;
+            highlightGrid();
+        }
+
+        function renderTargetWordsList() {
+            const listEl = document.getElementById('target-words-list');
+            listEl.innerHTML = '';
+
+            targetWords.forEach(w => {
+                const isFound = foundWords.includes(w);
+                const li = document.createElement('li');
+                li.className = `text-xs font-bold px-3 py-2 rounded-xl flex items-center justify-between border ${isFound ? 'bg-emerald-100 text-emerald-800 border-emerald-200 line-through' : 'bg-white text-slate-700 border-purple-100'}`;
+                li.innerHTML = `<span>${w}</span> ${isFound ? '<i class="fa-solid fa-circle-check text-emerald-600"></i>' : ''}`;
+                listEl.appendChild(li);
+            });
+        }
+
+        // ================= EVALUATION & REPORT DATA =================
+        function updateEvaluationData() {
+            const studentName = document.getElementById('student-name').value || 'Siswa Kelas 4';
+            document.getElementById('eval-student-name').innerText = studentName;
+            document.getElementById('eval-final-score').innerText = state.score;
+            document.getElementById('eval-total-errors').innerText = state.totalErrors;
+
+            // Status Update
+            const setStatus = (id, done) => {
+                const el = document.getElementById(id);
+                if (done) {
+                    el.innerText = 'Selesai (Tuntas)';
+                    el.className = 'p-2.5 border border-slate-200 text-center font-bold text-emerald-600';
                 } else {
-                    // Record mistake!
-                    studentData.mistakesG3++;
-                    document.getElementById('g3-mistakes-counter').innerText = studentData.mistakesG3;
-
-                    hintEl.innerText = formedWord 
-                        ? `Kata "${formedWord}" bukan kata target! (Salah pilih tercatat). Coba lagi!`
-                        : `Garis harus lurus horizontal atau vertikal! (Salah pilih tercatat).`;
-                    
-                    clearSelectionHighlights();
+                    el.innerText = 'Belum Selesai';
+                    el.className = 'p-2.5 border border-slate-200 text-center font-bold text-amber-600';
                 }
-            }
-        }
+            };
 
-        function reverseString(str) {
-            return str.split('').reverse().join('');
-        }
+            setStatus('eval-g1-status', state.gameStatus.g1);
+            setStatus('eval-g2-status', state.gameStatus.g2);
+            setStatus('eval-g3-status', state.gameStatus.g3);
 
-        function extractWordFromGrid(start, end) {
-            let str = '';
-            if (start.r === end.r) {
-                // Horizontal
-                const minC = Math.min(start.c, end.c);
-                const maxC = Math.max(start.c, end.c);
-                for (let c = minC; c <= maxC; c++) {
-                    str += wordSearchGridData[start.r][c];
-                }
-                if (start.c > end.c) str = reverseString(str);
-            } else if (start.c === end.c) {
-                // Vertical
-                const minR = Math.min(start.r, end.r);
-                const maxR = Math.max(start.r, end.r);
-                for (let r = minR; r <= maxR; r++) {
-                    str += wordSearchGridData[r][start.c];
-                }
-                if (start.r > end.r) str = reverseString(str);
-            }
-            return str;
-        }
+            document.getElementById('eval-g1-err').innerText = `${state.gameErrors.g1} kali`;
+            document.getElementById('eval-g2-err').innerText = `${state.gameErrors.g2} kali`;
+            document.getElementById('eval-g3-err').innerText = `${state.gameErrors.g3} kali`;
 
-        function markWordAsFound(start, end) {
-            if (start.r === end.r) {
-                const minC = Math.min(start.c, end.c);
-                const maxC = Math.max(start.c, end.c);
-                for (let c = minC; c <= maxC; c++) {
-                    const cellBtn = document.querySelector(`button[data-row="${start.r}"][data-col="${c}"]`);
-                    if (cellBtn) {
-                        cellBtn.className = 'w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 bg-emerald-500 text-white font-bold text-xs sm:text-sm rounded-lg flex items-center justify-center shadow-md';
-                        cellBtn.disabled = true;
-                    }
-                }
-            } else if (start.c === end.c) {
-                const minR = Math.min(start.r, end.r);
-                const maxR = Math.max(start.r, end.r);
-                for (let r = minR; r <= maxR; r++) {
-                    const cellBtn = document.querySelector(`button[data-row="${r}"][data-col="${start.c}"]`);
-                    if (cellBtn) {
-                        cellBtn.className = 'w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 bg-emerald-500 text-white font-bold text-xs sm:text-sm rounded-lg flex items-center justify-center shadow-md';
-                        cellBtn.disabled = true;
-                    }
-                }
-            }
-        }
-
-        function highlightCell(r, c, bgClass) {
-            const cellBtn = document.querySelector(`button[data-row="${r}"][data-col="${c}"]`);
-            if (cellBtn) {
-                cellBtn.className = `w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 ${bgClass} rounded-lg flex items-center justify-center transition-all`;
-            }
-        }
-
-        function clearSelectionHighlights() {
-            for (let r = 0; r < 11; r++) {
-                for (let c = 0; c < 11; c++) {
-                    const cellBtn = document.querySelector(`button[data-row="${r}"][data-col="${c}"]`);
-                    if (cellBtn && !cellBtn.disabled) {
-                        cellBtn.className = 'w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 bg-purple-800 hover:bg-purple-700 text-white font-bold text-xs sm:text-sm rounded-lg flex items-center justify-center transition-all cursor-pointer';
-                    }
-                }
-            }
-        }
-
-        function checkGame3Completion() {
-            const allFound = targetWords.every(w => w.found);
-            if (allFound) {
-                clearInterval(g3TimerInterval);
-                studentData.g3SecondsTaken = g3Seconds;
-                
-                // Calculate G3 score: base 100 - (5 points deducted per wrong selection), min 40
-                studentData.scoreG3 = Math.max(40, 100 - (studentData.mistakesG3 * 5));
-
-                const feedbackEl = document.getElementById('g3-feedback');
-                feedbackEl.classList.remove('hidden');
-                feedbackEl.className = 'p-4 rounded-xl text-center font-bold mt-4 bg-emerald-100 text-emerald-800 border border-emerald-300';
-                feedbackEl.innerHTML = `<i class="fa-solid fa-trophy text-xl mr-1"></i> Luar Biasa! Kamu menemukan seluruh 5 kata kunci dalam waktu ${g3Seconds} detik!`;
-
-                document.getElementById('g3-next-btn').classList.remove('hidden');
-            }
-        }
-
-        // ==========================================
-        // EVALUATION & REPORT GENERATION
-        // ==========================================
-        function finishAllGames() {
-            document.getElementById('game-3').classList.add('hidden');
-            document.getElementById('game-progress').classList.add('hidden');
-            document.getElementById('screen-report').classList.remove('hidden');
-
-            // Populate Student Details
-            document.getElementById('report-student-name').innerText = studentData.name;
-            document.getElementById('report-student-class').innerText = studentData.classInfo;
-            document.getElementById('report-date').innerText = studentData.date;
-
-            const totalMistakes = studentData.mistakesG1 + studentData.mistakesG2 + studentData.mistakesG3;
-            document.getElementById('report-total-mistakes').innerText = `${totalMistakes} Kesalahan`;
-
-            // Deducted scores calculation
-            const score1 = Math.max(30, 100 - (studentData.mistakesG1 * 5));
-            const score2 = Math.max(40, 100 - (studentData.mistakesG2 * 10));
-            const score3 = Math.max(40, 100 - (studentData.mistakesG3 * 5));
-
-            studentData.scoreG1 = score1;
-            studentData.scoreG2 = score2;
-            studentData.scoreG3 = score3;
-
-            const finalAverage = Math.round((score1 + score2 + score3) / 3);
-            document.getElementById('report-total-score').innerText = `${finalAverage} / 100`;
-
-            // Display per game error & score breakdown
-            document.getElementById('report-g1-details').innerText = `Kesalahan: ${studentData.mistakesG1} kali (-${studentData.mistakesG1 * 5} poin)`;
-            document.getElementById('report-g2-details').innerText = `Percobaan Gagal: ${studentData.mistakesG2} kali (-${studentData.mistakesG2 * 10} poin)`;
-            document.getElementById('report-g3-details').innerText = `Salah Pilih Kata: ${studentData.mistakesG3} kali (-${studentData.mistakesG3 * 5} poin)`;
-
-            document.getElementById('score-g1').innerText = `Skor: ${score1}/100`;
-            document.getElementById('score-g2').innerText = `Skor: ${score2}/100`;
-            document.getElementById('score-g3').innerText = `Skor: ${score3}/100`;
-
-            if (studentData.g3SecondsTaken > 0) {
-                document.getElementById('report-g3-time').innerText = `(Waktu: ${studentData.g3SecondsTaken} detik)`;
-            }
-
-            // Summary of Mistakes Analysis
-            const mistakesSummaryEl = document.getElementById('report-mistakes-summary');
-            if (totalMistakes === 0) {
-                mistakesSummaryEl.innerText = 'Sangat Istimewa! Siswa menyelesaikan seluruh permainan tanpa satupun kesalahan. Pemahaman logika komputasional sangat matang.';
-            } else if (totalMistakes <= 3) {
-                mistakesSummaryEl.innerText = `Siswa membuat ${totalMistakes} kesalahan kecil. Secara umum memiliki konsentrasi dan pemahaman yang baik.`;
+            // Dynamic Feedback Notes
+            const notesEl = document.getElementById('eval-notes');
+            if (state.score >= 90) {
+                notesEl.innerText = `${studentName} menunjukkan logika berpikir komputasional yang sangat unggul dalam mengenali pola abstrak, algoritma bersyarat, dan kosakata informatika.`;
+            } else if (state.score >= 75) {
+                notesEl.innerText = `${studentName} mampu menyelesaikan tugas logika dan algoritma dengan baik. Disarankan untuk lebih teliti pada pemahaman balok percabangannya.`;
             } else {
-                mistakesSummaryEl.innerText = `Terdapat ${totalMistakes} akumulasi kesalahan. Diperlukan latihan ekstra pada pembacaan pola dan urutan sekuensial langkah robot.`;
-            }
-
-            // Predikat & Catatan
-            const predikatEl = document.getElementById('report-predikat');
-            const catatanEl = document.getElementById('report-catatan');
-
-            if (finalAverage >= 85) {
-                predikatEl.innerText = 'Sangat Baik (A)';
-                catatanEl.innerText = 'Siswa sangat terampil dalam menggeneralisasi pola kompleks, menyusun algoritma bersyarat bercabang, serta mengidentifikasi istilah komputasional.';
-            } else if (finalAverage >= 70) {
-                predikatEl.innerText = 'Baik (B)';
-                catatanEl.innerText = 'Siswa mampu memahami sebagian besar konsep pola, alur percabangan logika, dan pencarian kata dengan baik.';
-            } else {
-                predikatEl.innerText = 'Cukup (C)';
-                catatanEl.innerText = 'Siswa telah mengenal dasar pola dan algoritma, namun memerlukan bimbingan tambahan dalam pemikiran percabangan logika.';
+                notesEl.innerText = `${studentName} memerlukan latihan tambahan pada konsep urutan sekuensial dan logika syarat bersyarat (If-Then).`;
             }
         }
+
+        // ================= MODAL DIALOG FEEDBACK =================
+        function showFeedbackModal(title, msg, isSuccess = true) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 no-print';
+            modal.innerHTML = `
+                <div class="bg-white rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl transform transition-all animate-bounce-short">
+                    <div class="w-16 h-16 ${isSuccess ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'} rounded-full flex items-center justify-center mx-auto text-3xl mb-4">
+                        <i class="fa-solid ${isSuccess ? 'fa-trophy' : 'fa-face-frown'}"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2 font-heading">${title}</h3>
+                    <p class="text-sm text-slate-600 mb-6">${msg}</p>
+                    <button onclick="this.closest('.fixed').remove()" class="w-full ${isSuccess ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-800 hover:bg-slate-900'} text-white font-bold py-3 rounded-xl shadow-md transition-all">
+                        Lanjutkan
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // ================= INITIALIZATION =================
+        window.onload = function() {
+            loadG1Question();
+            generateSolvableMaze();
+            initWordSearch();
+        };
     </script>
 </body>
 </html>
