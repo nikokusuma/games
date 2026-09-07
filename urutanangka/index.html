@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan Angka 1-20 - Permainan Anak</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fredoka', cursive, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Animasi Bouncy */
+        .bounce-active:active {
+            transform: scale(0.88);
+        }
+
+        /* Pop-in animation for modal */
+        @keyframes popIn {
+            0% { transform: scale(0.7); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop-in {
+            animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* Shine effect for level buttons */
+        .shine-effect {
+            position: relative;
+            overflow: hidden;
+        }
+        .shine-effect::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(60deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+            transform: rotate(30deg);
+            transition: all 0.5s;
+        }
+        .shine-effect:hover::after {
+            left: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-sky-400 via-indigo-400 to-purple-500 min-h-screen text-slate-800 flex flex-col justify-between items-center p-3 sm:p-5 relative overflow-x-hidden">
+
+    <!-- Confetti Canvas overlay -->
+    <canvas id="confettiCanvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
+
+    <!-- Header Utama -->
+    <header class="w-full max-w-xl text-center mt-1 mb-3">
+        <div class="inline-block bg-white/90 backdrop-blur-md px-5 py-2 rounded-full shadow-lg border-4 border-yellow-300 transform hover:scale-105 transition-all">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 flex items-center justify-center gap-2">
+                🎈 Petualangan Angka! 🎈
+            </h1>
+        </div>
+    </header>
+
+    <!-- Kontainer Permainan Utama -->
+    <main class="w-full max-w-xl bg-white/95 backdrop-blur-md rounded-3xl p-4 sm:p-6 shadow-2xl border-4 border-white flex flex-col items-center relative">
+        
+        <!-- Panel Info & Kontrol Mode -->
+        <div class="w-full flex flex-col sm:flex-row justify-between items-center gap-3 mb-4 pb-3 border-b-2 border-slate-100">
+            <!-- Mode Switcher -->
+            <div class="flex bg-slate-100 p-1.5 rounded-2xl border-2 border-slate-200 shadow-inner w-full sm:w-auto justify-center">
+                <button id="modeAscBtn" onclick="setMode('asc')" class="flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-md">
+                    ⬆️ 1 ➔ 20
+                </button>
+                <button id="modeDescBtn" onclick="setMode('desc')" class="flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all text-slate-500 hover:text-slate-800">
+                    ⬇️ 20 ➔ 1
+                </button>
+            </div>
+
+            <!-- Tombol Pilih Level -->
+            <button onclick="openLevelModal()" class="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white font-bold rounded-2xl shadow-md border-b-4 border-orange-600 transition bounce-active flex items-center justify-center gap-2 text-sm sm:text-base">
+                <span id="currentLevelLabel" class="text-lg">🎮 Level 1</span>
+                <span class="text-xs bg-white/30 px-2 py-0.5 rounded-full">Ganti</span>
+            </button>
+        </div>
+
+        <!-- Panel Status Target & Waktu -->
+        <div class="w-full grid grid-cols-2 gap-3 mb-4">
+            <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-2.5 text-center shadow-sm">
+                <span class="text-xs font-bold text-amber-600 uppercase tracking-wide block">Cari Angka</span>
+                <span id="targetDisplay" class="text-3xl sm:text-4xl font-black text-amber-500">1</span>
+            </div>
+            <div class="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-2.5 text-center shadow-sm">
+                <span class="text-xs font-bold text-emerald-600 uppercase tracking-wide block">Waktu</span>
+                <span id="timerDisplay" class="text-3xl sm:text-4xl font-black text-emerald-500 font-mono">0.0s</span>
+            </div>
+        </div>
+
+        <!-- Board Grid (5 Kolom x 4 Baris) -->
+        <!-- Menjamin 20 angka langsung tampil seragam tanpa tertumpuk atau terpotong -->
+        <div id="numberGrid" class="w-full grid grid-cols-5 gap-2 sm:gap-3 my-auto aspect-[5/4]">
+            <!-- Angka-angka akan di-render dinamis via JS -->
+        </div>
+
+        <!-- Control Buttons -->
+        <div class="mt-5 w-full flex gap-3">
+            <button onclick="restartLevel()" class="flex-1 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-extrabold rounded-2xl shadow-lg border-b-4 border-indigo-800 transition bounce-active flex items-center justify-center gap-2 text-sm sm:text-base">
+                🔄 Ulang Level Ini
+            </button>
+            <button onclick="openLevelModal()" class="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl border-2 border-slate-300 transition bounce-active text-sm sm:text-base">
+                📜 Semua Level
+            </button>
+        </div>
+    </main>
+
+    <!-- Modal Pilih Level (20 Level Grid) -->
+    <div id="levelModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex justify-center items-center p-4 z-40">
+        <div class="bg-white rounded-3xl p-5 sm:p-6 max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl border-4 border-purple-300 animate-pop-in">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b-2 border-slate-100">
+                <div>
+                    <h2 class="text-2xl font-black text-purple-600">Pilih Level (1 - 20)</h2>
+                    <p class="text-xs text-slate-500">Selesaikan setiap level dengan cepat!</p>
+                </div>
+                <button onclick="closeLevelModal()" class="w-9 h-9 bg-slate-100 hover:bg-rose-100 hover:text-rose-600 text-slate-500 font-black rounded-full flex items-center justify-center text-lg transition">✕</button>
+            </div>
+
+            <!-- Grid 20 Level -->
+            <div id="levelGrid" class="grid grid-cols-4 sm:grid-cols-5 gap-2.5 overflow-y-auto p-1 max-h-[60vh]">
+                <!-- Buttons level generated via JS -->
+            </div>
+
+            <button onclick="closeLevelModal()" class="mt-4 w-full py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-2xl transition">
+                Tutup
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Kemenangan -->
+    <div id="winModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md hidden flex justify-center items-center p-4 z-40">
+        <div class="bg-white border-4 border-yellow-300 p-6 rounded-3xl max-w-sm w-full text-center shadow-2xl animate-pop-in relative">
+            <div class="text-6xl mb-2">🏆</div>
+            <h2 class="text-3xl font-black text-purple-600 mb-1">HEBAT SEKALI!</h2>
+            <p id="winLevelSubtitle" class="text-sm font-bold text-slate-500 mb-3">Level 1 Selesai!</p>
+            
+            <!-- Star Ratings -->
+            <div id="starContainer" class="flex justify-center gap-2 text-4xl mb-4">
+                <span class="star opacity-30 transition-all duration-300">⭐</span>
+                <span class="star opacity-30 transition-all duration-300">⭐</span>
+                <span class="star opacity-30 transition-all duration-300">⭐</span>
+            </div>
+
+            <div class="bg-slate-50 p-4 rounded-2xl border-2 border-slate-200 mb-5">
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Waktu Penyelesaian</p>
+                <p id="finalTime" class="text-3xl font-black text-emerald-500 font-mono">0.00s</p>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <button id="nextLevelBtn" onclick="nextLevel()" class="w-full py-3 bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-500 hover:to-green-600 text-white font-extrabold text-lg rounded-2xl shadow-lg border-b-4 border-green-700 transition bounce-active">
+                    Level Berikutnya ➔
+                </button>
+                <button onclick="closeWinModal(); restartLevel();" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl transition">
+                    Main Ulang Level Ini
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-xs font-bold text-white/80 my-2 text-center drop-shadow">
+        Petualangan Angka Berurutan &copy; 2026 • Ramah Anak & Edukatif
+    </footer>
+
+    <script>
+        // Palette Warna Ramah Anak untuk Tombol Angka (20 Warna Ceria)
+        const TILE_COLORS = [
+            'bg-rose-400 text-white border-rose-500 hover:bg-rose-500',
+            'bg-pink-400 text-white border-pink-500 hover:bg-pink-500',
+            'bg-fuchsia-400 text-white border-fuchsia-500 hover:bg-fuchsia-500',
+            'bg-purple-400 text-white border-purple-500 hover:bg-purple-500',
+            'bg-violet-400 text-white border-violet-500 hover:bg-violet-500',
+            'bg-indigo-400 text-white border-indigo-500 hover:bg-indigo-500',
+            'bg-blue-400 text-white border-blue-500 hover:bg-blue-500',
+            'bg-sky-400 text-white border-sky-500 hover:bg-sky-500',
+            'bg-cyan-400 text-white border-cyan-500 hover:bg-cyan-500',
+            'bg-teal-400 text-white border-teal-500 hover:bg-teal-500',
+            'bg-emerald-400 text-white border-emerald-500 hover:bg-emerald-500',
+            'bg-green-400 text-white border-green-500 hover:bg-green-500',
+            'bg-lime-400 text-slate-800 border-lime-500 hover:bg-lime-500',
+            'bg-yellow-400 text-slate-800 border-yellow-500 hover:bg-yellow-500',
+            'bg-amber-400 text-slate-800 border-amber-500 hover:bg-amber-500',
+            'bg-orange-400 text-white border-orange-500 hover:bg-orange-500',
+            'bg-red-400 text-white border-red-500 hover:bg-red-500',
+            'bg-sky-500 text-white border-sky-600 hover:bg-sky-600',
+            'bg-emerald-500 text-white border-emerald-600 hover:bg-emerald-600',
+            'bg-purple-500 text-white border-purple-600 hover:bg-purple-600'
+        ];
+
+        // State Aplikasi
+        let currentMode = 'asc'; // 'asc' (1->20) or 'desc' (20->1)
+        let currentLevel = 1;
+        let currentTarget = 1;
+        let timerInterval = null;
+        let startTime = null;
+        let isGameActive = false;
+        
+        // Simpan data bintang level di local storage
+        let levelData = JSON.parse(localStorage.getItem('angka_kids_levels') || '{}');
+
+        // Web Audio Synthesizer (Tanpa file audio eksternal)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playTone(freq, type = 'sine', duration = 0.15) {
+            try {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                // Silently ignore audio context issues
+            }
+        }
+
+        function playCorrectSound(step) {
+            // Skala nada naik seiring progres
+            const baseFreq = currentMode === 'asc' ? 260 + (step * 25) : 750 - (step * 25);
+            playTone(baseFreq, 'triangle', 0.18);
+        }
+
+        function playWrongSound() {
+            playTone(160, 'sawtooth', 0.25);
+        }
+
+        function playFanfare() {
+            const notes = [523.25, 659.25, 783.99, 1046.50];
+            notes.forEach((freq, idx) => {
+                setTimeout(() => playTone(freq, 'sine', 0.3), idx * 120);
+            });
+        }
+
+        // Generator seeded random agar setiap level memunculkan urutan unik konsisten
+        function pseudoRandom(seed) {
+            const x = Math.sin(seed++) * 10000;
+            return x - Math.floor(x);
+        }
+
+        // Dapatkan susunan angka 1-20 berdasarkan Level ID
+        function getLevelNumbers(level) {
+            const numbers = Array.from({ length: 20 }, (_, i) => i + 1);
+            let seed = level * 997 + (currentMode === 'asc' ? 100 : 500);
+            
+            for (let i = numbers.length - 1; i > 0; i--) {
+                const j = Math.floor(pseudoRandom(seed++) * (i + 1));
+                [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+            }
+            return numbers;
+        }
+
+        // Element HTML
+        const gridElement = document.getElementById('numberGrid');
+        const targetDisplay = document.getElementById('targetDisplay');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const modeAscBtn = document.getElementById('modeAscBtn');
+        const modeDescBtn = document.getElementById('modeDescBtn');
+        const currentLevelLabel = document.getElementById('currentLevelLabel');
+        const winModal = document.getElementById('winModal');
+        const levelModal = document.getElementById('levelModal');
+        const levelGrid = document.getElementById('levelGrid');
+        const finalTime = document.getElementById('finalTime');
+        const winLevelSubtitle = document.getElementById('winLevelSubtitle');
+
+        // Ganti Mode
+        function setMode(mode) {
+            if (currentMode === mode) return;
+            currentMode = mode;
+
+            if (mode === 'asc') {
+                modeAscBtn.className = "flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-md";
+                modeDescBtn.className = "flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all text-slate-500 hover:text-slate-800";
+            } else {
+                modeDescBtn.className = "flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-md";
+                modeAscBtn.className = "flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all text-slate-500 hover:text-slate-800";
+            }
+
+            restartLevel();
+        }
+
+        // Mulai / Ulangi Level
+        function restartLevel() {
+            clearInterval(timerInterval);
+            timerDisplay.textContent = "0.0s";
+            isGameActive = false;
+
+            currentTarget = currentMode === 'asc' ? 1 : 20;
+            targetDisplay.textContent = currentTarget;
+            currentLevelLabel.textContent = `🎮 Level ${currentLevel}`;
+
+            const numbers = getLevelNumbers(currentLevel);
+
+            gridElement.innerHTML = '';
+            numbers.forEach((num, index) => {
+                const btn = document.createElement('button');
+                btn.textContent = num;
+                btn.dataset.value = num;
+
+                // Ambil warna unik untuk setiap petak
+                const colorClass = TILE_COLORS[(num - 1) % TILE_COLORS.length];
+
+                btn.className = `
+                    w-full h-full rounded-2xl font-extrabold text-xl sm:text-3xl
+                    border-b-4 ${colorClass}
+                    flex items-center justify-center shadow-md transition-all duration-150
+                    active:scale-90 touch-manipulation cursor-pointer shine-effect
+                `;
+
+                btn.addEventListener('click', () => handleNumberClick(btn, num));
+                gridElement.appendChild(btn);
+            });
+        }
+
+        // Penanganan Klik Angka
+        function handleNumberClick(button, value) {
+            // Mulai Timer pada klik angka yang benar pertama kali
+            if (!isGameActive && value === currentTarget) {
+                isGameActive = true;
+                startTime = Date.now();
+                timerInterval = setInterval(updateTimer, 100);
+            }
+
+            if (value === currentTarget) {
+                // Hitung langkah untuk variasi suara
+                const step = currentMode === 'asc' ? currentTarget : (21 - currentTarget);
+                playCorrectSound(step);
+
+                // Hilangkan tombol secara halus
+                button.disabled = true;
+                button.className = `
+                    w-full h-full rounded-2xl font-bold text-lg sm:text-2xl
+                    bg-slate-200/60 border-2 border-slate-300 text-slate-400
+                    flex items-center justify-center cursor-default opacity-40 shadow-inner scale-95 transition-all
+                `;
+
+                // Update Target Berikutnya
+                if (currentMode === 'asc') {
+                    currentTarget++;
+                    if (currentTarget <= 20) {
+                        targetDisplay.textContent = currentTarget;
+                    } else {
+                        endGame();
+                    }
+                } else {
+                    currentTarget--;
+                    if (currentTarget >= 1) {
+                        targetDisplay.textContent = currentTarget;
+                    } else {
+                        endGame();
+                    }
+                }
+            } else {
+                // Efek salah klik
+                playWrongSound();
+                if (!button.disabled) {
+                    const originalClass = button.className;
+                    button.classList.add('bg-rose-600', 'text-white', 'border-rose-800', 'animate-bounce');
+                    setTimeout(() => {
+                        button.className = originalClass;
+                    }, 300);
+                }
+            }
+        }
+
+        function updateTimer() {
+            const elapsed = (Date.now() - startTime) / 1000;
+            timerDisplay.textContent = elapsed.toFixed(1) + 's';
+        }
+
+        // Selesai Level
+        function endGame() {
+            clearInterval(timerInterval);
+            isGameActive = false;
+            const totalTime = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
+
+            finalTime.textContent = totalTime.toFixed(2) + 's';
+            winLevelSubtitle.textContent = `Level ${currentLevel} (${currentMode === 'asc' ? '1 ➔ 20' : '20 ➔ 1'}) Selesai!`;
+
+            // Hitung Bintang (Sangat ramah anak)
+            // < 12 detik = 3 Bintang, < 20 detik = 2 Bintang, sisanya = 1 Bintang
+            let stars = 1;
+            if (totalTime <= 12) stars = 3;
+            else if (totalTime <= 20) stars = 2;
+
+            // Simpan progres bintang
+            const key = `level_${currentLevel}_${currentMode}`;
+            if (!levelData[key] || levelData[key] < stars) {
+                levelData[key] = stars;
+                localStorage.setItem('angka_kids_levels', JSON.stringify(levelData));
+            }
+
+            // Tampilkan Bintang di Modal
+            const starNodes = document.querySelectorAll('#starContainer .star');
+            starNodes.forEach((star, idx) => {
+                if (idx < stars) {
+                    star.classList.remove('opacity-30', 'scale-75');
+                    star.classList.add('opacity-100', 'scale-110');
+                } else {
+                    star.classList.remove('opacity-100', 'scale-110');
+                    star.classList.add('opacity-30', 'scale-75');
+                }
+            });
+
+            playFanfare();
+            triggerConfetti();
+
+            setTimeout(() => {
+                winModal.classList.remove('hidden');
+            }, 300);
+        }
+
+        function closeWinModal() {
+            winModal.classList.add('hidden');
+        }
+
+        function nextLevel() {
+            closeWinModal();
+            if (currentLevel < 20) {
+                currentLevel++;
+            } else {
+                currentLevel = 1; // Loop kembali jika sudah tamat
+            }
+            restartLevel();
+        }
+
+        // Modal Level Grid
+        function openLevelModal() {
+            levelGrid.innerHTML = '';
+            for (let i = 1; i <= 20; i++) {
+                const btn = document.createElement('button');
+                const key = `level_${i}_${currentMode}`;
+                const stars = levelData[key] || 0;
+
+                const isCurrent = i === currentLevel;
+
+                btn.className = `
+                    p-3 rounded-2xl flex flex-col items-center justify-center font-black transition bounce-active border-b-4
+                    ${isCurrent ? 'bg-amber-400 text-slate-900 border-amber-600 ring-4 ring-amber-200' : 'bg-slate-100 hover:bg-purple-100 text-slate-700 border-slate-300'}
+                `;
+
+                let starsText = '⭐⭐⭐'.slice(0, stars) || '•••';
+
+                btn.innerHTML = `
+                    <span class="text-xs text-slate-400">Lvl</span>
+                    <span class="text-xl leading-none my-0.5">${i}</span>
+                    <span class="text-[10px] ${stars > 0 ? 'text-amber-500' : 'text-slate-300'}">${starsText}</span>
+                `;
+
+                btn.onclick = () => {
+                    currentLevel = i;
+                    closeLevelModal();
+                    restartLevel();
+                };
+
+                levelGrid.appendChild(btn);
+            }
+            levelModal.classList.remove('hidden');
+        }
+
+        function closeLevelModal() {
+            levelModal.classList.add('hidden');
+        }
+
+        // FX Konfeti Sederhana & Ringan
+        const canvas = document.getElementById('confettiCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function triggerConfetti() {
+            particles = [];
+            const colors = ['#f43f5e', '#ec4899', '#a855f7', '#3b82f6', '#10b981', '#eab308', '#f97316'];
+            for (let i = 0; i < 70; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    vx: (Math.random() - 0.5) * 14,
+                    vy: (Math.random() - 0.7) * 16,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    size: Math.random() * 8 + 6,
+                    rotation: Math.random() * 360,
+                    vRot: (Math.random() - 0.5) * 10
+                });
+            }
+            animateConfetti();
+        }
+
+        let confettiAnimationId = null;
+        function animateConfetti() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let active = false;
+
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.3; // Gravitasi
+                p.rotation += p.vRot;
+
+                if (p.y < canvas.height) active = true;
+
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate((p.rotation * Math.PI) / 180);
+                ctx.fillStyle = p.color;
+                ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                ctx.restore();
+            });
+
+            if (active) {
+                confettiAnimationId = requestAnimationFrame(animateConfetti);
+            }
+        }
+
+        // Inisialisasi awal saat halaman dimuat
+        window.onload = () => {
+            restartLevel();
+        };
+    </script>
+</body>
+</html>
