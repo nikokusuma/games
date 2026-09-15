@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan Koding: Master Algoritma & Loop</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Google: Fredoka & Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['Fredoka', 'sans-serif'],
+                        body: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            purple: '#6C5CE7',
+                            pink: '#FD79A8',
+                            yellow: '#FDCB6E',
+                            cyan: '#00CEC9',
+                            blue: '#0984E3',
+                            dark: '#2D3436'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F0F3FF; }
+        .font-display { font-family: 'Fredoka', cursive; }
+        .bounce-gentle { animation: bounceGentle 2s infinite; }
+        @keyframes bounceGentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .pulse-subtle { animation: pulseSubtle 1.5s infinite; }
+        @keyframes pulseSubtle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(1.02); }
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #e2e8f0; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #a0aec0; border-radius: 10px; }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col justify-between selection:bg-brand-purple selection:text-white">
+
+    <!-- Header App -->
+    <header class="bg-white border-b-4 border-indigo-100 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-brand-purple text-white p-2.5 rounded-2xl shadow-md font-display font-bold text-xl flex items-center gap-2">
+                    🤖 <span>KodingKidz</span>
+                </div>
+                <div class="hidden sm:block">
+                    <h1 class="font-display text-lg font-bold text-slate-800 leading-tight">Master Algoritma & Loop</h1>
+                    <p class="text-xs text-slate-500 font-medium">Pemrograman Interaktif Kelas 5</p>
+                </div>
+            </div>
+
+            <!-- Global Timer & Progress -->
+            <div class="flex items-center gap-4">
+                <div class="bg-amber-50 border-2 border-amber-200 text-amber-800 px-3 py-1.5 rounded-xl flex items-center gap-2 font-display text-sm font-semibold">
+                    ⏱️ <span id="global-timer">00:00</span>
+                </div>
+                <div class="bg-indigo-50 border-2 border-indigo-200 px-3 py-1.5 rounded-xl flex items-center gap-2 text-indigo-700 font-display text-sm font-semibold">
+                    🎯 Skor: <span id="global-score">0</span> pts
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Game Container -->
+    <main class="max-w-6xl mx-auto px-4 py-6 flex-grow w-full">
+
+        <!-- Progress Indicator Steps -->
+        <div id="step-indicator" class="mb-6 bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-center max-w-3xl mx-auto">
+            <div id="step-btn-1" class="flex items-center gap-2 text-brand-purple font-display font-bold">
+                <span class="w-8 h-8 rounded-full bg-brand-purple text-white flex items-center justify-center text-sm shadow">1</span>
+                <span class="hidden md:inline">Blok Loop</span>
+            </div>
+            <div class="h-1 flex-1 bg-slate-200 mx-3 rounded-full overflow-hidden">
+                <div id="prog-1" class="h-full bg-brand-purple w-0 transition-all duration-500"></div>
+            </div>
+            <div id="step-btn-2" class="flex items-center gap-2 text-slate-400 font-display font-bold">
+                <span class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-sm">2</span>
+                <span class="hidden md:inline">Pola Matematika</span>
+            </div>
+            <div class="h-1 flex-1 bg-slate-200 mx-3 rounded-full overflow-hidden">
+                <div id="prog-2" class="h-full bg-brand-purple w-0 transition-all duration-500"></div>
+            </div>
+            <div id="step-btn-3" class="flex items-center gap-2 text-slate-400 font-display font-bold">
+                <span class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-sm">3</span>
+                <span class="hidden md:inline">Perintah Bertingkat</span>
+            </div>
+            <div class="h-1 flex-1 bg-slate-200 mx-3 rounded-full overflow-hidden">
+                <div id="prog-3" class="h-full bg-brand-purple w-0 transition-all duration-500"></div>
+            </div>
+            <div id="step-btn-4" class="flex items-center gap-2 text-slate-400 font-display font-bold">
+                <span class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-sm">📊</span>
+                <span class="hidden md:inline">Evaluasi</span>
+            </div>
+        </div>
+
+        <!-- ================= START / WELCOME SCREEN ================= -->
+        <section id="screen-welcome" class="bg-white rounded-3xl p-8 shadow-xl border-4 border-indigo-100 text-center max-w-2xl mx-auto my-6">
+            <div class="text-6xl mb-4 bounce-gentle">🚀</div>
+            <h2 class="font-display text-3xl md:text-4xl font-extrabold text-slate-800 mb-3">Selamat Datang, Detektif Koding!</h2>
+            <p class="text-slate-600 mb-6 text-base leading-relaxed">
+                Hari ini kamu akan melatih otakmu dalam berpikir komputasional! Selesaikan 3 misi tantangan: memahami perulangan (loop), menemukan pola angka eksponensial, dan mengontrol dua robot secara bersamaan.
+            </p>
+            <div class="bg-indigo-50 p-4 rounded-2xl border-2 border-indigo-200 text-left mb-6 text-sm text-indigo-900 space-y-2">
+                <div class="flex items-center gap-2 font-bold font-display text-indigo-800 text-base">
+                    <span>💡 Tips Bertualang:</span>
+                </div>
+                <p>• Bacalah pola dengan teliti sebelum memasang blok perintah.</p>
+                <p>• Waktu dan keakuratan jawabanmu akan dicatat untuk evaluasi di akhir!</p>
+            </div>
+            <button onclick="startGame()" class="w-full bg-gradient-to-r from-brand-purple to-indigo-600 hover:from-indigo-600 hover:to-brand-purple text-white font-display font-bold text-xl py-4 px-8 rounded-2xl shadow-lg transform active:scale-95 transition-all cursor-pointer">
+                Mulai Petualangan Sekarang ➔
+            </button>
+        </section>
+
+        <!-- ================= GAME 1: BLOK PENGULANGAN ================= -->
+        <section id="screen-game1" class="hidden space-y-6">
+            <div class="bg-white rounded-3xl p-6 shadow-md border-2 border-slate-100">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-4 mb-4 gap-2">
+                    <div>
+                        <span class="bg-purple-100 text-brand-purple font-display font-bold px-3 py-1 rounded-full text-xs uppercase tracking-wider">Misi 1: Loop & Iterasi</span>
+                        <h2 class="font-display text-2xl font-bold text-slate-800 mt-1">Game 1: Tirukan Pola Perulangan</h2>
+                    </div>
+                    <div class="bg-slate-100 px-4 py-2 rounded-xl text-slate-700 font-display font-bold text-sm">
+                        Soal <span id="g1-question-num" class="text-brand-purple text-lg">1</span> / 10
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- Left: Target Pattern Display -->
+                    <div class="lg:col-col-span-12 lg:col-span-5 bg-slate-50 p-5 rounded-2xl border-2 border-dashed border-slate-300 flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-display font-bold text-slate-700 mb-2 flex items-center gap-2">
+                                <span>📺 Target Pola Gerakan:</span>
+                            </h3>
+                            <p id="g1-instruction" class="text-sm text-slate-600 mb-4 bg-white p-3 rounded-xl border border-slate-200">
+                                Amati pola aksi berikut, lalu susun blok perulangan agar robot menirukannya!
+                            </p>
+
+                            <!-- Target Visual Display -->
+                            <div class="bg-slate-900 text-white rounded-2xl p-4 min-h-[160px] flex flex-col items-center justify-center relative overflow-hidden shadow-inner">
+                                <div id="g1-robot-target" class="text-5xl transition-transform duration-300 mb-2">🤖</div>
+                                <div id="g1-action-badge" class="bg-brand-purple text-white px-3 py-1 rounded-full font-display text-sm font-semibold tracking-wide">
+                                    Siap...
+                                </div>
+                                <button onclick="playTargetPreview()" class="mt-4 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-400/30 font-display text-xs px-3 py-1.5 rounded-lg flex items-center gap-1">
+                                    ▶ Utarakan Ulang Pola
+                                </button>
+                            </div>
+
+                            <div class="mt-4">
+                                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2" id="g1-target-sequence-label">Urutan Aksi Target:</span>
+                                <div id="g1-target-sequence-list" class="flex flex-wrap gap-1.5">
+                                    <!-- Dynamic sequence chips -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Loop Coding Canvas -->
+                    <div class="lg:col-span-7 bg-indigo-50/50 p-5 rounded-2xl border-2 border-indigo-100 flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-display font-bold text-slate-800 mb-2 flex items-center justify-between">
+                                <span>🧩 Area Koding Blok Loop</span>
+                                <button onclick="resetG1Canvas()" class="text-xs text-rose-600 hover:underline font-semibold">Ulangi Blok</button>
+                            </h3>
+
+                            <!-- Loop Outer Container -->
+                            <div class="bg-amber-400 p-4 rounded-2xl shadow-md text-amber-950 space-y-3">
+                                <div class="flex items-center gap-2 font-display font-bold text-base md:text-lg">
+                                    <span>🔁 ULANGI (LOOP)</span>
+                                    <select id="g1-loop-count" class="bg-white text-slate-800 px-3 py-1 rounded-xl text-base font-bold shadow-sm outline-none border-2 border-amber-300 cursor-pointer">
+                                        <option value="1">1 kali</option>
+                                        <option value="2">2 kali</option>
+                                        <option value="3">3 kali</option>
+                                        <option value="4">4 kali</option>
+                                    </select>
+                                </div>
+
+                                <!-- Loop Inner Dropzone -->
+                                <div id="g1-loop-body" class="bg-white/90 border-2 border-dashed border-amber-600/40 rounded-xl p-3 min-h-[110px] flex flex-wrap gap-2 items-center">
+                                    <!-- Action Blocks added here -->
+                                    <span id="g1-empty-hint" class="text-slate-400 text-sm font-medium text-center w-full">Klik pilihan aksi di bawah untuk memasukkan ke dalam Loop</span>
+                                </div>
+
+                                <div class="text-xs text-amber-900 font-medium">✨ Perintah di dalam kotak akan diulang sesuai jumlah perulangan.</div>
+                            </div>
+
+                            <!-- Palette of Actions -->
+                            <div class="mt-4">
+                                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Pilih Aksi Perintah:</span>
+                                <div class="flex flex-wrap gap-2">
+                                    <button onclick="addG1Action('Lompat 🦘')" class="bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-700 font-display font-bold text-sm px-3.5 py-2 rounded-xl shadow-sm active:scale-95 transition-all">
+                                        🦘 Lompat
+                                    </button>
+                                    <button onclick="addG1Action('Berhenti 🛑')" class="bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-700 font-display font-bold text-sm px-3.5 py-2 rounded-xl shadow-sm active:scale-95 transition-all">
+                                        🛑 Berhenti
+                                    </button>
+                                    <button onclick="addG1Action('Maju ➡️')" class="bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-700 font-display font-bold text-sm px-3.5 py-2 rounded-xl shadow-sm active:scale-95 transition-all">
+                                        ➡️ Maju
+                                    </button>
+                                    <button onclick="addG1Action('Tepuk 👏')" class="bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-700 font-display font-bold text-sm px-3.5 py-2 rounded-xl shadow-sm active:scale-95 transition-all">
+                                        👏 Tepuk
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Run & Test Button -->
+                        <div class="mt-6 pt-4 border-t border-slate-200 flex gap-3">
+                            <button onclick="runG1Code()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-display font-bold py-3 px-6 rounded-xl shadow-lg active:scale-95 transition-all text-center">
+                                ▶️ Jalankan & Uji Program
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= GAME 2: POLA MATEMATIKA ================= -->
+        <section id="screen-game2" class="hidden space-y-6">
+            <div class="bg-white rounded-3xl p-6 shadow-md border-2 border-slate-100 max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-4 mb-4 gap-2">
+                    <div>
+                        <span class="bg-amber-100 text-amber-700 font-display font-bold px-3 py-1 rounded-full text-xs uppercase tracking-wider">Misi 2: Pola Bilangan & Algoritma</span>
+                        <h2 class="font-display text-2xl font-bold text-slate-800 mt-1">Game 2: Detektif Pola Eksponensial</h2>
+                    </div>
+                    <div class="bg-slate-100 px-4 py-2 rounded-xl text-slate-700 font-display font-bold text-sm">
+                        Soal <span id="g2-question-num" class="text-amber-600 text-lg">1</span> / 10
+                    </div>
+                </div>
+
+                <div class="text-center py-4">
+                    <p class="text-slate-600 mb-2 text-lg">Temukan aturan algoritma pertumbuhan bilangan di bawah ini, lalu tebak bilangan berikutnya!</p>
+                    <p class="text-sm text-slate-500 italic mb-6">Pola ini menggunakan aturan perkalian berulang (eksponensial sederhana).</p>
+
+                    <!-- Sequence Cards Container -->
+                    <div id="g2-cards-container" class="flex flex-wrap justify-center items-center gap-3 md:gap-4 my-6">
+                        <!-- Dynamic Sequence Cards -->
+                    </div>
+
+                    <!-- User Answer Input Section -->
+                    <div class="bg-amber-50/70 border-2 border-amber-200 rounded-2xl p-6 max-w-md mx-auto my-6 space-y-4 shadow-sm">
+                        <label class="block font-display font-bold text-slate-800 text-base">
+                            Berapakah Nilai [ ? ] Selanjutnya?
+                        </label>
+                        <div class="flex gap-2 justify-center">
+                            <input type="number" id="g2-user-input" placeholder="Ketik angka..." class="w-40 text-center font-display text-2xl p-3 border-2 border-amber-400 rounded-xl outline-none focus:ring-4 focus:ring-amber-200 bg-white">
+                            <button onclick="submitG2Answer()" class="bg-amber-500 hover:bg-amber-600 text-white font-display font-bold px-6 rounded-xl shadow-md active:scale-95 transition-all text-lg">
+                                Jawab 🎯
+                            </button>
+                        </div>
+                        <div id="g2-hint-box" class="hidden text-xs text-amber-900 bg-amber-100 p-2.5 rounded-lg border border-amber-300">
+                            <!-- Hint content -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= GAME 3: PERINTAH BERTINGKAT (PARALEL) ================= -->
+        <section id="screen-game3" class="hidden space-y-6">
+            <div class="bg-white rounded-3xl p-6 shadow-md border-2 border-slate-100">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-4 mb-4 gap-2">
+                    <div>
+                        <span class="bg-cyan-100 text-cyan-800 font-display font-bold px-3 py-1 rounded-full text-xs uppercase tracking-wider">Misi 3: Eksekusi Paralel</span>
+                        <h2 class="font-display text-2xl font-bold text-slate-800 mt-1">Game 3: Sinkronisasi Tim Robot</h2>
+                    </div>
+                    <div class="bg-slate-100 px-4 py-2 rounded-xl text-slate-700 font-display font-bold text-sm">
+                        Skenario <span id="g3-question-num" class="text-cyan-600 text-lg">1</span> / 5
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6 text-sm text-blue-900">
+                    🎯 <strong id="g3-scenario-desc">Tugas Tim: Program Robot Merah (🔴) dan Robot Biru (🔵) agar bergerak bersamaan dan bertemu tepat di Titik Bintang (⭐) pada detik/langkah yang sama!</strong>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    <!-- Left Grid Arena -->
+                    <div class="lg:col-span-5 bg-slate-900 p-6 rounded-2xl shadow-inner flex flex-col items-center justify-center">
+                        <div class="text-white font-display text-sm mb-3 font-semibold flex items-center gap-2">
+                            <span>🗺️ Grid Arena Pertemuan</span>
+                        </div>
+                        
+                        <!-- 5x5 Grid Canvas -->
+                        <div id="g3-grid" class="grid grid-cols-5 gap-2 bg-slate-800 p-3 rounded-xl border border-slate-700">
+                            <!-- Dynamic 25 grid cells -->
+                        </div>
+
+                        <div class="mt-4 text-xs text-slate-400 flex gap-4">
+                            <span class="flex items-center gap-1">🔴 Robot A</span>
+                            <span class="flex items-center gap-1">🔵 Robot B</span>
+                            <span class="flex items-center gap-1">⭐ Target Center</span>
+                        </div>
+                    </div>
+
+                    <!-- Right Command Editors -->
+                    <div class="lg:col-span-7 space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Robot Red Script -->
+                            <div class="bg-rose-50 border-2 border-rose-200 p-4 rounded-2xl">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="font-display font-bold text-rose-800 flex items-center gap-1">🔴 Program Robot Merah</h4>
+                                    <button onclick="clearG3Robot('red')" class="text-xs text-rose-600 hover:underline">Hapus</button>
+                                </div>
+                                <div id="g3-red-list" class="bg-white rounded-xl p-2.5 min-h-[90px] border border-rose-200 flex flex-wrap gap-1 text-xs mb-3">
+                                    <!-- Commands chips -->
+                                </div>
+                                <div class="grid grid-cols-3 gap-1">
+                                    <button onclick="addG3Cmd('red', '⬆️ Atas')" class="bg-white hover:bg-rose-100 border border-rose-300 py-1.5 rounded-lg font-bold text-xs">⬆️ Atas</button>
+                                    <button onclick="addG3Cmd('red', '⬇️ Bawah')" class="bg-white hover:bg-rose-100 border border-rose-300 py-1.5 rounded-lg font-bold text-xs">⬇️ Bawah</button>
+                                    <button onclick="addG3Cmd('red', '⬅️ Kiri')" class="bg-white hover:bg-rose-100 border border-rose-300 py-1.5 rounded-lg font-bold text-xs">⬅️ Kiri</button>
+                                    <button onclick="addG3Cmd('red', '➡️ Kanan')" class="bg-white hover:bg-rose-100 border border-rose-300 py-1.5 rounded-lg font-bold text-xs">➡️ Kanan</button>
+                                    <button onclick="addG3Cmd('red', '⏳ Diam')" class="col-span-2 bg-amber-100 hover:bg-amber-200 text-amber-800 border border-amber-300 py-1.5 rounded-lg font-bold text-xs">⏳ Diam (Tunggu)</button>
+                                </div>
+                            </div>
+
+                            <!-- Robot Blue Script -->
+                            <div class="bg-sky-50 border-2 border-sky-200 p-4 rounded-2xl">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="font-display font-bold text-sky-800 flex items-center gap-1">🔵 Program Robot Biru</h4>
+                                    <button onclick="clearG3Robot('blue')" class="text-xs text-sky-600 hover:underline">Hapus</button>
+                                </div>
+                                <div id="g3-blue-list" class="bg-white rounded-xl p-2.5 min-h-[90px] border border-sky-200 flex flex-wrap gap-1 text-xs mb-3">
+                                    <!-- Commands chips -->
+                                </div>
+                                <div class="grid grid-cols-3 gap-1">
+                                    <button onclick="addG3Cmd('blue', '⬆️ Atas')" class="bg-white hover:bg-sky-100 border border-sky-300 py-1.5 rounded-lg font-bold text-xs">⬆️ Atas</button>
+                                    <button onclick="addG3Cmd('blue', '⬇️ Bawah')" class="bg-white hover:bg-sky-100 border border-sky-300 py-1.5 rounded-lg font-bold text-xs">⬇️ Bawah</button>
+                                    <button onclick="addG3Cmd('blue', '⬅️ Kiri')" class="bg-white hover:bg-sky-100 border border-sky-300 py-1.5 rounded-lg font-bold text-xs">⬅️ Kiri</button>
+                                    <button onclick="addG3Cmd('blue', '➡️ Kanan')" class="bg-white hover:bg-sky-100 border border-sky-300 py-1.5 rounded-lg font-bold text-xs">➡️ Kanan</button>
+                                    <button onclick="addG3Cmd('blue', '⏳ Diam')" class="col-span-2 bg-amber-100 hover:bg-amber-200 text-amber-800 border border-amber-300 py-1.5 rounded-lg font-bold text-xs">⏳ Diam (Tunggu)</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Run Parallel Exec button -->
+                        <button onclick="runG3Parallel()" class="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-display font-bold text-lg py-3.5 px-6 rounded-2xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2">
+                            <span>⚡ Jalankan Perintah Paralel Bersamaan</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= EVALUATION & REPORT SCREEN ================= -->
+        <section id="screen-evaluation" class="hidden space-y-6">
+            <div class="bg-white rounded-3xl p-8 shadow-xl border-4 border-indigo-100 max-w-3xl mx-auto">
+                <div class="text-center border-b pb-6 mb-6">
+                    <div class="text-6xl mb-2">🏆</div>
+                    <h2 class="font-display text-3xl font-extrabold text-slate-800">Laporan Evaluasi Koding</h2>
+                    <p class="text-slate-500 text-sm">Hasil Pencapaian Berpikir Komputasional & Logika</p>
+                </div>
+
+                <!-- Score Overview Card -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-2xl text-center">
+                        <span class="text-xs text-indigo-600 font-bold uppercase tracking-wider block mb-1">Total Skor Akhir</span>
+                        <span id="eval-score" class="font-display text-4xl font-extrabold text-brand-purple">0</span>
+                        <span class="text-xs text-slate-500 block mt-1">dari 100 Poin</span>
+                    </div>
+                    <div class="bg-amber-50 border border-amber-200 p-4 rounded-2xl text-center">
+                        <span class="text-xs text-amber-700 font-bold uppercase tracking-wider block mb-1">Total Waktu Belajar</span>
+                        <span id="eval-time" class="font-display text-2xl font-bold text-amber-800 mt-1 block">00:00</span>
+                        <span class="text-xs text-slate-500 block mt-1">Menit:Detik</span>
+                    </div>
+                    <div class="bg-rose-50 border border-rose-200 p-4 rounded-2xl text-center">
+                        <span class="text-xs text-rose-700 font-bold uppercase tracking-wider block mb-1">Total Kesalahan</span>
+                        <span id="eval-errors" class="font-display text-3xl font-bold text-rose-600">0</span>
+                        <span class="text-xs text-slate-500 block mt-1">Percobaan Salah</span>
+                    </div>
+                </div>
+
+                <!-- Competency Breakdown -->
+                <div class="space-y-4 mb-8">
+                    <h3 class="font-display font-bold text-slate-800 text-lg border-b pb-2">📊 Analisis Penguasaan Konsep:</h3>
+                    
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-1">
+                        <div class="flex justify-between font-display font-bold text-sm">
+                            <span class="text-purple-700">1. Konsep Loop & Perulangan (Game 1)</span>
+                            <span id="eval-g1-status" class="text-slate-700">Sangat Baik</span>
+                        </div>
+                        <p id="eval-g1-desc" class="text-xs text-slate-600">Mampu mengidentifikasi pola berulang dan menerjemahkannya ke dalam jumlah iterasi loop yang tepat.</p>
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-1">
+                        <div class="flex justify-between font-display font-bold text-sm">
+                            <span class="text-amber-700">2. Pola Eksponensial & Algoritma (Game 2)</span>
+                            <span id="eval-g2-status" class="text-slate-700">Baik</span>
+                        </div>
+                        <p id="eval-g2-desc" class="text-xs text-slate-600">Memahami algoritma perkalian berulang pada deret bilangan teratur.</p>
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-1">
+                        <div class="flex justify-between font-display font-bold text-sm">
+                            <span class="text-cyan-700">3. Pengurutan Paralel & Sinkronisasi (Game 3)</span>
+                            <span id="eval-g3-status" class="text-slate-700">Luar Biasa</span>
+                        </div>
+                        <p id="eval-g3-desc" class="text-xs text-slate-600">Mampu menyusun dua algoritma bersamaan agar dua objek sampai tujuan di waktu yang persis sama.</p>
+                    </div>
+                </div>
+
+                <!-- Teacher / Parent Recommendation -->
+                <div id="eval-recommendation" class="bg-emerald-50 border-2 border-emerald-200 p-5 rounded-2xl text-emerald-950 text-sm mb-6 space-y-1">
+                    <div class="font-display font-bold text-emerald-800 text-base flex items-center gap-1">
+                        <span>🌟 Catatan & Saran Pembelajaran:</span>
+                    </div>
+                    <p id="eval-rec-text">Kerja bagus! Penguasaan logika kodingmu sangat tajam. Kamu siap melangkah ke materi variabel dan kondisi (If-Else)!</p>
+                </div>
+
+                <div class="flex gap-4">
+                    <button onclick="restartEntireGame()" class="w-full bg-brand-purple hover:bg-indigo-600 text-white font-display font-bold py-3.5 rounded-2xl shadow-lg active:scale-95 transition-all text-center">
+                        🔄 Main Lagi dari Awal
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Custom Modal Dialog (Replaces alert) -->
+    <div id="custom-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border-4 border-indigo-100 text-center space-y-4">
+            <div id="modal-icon" class="text-5xl">🎉</div>
+            <h3 id="modal-title" class="font-display text-2xl font-bold text-slate-800">Hebat!</h3>
+            <p id="modal-message" class="text-slate-600 text-sm">Jawabanmu tepat sekali!</p>
+            <button onclick="closeModal()" class="w-full bg-brand-purple hover:bg-indigo-600 text-white font-display font-bold py-3 rounded-xl shadow-md active:scale-95 transition-all">
+                Lanjutkan ➔
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /* SOUND SYNTHESIZER (Web Audio API) */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'success') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                    osc.frequency.exponentialRampToValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+                    osc.frequency.exponentialRampToValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                } else if (type === 'error') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(164.81, audioCtx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                } else if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.05);
+                }
+            } catch(e){}
+        }
+
+        /* GLOBAL STATE */
+        let gameState = {
+            score: 0,
+            startTime: null,
+            timerInterval: null,
+            totalSeconds: 0,
+            totalErrors: 0,
+            
+            // Game 1 State
+            g1Index: 0,
+            g1Errors: 0,
+            g1Actions: [],
+            
+            // Game 2 State
+            g2Index: 0,
+            g2Errors: 0,
+
+            // Game 3 State
+            g3Index: 0,
+            g3Errors: 0,
+            g3RedCmds: [],
+            g3BlueCmds: [],
+            g3RedPos: { x: 0, y: 2 },
+            g3BluePos: { x: 4, y: 2 },
+            g3TargetPos: { x: 2, y: 2 }
+        };
+
+        /* GAME 1 SOAL DATA (10 Questions - 5 with target displayed, 5 hidden) */
+        const g1Questions = [
+            // Soal 1 - 5: Urutan aksi ditampilkan
+            {
+                instruction: "Gunakan blok perulangan untuk menampilkan pola lompat-dua-henti 1 kali.",
+                unit: ["Lompat 🦘", "Lompat 🦘", "Berhenti 🛑"],
+                repeat: 1,
+                showTarget: true,
+                hint: "1 kali loop isi: Lompat, Lompat, Berhenti"
+            },
+            {
+                instruction: "Tirukan pola gerakan robot: (Maju, Tepuk) diulang sebanyak 3 kali!",
+                unit: ["Maju ➡️", "Tepuk 👏"],
+                repeat: 3,
+                showTarget: true,
+                hint: "Pilih loop 3 kali, lalu masukkan Maju dan Tepuk"
+            },
+            {
+                instruction: "Buat program perulangan: (Lompat, Maju, Berhenti) diulang 2 kali!",
+                unit: ["Lompat 🦘", "Maju ➡️", "Berhenti 🛑"],
+                repeat: 2,
+                showTarget: true,
+                hint: "Pilih loop 2 kali, lalu isi 3 gerakan tersebut"
+            },
+            {
+                instruction: "Susun algoritma loop: (Tepuk, Tepuk, Lompat) sebanyak 2 kali!",
+                unit: ["Tepuk 👏", "Tepuk 👏", "Lompat 🦘"],
+                repeat: 2,
+                showTarget: true,
+                hint: "Masukkan Tepuk 2x lalu Lompat 1x di dalam loop 2x"
+            },
+            {
+                instruction: "Tantangan Komplit: (Maju, Lompat, Berhenti, Tepuk) diulang 2 kali!",
+                unit: ["Maju ➡️", "Lompat 🦘", "Berhenti 🛑", "Tepuk 👏"],
+                repeat: 2,
+                showTarget: true,
+                hint: "Isi 4 aksi lengkap di dalam loop 2 kali"
+            },
+
+            // Soal 6 - 10: Urutan aksi RAHASIA (Target TIDAK ditampilkan secara eksplisit)
+            {
+                instruction: "🕵️ LEVEL RAHASIA: Amati gerakan robot! Susun loop (Lompat, Berhenti) diulang 4 kali!",
+                unit: ["Lompat 🦘", "Berhenti 🛑"],
+                repeat: 4,
+                showTarget: false,
+                hint: "Perhatikan animasi robot: Lompat lalu Berhenti sebanyak 4 kali."
+            },
+            {
+                instruction: "🕵️ LEVEL RAHASIA: Perhatikan pola gerakan! (Maju, Maju, Tepuk) diulang 2 kali!",
+                unit: ["Maju ➡️", "Maju ➡️", "Tepuk 👏"],
+                repeat: 2,
+                showTarget: false,
+                hint: "Pola dasar diisi (Maju, Maju, Tepuk) dan diulang 2 kali."
+            },
+            {
+                instruction: "🕵️ LEVEL RAHASIA: Analisis animasi robot! (Tepuk, Lompat, Maju) diulang 3 kali!",
+                unit: ["Tepuk 👏", "Lompat 🦘", "Maju ➡️"],
+                repeat: 3,
+                showTarget: false,
+                hint: "Amati urutan: Tepuk, Lompat, Maju lalu diset perulangan 3 kali."
+            },
+            {
+                instruction: "🕵️ LEVEL RAHASIA: Amati seksama! (Berhenti, Lompat, Tepuk) diulang 2 kali!",
+                unit: ["Berhenti 🛑", "Lompat 🦘", "Tepuk 👏"],
+                repeat: 2,
+                showTarget: false,
+                hint: "Urutan di dalam loop: Berhenti, Lompat, Tepuk (diulang 2x)."
+            },
+            {
+                instruction: "🕵️ LEVEL RAHASIA ULTIMATE: (Maju, Tepuk, Lompat, Berhenti) diulang 3 kali!",
+                unit: ["Maju ➡️", "Tepuk 👏", "Lompat 🦘", "Berhenti 🛑"],
+                repeat: 3,
+                showTarget: false,
+                hint: "Pola 4 aksi: Maju, Tepuk, Lompat, Berhenti diulang 3 kali!"
+            }
+        ];
+
+        /* GAME 2 SOAL DATA (10 Questions - Exponential & Multiplicative Patterns) */
+        const g2Questions = [
+            {
+                series: [2, 4, 8, 16],
+                answer: 32,
+                ruleText: "Perkalian 2 berulang (x2)",
+                hint: "2×2=4, 4×2=8, 8×2=16, 16×2=?"
+            },
+            {
+                series: [3, 9, 27, 81],
+                answer: 243,
+                ruleText: "Perkalian 3 berulang (x3)",
+                hint: "3×3=9, 9×3=27, 27×3=81, 81×3=?"
+            },
+            {
+                series: [1, 4, 16, 64],
+                answer: 256,
+                ruleText: "Perkalian 4 berulang (x4)",
+                hint: "1×4=4, 4×4=16, 16×4=64, 64×4=?"
+            },
+            {
+                series: [5, 10, 20, 40],
+                answer: 80,
+                ruleText: "Perkalian 2 berulang (x2)",
+                hint: "Setiap suku dikalikan 2: 40 × 2 = ?"
+            },
+            {
+                series: [2, 6, 18, 54],
+                answer: 162,
+                ruleText: "Perkalian 3 berulang (x3)",
+                hint: "Setiap angka dikali 3. Berapakah 54 × 3?"
+            },
+            {
+                series: [1, 5, 25, 125],
+                answer: 625,
+                ruleText: "Perkalian 5 berulang (x5)",
+                hint: "Setiap angka dikali 5: 125 × 5 = ?"
+            },
+            {
+                series: [4, 12, 36, 108],
+                answer: 324,
+                ruleText: "Perkalian 3 berulang (x3)",
+                hint: "Pola dikali 3 secara terus menerus: 108 × 3 = ?"
+            },
+            {
+                series: [2, 8, 32, 128],
+                answer: 512,
+                ruleText: "Perkalian 4 berulang (x4)",
+                hint: "Setiap bilangan dikalikan 4: 128 × 4 = ?"
+            },
+            {
+                series: [10, 20, 40, 80],
+                answer: 160,
+                ruleText: "Perkalian 2 berulang (x2)",
+                hint: "Bilangan bertambah 2x lipat setiap langkah: 80 × 2 = ?"
+            },
+            {
+                series: [3, 12, 48, 192],
+                answer: 768,
+                ruleText: "Perkalian 4 berulang (x4)",
+                hint: "Pola perkalian 4: 192 × 4 = ?"
+            }
+        ];
+
+        /* GAME 3 SOAL DATA (5 Scenarios - Parallel Sync Grid) */
+        const g3Questions = [
+            {
+                title: "Skenario 1: Pertemuan Horisontal",
+                desc: "Robot Merah di kiri (0,2), Robot Biru di kanan (4,2). Program agar keduanya bertemu di Bintang (2,2) dalam 2 langkah!",
+                redStart: { x: 0, y: 2 },
+                blueStart: { x: 4, y: 2 },
+                target: { x: 2, y: 2 },
+                expectedSteps: 2
+            },
+            {
+                title: "Skenario 2: Pertemuan Vertikal",
+                desc: "Robot Merah di atas (2,0), Robot Biru di bawah (2,4). Program agar keduanya bertemu di Bintang (2,2) dalam 2 langkah!",
+                redStart: { x: 2, y: 0 },
+                blueStart: { x: 2, y: 4 },
+                target: { x: 2, y: 2 },
+                expectedSteps: 2
+            },
+            {
+                title: "Skenario 3: Diagonal Silang",
+                desc: "Robot Merah di sudut kiri-atas (0,0), Robot Biru di sudut kanan-bawah (4,4). Pertemukan keduanya di Bintang (2,2) dalam 4 langkah!",
+                redStart: { x: 0, y: 0 },
+                blueStart: { x: 4, y: 4 },
+                target: { x: 2, y: 2 },
+                expectedSteps: 4
+            },
+            {
+                title: "Skenario 4: Silang Bertentangan",
+                desc: "Robot Merah di sudut kiri-bawah (0,4), Robot Biru di sudut kanan-atas (4,0). Pertemukan di Bintang (2,2) dalam 4 langkah!",
+                redStart: { x: 0, y: 4 },
+                blueStart: { x: 4, y: 0 },
+                target: { x: 2, y: 2 },
+                expectedSteps: 4
+            },
+            {
+                title: "Skenario 5: Tantangan Sinkronisasi (Jarak Berbeda)",
+                desc: "Robot Merah di (0,2) butuh 2 langkah. Robot Biru di (4,1) butuh 3 langkah. Gunakan perintah '⏳ Diam' pada Robot Merah agar tiba BERSAMAAN pada detik ke-3!",
+                redStart: { x: 0, y: 2 },
+                blueStart: { x: 4, y: 1 },
+                target: { x: 2, y: 2 },
+                expectedSteps: 3
+            }
+        ];
+
+        /* MODAL DIALOG CONTROLLER */
+        let modalCallback = null;
+        function showModal(icon, title, message, callback = null) {
+            document.getElementById('modal-icon').innerText = icon;
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-message').innerText = message;
+            document.getElementById('custom-modal').classList.remove('hidden');
+            modalCallback = callback;
+        }
+        function closeModal() {
+            playSound('click');
+            document.getElementById('custom-modal').classList.add('hidden');
+            if (modalCallback) {
+                modalCallback();
+                modalCallback = null;
+            }
+        }
+
+        /* TIMER & APP FLOW */
+        function startGame() {
+            playSound('click');
+            document.getElementById('screen-welcome').classList.add('hidden');
+            document.getElementById('screen-game1').classList.remove('hidden');
+            
+            gameState.startTime = Date.now();
+            gameState.timerInterval = setInterval(() => {
+                gameState.totalSeconds = Math.floor((Date.now() - gameState.startTime) / 1000);
+                const mins = String(Math.floor(gameState.totalSeconds / 60)).padStart(2, '0');
+                const secs = String(gameState.totalSeconds % 60).padStart(2, '0');
+                document.getElementById('global-timer').innerText = `${mins}:${secs}`;
+            }, 1000);
+
+            loadG1Question();
+        }
+
+        function updateScore(pts) {
+            gameState.score += pts;
+            document.getElementById('global-score').innerText = gameState.score;
+        }
+
+        /* ================= GAME 1 LOGIC ================= */
+        function loadG1Question() {
+            const q = g1Questions[gameState.g1Index];
+            document.getElementById('g1-question-num').innerText = gameState.g1Index + 1;
+            document.getElementById('g1-instruction').innerText = q.instruction;
+            
+            // Build full target array
+            const fullTarget = [];
+            for (let i = 0; i < q.repeat; i++) {
+                fullTarget.push(...q.unit);
+            }
+
+            // Render Target Chips
+            const container = document.getElementById('g1-target-sequence-list');
+            const label = document.getElementById('g1-target-sequence-label');
+            container.innerHTML = '';
+
+            if (q.showTarget) {
+                label.innerText = "Urutan Aksi Target:";
+                fullTarget.forEach(item => {
+                    const chip = document.createElement('span');
+                    chip.className = 'bg-slate-200 text-slate-800 text-xs px-2.5 py-1 rounded-lg font-semibold';
+                    chip.innerText = item;
+                    container.appendChild(chip);
+                });
+            } else {
+                label.innerText = "Urutan Aksi Target (Disembunyikan):";
+                const hiddenChip = document.createElement('div');
+                hiddenChip.className = 'bg-amber-100 border border-amber-300 text-amber-900 text-xs px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5';
+                hiddenChip.innerHTML = `🔒 <span>Detektif Rahasia: Amati animasi gerakan robot untuk menemukan polanya!</span>`;
+                container.appendChild(hiddenChip);
+            }
+
+            resetG1Canvas();
+            playTargetPreview();
+        }
+
+        function addG1Action(action) {
+            playSound('click');
+            gameState.g1Actions.push(action);
+            renderG1Body();
+        }
+
+        function renderG1Body() {
+            const body = document.getElementById('g1-loop-body');
+            const hint = document.getElementById('g1-empty-hint');
+            
+            if (gameState.g1Actions.length > 0) {
+                if (hint) hint.classList.add('hidden');
+            } else {
+                if (hint) hint.classList.remove('hidden');
+            }
+
+            // Clear existing chips excluding hint
+            Array.from(body.children).forEach(child => {
+                if (child.id !== 'g1-empty-hint') child.remove();
+            });
+
+            gameState.g1Actions.forEach((act, idx) => {
+                const chip = document.createElement('div');
+                chip.className = 'bg-amber-100 border border-amber-300 text-amber-900 font-display font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm';
+                chip.innerHTML = `<span>${act}</span> <button onclick="removeG1Action(${idx})" class="text-rose-500 hover:text-rose-700 font-bold">✕</button>`;
+                body.appendChild(chip);
+            });
+        }
+
+        function removeG1Action(index) {
+            playSound('click');
+            gameState.g1Actions.splice(index, 1);
+            renderG1Body();
+        }
+
+        function resetG1Canvas() {
+            gameState.g1Actions = [];
+            document.getElementById('g1-loop-count').value = "1";
+            renderG1Body();
+        }
+
+        async function playTargetPreview() {
+            const q = g1Questions[gameState.g1Index];
+            const robot = document.getElementById('g1-robot-target');
+            const badge = document.getElementById('g1-action-badge');
+
+            const fullTarget = [];
+            for (let i = 0; i < q.repeat; i++) {
+                fullTarget.push(...q.unit);
+            }
+
+            for (let act of fullTarget) {
+                badge.innerText = act;
+                if (act.includes('Lompat')) {
+                    robot.style.transform = 'translateY(-20px)';
+                } else if (act.includes('Maju')) {
+                    robot.style.transform = 'translateX(20px)';
+                } else if (act.includes('Tepuk')) {
+                    robot.style.transform = 'scale(1.2)';
+                } else {
+                    robot.style.transform = 'scale(0.9)';
+                }
+                await new Promise(r => setTimeout(r, 400));
+                robot.style.transform = 'none';
+                await new Promise(r => setTimeout(r, 200));
+            }
+            badge.innerText = 'Pola Selesai';
+        }
+
+        function runG1Code() {
+            playSound('click');
+            const q = g1Questions[gameState.g1Index];
+            const loopTimes = parseInt(document.getElementById('g1-loop-count').value);
+            
+            // Build user sequence
+            const userSeq = [];
+            for (let i = 0; i < loopTimes; i++) {
+                userSeq.push(...gameState.g1Actions);
+            }
+
+            // Build target sequence
+            const targetSeq = [];
+            for (let i = 0; i < q.repeat; i++) {
+                targetSeq.push(...q.unit);
+            }
+
+            // Check match
+            const isCorrect = userSeq.length === targetSeq.length && userSeq.every((val, index) => val === targetSeq[index]);
+
+            if (isCorrect) {
+                playSound('success');
+                updateScore(3); // 10 questions * 3 = 30 pts total
+                showModal('🎉', 'Luar Biasa!', 'Blok pengulanganmu tepat meniru pola robot!', () => {
+                    gameState.g1Index++;
+                    if (gameState.g1Index < g1Questions.length) {
+                        loadG1Question();
+                    } else {
+                        // Switch to Game 2
+                        document.getElementById('screen-game1').classList.add('hidden');
+                        document.getElementById('screen-game2').classList.remove('hidden');
+                        document.getElementById('prog-1').style.width = '100%';
+                        document.getElementById('step-btn-2').classList.replace('text-slate-400', 'text-amber-600');
+                        loadG2Question();
+                    }
+                });
+            } else {
+                playSound('error');
+                gameState.g1Errors++;
+                gameState.totalErrors++;
+                showModal('💡', 'Hampir Benar!', `Pola yang dihasilkan belum cocok.\nPetunjuk: ${q.hint}`);
+            }
+        }
+
+        /* ================= GAME 2 LOGIC ================= */
+        function loadG2Question() {
+            const q = g2Questions[gameState.g2Index];
+            document.getElementById('g2-question-num').innerText = gameState.g2Index + 1;
+            document.getElementById('g2-user-input').value = '';
+            document.getElementById('g2-hint-box').classList.add('hidden');
+
+            const container = document.getElementById('g2-cards-container');
+            container.innerHTML = '';
+
+            // Render sequence cards
+            q.series.forEach((num, idx) => {
+                const card = document.createElement('div');
+                card.className = 'bg-gradient-to-b from-amber-400 to-amber-500 text-amber-950 font-display font-extrabold text-2xl md:text-3xl w-16 h-20 md:w-20 md:h-24 rounded-2xl flex items-center justify-center shadow-lg transform hover:-translate-y-1 transition-all';
+                card.innerText = num;
+                container.appendChild(card);
+
+                // Add arrow icon between cards
+                if (idx < q.series.length - 1) {
+                    const arrow = document.createElement('span');
+                    arrow.className = 'text-amber-400 text-xl font-bold';
+                    arrow.innerText = '➔';
+                    container.appendChild(arrow);
+                }
+            });
+
+            // Question mark card
+            const qArrow = document.createElement('span');
+            qArrow.className = 'text-amber-400 text-xl font-bold';
+            qArrow.innerText = '➔';
+            container.appendChild(qArrow);
+
+            const qCard = document.createElement('div');
+            qCard.className = 'bg-white border-4 border-dashed border-amber-400 text-amber-600 font-display font-extrabold text-2xl md:text-3xl w-16 h-20 md:w-20 md:h-24 rounded-2xl flex items-center justify-center shadow-md animate-pulse';
+            qCard.innerText = '?';
+            container.appendChild(qCard);
+        }
+
+        function submitG2Answer() {
+            playSound('click');
+            const userVal = parseInt(document.getElementById('g2-user-input').value);
+            const q = g2Questions[gameState.g2Index];
+
+            if (userVal === q.answer) {
+                playSound('success');
+                updateScore(3); // 10 questions * 3 = 30 pts total
+                showModal('🧠', 'Jawaban Tepat!', `Hebat! Aturan algoritmanya adalah: ${q.ruleText}.`, () => {
+                    gameState.g2Index++;
+                    if (gameState.g2Index < g2Questions.length) {
+                        loadG2Question();
+                    } else {
+                        // Switch to Game 3
+                        document.getElementById('screen-game2').classList.add('hidden');
+                        document.getElementById('screen-game3').classList.remove('hidden');
+                        document.getElementById('prog-2').style.width = '100%';
+                        document.getElementById('step-btn-3').classList.replace('text-slate-400', 'text-cyan-600');
+                        loadG3Question();
+                    }
+                });
+            } else {
+                playSound('error');
+                gameState.g2Errors++;
+                gameState.totalErrors++;
+                const hintBox = document.getElementById('g2-hint-box');
+                hintBox.innerText = `💡 Petunjuk: ${q.hint}`;
+                hintBox.classList.remove('hidden');
+                showModal('❌', 'Belum Tepat', 'Coba periksa kembali aturan perkalian pada deret tersebut!');
+            }
+        }
+
+        /* ================= GAME 3 LOGIC ================= */
+        function loadG3Question() {
+            const sc = g3Questions[gameState.g3Index];
+            document.getElementById('g3-question-num').innerText = gameState.g3Index + 1;
+            document.getElementById('g3-scenario-desc').innerText = `${sc.title}: ${sc.desc}`;
+            
+            gameState.g3RedPos = { ...sc.redStart };
+            gameState.g3BluePos = { ...sc.blueStart };
+            gameState.g3TargetPos = { ...sc.target };
+            gameState.g3RedCmds = [];
+            gameState.g3BlueCmds = [];
+
+            renderG3Grid();
+            renderG3Cmds();
+        }
+
+        function renderG3Grid() {
+            const grid = document.getElementById('g3-grid');
+            grid.innerHTML = '';
+
+            for (let y = 0; y < 5; y++) {
+                for (let x = 0; x < 5; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'w-11 h-11 md:w-14 md:h-14 rounded-xl bg-slate-700 border border-slate-600 flex items-center justify-center text-xl relative';
+
+                    // Target center
+                    if (x === gameState.g3TargetPos.x && y === gameState.g3TargetPos.y) {
+                        cell.classList.add('bg-amber-500/20', 'border-amber-400');
+                        cell.innerHTML = '<span class="text-2xl bounce-gentle">⭐</span>';
+                    }
+
+                    // Red robot
+                    if (x === gameState.g3RedPos.x && y === gameState.g3RedPos.y) {
+                        cell.innerHTML = '<span class="text-2xl">🔴</span>';
+                    }
+
+                    // Blue robot
+                    if (x === gameState.g3BluePos.x && y === gameState.g3BluePos.y) {
+                        if (x === gameState.g3RedPos.x && y === gameState.g3RedPos.y) {
+                            cell.innerHTML = '<span class="text-2xl">🤝</span>'; // Both together
+                        } else {
+                            cell.innerHTML = '<span class="text-2xl">🔵</span>';
+                        }
+                    }
+
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        function addG3Cmd(robot, cmd) {
+            playSound('click');
+            if (robot === 'red') {
+                if (gameState.g3RedCmds.length < 6) gameState.g3RedCmds.push(cmd);
+            } else {
+                if (gameState.g3BlueCmds.length < 6) gameState.g3BlueCmds.push(cmd);
+            }
+            renderG3Cmds();
+        }
+
+        function clearG3Robot(robot) {
+            playSound('click');
+            if (robot === 'red') gameState.g3RedCmds = [];
+            else gameState.g3BlueCmds = [];
+            renderG3Cmds();
+        }
+
+        function renderG3Cmds() {
+            const redList = document.getElementById('g3-red-list');
+            const blueList = document.getElementById('g3-blue-list');
+
+            redList.innerHTML = gameState.g3RedCmds.map((c, i) => 
+                `<span class="bg-rose-100 text-rose-800 px-2 py-1 rounded font-bold">${i+1}. ${c}</span>`
+            ).join('') || '<span class="text-slate-400 italic">Belum ada perintah</span>';
+
+            blueList.innerHTML = gameState.g3BlueCmds.map((c, i) => 
+                `<span class="bg-sky-100 text-sky-800 px-2 py-1 rounded font-bold">${i+1}. ${c}</span>`
+            ).join('') || '<span class="text-slate-400 italic">Belum ada perintah</span>';
+        }
+
+        async function runG3Parallel() {
+            playSound('click');
+            if (gameState.g3RedCmds.length === 0 || gameState.g3BlueCmds.length === 0) {
+                showModal('⚠️', 'Program Belum Lengkap', 'Isi instruksi untuk KEDUA robot sebelum menjalankan perintah paralel!');
+                return;
+            }
+
+            const sc = g3Questions[gameState.g3Index];
+
+            // Reset initial positions before simulation
+            gameState.g3RedPos = { ...sc.redStart };
+            gameState.g3BluePos = { ...sc.blueStart };
+            renderG3Grid();
+
+            const maxSteps = Math.max(gameState.g3RedCmds.length, gameState.g3BlueCmds.length);
+
+            for (let step = 0; step < maxSteps; step++) {
+                // Execute Red command
+                const redCmd = gameState.g3RedCmds[step];
+                if (redCmd) {
+                    if (redCmd.includes('Kanan') && gameState.g3RedPos.x < 4) gameState.g3RedPos.x++;
+                    else if (redCmd.includes('Kiri') && gameState.g3RedPos.x > 0) gameState.g3RedPos.x--;
+                    else if (redCmd.includes('Atas') && gameState.g3RedPos.y > 0) gameState.g3RedPos.y--;
+                    else if (redCmd.includes('Bawah') && gameState.g3RedPos.y < 4) gameState.g3RedPos.y++;
+                }
+
+                // Execute Blue command
+                const blueCmd = gameState.g3BlueCmds[step];
+                if (blueCmd) {
+                    if (blueCmd.includes('Kanan') && gameState.g3BluePos.x < 4) gameState.g3BluePos.x++;
+                    else if (blueCmd.includes('Kiri') && gameState.g3BluePos.x > 0) gameState.g3BluePos.x--;
+                    else if (blueCmd.includes('Atas') && gameState.g3BluePos.y > 0) gameState.g3BluePos.y--;
+                    else if (blueCmd.includes('Bawah') && gameState.g3BluePos.y < 4) gameState.g3BluePos.y++;
+                }
+
+                renderG3Grid();
+                await new Promise(r => setTimeout(r, 600));
+            }
+
+            // Check if both are at target simultaneously at the end of execution
+            const redOnTarget = gameState.g3RedPos.x === gameState.g3TargetPos.x && gameState.g3RedPos.y === gameState.g3TargetPos.y;
+            const blueOnTarget = gameState.g3BluePos.x === gameState.g3TargetPos.x && gameState.g3BluePos.y === gameState.g3TargetPos.y;
+            const sameStepCount = gameState.g3RedCmds.length === gameState.g3BlueCmds.length;
+
+            if (redOnTarget && blueOnTarget && sameStepCount) {
+                playSound('success');
+                updateScore(8); // 5 scenarios * 8 = 40 pts total (Total Game 1+2+3 = 100 pts)
+                showModal('🤝', 'Sinkronisasi Sempurna!', `Kedua robot berhasil bertemu di Bintang (⭐) pada detik ke-${maxSteps} secara bersamaan!`, () => {
+                    gameState.g3Index++;
+                    if (gameState.g3Index < g3Questions.length) {
+                        loadG3Question();
+                    } else {
+                        finishAllGames();
+                    }
+                });
+            } else {
+                playSound('error');
+                gameState.g3Errors++;
+                gameState.totalErrors++;
+                let errorMsg = 'Kedua robot belum bertemu tepat di titik Bintang (⭐).';
+                if (!sameStepCount) {
+                    errorMsg = 'Jumlah total langkah robot belum sama! Gunakan "⏳ Diam" agar durasi eksekusi kedua robot seimbang.';
+                }
+                showModal('❌', 'Belum Perhitungannya Tepat', errorMsg);
+            }
+        }
+
+        /* ================= EVALUATION GENERATOR ================= */
+        function finishAllGames() {
+            clearInterval(gameState.timerInterval);
+            
+            document.getElementById('screen-game3').classList.add('hidden');
+            document.getElementById('screen-evaluation').classList.remove('hidden');
+            document.getElementById('prog-3').style.width = '100%';
+            document.getElementById('step-btn-4').classList.replace('text-slate-400', 'text-brand-purple');
+
+            // Set final stats
+            document.getElementById('eval-score').innerText = gameState.score;
+            
+            const mins = String(Math.floor(gameState.totalSeconds / 60)).padStart(2, '0');
+            const secs = String(gameState.totalSeconds % 60).padStart(2, '0');
+            document.getElementById('eval-time').innerText = `${mins}:${secs}`;
+            document.getElementById('eval-errors').innerText = gameState.totalErrors;
+
+            // Analyze Game 1 (Loop - 10 questions)
+            const g1Status = document.getElementById('eval-g1-status');
+            const g1Desc = document.getElementById('eval-g1-desc');
+            if (gameState.g1Errors === 0) {
+                g1Status.innerText = 'Sangat Baik (10/10 Perfect)';
+                g1Status.className = 'text-emerald-600 font-bold';
+                g1Desc.innerText = 'Siswa menguasai konsep pengulangan (loop) terstruktur dan mampu menganalisis pola tersembunyi tanpa bantuan visual!';
+            } else if (gameState.g1Errors <= 3) {
+                g1Status.innerText = 'Baik (Lancar)';
+                g1Status.className = 'text-indigo-600 font-bold';
+                g1Desc.innerText = 'Siswa memahami perulangan dengan baik, mampu menyelesaikan soal visual maupun rahasia dengan cepat.';
+            } else {
+                g1Status.innerText = 'Perlu Pendampingan';
+                g1Status.className = 'text-amber-600 font-bold';
+                g1Desc.innerText = 'Siswa memerlukan penguatan pada cara menghitung jumlah iterasi loop dari animasi gerakan.';
+            }
+
+            // Analyze Game 2 (Exponential Patterns - 10 questions)
+            const g2Status = document.getElementById('eval-g2-status');
+            const g2Desc = document.getElementById('eval-g2-desc');
+            if (gameState.g2Errors === 0) {
+                g2Status.innerText = 'Sangat Baik (Master Eksponensial)';
+                g2Status.className = 'text-emerald-600 font-bold';
+                g2Desc.innerText = 'Anak sangat tangkas menemukan aturan algoritma perkalian berulang pada deret bilangan!';
+            } else if (gameState.g2Errors <= 3) {
+                g2Status.innerText = 'Baik';
+                g2Status.className = 'text-indigo-600 font-bold';
+                g2Desc.innerText = 'Anak mampu menganalisis perkalian berulang setelah melihat petunjuk deret.';
+            } else {
+                g2Status.innerText = 'Cukup';
+                g2Status.className = 'text-amber-600 font-bold';
+                g2Desc.innerText = 'Disarankan memperbanyak latihan perkalian berulang (2x, 3x, 4x, 5x).';
+            }
+
+            // Analyze Game 3 (Parallel Sync - 5 scenarios)
+            const g3Status = document.getElementById('eval-g3-status');
+            const g3Desc = document.getElementById('eval-g3-desc');
+            if (gameState.g3Errors === 0) {
+                g3Status.innerText = 'Sempurna (Sinkron 100%)';
+                g3Status.className = 'text-emerald-600 font-bold';
+                g3Desc.innerText = 'Luar biasa! Pemikiran spasial, waktu eksekusi, dan penggunaan penundaan (⏳ Diam) sangat presisi.';
+            } else {
+                g3Status.innerText = 'Berhasil dengan Eksperimen';
+                g3Status.className = 'text-indigo-600 font-bold';
+                g3Desc.innerText = 'Siswa berhasil menyelesaikan seluruh 5 skenario sinkronisasi tim robot.';
+            }
+
+            // Final recommendation text
+            const recText = document.getElementById('eval-rec-text');
+            if (gameState.totalErrors === 0) {
+                recText.innerText = '🏆 Luar biasa! Siswa menyelesaikan 25 soal/skenario tanpa kesalahan! Kemampuan Logika Komputasional Kelas 5 sangat istimewa.';
+            } else if (gameState.totalErrors <= 5) {
+                recText.innerText = '🌟 Sangat Bagus! Siswa menunjukkan daya tangkap yang baik pada perulangan, pola bilangan eksponensial, dan sinkronisasi robot.';
+            } else {
+                recText.innerText = '💪 Usaha yang luar biasa! Seluruh 25 soal petualangan telah diselesaikan. Selamat atas kerja kerasnya!';
+            }
+        }
+
+        function restartEntireGame() {
+            playSound('click');
+            location.reload();
+        }
+    </script>
+</body>
+</html>
