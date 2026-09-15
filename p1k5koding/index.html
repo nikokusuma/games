@@ -1098,6 +1098,12 @@
                 if (!sameStepCount) {
                     errorMsg = 'Jumlah total langkah robot belum sama! Gunakan "⏳ Diam" agar durasi eksekusi kedua robot seimbang.';
                 }
+
+                // Reset posisi kedua robot kembali ke tempat semula (posisi awal skenario)
+                gameState.g3RedPos = { ...sc.redStart };
+                gameState.g3BluePos = { ...sc.blueStart };
+                renderG3Grid();
+
                 showModal('❌', 'Belum Perhitungannya Tepat', errorMsg);
             }
         }
