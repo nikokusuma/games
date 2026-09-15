@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KodePetualang: Ekspedisi Pola & Algoritma</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .font-heading {
+            font-family: 'Fredoka', cursive;
+        }
+        .grid-cell {
+            transition: all 0.2s ease;
+        }
+        .pulse-active {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.85; }
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+    <header class="glass-panel sticky top-0 z-50 border-b border-slate-700/60 py-3 px-4 md:px-8">
+        <div class="max-w-6xl mx-auto flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <span class="text-3xl">🧩</span>
+                <div>
+                    <h1 class="font-heading text-xl md:text-2xl font-bold bg-gradient-to-r from-amber-400 via-orange-400 to-emerald-400 bg-clip-text text-transparent">
+                        KodePetualang
+                    </h1>
+                    <p class="text-xs text-slate-400">Kelas 6 - Penerapan Pola & Algoritma</p>
+                </div>
+            </div>
+
+            <!-- Stage Navigation Tracker -->
+            <div class="flex items-center space-x-2 text-xs md:text-sm font-semibold">
+                <div id="nav-g1" class="px-3 py-1.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                    <span>🏴‍☠️</span> <span>1. Harta Karun</span>
+                </div>
+                <div id="nav-g2" class="px-3 py-1.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 flex items-center gap-1">
+                    <span>📅</span> <span>2. Kalender</span>
+                </div>
+                <div id="nav-g3" class="px-3 py-1.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 flex items-center gap-1">
+                    <span>🌐</span> <span>3. Debug Jaringan</span>
+                </div>
+                <div id="nav-eval" class="px-3 py-1.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 flex items-center gap-1">
+                    <span>📊</span> <span>Evaluasi</span>
+                </div>
+            </div>
+
+            <!-- Timer & Error Stats Header -->
+            <div class="flex items-center gap-4 bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-800">
+                <div class="text-xs text-slate-400">
+                    ⏱️ Waktu: <span id="global-timer" class="font-mono text-emerald-400 font-bold text-sm">00:00</span>
+                </div>
+                <div class="text-xs text-slate-400">
+                    ❌ Error: <span id="global-errors" class="font-mono text-rose-400 font-bold text-sm">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto w-full p-4 md:p-6 flex-grow">
+        <!-- GAME 1 SECTION -->
+        <section id="game1-container" class="space-y-6">
+            <div class="glass-panel p-6 rounded-2xl border border-amber-500/30">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">Game 1 dari 3</span>
+                        <h2 class="font-heading text-2xl md:text-3xl font-bold text-slate-100 mt-1">Pencarian Harta Karun Pulau Pola</h2>
+                        <p class="text-sm text-slate-300">Gunakan kombinasi instruksi navigasi untuk mencapai pos. Pecahkan 5 teka-teki pola untuk membuka peti harta karun!</p>
+                    </div>
+                    <div class="bg-slate-900/90 px-4 py-2 rounded-xl text-right border border-slate-800">
+                        <div class="text-xs text-slate-400">Progres Pos Teka-Teki</div>
+                        <div class="text-lg font-bold text-amber-400"><span id="g1-solved-count">0</span> / 5 Terpecahkan</div>
+                    </div>
+                </div>
+
+                <!-- Grid Map & Command Control Split Layout -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    <!-- Map Board -->
+                    <div class="lg:col-span-7 bg-slate-900/90 p-4 rounded-xl border border-slate-800 flex flex-col items-center">
+                        <div id="g1-map" class="grid grid-cols-6 gap-2 w-full max-w-[420px] aspect-square"></div>
+                        <div class="mt-4 flex items-center justify-around w-full text-xs text-slate-400 bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                            <span class="flex items-center gap-1">🤖 Penjelajah</span>
+                            <span class="flex items-center gap-1">📜 Pos Teka-Teki</span>
+                            <span class="flex items-center gap-1">💎 Peti Harta</span>
+                            <span class="flex items-center gap-1">🪨 Rintangan</span>
+                        </div>
+                    </div>
+
+                    <!-- Command Panel & Instructions -->
+                    <div class="lg:col-span-5 space-y-4">
+                        <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 space-y-3">
+                            <h3 class="font-bold text-amber-400 text-sm uppercase tracking-wider flex items-center gap-2">
+                                <span>🧭</span> Algoritma Navigasi
+                            </h3>
+                            <p class="text-xs text-slate-400">Tambahkan instruksi langkah untuk menggerakkan penjelajah ke pos berikutnya.</p>
+                            
+                            <!-- Queue Display -->
+                            <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 min-h-[60px] flex flex-wrap gap-2 items-center" id="g1-queue">
+                                <span class="text-xs text-slate-500 italic">Antrean instruksi kosong...</span>
+                            </div>
+
+                            <!-- Buttons to Add Commands -->
+                            <div class="grid grid-cols-3 gap-2">
+                                <button onclick="addG1Command('UP')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded-lg font-bold text-xs flex flex-col items-center gap-1 border border-slate-700">
+                                    <span>⬆️</span> <span>Maju Ke Atas</span>
+                                </button>
+                                <button onclick="addG1Command('DOWN')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded-lg font-bold text-xs flex flex-col items-center gap-1 border border-slate-700">
+                                    <span>⬇️</span> <span>Maju Ke Bawah</span>
+                                </button>
+                                <button onclick="addG1Command('LEFT')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded-lg font-bold text-xs flex flex-col items-center gap-1 border border-slate-700">
+                                    <span>⬅️</span> <span>Maju Ke Kiri</span>
+                                </button>
+                                <button onclick="addG1Command('RIGHT')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded-lg font-bold text-xs flex flex-col items-center gap-1 border border-slate-700">
+                                    <span>➡️</span> <span>Maju Ke Kanan</span>
+                                </button>
+                                <button onclick="clearG1Queue()" class="bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 py-2.5 rounded-lg font-bold text-xs flex flex-col items-center gap-1 border border-rose-800/50">
+                                    <span>🗑️</span> <span>Hapus Semua</span>
+                                </button>
+                                <button onclick="runG1Commands()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 py-2.5 rounded-lg font-bold text-xs flex flex-col items-center gap-1 transition shadow-lg shadow-amber-500/20">
+                                    <span>▶️</span> <span>Jalankan!</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Instruction guide -->
+                        <div id="g1-status-msg" class="bg-amber-500/10 border border-amber-500/30 text-amber-200 p-3.5 rounded-xl text-xs space-y-1">
+                            <div class="font-bold flex items-center gap-1">📍 Misi Anda:</div>
+                            <p>Arahkan karakter ke pos bernomor (1-5) secara berurutan atau buka teka-teki saat tiba di pos!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- GAME 2 SECTION -->
+        <section id="game2-container" class="space-y-6 hidden">
+            <div class="glass-panel p-6 rounded-2xl border border-indigo-500/30">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">Game 2 dari 3</span>
+                        <h2 class="font-heading text-2xl md:text-3xl font-bold text-slate-100 mt-1">Susun Kalender Pola Bulanan</h2>
+                        <p class="text-sm text-slate-300">Temukan pola angka dan siklus hari untuk melengkapi tanggal yang hilang pada kalender (10 Soal).</p>
+                    </div>
+                    <div class="bg-slate-900/90 px-4 py-2 rounded-xl text-right border border-slate-800">
+                        <div class="text-xs text-slate-400">Kemajuan Soal</div>
+                        <div class="text-lg font-bold text-indigo-400"><span id="g2-progress">1</span> / 10</div>
+                    </div>
+                </div>
+
+                <!-- Main Calendar Card Challenge -->
+                <div class="bg-slate-900/90 p-6 rounded-xl border border-slate-800 max-w-2xl mx-auto space-y-6">
+                    <div class="flex justify-between items-center bg-indigo-950/60 border border-indigo-800/50 p-4 rounded-xl">
+                        <div>
+                            <div class="text-xs text-indigo-300 uppercase tracking-widest font-semibold">Tantangan Pola Kalender</div>
+                            <h3 id="g2-question-title" class="text-lg font-bold text-white mt-0.5">Soal 1: Pola Mingguan</h3>
+                        </div>
+                        <span class="text-3xl">🗓️</span>
+                    </div>
+
+                    <p id="g2-question-desc" class="text-slate-200 text-sm leading-relaxed bg-slate-950 p-4 rounded-xl border border-slate-800">
+                        Deskripsi tantangan pola kalender akan tampil di sini.
+                    </p>
+
+                    <!-- Interactive Grid Preview -->
+                    <div class="space-y-2">
+                        <div class="grid grid-cols-7 gap-1.5 text-center font-bold text-xs text-slate-400 py-1 bg-slate-950 rounded-lg">
+                            <span>Min</span><span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span>
+                        </div>
+                        <div id="g2-calendar-grid" class="grid grid-cols-7 gap-1.5 text-center text-sm font-semibold"></div>
+                    </div>
+
+                    <!-- Input / Choice Section -->
+                    <div class="pt-4 border-t border-slate-800 space-y-3">
+                        <label class="block text-xs font-bold text-indigo-300 uppercase tracking-wider">
+                            Masukkan Angka/Tanggal Yang Tepat:
+                        </label>
+                        <div class="flex gap-3">
+                            <input type="number" id="g2-answer-input" placeholder="Ketik angka..." class="flex-grow bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 font-bold text-lg">
+                            <button onclick="submitG2Answer()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-6 py-3 rounded-xl transition shadow-lg shadow-indigo-600/30 flex items-center gap-2">
+                                <span>Periksa</span> <span>➡️</span>
+                            </button>
+                        </div>
+                        <div id="g2-feedback" class="hidden p-3 rounded-xl text-xs font-semibold"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- GAME 3 SECTION -->
+        <section id="game3-container" class="space-y-6 hidden">
+            <div class="glass-panel p-6 rounded-2xl border border-emerald-500/30">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">Game 3 dari 3</span>
+                        <h2 class="font-heading text-2xl md:text-3xl font-bold text-slate-100 mt-1">Debug Jaringan Transportasi</h2>
+                        <p class="text-sm text-slate-300">Identifikasi jalur terputus/salah direction (bug). Klik tombol sakelar rute untuk menghubungkan seluruh stasiun (20 Level).</p>
+                    </div>
+                    <div class="bg-slate-900/90 px-4 py-2 rounded-xl text-right border border-slate-800">
+                        <div class="text-xs text-slate-400">Level Jaringan</div>
+                        <div class="text-lg font-bold text-emerald-400"><span id="g3-level-num">1</span> / 20</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    <!-- SVG Interactive Network Visualizer -->
+                    <div class="lg:col-span-8 bg-slate-900/90 p-4 rounded-xl border border-slate-800 flex flex-col items-center">
+                        <div class="w-full relative aspect-[4/3] max-h-[400px] bg-slate-950 rounded-xl border border-slate-800 overflow-hidden flex items-center justify-center">
+                            <svg id="g3-network-svg" class="w-full h-full text-slate-300" viewBox="0 0 600 400"></svg>
+                        </div>
+                        <div class="mt-3 flex items-center gap-6 text-xs text-slate-400">
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span> Stasiun Terhubung</span>
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-rose-500 inline-block"></span> Terisolasi / Error</span>
+                            <span class="flex items-center gap-1.5"><span class="w-3.5 h-1 bg-emerald-400 inline-block"></span> Jalur Aktif</span>
+                            <span class="flex items-center gap-1.5"><span class="w-3.5 h-1 bg-slate-700 border border-dashed inline-block"></span> Jalur Mati</span>
+                        </div>
+                    </div>
+
+                    <!-- Debugging Action Panel -->
+                    <div class="lg:col-span-4 space-y-4">
+                        <div class="bg-slate-900/90 p-5 rounded-xl border border-slate-800 space-y-4">
+                            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                                <h3 class="font-bold text-emerald-400 text-sm uppercase tracking-wider">🛠️ Control Switch Panel</h3>
+                                <span class="text-xs text-slate-400">Sisa Edit: <b id="g3-edits-count" class="text-white">0</b></span>
+                            </div>
+                            <p id="g3-level-desc" class="text-xs text-slate-300 leading-relaxed">
+                                Deskripsi bug jaringan...
+                            </p>
+
+                            <!-- Dynamic List of Switchable Cables -->
+                            <div id="g3-switches-list" class="space-y-2 max-h-[220px] overflow-y-auto pr-1"></div>
+
+                            <button onclick="testG3Connectivity()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
+                                <span>⚡ Uji Konektivitas Jaringan</span>
+                            </button>
+                        </div>
+
+                        <div id="g3-status-box" class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-xs text-slate-300">
+                            <span class="font-bold text-slate-200">Status Sinyal:</span> <span id="g3-signal-msg">Silakan aktifkan kabel yang tepat.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- EVALUATION DASHBOARD SECTION -->
+        <section id="eval-container" class="space-y-6 hidden">
+            <div class="glass-panel p-6 md:p-8 rounded-2xl border border-amber-500/40 relative overflow-hidden">
+                <div class="absolute -right-10 -bottom-10 text-9xl opacity-10 select-none">🏆</div>
+                
+                <div class="text-center max-w-2xl mx-auto space-y-3 mb-8">
+                    <span class="text-xs font-bold uppercase tracking-widest text-amber-400 bg-amber-500/10 px-4 py-1.5 rounded-full border border-amber-500/20">Laporan Ekspedisi Selesai</span>
+                    <h2 class="font-heading text-3xl md:text-4xl font-bold bg-gradient-to-r from-amber-300 via-orange-300 to-emerald-300 bg-clip-text text-transparent">
+                        Evaluasi Berpikir Komputasional
+                    </h2>
+                    <p class="text-sm text-slate-300">Berikut adalah analisis mendalam mengenai kemampuan logika pola, algoritma, dan debugging Anda.</p>
+                </div>
+
+                <!-- Metrics Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                    <div class="bg-slate-900/90 p-5 rounded-xl border border-slate-800 text-center space-y-1">
+                        <div class="text-xs text-slate-400 font-semibold">Total Waktu Waktu</div>
+                        <div id="eval-total-time" class="text-2xl font-bold text-emerald-400 font-mono">00:00</div>
+                        <div class="text-[10px] text-slate-500">Durasi pengerjaan</div>
+                    </div>
+                    <div class="bg-slate-900/90 p-5 rounded-xl border border-slate-800 text-center space-y-1">
+                        <div class="text-xs text-slate-400 font-semibold">Total Kesalahan (Error)</div>
+                        <div id="eval-total-errors" class="text-2xl font-bold text-rose-400 font-mono">0</div>
+                        <div class="text-[10px] text-slate-500">Percobaan gagal/salah</div>
+                    </div>
+                    <div class="bg-slate-900/90 p-5 rounded-xl border border-slate-800 text-center space-y-1">
+                        <div class="text-xs text-slate-400 font-semibold">Skor Efisiensi Algoritma</div>
+                        <div id="eval-score" class="text-2xl font-bold text-amber-400 font-mono">100%</div>
+                        <div class="text-[10px] text-slate-500">Akurasi & ketepatan rute</div>
+                    </div>
+                    <div class="bg-slate-900/90 p-5 rounded-xl border border-slate-800 text-center space-y-1">
+                        <div class="text-xs text-slate-400 font-semibold">Gelar Komputasional</div>
+                        <div id="eval-badge" class="text-lg font-bold text-indigo-300">Master Pola</div>
+                        <div class="text-[10px] text-slate-500">Predikat siswa</div>
+                    </div>
+                </div>
+
+                <!-- Comprehensive Competency Breakdown -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <!-- Breakdown 1 -->
+                    <div class="bg-slate-900/80 p-5 rounded-xl border border-slate-800 space-y-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">🏴‍☠️</span>
+                            <h4 class="font-bold text-slate-100 text-sm">Algoritma & Navigasi</h4>
+                        </div>
+                        <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden">
+                            <div id="bar-g1" class="bg-amber-400 h-full w-full"></div>
+                        </div>
+                        <p id="desc-g1" class="text-xs text-slate-300 leading-relaxed">
+                            Mampu merancang urutan langkah logis secara berurutan untuk mencapai tujuan tanpa tersesat.
+                        </p>
+                    </div>
+
+                    <!-- Breakdown 2 -->
+                    <div class="bg-slate-900/80 p-5 rounded-xl border border-slate-800 space-y-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">📅</span>
+                            <h4 class="font-bold text-slate-100 text-sm">Pengenalan Pola Siklus</h4>
+                        </div>
+                        <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden">
+                            <div id="bar-g2" class="bg-indigo-400 h-full w-full"></div>
+                        </div>
+                        <p id="desc-g2" class="text-xs text-slate-300 leading-relaxed">
+                            Mengenali kebiasaan dan siklus berulang (seperti barisan aritmatika dan kelipatan tanggal).
+                        </p>
+                    </div>
+
+                    <!-- Breakdown 3 -->
+                    <div class="bg-slate-900/80 p-5 rounded-xl border border-slate-800 space-y-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">🌐</span>
+                            <h4 class="font-bold text-slate-100 text-sm">Debugging & Topologi</h4>
+                        </div>
+                        <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden">
+                            <div id="bar-g3" class="bg-emerald-400 h-full w-full"></div>
+                        </div>
+                        <p id="desc-g3" class="text-xs text-slate-300 leading-relaxed">
+                            Daya kritis mengidentifikasi titik kegagalan (bug) pada simpul sistem jaringan transportasi.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Qualitative Feedback Note -->
+                <div class="bg-slate-950 p-6 rounded-xl border border-slate-800 space-y-2">
+                    <h4 class="font-bold text-amber-400 text-sm flex items-center gap-2">
+                        <span>📝</span> Catatan Evaluasi Guru / Refleksi Siswa:
+                    </h4>
+                    <p id="eval-detailed-text" class="text-xs md:text-sm text-slate-300 leading-relaxed">
+                        Memuat rekomendasi khusus berdasarkan performa waktu dan total error...
+                    </p>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="pt-6 flex flex-wrap justify-center gap-4">
+                    <button onclick="restartAllGames()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-8 py-3.5 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center gap-2">
+                        <span>🔄 Ulangi Ekspedisi</span>
+                    </button>
+                    <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-8 py-3.5 rounded-xl border border-slate-700 transition flex items-center gap-2">
+                        <span>🖨️ Cetak Laporan Evaluasi</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Dialog for Pattern Puzzles in Game 1 -->
+    <div id="puzzle-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-filter backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-amber-500/50 p-6 rounded-2xl max-w-lg w-full space-y-4 shadow-2xl relative">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <span id="modal-title" class="font-heading text-lg font-bold text-amber-400">📜 Pos Teka-Teki Pola #1</span>
+                <span class="text-2xl">🔒</span>
+            </div>
+            <p id="modal-desc" class="text-sm text-slate-200 leading-relaxed bg-slate-950 p-4 rounded-xl border border-slate-800">
+                Teks teka teki...
+            </p>
+            <div id="modal-input-container" class="space-y-3">
+                <!-- Inputs injected dynamically -->
+            </div>
+            <div id="modal-error" class="hidden text-xs text-rose-400 bg-rose-950/50 p-2.5 rounded-lg border border-rose-800/50"></div>
+            <button onclick="submitPuzzleAnswer()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg shadow-amber-500/20">
+                Buka Pos & Lanjutkan Misi 🔑
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let globalTimerInterval = null;
+        let globalSeconds = 0;
+        let globalErrors = 0;
+        let currentGame = 1;
+
+        // Specific Error Counters per Game
+        let g1Errors = 0;
+        let g2Errors = 0;
+        let g3Errors = 0;
+
+        // Game 1 Map Setup (6x6 Grid)
+        const g1MapData = [
+            [0, 0, 1, 0, 0, 2], // (0,5)=Pos 2
+            [2, 0, 1, 0, 1, 0], // (1,0)=Pos 1
+            [0, 0, 0, 0, 1, 0],
+            [1, 1, 0, 2, 0, 0], // (3,3)=Pos 3
+            [0, 2, 0, 1, 1, 0], // (4,1)=Pos 4
+            [0, 0, 0, 0, 2, 3]  // (5,4)=Pos 5, (5,5)=Treasure
+        ];
+
+        let g1PlayerPos = { r: 0, c: 0 };
+        let g1CommandQueue = [];
+        let g1SolvedCheckpoints = 0;
+        let activePuzzleIndex = -1;
+
+        // Game 1 Puzzles without hints
+        const g1Puzzles = [
+            {
+                id: 1,
+                pos: { r: 1, c: 0 },
+                title: "Pos 1: Pola Deret Penggandaan",
+                question: "Selesaikan pola deret angka ini untuk mendapatkan kunci: <b>2, 4, 8, 16, [ ? ]</b>",
+                answer: "32"
+            },
+            {
+                id: 2,
+                pos: { r: 0, c: 5 },
+                title: "Pos 2: Pola Simbol Berulang",
+                question: "Pola urutan bentuk: 🔺, 🔷, 🔴, 🔺, 🔷, [ ? ]. Simbol apa selanjutnya?",
+                type: "choice",
+                options: ["🔺 Segitiga", "🔷 Belah Ketupat", "🔴 Lingkaran"],
+                answer: "🔴 Lingkaran"
+            },
+            {
+                id: 3,
+                pos: { r: 3, c: 3 },
+                title: "Pos 3: Pola Kuadrat / Kuadratik",
+                question: "Amati urutan bilangan kuadrat berikut: <b>1, 4, 9, 16, [ ? ]</b>. Berapakah angka ke-5?",
+                answer: "25"
+            },
+            {
+                id: 4,
+                pos: { r: 4, c: 1 },
+                title: "Pos 4: Pola Penjumlahan Berantai (Fibonacci)",
+                question: "Isi angka berikutnya dalam pola ini: <b>1, 2, 3, 5, 8, [ ? ]</b>",
+                answer: "13"
+            },
+            {
+                id: 5,
+                pos: { r: 5, c: 4 },
+                title: "Pos 5: Logika Kombinasi Nilai Biner",
+                question: "Setiap arah memiliki nilai: UP=1, RIGHT=2, DOWN=4, LEFT=8. Berapa total nilai jika kamu menggabungkan <b>UP + RIGHT + LEFT</b>?",
+                answer: "11"
+            }
+        ];
+
+        const g2Questions = [
+            {
+                title: "Soal 1: Siklus Kelipatan Mingguan",
+                desc: "Setiap hari Minggu ada kegiatan Pramuka. Jika Minggu pertama tanggal 7, Minggu kedua tanggal 14, dan ketiga tanggal 21. Tanggal berapa Minggu keempat?",
+                answer: 28,
+                highlightPattern: [7, 14, 21, 28]
+            },
+            {
+                title: "Soal 2: Jadwal Les Renang (Lompat 4)",
+                desc: "Jadwal les renang Kakak adalah setiap 4 hari sekali: tanggal 4, 8, 12, [ ? ], 20. Tanggal berapa yang hilang?",
+                answer: 16,
+                highlightPattern: [4, 8, 12, 16, 20]
+            },
+            {
+                title: "Soal 3: Penyiraman Tanaman (Interval 3 Hari)",
+                desc: "Penyiraman tanaman anggrek dilakukan setiap 3 hari: 1, 4, 7, [ ? ], 13. Berapa tanggal yang tepat di tengah?",
+                answer: 10,
+                highlightPattern: [1, 4, 7, 10, 13]
+            },
+            {
+                title: "Soal 4: Hari Selasa Terakhir Bulan",
+                desc: "Latihan musik tiap hari Selasa jatuh pada tanggal 2, 9, 16, 23, [ ? ]. Tanggal berapa Selasa terakhir di bulan 30 hari ini?",
+                answer: 30,
+                highlightPattern: [2, 9, 16, 23, 30]
+            },
+            {
+                title: "Soal 5: Pola Tanggal Ganjil Berurutan",
+                desc: "Petugas kebersihan datang setiap tanggal ganjil berurutan pertengahan bulan: 15, 17, 19, [ ? ], 23. Berapa tanggal berikutnya?",
+                answer: 21,
+                highlightPattern: [15, 17, 19, 21, 23]
+            },
+            {
+                title: "Soal 6: Ronda Malam (Interval 5 Hari)",
+                desc: "Ayah mendapat giliran ronda malam setiap 5 hari: tanggal 5, 10, 15, [ ? ], 25. Isi tanggal ronda yang kosong!",
+                answer: 20,
+                highlightPattern: [5, 10, 15, 20, 25]
+            },
+            {
+                title: "Soal 7: Pola Selang-Seling (+2, +3)",
+                desc: "Amati tanggal rapat klub koding: 1 (+2) 3 (+3) 6 (+2) 8 (+3) 11 (+2) [ ? ]. Tanggal berapa selanjutnya?",
+                answer: 13,
+                highlightPattern: [1, 3, 6, 8, 11, 13]
+            },
+            {
+                title: "Soal 8: Navigasi Kolom Kalender",
+                desc: "Dalam satu baris kalender seminggu, jika hari Rabu adalah tanggal 12, maka hari Jumat di minggu yang sama adalah tanggal [ ? ]?",
+                answer: 14,
+                highlightPattern: [12, 13, 14]
+            },
+            {
+                title: "Soal 9: Pengambilan Tabungan (Jumat)",
+                desc: "Setiap hari Jumat sekolah mengadakan tabungan: tanggal 5, 12, 19, [ ? ]. Berapa tanggal Jumat minggu keempat?",
+                answer: 26,
+                highlightPattern: [5, 12, 19, 26]
+            },
+            {
+                title: "Soal 10: Pemupukan Pohon (Interval 6 Hari)",
+                desc: "Pemupukan tanaman sekolah setiap 6 hari sekali: 6, 12, 18, [ ? ], 30. Isi tanggal yang belum tercatat!",
+                answer: 24,
+                highlightPattern: [6, 12, 18, 24, 30]
+            }
+        ];
+
+        let g2CurrentIdx = 0;
+
+        // Expanded 20 Levels for Game 3 (Levels 11-20 have NO hints/guidelines)
+        const g3Levels = [
+            {
+                level: 1,
+                title: "Level 1: Rute Bus Sekolah (5 Stasiun)",
+                desc: "Petunjuk: Hubungkan stasiun utama A ke seluruh stasiun (B, C, D, E). Cari kabel yang terputus antara A dan C.",
+                nodes: [
+                    { id: 'A', name: 'Stasiun A', x: 100, y: 200, isStart: true },
+                    { id: 'B', name: 'Stasiun B', x: 250, y: 100 },
+                    { id: 'C', name: 'Stasiun C', x: 250, y: 300 },
+                    { id: 'D', name: 'Stasiun D', x: 450, y: 100 },
+                    { id: 'E', name: 'Stasiun E', x: 450, y: 300 }
+                ],
+                edges: [
+                    { from: 'A', to: 'B', active: true },
+                    { from: 'A', to: 'C', active: false },
+                    { from: 'B', to: 'D', active: true },
+                    { from: 'C', to: 'E', active: true },
+                    { from: 'D', to: 'E', active: false }
+                ]
+            },
+            {
+                level: 2,
+                title: "Level 2: Jalur Kereta Bawah Tanah (6 Stasiun)",
+                desc: "Petunjuk: Stasiun F terisolasi. Aktifkan sakelar penyeimbang dari B ke D dan E ke F.",
+                nodes: [
+                    { id: 'A', name: 'Pusat A', x: 100, y: 200, isStart: true },
+                    { id: 'B', name: 'Transit B', x: 220, y: 120 },
+                    { id: 'C', name: 'Transit C', x: 220, y: 280 },
+                    { id: 'D', name: 'Kota D', x: 380, y: 120 },
+                    { id: 'E', name: 'Kota E', x: 380, y: 280 },
+                    { id: 'F', name: 'Ujung F', x: 500, y: 200 }
+                ],
+                edges: [
+                    { from: 'A', to: 'B', active: true },
+                    { from: 'A', to: 'C', active: true },
+                    { from: 'B', to: 'D', active: false },
+                    { from: 'C', to: 'E', active: true },
+                    { from: 'E', to: 'F', active: false },
+                    { from: 'D', to: 'F', active: false }
+                ]
+            },
+            {
+                level: 3,
+                title: "Level 3: Jaringan Fiber Optik Kota (7 Stasiun)",
+                desc: "Petunjuk: Sambungkan jembatan tengah D untuk menyatukan node bagian timur dan barat.",
+                nodes: [
+                    { id: 'A', name: 'Server A', x: 80, y: 200, isStart: true },
+                    { id: 'B', name: 'Node B', x: 200, y: 100 },
+                    { id: 'C', name: 'Node C', x: 200, y: 300 },
+                    { id: 'D', name: 'Bridge D', x: 320, y: 200 },
+                    { id: 'E', name: 'Hub E', x: 440, y: 100 },
+                    { id: 'F', name: 'Hub F', x: 440, y: 300 },
+                    { id: 'G', name: 'Target G', x: 540, y: 200 }
+                ],
+                edges: [
+                    { from: 'A', to: 'B', active: true },
+                    { from: 'A', to: 'C', active: true },
+                    { from: 'B', to: 'D', active: false },
+                    { from: 'C', to: 'D', active: false },
+                    { from: 'D', to: 'E', active: false },
+                    { from: 'E', to: 'G', active: true },
+                    { from: 'F', to: 'G', active: true }
+                ]
+            },
+            {
+                level: 4,
+                title: "Level 4: Distribusi Pipa Air Bersih (5 Stasiun)",
+                desc: "Petunjuk: Pipa menuju stasiun D dan E terputus di percabangan utama.",
+                nodes: [
+                    { id: 'A', name: 'Pompa A', x: 100, y: 200, isStart: true },
+                    { id: 'B', name: 'Tengki B', x: 230, y: 120 },
+                    { id: 'C', name: 'Tangki C', x: 230, y: 280 },
+                    { id: 'D', name: 'Zona D', x: 420, y: 120 },
+                    { id: 'E', name: 'Zona E', x: 420, y: 280 }
+                ],
+                edges: [
+                    { from: 'A', to: 'B', active: true },
+                    { from: 'A', to: 'C', active: false },
+                    { from: 'B', to: 'D', active: false },
+                    { from: 'C', to: 'E', active: true }
+                ]
+            },
+            {
+                level: 5,
+                title: "Level 5: Listrik Kota Pintar (6 Stasiun)",
+                desc: "Petunjuk: Aktifkan gardu pemutar listrik C agar bagian bawah teraliri arus.",
+                nodes: [
+                    { id: 'A', name: 'Pembangkit A', x: 100, y: 200, isStart: true },
+                    { id: 'B', name: 'Gardu B', x: 240, y: 120 },
+                    { id: 'C', name: 'Gardu C', x: 240, y: 280 },
+                    { id: 'D', name: 'Sektor D', x: 380, y: 120 },
+                    { id: 'E', name: 'Sektor E', x: 380, y: 280 },
+                    { id: 'F', name: 'Kota F', x: 500, y: 200 }
+                ],
+                edges: [
+                    { from: 'A', to: 'B', active: true },
+                    { from: 'A', to: 'C', active: false },
+                    { from: 'B', to: 'D', active: true },
+                    { from: 'C', to: 'E', active: true },
+                    { from: 'D', to: 'F', active: true },
+                    { from: 'E', to: 'F', active: false }
+                ]
+            },
+            {
+                level: 6,
+                title: "Level 6: Rute Satelit Komunikasi (6 Stasiun)",
+                desc: "Petunjuk: Satelit C dan E membutuhkan sinyal aktif dari A.",
+                nodes: [
+                    { id: 'A', name: 'Stasiun A', x: 80, y: 200, isStart: true },
+                    { id: 'B', name: 'Satelit B', x: 200, y: 100 },
+                    { id: 'C', name: 'Satelit C', x: 200, y: 300 },
+                    { id: 'D', name: 'Relay D', x: 360, y: 100 },
+                    { id: 'E', name: 'Relay E', x: 360, y: 300 },
+                    { id: 'F', name: 'Receiver F', x: 500, y: 200 }
+                ],
+                edges: [
+                    { from: 'A', to: 'B', active: true },
+                    { from: 'A', to: 'C', active: false },
+                    { from: 'B', to: 'D', active: true },
+                    { from: 'C', to: 'E', active: false },
+                    { from: 'D', to: 'F', active: true },
+                    { from: 'E', to: 'F', active: true }
+                ]
+            },
+            {
+                level: 7,
+                title: "Level 7: Jaringan Kurir Logistik (7 Stasiun)",
+                desc: "Petunjuk: Aktifkan jalur penghubung antar gudang B-E dan C-F.",
+                nodes: [
+                    { id: 'A', name: 'Gudang Utama A', x: 90, y: 200, isStart: true },
+                    { id: 'B', name: 'Hub B', x: 220, y: 110 },
+                    { id: 'C', name: 'Hub C', x: 220, y: 290 },
+                    { id: 'D', name: 'Pos D', x: 340, y: 200 },
+                    { id: 'E', name: 'Kurir E', x: 450, y: 110 },
+                    { id: 'F', name: 'Kurir F', x: 450, y: 290 },
+                    { id: 'G', name: 'Penerima G', x: 540, y: 200 }
+                ],
+                edges: [
+                    { from: 'A', to: 'B', active: true },
+                    { from: 'A', to: 'C', active: true },
+                    { from: 'B', to: 'E', active: false },
+                    { from: 'C', to: 'F', active: false },
+                    { from: 'D', to: 'G', active: false },
+                    { from: 'E', to: 'G', active: true },
+                    { from: 'F', to: 'G', active: true }
+                ]
+            },
+            {
+                level: 8,
+                title: "Level 8: Pertahanan Server Cyber (7 Stasiun)",
+                desc: "Petunjuk: Terjadi masalah transmisi pada firewall tengah D.",
+                nodes: [
+                    { id: 'A', name: 'Mainframe A', x: 80, y: 200, isStart: true },
+                    { id: 'B', name: 'Proxy B', x: 200, y: 120 },
+                    { id: 'C', name: 'Proxy C', x: 200, y: 280 },
+                    { id: 'D', name: 'Firewall D', x: 320, y: 200 },
+                    { id: 'E', name: 'Server E', x: 440, y: 120 },
+                    { id: 'F', name: 'Server F', x: 440, y: 280 },
+                    { id: 'G', name: 'Database G', x: 540, y: 200 }
+                ],
+                edges: [
+                    { from: 'A', to: 'B', active: true },
+                    { from: 'A', to: 'C', active: true },
+                    { from: 'B', to: 'D', active: false },
+                    { from: 'C', to: 'D', active: true },
+                    { from: 'D', to: 'E', active: false },
+                    { from: 'D', to: 'F', active: true },
+                    { from: 'E', to: 'G', active: true },
+                    { from: 'F', to: 'G', active: false }
+                ]
+            },
+            {
+                level: 9,
+                title: "Level 9: Kereta Cepat Antarkota (8 Stasiun)",
+                desc: "Petunjuk: Aktifkan sakelar stasiun percabangan E dan H.",
+                nodes: [
+                    { id: 'A', name: 'Stasiun A', x: 70, y: 200, isStart: true },
+                    { id: 'B', name: 'Stasiun B', x: 180, y: 120 },
+                    { id: 'C', name: 'Stasiun C', x: 180, y: 280 },
+                    { id: 'D', name: 'Stasiun D', x: 300, y: 120 },
+                    { id: 'E', name: 'Stasiun E', x: 300, y: 280 },
+                    { id: 'F', name: 'Stasiun F', x: 420, y: 120 },
+                    { id: 'G', name: 'Stasiun G', x: 420, y: 280 },
+                    { id: 'H', name: 'Stasiun H', x: 530, y: 200 }
+                ],
+                edges: [
+                    { from: 'A', to: 'B', active: true },
+                    { from: 'A', to: 'C', active: true },
+                    { from: 'B', to: 'D', active: true },
+                    { from: 'C', to: 'E', active: false },
+                    { from: 'D', to: 'F', active: false },
+                    { from: 'E', to: 'G', active: true },
+                    { from: 'F', to: 'H', active: true },
+                    { from: 'G', to: 'H', active: false }
+                ]
+            },
+            {
+                level: 10,
+                title: "Level 10: Penerbangan Perintis (8 Stasiun)",
+                desc: "Petunjuk: Bandara transit D dan G belum tersambung secara utuh.",
+                nodes: [
+                    { id: 'A', name: 'Bandara A', x: 70, y: 200, isStart: true },
+                    { id: 'B', name: 'Bandara B', x: 180, y: 100 },
+                    { id: 'C', name: 'Bandara C', x: 180, y: 300 },
+                    { id: 'D', name: 'Bandara D', x: 300, y: 200 },
+                    { id: 'E', name: 'Bandara E', x: 420, y: 100 },
+                    { id: 'F', name: 'Bandara F', x: 420, y: 300 },
+                    { id: 'G', name: 'Bandara G', x: 480, y: 200 },
+                    { id: 'H', name: 'Bandara H', x: 550, y: 200 }
+                ],
+                edges: [
+                    { from: 'A', to: 'B', active: true },
+                    { from: 'A', to: 'C', active: true },
+                    { from: 'B', to: 'D', active: false },
+                    { from: 'C', to: 'D', active: true },
+                    { from: 'D', to: 'E', active: true },
+                    { from: 'D', to: 'F', active: false },
+                    { from: 'E', to: 'G', active: false },
+                    { from: 'F', to: 'G', active: true },
+                    { from: 'G', to: 'H', active: false }
+                ]
+            },
+            // LEVELS 11 - 20: NO HINTS AT ALL!
+            {
+                level: 11,
+                title: "Level 11: Topologi Misteri A (5 Stasiun)",
+                desc: "❌ TANPA PETUNJUK: Periksa diagram jaringan secara visual dan aktifkan jalur yang terputus agar semua stasiun terhubung ke Stasiun A.",
+                nodes: [
+                    { id: 'A', name: 'Node A', x: 100, y: 200, isStart: true },
+                    { id: 'B', name: 'Node B', x: 250, y: 120 },
+                    { id: 'C', name: 'Node C', x: 250, y: 280 },
+                    { id: 'D', name: 'Node D', x: 450, y: 120 },
+                    { id: 'E', name: 'Node E', x: 450, y: 280 }
+                ],
+                edges: [
+                    { from: 'A', to: 'B', active: true },
+                    { from: 'A', to: 'C', active: false },
+                    { from: 'B', to: 'D', active: false },
+                    { from: 'C', to: 'E', active: true }
+                ]
+            },
+            {
+                level: 12,
+                title: "Level 12: Topologi Misteri B (6 Stasiun)",
+                desc: "❌ TANPA PETUNJUK: Analisis rute yang mati untuk menghubungkan stasiun terisolasi.",
+                nodes: [
+                    { id: 'A', name: 'Node A', x: 90, y: 200, isStart: true },
+                    { id: 'B', name: 'Node B', x: 220, y: 120 },
+                    { id: 'C', name: 'Node C', x: 220, y: 280 },
+                    { id: 'D', name: 'Node D', x: 380, y: 120 },
+                    { id: 'E', name: 'Node E', x: 380, y: 280 },
+                    { id: 'F', name: 'Node F', x: 500, y: 200 }
+                ],
+                edges: [
+                    { from: 'A', to: 'B', active: false },
+                    { from: 'A', to: 'C', active: true },
+                    { from: 'B', to: 'D', active: true },
+                    { from: 'C', to: 'E', active: false },
+                    { from: 'D', to: 'F', active: false },
+                    { from: 'E', to: 'F', active: true }
+                ]
+            },
+            {
+                level: 13,
+                title: "Level 13: Topologi Misteri C (6 Stasiun)",
+                desc: "❌ TANPA PETUNJUK: Cari sakelar yang tepat untuk mengaktifkan konektivitas penuh.",
+                nodes: [
+                    { id: 'A', name: 'Node A', x: 100, y: 200, isStart: true },
+                    { id: 'B', name: 'Node B', x: 220, y: 100 },
+                    { id: 'C', name: 'Node C', x: 220, y: 300 },
+                    { id: 'D', name: 'Node D', x: 360, y: 100 },
+                    { id: 'E', name: 'Node E', x: 360, y: 300 },
+                    { id: 'F', name: 'Node F', x: 480, y: 200 }
+                ],
+                edges: [
+                    { from: 'A', to: 'B', active: true },
+                    { from: 'A', to: 'C', active: false },
+                    { from: 'B', to: 'D', active: false },
+                    { from: 'C', to: 'E', active: true },
+                    { from: 'D', to: 'E', active: false },
+                    { from: 'E', to: 'F', active: false }
+                ]
+            },
+            {
+                level: 14,
+                title: "Level 14: Topologi Misteri D (7 Stasiun)",
+                desc: "❌ TANPA PETUNJUK: Temukan bug rute pada simpul tengah.",
+                nodes: [
+                    { id: 'A', name: 'Node A', x: 80, y: 200, isStart: true },
+                    { id: 'B', name: 'Node B', x: 200, y: 110 },
+                    { id: 'C', name: 'Node C', x: 200, y: 290 },
+                    { id: 'D', name: 'Node D', x: 320, y: 200 },
+                    { id: 'E', name: 'Node E', x: 440, y: 110 },
+                    { id: 'F', name: 'Node F', x: 440, y: 290 },
+                    { id: 'G', name: 'Node G', x: 540, y: 200 }
+                ],
+                edges: [
+                    { from: 'A', to: 'B', active: true },
+                    { from: 'A', to: 'C', active: false },
+                    { from: 'B', to: 'D', active: false },
+                    { from: 'C', to: 'D', active: true },
+                    { from: 'D', to: 'E', active: false },
+                    { from: 'D', to: 'F', active: true },
+                    { from: 'E', to: 'G', active: false },
+                    { from: 'F', to: 'G', active: true }
+                ]
+            },
+            {
+                level: 15,
+                title: "Level 15: Topologi Misteri E (7 Stasiun)",
+                desc: "❌ TANPA PETUNJUK: Sambungkan simpul-simpul merah hingga semuanya berubah hijau.",
+                nodes: [
+                    { id: 'A', name: 'Node A', x: 80, y: 200, isStart: true },
+                    { id: 'B', name: 'Node B', x: 190, y: 100 },
+                    { id: 'C', name: 'Node C', x: 190, y: 300 },
+                    { id: 'D', name: 'Node D', x: 310, y: 100 },
+                    { id: 'E', name: 'Node E', x: 310, y: 300 },
+                    { id: 'F', name: 'Node F', x: 430, y: 200 },
+                    { id: 'G', name: 'Node G', x: 530, y: 200 }
+                ],
+                edges: [
+                    { from: 'A', to: 'B', active: false },
+                    { from: 'A', to: 'C', active: true },
+                    { from: 'B', to: 'D', active: true },
+                    { from: 'C', to: 'E', active: false },
+                    { from: 'D', to: 'F', active: false },
+                    { from: 'E', to: 'F', active: true },
+                    { from: 'F', to: 'G', active: false }
+                ]
+            },
+            {
+                level: 16,
+                title: "Level 16: Topologi Misteri F (7 Stasiun)",
+                desc: "❌ TANPA PETUNJUK: Hubungkan rute bercabang secara efisien.",
+                nodes: [
+                    { id: 'A', name: 'Node A', x: 80, y: 200, isStart: true },
+                    { id: 'B', name: 'Node B', x: 200, y: 120 },
+                    { id: 'C', name: 'Node C', x: 200, y: 280 },
+                    { id: 'D', name: 'Node D', x: 330, y: 200 },
+                    { id: 'E', name: 'Node E', x: 430, y: 120 },
+                    { id: 'F', name: 'Node F', x: 430, y: 280 },
+                    { id: 'G', name: 'Node G', x: 530, y: 200 }
+                ],
+                edges: [
+                    { from: 'A', to: 'B', active: true },
+                    { from: 'A', to: 'C', active: false },
+                    { from: 'B', to: 'D', active: false },
+                    { from: 'C', to: 'D', active: false },
+                    { from: 'D', to: 'E', active: true },
+                    { from: 'D', to: 'F', active: false },
+                    { from: 'E', to: 'G', active: true },
+                    { from: 'F', to: 'G', active: true }
+                ]
+            },
+            {
+                level: 17,
+                title: "Level 17: Topologi Misteri G (8 Stasiun)",
+                desc: "❌ TANPA PETUNJUK: Analisis 8 node dan perbaiki kabel mati.",
+                nodes: [
+                    { id: 'A', name: 'Node A', x: 70, y: 200, isStart: true },
+                    { id: 'B', name: 'Node B', x: 180, y: 110 },
+                    { id: 'C', name: 'Node C', x: 180, y: 290 },
+                    { id: 'D', name: 'Node D', x: 300, y: 110 },
+                    { id: 'E', name: 'Node E', x: 300, y: 290 },
+                    { id: 'F', name: 'Node F', x: 420, y: 110 },
+                    { id: 'G', name: 'Node G', x: 420, y: 290 },
+                    { id: 'H', name: 'Node H', x: 530, y: 200 }
+                ],
+                edges: [
+                    { from: 'A', to: 'B', active: true },
+                    { from: 'A', to: 'C', active: false },
+                    { from: 'B', to: 'D', active: false },
+                    { from: 'C', to: 'E', active: true },
+                    { from: 'D', to: 'F', active: true },
+                    { from: 'E', to: 'G', active: false },
+                    { from: 'F', to: 'H', active: false },
+                    { from: 'G', to: 'H', active: true }
+                ]
+            },
+            {
+                level: 18,
+                title: "Level 18: Topologi Misteri H (8 Stasiun)",
+                desc: "❌ TANPA PETUNJUK: Cermati titik awal A hingga titik akhir H.",
+                nodes: [
+                    { id: 'A', name: 'Node A', x: 70, y: 200, isStart: true },
+                    { id: 'B', name: 'Node B', x: 180, y: 100 },
+                    { id: 'C', name: 'Node C', x: 180, y: 300 },
+                    { id: 'D', name: 'Node D', x: 290, y: 200 },
+                    { id: 'E', name: 'Node E', x: 400, y: 100 },
+                    { id: 'F', name: 'Node F', x: 400, y: 300 },
+                    { id: 'G', name: 'Node G', x: 480, y: 200 },
+                    { id: 'H', name: 'Node H', x: 550, y: 200 }
+                ],
+                edges: [
+                    { from: 'A', to: 'B', active: false },
+                    { from: 'A', to: 'C', active: true },
+                    { from: 'B', to: 'D', active: true },
+                    { from: 'C', to: 'D', active: false },
+                    { from: 'D', to: 'E', active: false },
+                    { from: 'D', to: 'F', active: true },
+                    { from: 'E', to: 'G', active: true },
+                    { from: 'F', to: 'G', active: false },
+                    { from: 'G', to: 'H', active: false }
+                ]
+            },
+            {
+                level: 19,
+                title: "Level 19: Topologi Misteri I (8 Stasiun)",
+                desc: "❌ TANPA PETUNJUK: Perbaiki jaringan berlapis tanpa ada titik terpisah.",
+                nodes: [
+                    { id: 'A', name: 'Node A', x: 70, y: 200, isStart: true },
+                    { id: 'B', name: 'Node B', x: 180, y: 120 },
+                    { id: 'C', name: 'Node C', x: 180, y: 280 },
+                    { id: 'D', name: 'Node D', x: 300, y: 120 },
+                    { id: 'E', name: 'Node E', x: 300, y: 280 },
+                    { id: 'F', name: 'Node F', x: 420, y: 120 },
+                    { id: 'G', name: 'Node G', x: 420, y: 280 },
+                    { id: 'H', name: 'Node H', x: 530, y: 200 }
+                ],
+                edges: [
+                    { from: 'A', to: 'B', active: true },
+                    { from: 'A', to: 'C', active: false },
+                    { from: 'B', to: 'D', active: false },
+                    { from: 'C', to: 'E', active: false },
+                    { from: 'D', to: 'F', active: true },
+                    { from: 'E', to: 'G', active: true },
+                    { from: 'F', to: 'H', active: false },
+                    { from: 'G', to: 'H', active: false }
+                ]
+            },
+            {
+                level: 20,
+                title: "Level 20: Topologi Tantangan Akhir (8 Stasiun)",
+                desc: "❌ TANPA PETUNJUK: Tantangan puncak! Perbaiki rute kompleks agar seluruh 8 stasiun aktif sempurna.",
+                nodes: [
+                    { id: 'A', name: 'Node A', x: 70, y: 200, isStart: true },
+                    { id: 'B', name: 'Node B', x: 180, y: 90 },
+                    { id: 'C', name: 'Node C', x: 180, y: 310 },
+                    { id: 'D', name: 'Node D', x: 300, y: 200 },
+                    { id: 'E', name: 'Node E', x: 410, y: 90 },
+                    { id: 'F', name: 'Node F', x: 410, y: 310 },
+                    { id: 'G', name: 'Node G', x: 490, y: 200 },
+                    { id: 'H', name: 'Node H', x: 550, y: 200 }
+                ],
+                edges: [
+                    { from: 'A', to: 'B', active: false },
+                    { from: 'A', to: 'C', active: false },
+                    { from: 'B', to: 'D', active: true },
+                    { from: 'C', to: 'D', active: false },
+                    { from: 'D', to: 'E', active: false },
+                    { from: 'D', to: 'F', active: true },
+                    { from: 'E', to: 'G', active: false },
+                    { from: 'F', to: 'G', active: true },
+                    { from: 'G', to: 'H', active: false }
+                ]
+            }
+        ];
+
+        let g3CurrentLevelIdx = 0;
+        let g3CurrentEdges = [];
+        let g3EditsMade = 0;
+
+        window.onload = function() {
+            startTimer();
+            initGame1();
+        };
+
+        function startTimer() {
+            if (globalTimerInterval) clearInterval(globalTimerInterval);
+            globalTimerInterval = setInterval(() => {
+                globalSeconds++;
+                const mins = String(Math.floor(globalSeconds / 60)).padStart(2, '0');
+                const secs = String(globalSeconds % 60).padStart(2, '0');
+                document.getElementById('global-timer').innerText = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function incrementErrors(gameNum = 1) {
+            globalErrors++;
+            if (gameNum === 1) g1Errors++;
+            else if (gameNum === 2) g2Errors++;
+            else if (gameNum === 3) g3Errors++;
+
+            document.getElementById('global-errors').innerText = globalErrors;
+        }
+
+        function initGame1() {
+            g1PlayerPos = { r: 0, c: 0 };
+            g1CommandQueue = [];
+            g1SolvedCheckpoints = 0;
+            renderG1Map();
+            renderG1Queue();
+            document.getElementById('g1-solved-count').innerText = g1SolvedCheckpoints;
+        }
+
+        function renderG1Map() {
+            const mapEl = document.getElementById('g1-map');
+            mapEl.innerHTML = '';
+
+            for (let r = 0; r < 6; r++) {
+                for (let c = 0; c < 6; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = "grid-cell rounded-lg flex items-center justify-center font-bold text-sm relative select-none border border-slate-800 ";
+
+                    const val = g1MapData[r][c];
+                    
+                    // Background terrain styling
+                    if (val === 1) {
+                        cell.classList.add('bg-slate-800', 'text-slate-600');
+                        cell.innerHTML = '🪨';
+                    } else {
+                        cell.classList.add('bg-slate-950/80');
+                    }
+
+                    // Checkpoints
+                    const puzzle = g1Puzzles.find(p => p.pos.r === r && p.pos.c === c);
+                    if (puzzle) {
+                        cell.classList.add('bg-amber-950/40', 'border-amber-700/50');
+                        cell.innerHTML = `<span class="text-amber-400 font-extrabold text-xs bg-amber-950/80 px-1.5 py-0.5 rounded border border-amber-600">📜 ${puzzle.id}</span>`;
+                    }
+
+                    // Treasure Chest
+                    if (val === 3) {
+                        cell.classList.add('bg-emerald-950/40', 'border-emerald-600');
+                        cell.innerHTML = '💎';
+                    }
+
+                    // Player position overlay
+                    if (g1PlayerPos.r === r && g1PlayerPos.c === c) {
+                        const pIcon = document.createElement('div');
+                        pIcon.className = 'absolute inset-0 bg-amber-500/30 rounded-lg flex items-center justify-center text-xl pulse-active border-2 border-amber-400';
+                        pIcon.innerHTML = '🤖';
+                        cell.appendChild(pIcon);
+                    }
+
+                    mapEl.appendChild(cell);
+                }
+            }
+        }
+
+        function addG1Command(dir) {
+            if (g1CommandQueue.length >= 10) return;
+            g1CommandQueue.push(dir);
+            renderG1Queue();
+        }
+
+        function clearG1Queue() {
+            g1CommandQueue = [];
+            renderG1Queue();
+        }
+
+        function renderG1Queue() {
+            const qEl = document.getElementById('g1-queue');
+            if (g1CommandQueue.length === 0) {
+                qEl.innerHTML = `<span class="text-xs text-slate-500 italic">Antrean instruksi kosong...</span>`;
+                return;
+            }
+
+            const arrowMap = { 'UP': '⬆️ Atas', 'DOWN': '⬇️ Bawah', 'LEFT': '⬅️ Kiri', 'RIGHT': '➡️ Kanan' };
+            qEl.innerHTML = g1CommandQueue.map((cmd, idx) => `
+                <span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2.5 py-1 rounded-md text-xs font-bold flex items-center gap-1">
+                    <span>${idx + 1}.</span> <span>${arrowMap[cmd]}</span>
+                </span>
+            `).join('');
+        }
+
+        async function runG1Commands() {
+            if (g1CommandQueue.length === 0) return;
+
+            const msgBox = document.getElementById('g1-status-msg');
+            msgBox.className = "bg-sky-500/10 border border-sky-500/30 text-sky-200 p-3.5 rounded-xl text-xs space-y-1";
+            msgBox.innerHTML = `<b>⚙️ Memproses Algoritma...</b>`;
+
+            for (let i = 0; i < g1CommandQueue.length; i++) {
+                const dir = g1CommandQueue[i];
+                let nextR = g1PlayerPos.r;
+                let nextC = g1PlayerPos.c;
+
+                if (dir === 'UP') nextR--;
+                else if (dir === 'DOWN') nextR++;
+                else if (dir === 'LEFT') nextC--;
+                else if (dir === 'RIGHT') nextC++;
+
+                // Check bounds & obstacles
+                if (nextR < 0 || nextR >= 6 || nextC < 0 || nextC >= 6 || g1MapData[nextR][nextC] === 1) {
+                    incrementErrors(1);
+                    msgBox.className = "bg-rose-500/10 border border-rose-500/30 text-rose-200 p-3.5 rounded-xl text-xs space-y-1";
+                    msgBox.innerHTML = `⚠️ <b>Error Rute:</b> Penjelajah menabrak rintangan/keluar batas di langkah ke-${i + 1}! Pilihan rute diperbaiki.`;
+                    break;
+                }
+
+                g1PlayerPos = { r: nextR, c: nextC };
+                renderG1Map();
+                await new Promise(res => setTimeout(res, 350));
+
+                // Check for Puzzle Checkpoint
+                const puzzle = g1Puzzles.find(p => p.pos.r === nextR && p.pos.c === nextC);
+                if (puzzle) {
+                    // ENFORCE SEQUENTIAL ORDER (Must solve Pos 1, then Pos 2, Pos 3...)
+                    if (puzzle.id !== g1SolvedCheckpoints + 1) {
+                        incrementErrors(1);
+                        msgBox.className = "bg-amber-500/10 border border-amber-500/30 text-amber-200 p-3.5 rounded-xl text-xs space-y-1";
+                        msgBox.innerHTML = `⚠️ <b>Pos Terkunci!</b> Kamu berada di Pos ${puzzle.id}, tetapi kamu harus menyelesaikan <b>Pos ${g1SolvedCheckpoints + 1}</b> terlebih dahulu secara berurutan!`;
+                        clearG1Queue();
+                        return;
+                    }
+                    openPuzzleModal(puzzle);
+                    clearG1Queue();
+                    return;
+                }
+
+                // Check for Treasure
+                if (g1MapData[nextR][nextC] === 3) {
+                    if (g1SolvedCheckpoints < 5) {
+                        msgBox.className = "bg-amber-500/10 border border-amber-500/30 text-amber-200 p-3.5 rounded-xl text-xs space-y-1";
+                        msgBox.innerHTML = `🔒 Peti Harta Karun terkunci! Kamu harus memecahkan <b>5 Pos Teka-Teki Pola</b> terlebih dahulu secara berurutan. (Saat ini: ${g1SolvedCheckpoints}/5)`;
+                    } else {
+                        // Game 1 Complete!
+                        msgBox.className = "bg-emerald-500/10 border border-emerald-500/30 text-emerald-200 p-3.5 rounded-xl text-xs space-y-1";
+                        msgBox.innerHTML = `🎉 <b>SELAMAT!</b> Kamu berhasil memecahkan semua pola dan menemukan Harta Karun! Beralih ke Game 2...`;
+                        setTimeout(() => {
+                            switchToGame(2);
+                        }, 1800);
+                        clearG1Queue();
+                        return;
+                    }
+                }
+            }
+
+            clearG1Queue();
+        }
+
+        function openPuzzleModal(puzzle) {
+            activePuzzleIndex = puzzle.id - 1;
+            const modal = document.getElementById('puzzle-modal');
+            document.getElementById('modal-title').innerText = `📜 ${puzzle.title}`;
+            // NO HINTS DISPLAYED
+            document.getElementById('modal-desc').innerHTML = `${puzzle.question}`;
+            document.getElementById('modal-error').classList.add('hidden');
+
+            const inputContainer = document.getElementById('modal-input-container');
+            if (puzzle.type === 'choice') {
+                inputContainer.innerHTML = puzzle.options.map(opt => `
+                    <button onclick="selectChoicePuzzle('${opt}')" class="w-full bg-slate-800 hover:bg-slate-700 text-left p-3 rounded-xl font-semibold text-xs border border-slate-700 transition flex justify-between items-center">
+                        <span>${opt}</span> <span>➡️</span>
+                    </button>
+                `).join('');
+            } else {
+                inputContainer.innerHTML = `
+                    <input type="text" id="puzzle-answer-field" placeholder="Ketik jawabanmu..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold text-sm focus:outline-none focus:border-amber-500">
+                `;
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function selectChoicePuzzle(val) {
+            checkPuzzleAnswer(val);
+        }
+
+        function submitPuzzleAnswer() {
+            const field = document.getElementById('puzzle-answer-field');
+            if (field) {
+                checkPuzzleAnswer(field.value.trim());
+            }
+        }
+
+        function checkPuzzleAnswer(userAns) {
+            const puzzle = g1Puzzles[activePuzzleIndex];
+            const errBox = document.getElementById('modal-error');
+
+            if (userAns.toString().toLowerCase() === puzzle.answer.toString().toLowerCase()) {
+                document.getElementById('puzzle-modal').classList.add('hidden');
+                g1SolvedCheckpoints++;
+                document.getElementById('g1-solved-count').innerText = g1SolvedCheckpoints;
+
+                const msgBox = document.getElementById('g1-status-msg');
+                msgBox.className = "bg-emerald-500/10 border border-emerald-500/30 text-emerald-200 p-3.5 rounded-xl text-xs space-y-1";
+                msgBox.innerHTML = `✅ <b>Hebat!</b> ${puzzle.title} berhasil dipecahkan! Silakan lanjutkan navigasi.`;
+            } else {
+                incrementErrors(1);
+                errBox.classList.remove('hidden');
+                errBox.innerText = `Jawaban belum tepat! Coba amati kembali pola dan petunjuknya.`;
+            }
+        }
+
+        function initGame2() {
+            g2CurrentIdx = 0;
+            renderG2Question();
+        }
+
+        function renderG2Question() {
+            const q = g2Questions[g2CurrentIdx];
+            document.getElementById('g2-progress').innerText = g2CurrentIdx + 1;
+            document.getElementById('g2-question-title').innerText = q.title;
+            document.getElementById('g2-question-desc').innerText = q.desc;
+            document.getElementById('g2-answer-input').value = '';
+            
+            const feedbackEl = document.getElementById('g2-feedback');
+            feedbackEl.className = "hidden p-3 rounded-xl text-xs font-semibold";
+
+            // Render calendar monthly grid visual - ONLY SHOW PATTERN NUMBERS
+            const calGrid = document.getElementById('g2-calendar-grid');
+            calGrid.innerHTML = '';
+
+            // Offset 2 blank days at month start
+            for (let b = 0; b < 2; b++) {
+                calGrid.innerHTML += `<div class="p-2 bg-slate-950/40 text-slate-700 rounded-lg"></div>`;
+            }
+
+            for (let day = 1; day <= 30; day++) {
+                const isTargetMissing = day === q.answer;
+                const isHighlighted = q.highlightPattern.includes(day) && !isTargetMissing;
+
+                let cellClass = "p-2 rounded-lg border border-slate-800 bg-slate-950 text-slate-400 min-h-[38px] flex items-center justify-center font-bold";
+                let content = ""; // Empty by default for non-pattern dates!
+
+                if (isTargetMissing) {
+                    cellClass = "p-2 rounded-lg border-2 border-dashed border-indigo-400 bg-indigo-950/40 text-indigo-300 font-extrabold pulse-active min-h-[38px] flex items-center justify-center";
+                    content = "?";
+                } else if (isHighlighted) {
+                    cellClass = "p-2 rounded-lg border border-indigo-500/50 bg-indigo-900/40 text-indigo-200 font-bold min-h-[38px] flex items-center justify-center";
+                    content = day;
+                }
+
+                calGrid.innerHTML += `<div class="${cellClass}">${content}</div>`;
+            }
+        }
+
+        function submitG2Answer() {
+            const inputVal = parseInt(document.getElementById('g2-answer-input').value);
+            const q = g2Questions[g2CurrentIdx];
+            const feedbackEl = document.getElementById('g2-feedback');
+
+            if (isNaN(inputVal)) {
+                feedbackEl.className = "p-3 rounded-xl text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40";
+                feedbackEl.innerText = "Harap masukkan angka tanggal terlebih dahulu!";
+                feedbackEl.classList.remove('hidden');
+                return;
+            }
+
+            if (inputVal === q.answer) {
+                feedbackEl.className = "p-3 rounded-xl text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
+                feedbackEl.innerText = "🎉 Benar sekali! Tanggal sesuai dengan siklus pola.";
+                feedbackEl.classList.remove('hidden');
+
+                setTimeout(() => {
+                    g2CurrentIdx++;
+                    if (g2CurrentIdx < g2Questions.length) {
+                        renderG2Question();
+                    } else {
+                        // Game 2 Complete
+                        switchToGame(3);
+                    }
+                }, 1200);
+            } else {
+                incrementErrors(2);
+                feedbackEl.className = "p-3 rounded-xl text-xs font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/40";
+                feedbackEl.innerText = `❌ Tanggal ${inputVal} belum tepat sesuai siklus. Periksa kembali lompatan angkanya!`;
+                feedbackEl.classList.remove('hidden');
+            }
+        }
+
+        function initGame3() {
+            g3CurrentLevelIdx = 0;
+            loadG3Level();
+        }
+
+        function loadG3Level() {
+            const lvl = g3Levels[g3CurrentLevelIdx];
+            document.getElementById('g3-level-num').innerText = lvl.level;
+            document.getElementById('g3-level-desc').innerText = lvl.desc;
+            g3CurrentEdges = JSON.parse(JSON.stringify(lvl.edges)); // Deep copy
+            g3EditsMade = 0;
+            document.getElementById('g3-edits-count').innerText = g3EditsMade;
+            document.getElementById('g3-signal-msg').innerText = "Silakan periksa dan aktifkan sakelar jalur yang bermasalah.";
+
+            renderG3Switches();
+            renderG3NetworkSVG();
+        }
+
+        function renderG3Switches() {
+            const listEl = document.getElementById('g3-switches-list');
+            listEl.innerHTML = g3CurrentEdges.map((edge, idx) => `
+                <div class="flex items-center justify-between bg-slate-950 p-2.5 rounded-lg border border-slate-800 text-xs">
+                    <span class="font-bold text-slate-300">Jalur Stasiun ${edge.from} ↔ ${edge.to}</span>
+                    <button onclick="toggleG3Edge(${idx})" class="px-3 py-1 rounded-md font-bold text-[11px] transition ${edge.active ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-slate-800 text-slate-400 border border-slate-700'}">
+                        ${edge.active ? '🟢 AKTIF' : '⚪ MATI'}
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function toggleG3Edge(idx) {
+            g3CurrentEdges[idx].active = !g3CurrentEdges[idx].active;
+            g3EditsMade++;
+            document.getElementById('g3-edits-count').innerText = g3EditsMade;
+            renderG3Switches();
+            renderG3NetworkSVG();
+        }
+
+        function renderG3NetworkSVG() {
+            const lvl = g3Levels[g3CurrentLevelIdx];
+            const svg = document.getElementById('g3-network-svg');
+            svg.innerHTML = '';
+
+            // Compute connected nodes from start node using BFS
+            const activeAdjacency = {};
+            lvl.nodes.forEach(n => activeAdjacency[n.id] = []);
+            g3CurrentEdges.forEach(e => {
+                if (e.active) {
+                    activeAdjacency[e.from].push(e.to);
+                    activeAdjacency[e.to].push(e.from);
+                }
+            });
+
+            // BFS from 'A'
+            const visited = new Set(['A']);
+            const queue = ['A'];
+            while (queue.length > 0) {
+                const curr = queue.shift();
+                activeAdjacency[curr].forEach(neighbor => {
+                    if (!visited.has(neighbor)) {
+                        visited.add(neighbor);
+                        queue.push(neighbor);
+                    }
+                });
+            }
+
+            // Render Edges
+            g3CurrentEdges.forEach(e => {
+                const fromNode = lvl.nodes.find(n => n.id === e.from);
+                const toNode = lvl.nodes.find(n => n.id === e.to);
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', fromNode.x);
+                line.setAttribute('y1', fromNode.y);
+                line.setAttribute('x2', toNode.x);
+                line.setAttribute('y2', toNode.y);
+
+                if (e.active) {
+                    line.setAttribute('stroke', '#10b981');
+                    line.setAttribute('stroke-width', '4');
+                } else {
+                    line.setAttribute('stroke', '#334155');
+                    line.setAttribute('stroke-width', '2');
+                    line.setAttribute('stroke-dasharray', '5,5');
+                }
+                svg.appendChild(line);
+            });
+
+            // Render Nodes
+            lvl.nodes.forEach(n => {
+                const isConnected = visited.has(n.id);
+                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', n.x);
+                circle.setAttribute('cy', n.y);
+                circle.setAttribute('r', '20');
+                circle.setAttribute('fill', isConnected ? '#065f46' : '#881337');
+                circle.setAttribute('stroke', isConnected ? '#34d399' : '#f43f5e');
+                circle.setAttribute('stroke-width', '3');
+
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', n.x);
+                text.setAttribute('y', n.y + 5);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('fill', '#ffffff');
+                text.setAttribute('font-weight', 'bold');
+                text.setAttribute('font-size', '14px');
+                text.textContent = n.id;
+
+                g.appendChild(circle);
+                g.appendChild(text);
+                svg.appendChild(g);
+            });
+        }
+
+        function testG3Connectivity() {
+            const lvl = g3Levels[g3CurrentLevelIdx];
+            
+            // Perform BFS check
+            const activeAdjacency = {};
+            lvl.nodes.forEach(n => activeAdjacency[n.id] = []);
+            g3CurrentEdges.forEach(e => {
+                if (e.active) {
+                    activeAdjacency[e.from].push(e.to);
+                    activeAdjacency[e.to].push(e.from);
+                }
+            });
+
+            const visited = new Set(['A']);
+            const queue = ['A'];
+            while (queue.length > 0) {
+                const curr = queue.shift();
+                activeAdjacency[curr].forEach(neighbor => {
+                    if (!visited.has(neighbor)) {
+                        visited.add(neighbor);
+                        queue.push(neighbor);
+                    }
+                });
+            }
+
+            const msgEl = document.getElementById('g3-signal-msg');
+            const allConnected = lvl.nodes.every(n => visited.has(n.id));
+
+            if (allConnected) {
+                msgEl.innerHTML = `<b class="text-emerald-400">⚡ SUKSES! Seluruh ${lvl.nodes.length} stasiun berhasil terhubung tanpa ada yang terisolasi!</b>`;
+                setTimeout(() => {
+                    g3CurrentLevelIdx++;
+                    if (g3CurrentLevelIdx < g3Levels.length) {
+                        loadG3Level();
+                    } else {
+                        // All 3 games complete! Go to evaluation
+                        switchToGame('eval');
+                    }
+                }, 1500);
+            } else {
+                incrementErrors(3);
+                msgEl.innerHTML = `<b class="text-rose-400">⚠️ DEBUG FAILED: Masih ada stasiun berwarna merah yang terisolasi dari pusat A. Sesuaikan kembali sakelar!</b>`;
+            }
+        }
+
+        function switchToGame(target) {
+            document.getElementById('game1-container').classList.add('hidden');
+            document.getElementById('game2-container').classList.add('hidden');
+            document.getElementById('game3-container').classList.add('hidden');
+            document.getElementById('eval-container').classList.add('hidden');
+
+            // Reset navigation tab styles
+            ['nav-g1', 'nav-g2', 'nav-g3', 'nav-eval'].forEach(id => {
+                document.getElementById(id).className = "px-3 py-1.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 flex items-center gap-1 text-xs md:text-sm font-semibold";
+            });
+
+            if (target === 1) {
+                document.getElementById('game1-container').classList.remove('hidden');
+                document.getElementById('nav-g1').className = "px-3 py-1.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1 text-xs md:text-sm font-semibold";
+            } else if (target === 2) {
+                document.getElementById('game2-container').classList.remove('hidden');
+                document.getElementById('nav-g2').className = "px-3 py-1.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 flex items-center gap-1 text-xs md:text-sm font-semibold";
+                initGame2();
+            } else if (target === 3) {
+                document.getElementById('game3-container').classList.remove('hidden');
+                document.getElementById('nav-g3').className = "px-3 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1 text-xs md:text-sm font-semibold";
+                initGame3();
+            } else if (target === 'eval') {
+                document.getElementById('eval-container').classList.remove('hidden');
+                document.getElementById('nav-eval').className = "px-3 py-1.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1 text-xs md:text-sm font-semibold";
+                generateEvaluationReport();
+            }
+        }
+
+        function generateEvaluationReport() {
+            if (globalTimerInterval) clearInterval(globalTimerInterval);
+
+            const mins = String(Math.floor(globalSeconds / 60)).padStart(2, '0');
+            const secs = String(globalSeconds % 60).padStart(2, '0');
+            document.getElementById('eval-total-time').innerText = `${mins}:${secs}`;
+            document.getElementById('eval-total-errors').innerText = globalErrors;
+
+            // Score Calculation based on accuracy & errors
+            // Base 100%, deduct 5% per error
+            let score = Math.max(40, 100 - (globalErrors * 5));
+            document.getElementById('eval-score').innerText = `${score}%`;
+
+            // Predikat / Badge
+            let badge = "Grandmaster Algoritma 🏆";
+            if (score < 70) badge = "Penyelidik Pola 🔍";
+            else if (score < 85) badge = "Arsitek Jaringan 🌐";
+            document.getElementById('eval-badge').innerText = badge;
+
+            // Individual Sub-bars
+            const g1Score = Math.max(30, 100 - (g1Errors * 10));
+            const g2Score = Math.max(30, 100 - (g2Errors * 8));
+            const g3Score = Math.max(30, 100 - (g3Errors * 12));
+
+            document.getElementById('bar-g1').style.width = `${g1Score}%`;
+            document.getElementById('bar-g2').style.width = `${g2Score}%`;
+            document.getElementById('bar-g3').style.width = `${g3Score}%`;
+
+            // Detailed qualitative text generator
+            let detailText = `Anak menunjukkan pemahaman yang sangat baik dalam menghubungkan berbagai materi Computational Thinking. `;
+            if (globalErrors === 0) {
+                detailText += `<b>Eksekusi Sempurna!</b> Tidak ada kesalahan algoritma maupun debug yang dilakukan. Kemampuan logika pola dan eksekusi rute sangat efisien!`;
+            } else if (globalErrors <= 3) {
+                detailText += `Siswa mampu menyelesaikan masalah dengan cepat dan koreksi diri yang baik ketika menemukan rute yang kurang optimal.`;
+            } else {
+                detailText += `Siswa berhasil menyelesaikan seluruh tantangan. Disarankan untuk lebih teliti memperhatikan pola barisan angka dan simulasi rute sebelum mengeksekusi instruksi.`;
+            }
+
+            document.getElementById('eval-detailed-text').innerHTML = detailText;
+        }
+
+        function restartAllGames() {
+            globalSeconds = 0;
+            globalErrors = 0;
+            g1Errors = 0;
+            g2Errors = 0;
+            g3Errors = 0;
+            document.getElementById('global-errors').innerText = '0';
+            document.getElementById('global-timer').innerText = '00:00';
+            startTimer();
+            switchToGame(1);
+            initGame1();
+        }
+    </script>
+</body>
+</html>
