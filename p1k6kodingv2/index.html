@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan Algoritma & Pola - Kelas 6</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Font Google Inter & Press Start 2P -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Fredoka+One&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Fredoka One', 'cursive']
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(229, 231, 235, 0.8);
+        }
+        .calendar-cell-empty {
+            background-color: #f3f4f6;
+            border: 2px dashed #cbd5e1;
+        }
+        .calendar-cell-clue {
+            background-color: #e0e7ff;
+            border: 2px solid #6366f1;
+            color: #312e81;
+            font-weight: bold;
+        }
+        .calendar-cell-filled {
+            background-color: #dcfce7;
+            border: 2px solid #22c55e;
+            color: #14532d;
+            font-weight: bold;
+        }
+        .pulse-subtle {
+            animation: pulse-border 2s infinite;
+        }
+        @keyframes pulse-border {
+            0%, 100% { border-color: rgba(99, 102, 241, 0.4); }
+            50% { border-color: rgba(99, 102, 241, 1); }
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+
+    <!-- Navigation Bar -->
+    <header class="bg-slate-800/90 border-b border-slate-700 backdrop-blur sticky top-0 z-50 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('dashboard')">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-brain"></i>
+                </div>
+                <div>
+                    <h1 class="font-display text-lg text-white leading-tight">LogiCode <span class="text-indigo-400 text-xs px-2 py-0.5 bg-indigo-950 rounded-full border border-indigo-700">Kelas 6</span></h1>
+                    <p class="text-xs text-slate-400">Pola & Algoritma Problem Solving</p>
+                </div>
+            </div>
+
+            <!-- Global User Stats & Navigation -->
+            <div id="nav-stats" class="hidden md:flex items-center gap-6 bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-700 text-xs">
+                <div class="flex items-center gap-2 text-slate-300">
+                    <i class="fa-solid fa-user text-indigo-400"></i>
+                    <span id="player-display-name">Siswa</span>
+                </div>
+                <div class="flex items-center gap-2 text-amber-400">
+                    <i class="fa-solid fa-clock"></i>
+                    <span id="global-timer">00:00</span>
+                </div>
+                <div class="flex items-center gap-2 text-rose-400">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>Salah: <strong id="global-mistakes">0</strong></span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button onclick="switchTab('dashboard')" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded-lg font-semibold transition">
+                    <i class="fa-solid fa-house mr-1"></i> Menu Utama
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto w-full px-4 py-6 flex-grow">
+
+        <!-- SECTION 0: STUDENT LOGIN / DASHBOARD -->
+        <section id="sec-dashboard" class="space-y-8">
+            <div class="bg-gradient-to-r from-indigo-900/60 to-slate-800 rounded-3xl p-8 border border-indigo-500/30 shadow-2xl relative overflow-hidden">
+                <div class="max-w-2xl relative z-10 space-y-4">
+                    <span class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-xs font-semibold px-3 py-1 rounded-full inline-flex items-center gap-2">
+                        <i class="fa-solid fa-graduation-cap"></i> Modul Berpikir Komputasional
+                    </span>
+                    <h2 class="text-3xl md:text-4xl font-display font-bold text-white">Mastering Logic & Pattern Recognition</h2>
+                    <p class="text-slate-300 text-sm leading-relaxed">
+                        Selamat datang di Misi Algoritma! Kamu akan menyelesaikan 3 modul tantangan dunia nyata. Pelajari pola, temukan rute tersembunyi, dan perbaiki jaringan transportasi otomatis.
+                    </p>
+                    
+                    <div class="pt-2 flex flex-col sm:flex-row gap-3">
+                        <input type="text" id="input-student-name" placeholder="Masukkan Nama Lengkap..." class="bg-slate-900/90 border border-slate-700 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 w-full sm:w-72">
+                        <button onclick="startMission()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center justify-center gap-2">
+                            <span>Mulai Misi Tantangan</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Game 1 Card -->
+                <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 flex flex-col justify-between hover:border-amber-500/50 transition">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center text-xl font-bold mb-4">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2">Game 1: Pencarian Harta Karun</h3>
+                        <p class="text-xs text-slate-400 mb-4">Pahami urutan rute dan pola logika tanpa petunjuk untuk menemukan peti harta karun.</p>
+                        <ul class="text-xs space-y-1.5 text-slate-300">
+                            <li><i class="fa-solid fa-check text-emerald-400 mr-2"></i>5 Soal Tantangan</li>
+                            <li><i class="fa-solid fa-lock text-amber-400 mr-2"></i>Wajib diselesaikan secara urut</li>
+                            <li><i class="fa-solid fa-eye-slash text-rose-400 mr-2"></i>Tanpa Petunjuk (No Hints)</li>
+                        </ul>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-700/60 flex items-center justify-between">
+                        <span id="status-g1" class="text-xs text-slate-400">Status: Belum Dimulai</span>
+                        <button onclick="enterGame(1)" class="bg-slate-700 hover:bg-indigo-600 text-white text-xs font-bold px-4 py-2 rounded-lg transition">Mainkan</button>
+                    </div>
+                </div>
+
+                <!-- Game 2 Card -->
+                <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 flex flex-col justify-between hover:border-blue-500/50 transition">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-blue-500/20 border border-blue-500/40 text-blue-400 flex items-center justify-center text-xl font-bold mb-4">
+                            <i class="fa-solid fa-calendar-days"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2">Game 2: Susun Kalender</h3>
+                        <p class="text-xs text-slate-400 mb-4">Analisis siklus mingguan & harian. Lengkapi tanggal kosong yang hilang berdasarkan pola.</p>
+                        <ul class="text-xs space-y-1.5 text-slate-300">
+                            <li><i class="fa-solid fa-check text-emerald-400 mr-2"></i>10 Soal Siklus Kalender</li>
+                            <li><i class="fa-solid fa-filter text-blue-400 mr-2"></i>Hanya menampilkan angka petunjuk</li>
+                            <li><i class="fa-solid fa-bullseye text-purple-400 mr-2"></i>Akurasi Tanggal</li>
+                        </ul>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-700/60 flex items-center justify-between">
+                        <span id="status-g2" class="text-xs text-slate-400">Status: Belum Dimulai</span>
+                        <button onclick="enterGame(2)" class="bg-slate-700 hover:bg-indigo-600 text-white text-xs font-bold px-4 py-2 rounded-lg transition">Mainkan</button>
+                    </div>
+                </div>
+
+                <!-- Game 3 Card -->
+                <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 flex flex-col justify-between hover:border-emerald-500/50 transition">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center text-xl font-bold mb-4">
+                            <i class="fa-solid fa-network-wired"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2">Game 3: Debug Jaringan</h3>
+                        <p class="text-xs text-slate-400 mb-4">Perbaiki rute stasiun transportasi terputus dengan mematuhi kuota energi/stasiun aktif.</p>
+                        <ul class="text-xs space-y-1.5 text-slate-300">
+                            <li><i class="fa-solid fa-check text-emerald-400 mr-2"></i>20 Soal Tantangan Jaringan</li>
+                            <li><i class="fa-solid fa-bolt text-amber-400 mr-2"></i>Batas Maksimal Panel Aktif</li>
+                            <li><i class="fa-solid fa-eye-slash text-rose-400 mr-2"></i>Soal 11–20 Tanpa Petunjuk</li>
+                        </ul>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-700/60 flex items-center justify-between">
+                        <span id="status-g3" class="text-xs text-slate-400">Status: Belum Dimulai</span>
+                        <button onclick="enterGame(3)" class="bg-slate-700 hover:bg-indigo-600 text-white text-xs font-bold px-4 py-2 rounded-lg transition">Mainkan</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 1: GAME 1 - PENCARIAN HARTA KARUN -->
+        <section id="sec-game1" class="hidden space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-800/90 p-4 rounded-2xl border border-slate-700">
+                <div>
+                    <span class="text-xs text-amber-400 font-semibold uppercase tracking-wider">Modul 1 • Algoritma Jalur Labirin & Pola Suku</span>
+                    <h2 class="text-2xl font-bold text-white">Game 1: Pencarian Harta Karun Labirin</h2>
+                    <p class="text-xs text-slate-400">Gunakan tombol panah / D-Pad untuk menggerakkan karakter menuju Pos Pola berurutan!</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="bg-slate-900 px-4 py-2 rounded-xl border border-slate-700 text-center">
+                        <span class="text-xs text-slate-400 block">Pos Aktif</span>
+                        <span id="g1-level-indicator" class="text-lg font-bold text-amber-400">Pos 1 / 5</span>
+                    </div>
+                    <button onclick="switchTab('dashboard')" class="bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded-xl text-xs font-semibold">
+                        <i class="fa-solid fa-xmark mr-1"></i> Keluar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game 1 Content Area -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Map / Story & Maze View -->
+                <div class="lg:col-span-7 bg-slate-800/80 border border-slate-700 rounded-2xl p-6 flex flex-col justify-between min-h-[420px]">
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 id="g1-title" class="text-lg font-bold text-amber-300">Labirin Harta Karun</h3>
+                            <span class="text-xs bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2.5 py-1 rounded-md font-semibold">
+                                <i class="fa-solid fa-eye-slash mr-1"></i> No Hints Mode
+                            </span>
+                        </div>
+                        <p id="g1-story" class="text-xs text-slate-300 leading-relaxed mb-4">
+                            Gerakkan penjelajah <span class="text-amber-400 font-bold">🧭</span> dengan tombol panah ke titik lokasi <span class="text-indigo-400 font-bold">Pos [1..5]</span>. Buka pintu penghalang dengan memecahkan sandi pola!
+                        </p>
+                        
+                        <!-- Interactive Maze Grid Visual -->
+                        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3 flex flex-col items-center justify-center">
+                            <div id="g1-maze-grid" class="grid grid-cols-8 gap-1 w-full max-w-[340px] aspect-square">
+                                <!-- Rendered dynamically by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Touch D-Pad Controls for Mobile / Convenience -->
+                    <div class="mt-4 pt-3 border-t border-slate-700/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                        <div class="flex items-center gap-2 text-slate-400">
+                            <i class="fa-solid fa-keyboard text-amber-400 text-base"></i>
+                            <span>Gunakan <strong>Panah Keyboard</strong> atau D-Pad</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-1 w-36 h-24">
+                            <div></div>
+                            <button onclick="movePlayer(-1, 0)" class="bg-slate-700 hover:bg-amber-500 active:bg-amber-600 text-white font-bold rounded-lg flex items-center justify-center text-sm shadow">
+                                <i class="fa-solid fa-arrow-up"></i>
+                            </button>
+                            <div></div>
+                            <button onclick="movePlayer(0, -1)" class="bg-slate-700 hover:bg-amber-500 active:bg-amber-600 text-white font-bold rounded-lg flex items-center justify-center text-sm shadow">
+                                <i class="fa-solid fa-arrow-left"></i>
+                            </button>
+                            <button onclick="movePlayer(1, 0)" class="bg-slate-700 hover:bg-amber-500 active:bg-amber-600 text-white font-bold rounded-lg flex items-center justify-center text-sm shadow">
+                                <i class="fa-solid fa-arrow-down"></i>
+                            </button>
+                            <button onclick="movePlayer(0, 1)" class="bg-slate-700 hover:bg-amber-500 active:bg-amber-600 text-white font-bold rounded-lg flex items-center justify-center text-sm shadow">
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Answer Interactive Controls -->
+                <div class="lg:col-span-5 bg-slate-800/80 border border-slate-700 rounded-2xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div id="g1-riddle-status" class="bg-slate-900 border border-amber-500/40 p-3 rounded-xl mb-4 text-xs text-amber-300 flex items-center gap-2">
+                            <i class="fa-solid fa-location-crosshairs text-base"></i>
+                            <span id="g1-riddle-status-text">Gerakkan karakter ke Pos 1 di labirin untuk memunculkan sandi!</span>
+                        </div>
+
+                        <!-- Sequence Riddle Box -->
+                        <div id="g1-visual-container" class="bg-slate-900 border border-slate-700 rounded-xl p-4 text-center flex flex-col items-center justify-center min-h-[140px] mb-4">
+                            <!-- Dynamic Content Rendered Here -->
+                        </div>
+
+                        <h4 class="text-sm font-bold text-white mb-2">Input Solusi Sandi</h4>
+                        <!-- Interactive Answer Options Container -->
+                        <div id="g1-input-container" class="space-y-3">
+                            <!-- Dynamic Inputs -->
+                        </div>
+                    </div>
+
+                    <div class="mt-6 space-y-3">
+                        <button id="g1-submit-btn" onclick="submitGame1Answer()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl shadow-lg shadow-amber-500/20 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-key"></i>
+                            <span>Buka Sandi Pos Ini</span>
+                        </button>
+                        <div id="g1-feedback" class="text-xs p-3 rounded-xl hidden"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: GAME 2 - SUSUN KALENDER -->
+        <section id="sec-game2" class="hidden space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-800/90 p-4 rounded-2xl border border-slate-700">
+                <div>
+                    <span class="text-xs text-blue-400 font-semibold uppercase tracking-wider">Modul 2 • Pola Siklus Kehidupan Sehari-hari</span>
+                    <h2 class="text-2xl font-bold text-white">Game 2: Susun Kalender</h2>
+                    <p class="text-xs text-slate-400">Kalender bersih! Hanya angka petunjuk yang ditampilkan. Isi tanggal yang hilang.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="bg-slate-900 px-4 py-2 rounded-xl border border-slate-700 text-center">
+                        <span class="text-xs text-slate-400 block">Soal Ke</span>
+                        <span id="g2-level-indicator" class="text-lg font-bold text-blue-400">1 / 10</span>
+                    </div>
+                    <button onclick="switchTab('dashboard')" class="bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded-xl text-xs font-semibold">
+                        <i class="fa-solid fa-xmark mr-1"></i> Keluar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Calendar Container -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Main Calendar View -->
+                <div class="lg:col-span-8 bg-slate-800/80 border border-slate-700 rounded-2xl p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 id="g2-month-title" class="text-lg font-bold text-white">Kalender Bulan Aktivitas</h3>
+                        <span id="g2-rule-badge" class="text-xs bg-blue-500/20 text-blue-300 border border-blue-500/30 px-3 py-1 rounded-full font-semibold">
+                            Pola Siklus: Per-7 Hari
+                        </span>
+                    </div>
+
+                    <p id="g2-prompt" class="text-xs text-slate-300 mb-6 bg-slate-900/60 p-3 rounded-xl border border-slate-700">
+                        Instruksi Soal...
+                    </p>
+
+                    <!-- Days Grid Header -->
+                    <div class="grid grid-cols-7 gap-2 mb-2 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">
+                        <div>Sen</div><div>Sel</div><div>Rab</div><div>Kam</div><div>Jum</div><div>Sab</div><div>Ming</div>
+                    </div>
+
+                    <!-- 35-Cell Calendar Grid -->
+                    <div id="g2-calendar-grid" class="grid grid-cols-7 gap-2">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Input & Controls Side Box -->
+                <div class="lg:col-span-4 bg-slate-800/80 border border-slate-700 rounded-2xl p-6 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-base font-bold text-white mb-3">Target Jawaban Soal</h3>
+                        <p class="text-xs text-slate-400 mb-4">Klik/pilih kotak tanggal yang ditandai atau masukkan nilai tanggal secara langsung sesuai instruksi pola.</p>
+
+                        <div id="g2-target-inputs" class="space-y-4">
+                            <!-- Input slots rendered dynamically -->
+                        </div>
+                    </div>
+
+                    <div class="mt-6 space-y-3">
+                        <button onclick="submitGame2Answer()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-600/20 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-calendar-check"></i>
+                            <span>Verifikasi Kalender</span>
+                        </button>
+                        <div id="g2-feedback" class="text-xs p-3 rounded-xl hidden"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: GAME 3 - DEBUG JARINGAN -->
+        <section id="sec-game3" class="hidden space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-800/90 p-4 rounded-2xl border border-slate-700">
+                <div>
+                    <span class="text-xs text-emerald-400 font-semibold uppercase tracking-wider">Modul 3 • Perbaikan Rute Transportasi & Batas Daya</span>
+                    <h2 class="text-2xl font-bold text-white">Game 3: Debug Jaringan Transportasi</h2>
+                    <p class="text-xs text-slate-400">Hubungkan stasiun tujuan dengan memperhatikan kuota maksimal stasiun aktif!</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="bg-slate-900 px-4 py-2 rounded-xl border border-slate-700 text-center">
+                        <span class="text-xs text-slate-400 block">Level Jaringan</span>
+                        <span id="g3-level-indicator" class="text-lg font-bold text-emerald-400">1 / 20</span>
+                    </div>
+                    <button onclick="switchTab('dashboard')" class="bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded-xl text-xs font-semibold">
+                        <i class="fa-solid fa-xmark mr-1"></i> Keluar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game 3 Main Interface -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Visual Network Graph Canvas / SVG -->
+                <div class="lg:col-span-8 bg-slate-800/80 border border-slate-700 rounded-2xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex flex-wrap justify-between items-center gap-2 mb-3">
+                            <h3 id="g3-level-title" class="text-base font-bold text-white">Topologi Jaringan Stasiun #1</h3>
+                            
+                            <div class="flex items-center gap-3">
+                                <!-- Station limit badge -->
+                                <span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs px-3 py-1 rounded-full font-bold">
+                                    <i class="fa-solid fa-bolt mr-1"></i> Panel Aktif: <span id="g3-active-count">0</span> / <span id="g3-max-limit">3</span>
+                                </span>
+                                
+                                <span id="g3-hint-badge" class="text-xs bg-slate-700 text-slate-300 px-2.5 py-1 rounded-md">
+                                    Petunjuk: Ada
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Instructions / Hint box -->
+                        <div id="g3-instruction-box" class="text-xs bg-slate-900/80 p-3 rounded-xl border border-slate-700 text-slate-300 mb-4">
+                            Aktifkan stasiun perantara yang tepat untuk menghubungkan Pusat Utama ke Stasiun Akhir.
+                        </div>
+
+                        <!-- Network SVG Interactive Area -->
+                        <div class="relative bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden min-h-[340px] flex items-center justify-center p-4">
+                            <svg id="g3-network-svg" class="w-full h-[320px]" viewBox="0 0 600 320">
+                                <!-- Rendered dynamically by JavaScript -->
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t border-slate-700/60 flex items-center justify-between text-xs text-slate-400">
+                        <span><i class="fa-solid fa-hand-pointer mr-1"></i> Klik stasiun untuk menyalakan / mematikan sakelar</span>
+                        <button onclick="resetCurrentNetwork()" class="text-slate-300 hover:text-white underline">
+                            <i class="fa-solid fa-rotate-left mr-1"></i> Reset Sakelar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Network Control Console -->
+                <div class="lg:col-span-4 bg-slate-800/80 border border-slate-700 rounded-2xl p-6 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-base font-bold text-white mb-2">Panel Kontrol Transmisi</h3>
+                        <p class="text-xs text-slate-400 mb-4">Pastikan arus terhubung dari sumber <span class="text-emerald-400 font-bold">(S)</span> ke tujuan <span class="text-rose-400 font-bold">(T)</span> tanpa melebihi batas panel aktif.</p>
+
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3 mb-4">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-slate-400">Status Koneksi Tujuan:</span>
+                                <span id="g3-connection-status" class="font-bold text-rose-400">TERPUTUS</span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-slate-400">Jumlah Sakelar Diubah:</span>
+                                <span id="g3-toggle-count" class="font-bold text-white">0 kali</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <button onclick="submitGame3Answer()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-600/20 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-network-wired"></i>
+                            <span>Uji Koneksi Jaringan</span>
+                        </button>
+                        <div id="g3-feedback" class="text-xs p-3 rounded-xl hidden"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: FINAL EVALUATION REPORT -->
+        <section id="sec-evaluation" class="hidden space-y-8">
+            <div class="bg-gradient-to-b from-indigo-950 via-slate-900 to-slate-900 border border-indigo-500/40 rounded-3xl p-8 shadow-2xl text-center relative overflow-hidden">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-indigo-600/30 text-indigo-400 border border-indigo-500/50 rounded-3xl text-3xl mb-4 shadow-lg shadow-indigo-500/20">
+                    <i class="fa-solid fa-award"></i>
+                </div>
+                <h2 class="text-3xl md:text-4xl font-display font-bold text-white mb-2">Laporan Evaluasi Berpikir Komputasional</h2>
+                <p class="text-sm text-slate-300 max-w-xl mx-auto mb-6">
+                    Hasil analisis kemampuan penalaran pola, pembuatan rute algoritma, dan debugging jaringan untuk <span id="eval-student-name" class="text-indigo-400 font-bold">Siswa</span>.
+                </p>
+
+                <!-- Grade Card -->
+                <div class="max-w-xs mx-auto bg-slate-800/90 border border-slate-700 rounded-2xl p-4 mb-8">
+                    <span class="text-xs text-slate-400 block uppercase tracking-wider mb-1">Peringkat Algoritma</span>
+                    <div id="eval-grade-badge" class="text-4xl font-display font-extrabold text-amber-400">A+</div>
+                    <span id="eval-grade-desc" class="text-xs text-slate-300 font-medium">Master Algoritma & Debugger Handal</span>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto text-left mb-8">
+                    <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700">
+                        <div class="text-xs text-slate-400 mb-1">Total Waktu Pengerjaan</div>
+                        <div id="eval-total-time" class="text-xl font-bold text-indigo-400">00:00</div>
+                        <div class="text-[11px] text-slate-500 mt-1">Efisiensi durasi</div>
+                    </div>
+                    <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700">
+                        <div class="text-xs text-slate-400 mb-1">Total Kesalahan (Bug)</div>
+                        <div id="eval-total-errors" class="text-xl font-bold text-rose-400">0 Kali</div>
+                        <div class="text-[11px] text-slate-500 mt-1">Akurasi logika</div>
+                    </div>
+                    <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700">
+                        <div class="text-xs text-slate-400 mb-1">Modul Selesai</div>
+                        <div id="eval-completed-modules" class="text-xl font-bold text-emerald-400">3 / 3 Modul</div>
+                        <div class="text-[11px] text-slate-500 mt-1">35 Soal berhasil dilalui</div>
+                    </div>
+                </div>
+
+                <!-- Game Detailed Table Breakdown -->
+                <div class="max-w-3xl mx-auto bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden mb-8 text-left">
+                    <div class="px-6 py-3 bg-slate-800/60 border-b border-slate-800 font-bold text-xs text-slate-300 uppercase tracking-wider flex justify-between">
+                        <span>Rincian Per Game</span>
+                        <span>Evaluasi Performa</span>
+                    </div>
+                    <div class="divide-y divide-slate-800 text-xs">
+                        <div class="px-6 py-4 flex justify-between items-center">
+                            <div>
+                                <span class="font-bold text-amber-400 block">Game 1: Pencarian Harta Karun</span>
+                                <span class="text-slate-400">5 Soal • Algoritma Jalur & Pola</span>
+                            </div>
+                            <div class="text-right">
+                                <span id="eval-g1-time" class="text-white font-semibold">00:00</span>
+                                <span id="eval-g1-err" class="block text-rose-400 text-[11px]">0 kesalahan</span>
+                            </div>
+                        </div>
+                        <div class="px-6 py-4 flex justify-between items-center">
+                            <div>
+                                <span class="font-bold text-blue-400 block">Game 2: Susun Kalender</span>
+                                <span class="text-slate-400">10 Soal • Analisis Siklus Bulanan</span>
+                            </div>
+                            <div class="text-right">
+                                <span id="eval-g2-time" class="text-white font-semibold">00:00</span>
+                                <span id="eval-g2-err" class="block text-rose-400 text-[11px]">0 kesalahan</span>
+                            </div>
+                        </div>
+                        <div class="px-6 py-4 flex justify-between items-center">
+                            <div>
+                                <span class="font-bold text-emerald-400 block">Game 3: Debug Jaringan</span>
+                                <span class="text-slate-400">20 Soal • Batas Panel Aktif & Graph</span>
+                            </div>
+                            <div class="text-right">
+                                <span id="eval-g3-time" class="text-white font-semibold">00:00</span>
+                                <span id="eval-g3-err" class="block text-rose-400 text-[11px]">0 kesalahan</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Qualitative Feedback -->
+                <div class="max-w-3xl mx-auto text-left bg-slate-800/60 p-6 rounded-2xl border border-slate-700/80 space-y-3 mb-8">
+                    <h4 class="font-bold text-white text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-comment-dots text-indigo-400"></i> Catatan Evaluasi Guru / Sistem:
+                    </h4>
+                    <p id="eval-feedback-text" class="text-xs text-slate-300 leading-relaxed">
+                        Siswa menunjukkan pemahaman yang sangat kuat dalam mengenali pola rekursif, menjaga batasan variabel (kuota daya), serta memecahkan masalah tanpa ketergantungan pada petunjuk.
+                    </p>
+                </div>
+
+                <div class="flex justify-center gap-4">
+                    <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-6 py-3 rounded-xl transition">
+                        <i class="fa-solid fa-print mr-2"></i> Cetak / Simpan Laporan
+                    </button>
+                    <button onclick="restartAll()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-6 py-3 rounded-xl transition">
+                        <i class="fa-solid fa-rotate-right mr-2"></i> Ulangi Tantangan
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 py-4 text-center text-xs text-slate-500">
+        <p>LogiCode SD Kelas 6 • Media Pembelajaran Interaktif Berpikir Komputasional & Modulo Logic</p>
+    </footer>
+
+    <script>
+        // Global Application State
+        const state = {
+            playerName: "Siswa",
+            startTime: null,
+            timerInterval: null,
+            totalSeconds: 0,
+            
+            // Stats per game
+            gameStats: {
+                1: { timeSpent: 0, mistakes: 0, completed: false, currentIdx: 0 },
+                2: { timeSpent: 0, mistakes: 0, completed: false, currentIdx: 0 },
+                3: { timeSpent: 0, mistakes: 0, completed: false, currentIdx: 0 }
+            },
+            
+            currentGame: 1,
+            activeTab: 'dashboard'
+        };
+
+        // Game 1 Maze State
+        const mazeState = {
+            player: { r: 0, c: 0 },
+            unlockedBarriers: { B1: false, B2: false, B3: false, B4: false, B5: false },
+            atCheckpoint: false
+        };
+
+        // 8x8 Maze Grid Layout Matrix:
+        // 0 = Empty Path, 1 = Wall, S = Start, P1-P5 = Checkpoint Puzzles, B1-B5 = Locked Barriers, T = Treasure Chest
+        const MAZE_LAYOUT = [
+            ['S',  0,  'P1', 'B1',  1,   1,   1,   1],
+            [ 1,   1,   1,    0,    1,   0,   0,   0],
+            [ 1,   0,   0,   'P2',  1,   0,   1,   0],
+            [ 1,   0,   1,   'B2',  0,   0,   1,   0],
+            [ 1,  'P3', 1,    1,    1,   1,   1,   0],
+            [ 1,  'B3', 0,    0,    0,   0,   0,   0],
+            [ 1,   1,   1,   'P4', 'B4', 0,   1,   1],
+            [ 1,   1,   1,    1,    0,   0,  'P5', 'T']
+        ];
+
+        // Utility: Format Seconds
+        function formatTime(sec) {
+            const m = Math.floor(sec / 60).toString().padStart(2, '0');
+            const s = (sec % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        // Start Overall Game Engine
+        function startMission() {
+            const nameInput = document.getElementById('input-student-name').value.trim();
+            if (nameInput) {
+                state.playerName = nameInput;
+            }
+            document.getElementById('player-display-name').innerText = state.playerName;
+
+            if (!state.startTime) {
+                state.startTime = Date.now();
+                state.timerInterval = setInterval(() => {
+                    state.totalSeconds++;
+                    document.getElementById('global-timer').innerText = formatTime(state.totalSeconds);
+                    
+                    // Add time to active game
+                    if (state.activeTab.startsWith('game')) {
+                        const gNum = state.currentGame;
+                        state.gameStats[gNum].timeSpent++;
+                    }
+                }, 1000);
+            }
+
+            enterGame(1);
+        }
+
+        function switchTab(tabId) {
+            state.activeTab = tabId;
+            ['sec-dashboard', 'sec-game1', 'sec-game2', 'sec-game3', 'sec-evaluation'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+
+            if (tabId === 'dashboard') {
+                document.getElementById('sec-dashboard').classList.remove('hidden');
+                updateDashboardUI();
+            } else if (tabId === 'game1') {
+                document.getElementById('sec-game1').classList.remove('hidden');
+                state.currentGame = 1;
+                renderGame1Level();
+            } else if (tabId === 'game2') {
+                document.getElementById('sec-game2').classList.remove('hidden');
+                state.currentGame = 2;
+                renderGame2Level();
+            } else if (tabId === 'game3') {
+                document.getElementById('sec-game3').classList.remove('hidden');
+                state.currentGame = 3;
+                renderGame3Level();
+            } else if (tabId === 'evaluation') {
+                document.getElementById('sec-evaluation').classList.remove('hidden');
+                renderEvaluationScreen();
+            }
+        }
+
+        function enterGame(gameNum) {
+            if (gameNum === 1) switchTab('game1');
+            if (gameNum === 2) switchTab('game2');
+            if (gameNum === 3) switchTab('game3');
+        }
+
+        function addMistake(gameNum) {
+            state.gameStats[gameNum].mistakes++;
+            const totalM = state.gameStats[1].mistakes + state.gameStats[2].mistakes + state.gameStats[3].mistakes;
+            document.getElementById('global-mistakes').innerText = totalM;
+        }
+
+        function updateDashboardUI() {
+            for (let i = 1; i <= 3; i++) {
+                const stat = state.gameStats[i];
+                const badge = document.getElementById(`status-g${i}`);
+                if (stat.completed) {
+                    badge.innerText = `Selesai (${formatTime(stat.timeSpent)})`;
+                    badge.className = "text-xs text-emerald-400 font-bold";
+                } else if (stat.currentIdx > 0) {
+                    badge.innerText = `Progres: ${stat.currentIdx + 1} Soal`;
+                    badge.className = "text-xs text-amber-400 font-bold";
+                } else {
+                    badge.innerText = "Status: Belum Dimulai";
+                    badge.className = "text-xs text-slate-400";
+                }
+            }
+        }
+
+        /* ==========================================================================
+           GAME 1 DATA & LOGIC: PENCARIAN HARTA KARUN (Maze + 5 Soal Urut)
+           ========================================================================== */
+        const game1Questions = [
+            {
+                id: 1,
+                posCode: 'P1',
+                barrierCode: 'B1',
+                title: "Pos 1: Sandi Deret Langkah Kerajaan",
+                story: "Kamu berada di Pos 1! Tentukan 2 angka deret koordinat berikutnya berdasarkan pola penambahan berulang untuk membuka Pintu B1.",
+                sequenceDisplay: "3,  7,  11,  15,  19,  [ ? ],  [ ? ]",
+                type: "dual-input",
+                correct: [23, 27],
+                explanation: "Pola adalah penambahan konsisten (+4) di setiap langkah."
+            },
+            {
+                id: 2,
+                posCode: 'P2',
+                barrierCode: 'B2',
+                title: "Pos 2: Pola Selang-Seling Jalur Hutan",
+                story: "Di Pos 2, petunjuk pintu B2 ditentukan oleh pola operasi ganda berulang (+5, lalu -2). Hitung dua posisi selanjutnya!",
+                sequenceDisplay: "10,  15,  13,  18,  16,  21,  [ ? ],  [ ? ]",
+                type: "dual-input",
+                correct: [19, 24],
+                explanation: "Pola selang-seling secara bergantian: +5 kemudian -2."
+            },
+            {
+                id: 3,
+                posCode: 'P3',
+                barrierCode: 'B3',
+                title: "Pos 3: Kode Fibonacci Peti Kuno",
+                story: "Sandi Pos 3 mengikuti algoritma di mana setiap suku adalah jumlah dari dua suku sebelumnya. Tentukan dua angka berikutnya untuk mendobrak Pintu B3!",
+                sequenceDisplay: "2,  3,  5,  8,  13,  21,  [ ? ],  [ ? ]",
+                type: "dual-input",
+                correct: [34, 55],
+                explanation: "Deret Fibonacci: 13+21 = 34, lalu 21+34 = 55."
+            },
+            {
+                id: 4,
+                posCode: 'P4',
+                barrierCode: 'B4',
+                title: "Pos 4: Algoritma Geometri Kelipatan Jalur Gua",
+                story: "Pintu B4 hanya terbuka dengan perkalian posisi (geometri x2). Temukan dua nomor batu berikutnya!",
+                sequenceDisplay: "3,  6,  12,  24,  48,  [ ? ],  [ ? ]",
+                type: "dual-input",
+                correct: [96, 192],
+                explanation: "Setiap suku dikalikan 2 (x2)."
+            },
+            {
+                id: 5,
+                posCode: 'P5',
+                barrierCode: 'B5',
+                title: "Pos 5: Ruang Kunci Harta Karun Utama",
+                story: "Peti Harta Karun Utama di ujung labirin terlindungi oleh Pintu B5! Pola deret kuadrat lokasi: 1, 4, 9, 16, 25, ... Masukkan 2 kunci angka berikutnya!",
+                sequenceDisplay: "1,  4,  9,  16,  25,  [ ? ],  [ ? ]",
+                type: "dual-input",
+                correct: [36, 49],
+                explanation: "Pola bilangan kuadrat (1x1, 2x2, 3x3, 4x4, 5x5, 6x6=36, 7x7=49)."
+            }
+        ];
+
+        function renderMazeGrid() {
+            const gridEl = document.getElementById('g1-maze-grid');
+            gridEl.innerHTML = '';
+
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const cellVal = MAZE_LAYOUT[r][c];
+                    const cell = document.createElement('div');
+                    cell.className = "w-full h-full rounded-md flex items-center justify-center text-xs font-bold select-none transition-all ";
+
+                    // Is player here?
+                    if (mazeState.player.r === r && mazeState.player.c === c) {
+                        cell.className += "bg-amber-400 text-slate-950 font-extrabold shadow-lg shadow-amber-400/50 scale-105 border-2 border-white animate-pulse";
+                        cell.innerHTML = `🧭`;
+                    } else if (cellVal === 1) {
+                        // Wall
+                        cell.className += "bg-slate-800 border border-slate-700/80";
+                        cell.innerHTML = `<i class="fa-solid fa-square text-slate-700/50 text-[10px]"></i>`;
+                    } else if (cellVal === 'S') {
+                        // Start
+                        cell.className += "bg-emerald-950 border border-emerald-500/40 text-emerald-400";
+                        cell.innerHTML = `🚩`;
+                    } else if (typeof cellVal === 'string' && cellVal.startsWith('P')) {
+                        // Checkpoint Pos
+                        const posNum = parseInt(cellVal.replace('P', ''));
+                        const currentIdx = state.gameStats[1].currentIdx;
+
+                        if (posNum - 1 < currentIdx) {
+                            // Completed checkpoint
+                            cell.className += "bg-emerald-900/60 border border-emerald-500/50 text-emerald-300";
+                            cell.innerHTML = `✓`;
+                        } else if (posNum - 1 === currentIdx) {
+                            // Current active target checkpoint
+                            cell.className += "bg-indigo-600/80 border-2 border-indigo-400 text-white animate-bounce";
+                            cell.innerHTML = `P${posNum}`;
+                        } else {
+                            // Locked future checkpoint
+                            cell.className += "bg-slate-900 border border-slate-700 text-slate-500 opacity-60";
+                            cell.innerHTML = `P${posNum}`;
+                        }
+                    } else if (typeof cellVal === 'string' && cellVal.startsWith('B')) {
+                        // Barrier Door
+                        if (mazeState.unlockedBarriers[cellVal]) {
+                            // Opened door
+                            cell.className += "bg-slate-900 border border-emerald-500/30 text-emerald-400/60";
+                            cell.innerHTML = `<i class="fa-solid fa-door-open text-[10px]"></i>`;
+                        } else {
+                            // Closed Door
+                            cell.className += "bg-rose-950/80 border border-rose-500/60 text-rose-400";
+                            cell.innerHTML = `<i class="fa-solid fa-lock text-[10px]"></i>`;
+                        }
+                    } else if (cellVal === 'T') {
+                        // Treasure Chest
+                        if (state.gameStats[1].completed) {
+                            cell.className += "bg-amber-500 border border-amber-300 text-slate-950 font-extrabold";
+                            cell.innerHTML = `🏆`;
+                        } else {
+                            cell.className += "bg-amber-950/80 border border-amber-500/60 text-amber-400";
+                            cell.innerHTML = `💎`;
+                        }
+                    } else {
+                        // Empty Path (0)
+                        cell.className += "bg-slate-900/80 border border-slate-800/50";
+                    }
+
+                    gridEl.appendChild(cell);
+                }
+            }
+        }
+
+        function movePlayer(dr, dc) {
+            if (state.activeTab !== 'game1') return;
+
+            const nr = mazeState.player.r + dr;
+            const nc = mazeState.player.c + dc;
+
+            // Bounds check
+            if (nr < 0 || nr >= 8 || nc < 0 || nc >= 8) return;
+
+            const targetVal = MAZE_LAYOUT[nr][nc];
+
+            // Can't walk through walls
+            if (targetVal === 1) return;
+
+            // Can't walk through locked barriers
+            if (typeof targetVal === 'string' && targetVal.startsWith('B')) {
+                if (!mazeState.unlockedBarriers[targetVal]) {
+                    const feedback = document.getElementById('g1-feedback');
+                    feedback.classList.remove('hidden', 'bg-emerald-500/20', 'text-emerald-300');
+                    feedback.classList.add('bg-rose-500/20', 'text-rose-300');
+                    feedback.innerHTML = `<i class="fa-solid fa-lock mr-1"></i> Pintu ${targetVal} terkunci! Selesaikan Pos sandi terlebih dahulu.`;
+                    return;
+                }
+            }
+
+            // Move player
+            mazeState.player.r = nr;
+            mazeState.player.c = nc;
+
+            renderMazeGrid();
+            checkMazePositionTrigger();
+        }
+
+        function checkMazePositionTrigger() {
+            const { r, c } = mazeState.player;
+            const currentVal = MAZE_LAYOUT[r][c];
+            const currentIdx = state.gameStats[1].currentIdx;
+            const targetPosCode = `P${currentIdx + 1}`;
+
+            const statusText = document.getElementById('g1-riddle-status-text');
+
+            if (currentVal === targetPosCode) {
+                statusText.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-circle-check mr-1"></i> Tiba di ${targetPosCode}!</span> Soal sandi telah terbuka di bawah ini!`;
+                mazeState.atCheckpoint = true;
+                renderGame1Riddle(true);
+            } else if (currentVal === 'T' && state.gameStats[1].completed) {
+                statusText.innerText = `Selamat! Peti Harta Karun telah terbuka!`;
+                renderGame1Riddle(false);
+            } else if (typeof currentVal === 'string' && currentVal.startsWith('P')) {
+                const stepNum = parseInt(currentVal.replace('P', ''));
+                if (stepNum - 1 < currentIdx) {
+                    statusText.innerText = `Pos ${stepNum} sudah selesai. Lanjutkan perjalanan menuju P${currentIdx + 1}!`;
+                } else {
+                    statusText.innerText = `Selesaikan Pos ${currentIdx + 1} terlebih dahulu sebelum ke Pos ${stepNum}!`;
+                }
+                mazeState.atCheckpoint = false;
+                renderGame1Riddle(false);
+            } else {
+                statusText.innerText = `Gerakkan karakter 🧭 menuju Pos ${currentIdx + 1} di labirin!`;
+                mazeState.atCheckpoint = false;
+                renderGame1Riddle(false);
+            }
+        }
+
+        function renderGame1Riddle(isUnlocked) {
+            const idx = state.gameStats[1].currentIdx;
+            const q = game1Questions[idx];
+
+            const visual = document.getElementById('g1-visual-container');
+            const inputContainer = document.getElementById('g1-input-container');
+            const btnSubmit = document.getElementById('g1-submit-btn');
+
+            if (isUnlocked) {
+                if (!document.getElementById('g1-ans-1')) {
+                    visual.innerHTML = `
+                        <div class="text-amber-400 text-2xl font-bold font-display tracking-widest mb-2 animate-pulse">
+                            ${q.sequenceDisplay}
+                        </div>
+                        <div class="flex items-center justify-center gap-2 text-xs text-slate-300 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/30">
+                            <i class="fa-solid fa-unlock text-amber-400"></i>
+                            <span>Sandi Pembuka Pintu ${q.barrierCode} Terbuka!</span>
+                        </div>
+                    `;
+
+                    inputContainer.innerHTML = `
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Angka 1</label>
+                                <input type="number" id="g1-ans-1" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold text-center text-lg focus:border-amber-500 focus:outline-none" placeholder="?">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Angka 2</label>
+                                <input type="number" id="g1-ans-2" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold text-center text-lg focus:border-amber-500 focus:outline-none" placeholder="?">
+                            </div>
+                        </div>
+                    `;
+                }
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.className = "w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl shadow-lg shadow-amber-500/20 transition flex items-center justify-center gap-2 cursor-pointer";
+                }
+            } else {
+                visual.innerHTML = `
+                    <div class="text-slate-500 text-center py-3 flex flex-col items-center">
+                        <i class="fa-solid fa-lock text-3xl text-amber-500/60 mb-2 animate-pulse"></i>
+                        <p class="text-xs font-bold text-slate-300">Soal Pos ${idx + 1} Terkunci</p>
+                        <p class="text-[11px] text-amber-400/90 mt-1 max-w-xs">Jalankan karakter 🧭 menuju kotak <strong>Pos ${idx + 1}</strong> (P${idx + 1}) di labirin untuk melihat soal sandi!</p>
+                    </div>
+                `;
+
+                inputContainer.innerHTML = `
+                    <div class="p-3 bg-slate-900/60 border border-slate-800 rounded-xl text-center text-xs text-slate-500 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-person-walking text-amber-500/70"></i>
+                        <span>Capai lokasi Pos ${idx + 1} untuk membuka input sandi.</span>
+                    </div>
+                `;
+
+                if (btnSubmit) {
+                    btnSubmit.disabled = true;
+                    btnSubmit.className = "w-full bg-slate-800 text-slate-500 font-bold py-3 rounded-xl border border-slate-700 cursor-not-allowed opacity-60 flex items-center justify-center gap-2";
+                }
+            }
+        }
+
+        function renderGame1Level() {
+            const idx = state.gameStats[1].currentIdx;
+            const q = game1Questions[idx];
+
+            document.getElementById('g1-level-indicator').innerText = `Pos ${idx + 1} / 5`;
+            document.getElementById('g1-title').innerText = q.title;
+            document.getElementById('g1-story').innerText = q.story;
+            document.getElementById('g1-feedback').classList.add('hidden');
+
+            renderMazeGrid();
+            checkMazePositionTrigger();
+        }
+
+        function submitGame1Answer() {
+            const idx = state.gameStats[1].currentIdx;
+            const q = game1Questions[idx];
+
+            const feedback = document.getElementById('g1-feedback');
+            feedback.classList.remove('hidden', 'bg-rose-500/20', 'text-rose-300', 'bg-emerald-500/20', 'text-emerald-300');
+
+            // Require player to stand on the active checkpoint in the maze first!
+            const currentPosCode = `P${idx + 1}`;
+            const { r, c } = mazeState.player;
+            if (MAZE_LAYOUT[r][c] !== currentPosCode) {
+                feedback.classList.add('bg-rose-500/20', 'text-rose-300');
+                feedback.innerHTML = `<i class="fa-solid fa-person-walking-arrow-loop-left mr-1"></i> Gerakkan karakter 🧭 terlebih dahulu sampai berada tepat di kotak <strong>${currentPosCode}</strong>!`;
+                return;
+            }
+
+            const v1 = parseInt(document.getElementById('g1-ans-1').value);
+            const v2 = parseInt(document.getElementById('g1-ans-2').value);
+
+            if (isNaN(v1) || isNaN(v2)) {
+                feedback.classList.add('bg-rose-500/20', 'text-rose-300');
+                feedback.innerText = "Isi kedua kolom angka sandi terlebih dahulu!";
+                return;
+            }
+
+            if (v1 === q.correct[0] && v2 === q.correct[1]) {
+                // Unlock barrier!
+                mazeState.unlockedBarriers[q.barrierCode] = true;
+
+                feedback.classList.add('bg-emerald-500/20', 'text-emerald-300');
+                feedback.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> Sandi Tepat! Pintu ${q.barrierCode} terbuka! ${q.explanation}`;
+
+                setTimeout(() => {
+                    if (idx < game1Questions.length - 1) {
+                        state.gameStats[1].currentIdx++;
+                        renderGame1Level();
+                    } else {
+                        state.gameStats[1].completed = true;
+                        mazeState.unlockedBarriers['B5'] = true;
+                        renderMazeGrid();
+                        showModalSuccess("Game 1 Selesai!", "Semua pos sandi terbuka! Gerakkan karakter ke Peti Harta Karun 🏆 di sudut labirin!", () => {
+                            switchTab('game2');
+                        });
+                    }
+                }, 1200);
+            } else {
+                addMistake(1);
+                feedback.classList.add('bg-rose-500/20', 'text-rose-300');
+                feedback.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1"></i> Sandi belum sesuai. Hitung kembali pola lompatan angka!`;
+            }
+        }
+
+        // Keyboard Arrow Key Listener for Maze
+        window.addEventListener('keydown', (e) => {
+            if (state.activeTab !== 'game1') return;
+            
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+                e.preventDefault();
+                movePlayer(-1, 0);
+            } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+                e.preventDefault();
+                movePlayer(1, 0);
+            } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                e.preventDefault();
+                movePlayer(0, -1);
+            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                e.preventDefault();
+                movePlayer(0, 1);
+            }
+        });
+
+
+        /* ==========================================================================
+           GAME 2 DATA & LOGIC: SUSUN KALENDER (10 Soal, Hanya Angka Petunjuk)
+           ========================================================================== */
+        const game2Questions = [
+            {
+                id: 1,
+                title: "Siklus Les Renang (Per-7 Hari)",
+                rule: "Les Renang diadakan setiap 7 hari sekali mulai tanggal 3. Isi 3 tanggal berikutnya!",
+                clues: { 3: "3" }, // Only clue shown
+                missingTargets: [10, 17, 24],
+                prompt: "Tentukan 3 tanggal les renang berikutnya di kolom input!"
+            },
+            {
+                id: 2,
+                title: "Siklus Piket Kebersihan (Per-4 Hari)",
+                rule: "Jadwal piket kelas jatuh setiap 4 hari. Petunjuk: Tanggal 2 dan 6.",
+                clues: { 2: "2", 6: "6" },
+                missingTargets: [10, 14, 18],
+                prompt: "Masukkan 3 tanggal piket berikutnya sesuai kelipatan +4!"
+            },
+            {
+                id: 3,
+                title: "Pola Hari Selang-Seling (+3 Hari)",
+                rule: "Latihan Dramband diadakan setiap 3 hari sekali mulai tanggal 1.",
+                clues: { 1: "1", 4: "4" },
+                missingTargets: [7, 10, 13, 16],
+                prompt: "Lengkapi 4 tanggal latihan berikutnya!"
+            },
+            {
+                id: 4,
+                title: "Pola Akhir Pekan & Evaluasi Modulo",
+                rule: "Kuis daring diselenggarakan setiap hari Sabtu (Tanggal 5, 12...).",
+                clues: { 5: "5", 12: "12" },
+                missingTargets: [19, 26],
+                prompt: "Isi 2 tanggal Sabtu tersisa dalam bulan ini!"
+            },
+            {
+                id: 5,
+                title: "Siklus Siram Tanaman (+5 Hari)",
+                rule: "Piket menyiram kebun sekolah dilakukan tiap 5 hari. Dimulai tanggal 4.",
+                clues: { 4: "4" },
+                missingTargets: [9, 14, 19, 24],
+                prompt: "Tentukan 4 tanggal berikutnya dalam siklus +5 hari!"
+            },
+            {
+                id: 6,
+                title: "Pola Dua Deret Bertahap (+2, Lalu +4)",
+                rule: "Jadwal patroli keamanan menggunakan pola berulang: +2 hari, kemudian +4 hari.",
+                clues: { 1: "1", 3: "3", 7: "7" },
+                missingTargets: [9, 13, 15],
+                prompt: "Ikuti pola berturut-turut (+2, +4, +2, +4...)!"
+            },
+            {
+                id: 7,
+                title: "Pola Tanggal Genap Berturut-turut",
+                rule: "Ujian modul bertahap diselenggarakan pada tanggal genap kelipatan 6.",
+                clues: { 6: "6" },
+                missingTargets: [12, 18, 24, 30],
+                prompt: "Masukkan 4 tanggal kelipatan 6 berikutnya!"
+            },
+            {
+                id: 8,
+                title: "Pola Hitung Mundur Siklus Projek",
+                rule: "Tenggat laporan bulanan dihitung mundur dari tanggal 29 dengan interval 6 hari (-6).",
+                clues: { 29: "29", 23: "23" },
+                missingTargets: [17, 11, 5],
+                prompt: "Isi 3 tanggal mundur sebelumnya!"
+            },
+            {
+                id: 9,
+                title: "Pola Kombinasi Hari Selasa & Jumat",
+                rule: "Pertemuan pramuka setiap hari Selasa (Tgl 2) dan Jumat (Tgl 5) dalam tiap minggu (+7 hari).",
+                clues: { 2: "2", 5: "5" },
+                missingTargets: [9, 12, 16, 19],
+                prompt: "Isi tanggal Selasa & Jumat di minggu ke-2 dan ke-3!"
+            },
+            {
+                id: 10,
+                title: "Master Siklus Kalender Kompleks (+8 Hari)",
+                rule: "Pengambilan sampel lab dilakukan setiap 8 hari sekali. Dimulai tanggal 2.",
+                clues: { 2: "2", 10: "10" },
+                missingTargets: [18, 26],
+                prompt: "Tentukan 2 tanggal sampel lab tersisa!"
+            }
+        ];
+
+        function renderGame2Level() {
+            const idx = state.gameStats[2].currentIdx;
+            const q = game2Questions[idx];
+
+            document.getElementById('g2-level-indicator').innerText = `${idx + 1} / 10`;
+            document.getElementById('g2-month-title').innerText = q.title;
+            document.getElementById('g2-rule-badge').innerText = q.rule;
+            document.getElementById('g2-prompt').innerText = q.prompt;
+            document.getElementById('g2-feedback').classList.add('hidden');
+
+            // Render 35-Cell Calendar Grid (Only Clue Numbers Shown!)
+            const grid = document.getElementById('g2-calendar-grid');
+            grid.innerHTML = '';
+
+            for (let day = 1; day <= 31; day++) {
+                const cell = document.createElement('div');
+                cell.className = "h-11 rounded-xl flex items-center justify-center text-sm font-bold transition ";
+
+                if (q.clues[day]) {
+                    // Petunjuk ditunjukkan dengan jelas
+                    cell.className += "calendar-cell-clue shadow-md";
+                    cell.innerHTML = `<span>${q.clues[day]}</span>`;
+                } else if (q.missingTargets.includes(day)) {
+                    // Kotak target yang harus diisi anak
+                    cell.className += "bg-amber-500/20 border-2 border-amber-500/60 text-amber-300 animate-pulse";
+                    cell.innerHTML = `<i class="fa-solid fa-question text-xs"></i>`;
+                } else {
+                    // Kotak kosong tanpa angka apapun (sesuai instruksi: tidak ada angka lain selain petunjuk)
+                    cell.className += "calendar-cell-empty opacity-40";
+                    cell.innerHTML = ``;
+                }
+                grid.appendChild(cell);
+            }
+
+            // Render Target Input Form
+            const inputContainer = document.getElementById('g2-target-inputs');
+            inputContainer.innerHTML = '';
+
+            q.missingTargets.forEach((targetDay, i) => {
+                const div = document.createElement('div');
+                div.className = "flex items-center gap-3";
+                div.innerHTML = `
+                    <span class="text-xs text-slate-300 w-28">Tanggal Target #${i + 1}:</span>
+                    <input type="number" id="g2-target-val-${i}" data-correct="${targetDay}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold text-center focus:border-blue-500 focus:outline-none" placeholder="Isi Tanggal">
+                `;
+                inputContainer.appendChild(div);
+            });
+        }
+
+        function submitGame2Answer() {
+            const idx = state.gameStats[2].currentIdx;
+            const q = game2Questions[idx];
+            const feedback = document.getElementById('g2-feedback');
+            feedback.classList.remove('hidden', 'bg-rose-500/20', 'text-rose-300', 'bg-emerald-500/20', 'text-emerald-300');
+
+            let allCorrect = true;
+            for (let i = 0; i < q.missingTargets.length; i++) {
+                const inputEl = document.getElementById(`g2-target-val-${i}`);
+                const val = parseInt(inputEl.value);
+                const expected = parseInt(inputEl.getAttribute('data-correct'));
+
+                if (isNaN(val) || val !== expected) {
+                    allCorrect = false;
+                    break;
+                }
+            }
+
+            if (allCorrect) {
+                feedback.classList.add('bg-emerald-500/20', 'text-emerald-300');
+                feedback.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> Tepat Sekali! Pola kalender berhasil disusun.`;
+
+                setTimeout(() => {
+                    if (idx < game2Questions.length - 1) {
+                        state.gameStats[2].currentIdx++;
+                        renderGame2Level();
+                    } else {
+                        state.gameStats[2].completed = true;
+                        showModalSuccess("Game 2 Selesai!", "Hebat! Seluruh 10 soal pola kalender berhasil dipecahkan!", () => {
+                            switchTab('game3');
+                        });
+                    }
+                }, 1200);
+            } else {
+                addMistake(2);
+                feedback.classList.add('bg-rose-500/20', 'text-rose-300');
+                feedback.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1"></i> Terdapat tanggal yang kurang tepat. Hitung kembali jarak antar siklus!`;
+            }
+        }
+
+
+        /* ==========================================================================
+           GAME 3 DATA & LOGIC: DEBUG JARINGAN (20 Soal, Max Node Limits, 11-20 No Hints)
+           ========================================================================== */
+        // Generator/Definition for 20 graph questions
+        const game3Questions = [
+            // Soal 1 - 10 (Dengan Petunjuk & Instruksi)
+            { id: 1, nodes: [ {id:'S', x:80, y:160, isStart:true}, {id:'A', x:250, y:80}, {id:'B', x:250, y:240}, {id:'T', x:480, y:160, isTarget:true} ], edges: [ ['S','A'], ['S','B'], ['A','T'], ['B','T'] ], maxActive: 1, hint: "Aktifkan hanya 1 stasiun perantara (A atau B) untuk menghubungkan S ke T.", solutionNodes: ['A'] },
+            { id: 2, nodes: [ {id:'S', x:80, y:160, isStart:true}, {id:'A', x:200, y:160}, {id:'B', x:340, y:160}, {id:'T', x:480, y:160, isTarget:true} ], edges: [ ['S','A'], ['A','B'], ['B','T'] ], maxActive: 2, hint: "Aktifkan kedua stasiun perantara A dan B agar jalur utama terhubung seri.", solutionNodes: ['A', 'B'] },
+            { id: 3, nodes: [ {id:'S', x:80, y:160, isStart:true}, {id:'A', x:220, y:80}, {id:'B', x:220, y:240}, {id:'C', x:360, y:80}, {id:'T', x:480, y:160, isTarget:true} ], edges: [ ['S','A'], ['S','B'], ['A','C'], ['C','T'], ['B','T'] ], maxActive: 1, hint: "Pilih jalur langsung bawah (B) yang hanya butuh 1 sakelar aktif!", solutionNodes: ['B'] },
+            { id: 4, nodes: [ {id:'S', x:80, y:100, isStart:true}, {id:'A', x:220, y:100}, {id:'B', x:220, y:220}, {id:'C', x:380, y:220}, {id:'T', x:480, y:100, isTarget:true} ], edges: [ ['S','A'], ['S','B'], ['A','T'], ['B','C'], ['C','T'] ], maxActive: 1, hint: "Gunakan jalur atas (A) untuk memenuhi batas maksimal 1 sakelar.", solutionNodes: ['A'] },
+            { id: 5, nodes: [ {id:'S', x:80, y:160, isStart:true}, {id:'A', x:200, y:80}, {id:'B', x:200, y:240}, {id:'C', x:340, y:160}, {id:'T', x:480, y:160, isTarget:true} ], edges: [ ['S','A'], ['S','B'], ['A','C'], ['B','C'], ['C','T'] ], maxActive: 2, hint: "Lewati A lalu C untuk menyambungkan daya ke T.", solutionNodes: ['A', 'C'] },
+            
+            { id: 6, nodes: [ {id:'S', x:80, y:160, isStart:true}, {id:'A', x:200, y:60}, {id:'B', x:200, y:260}, {id:'C', x:340, y:60}, {id:'D', x:340, y:260}, {id:'T', x:480, y:160, isTarget:true} ], edges: [ ['S','A'], ['S','B'], ['A','C'], ['B','D'], ['C','T'], ['D','T'] ], maxActive: 2, hint: "Batas 2 sakelar: pilih jalur atas (A-C) atau jalur bawah (B-D).", solutionNodes: ['A', 'C'] },
+            { id: 7, nodes: [ {id:'S', x:80, y:160, isStart:true}, {id:'A', x:200, y:160}, {id:'B', x:300, y:80}, {id:'C', x:300, y:240}, {id:'T', x:480, y:160, isTarget:true} ], edges: [ ['S','A'], ['A','B'], ['A','C'], ['B','T'], ['C','T'] ], maxActive: 2, hint: "Nyalakan A, kemudian pilih B atau C untuk mencapai T.", solutionNodes: ['A', 'B'] },
+            { id: 8, nodes: [ {id:'S', x:80, y:160, isStart:true}, {id:'A', x:180, y:100}, {id:'B', x:180, y:220}, {id:'C', x:320, y:100}, {id:'D', x:320, y:220}, {id:'T', x:480, y:160, isTarget:true} ], edges: [ ['S','A'], ['S','B'], ['A','D'], ['B','C'], ['C','T'], ['D','T'] ], maxActive: 2, hint: "Dua sakelar aktif: A dan D menghubungkan S langsung ke T.", solutionNodes: ['A', 'D'] },
+            { id: 9, nodes: [ {id:'S', x:80, y:160, isStart:true}, {id:'A', x:200, y:160}, {id:'B', x:320, y:160}, {id:'C', x:420, y:160}, {id:'T', x:520, y:160, isTarget:true} ], edges: [ ['S','A'], ['A','B'], ['B','C'], ['C','T'] ], maxActive: 3, hint: "Transmisi jarak jauh: Aktifkan A, B, dan C secara berurutan.", solutionNodes: ['A', 'B', 'C'] },
+            { id: 10, nodes: [ {id:'S', x:80, y:160, isStart:true}, {id:'A', x:200, y:80}, {id:'B', x:200, y:240}, {id:'C', x:360, y:160}, {id:'T', x:480, y:160, isTarget:true} ], edges: [ ['S','A'], ['S','B'], ['A','B'], ['B','C'], ['C','T'] ], maxActive: 2, hint: "Cari rute terpendek dengan batas 2 sakelar!", solutionNodes: ['B', 'C'] },
+
+            // Soal 11 - 20 (TANPA PETUNJUK / NO HINTS, Kuota Sakelar Sangat Ketat)
+            { id: 11, nodes: [ {id:'S', x:80, y:160, isStart:true}, {id:'A', x:220, y:80}, {id:'B', x:220, y:240}, {id:'C', x:360, y:240}, {id:'T', x:480, y:160, isTarget:true} ], edges: [ ['S','A'], ['S','B'], ['A','T'], ['B','C'], ['C','T'] ], maxActive: 1, hint: null, solutionNodes: ['A'] },
+            { id: 12, nodes: [ {id:'S', x:80, y:160, isStart:true}, {id:'A', x:180, y:80}, {id:'B', x:180, y:240}, {id:'C', x:320, y:80}, {id:'D', x:320, y:240}, {id:'T', x:480, y:160, isTarget:true} ], edges: [ ['S','A'], ['S','B'], ['A','C'], ['B','D'], ['C','T'], ['D','T'] ], maxActive: 2, hint: null, solutionNodes: ['B', 'D'] },
+            { id: 13, nodes: [ {id:'S', x:80, y:160, isStart:true}, {id:'A', x:200, y:100}, {id:'B', x:200, y:220}, {id:'C', x:340, y:160}, {id:'T', x:480, y:160, isTarget:true} ], edges: [ ['S','A'], ['S','B'], ['A','C'], ['B','C'], ['C','T'] ], maxActive: 2, hint: null, solutionNodes: ['B', 'C'] },
+            { id: 14, nodes: [ {id:'S', x:80, y:80, isStart:true}, {id:'A', x:200, y:80}, {id:'B', x:200, y:220}, {id:'C', x:360, y:80}, {id:'D', x:360, y:220}, {id:'T', x:480, y:220, isTarget:true} ], edges: [ ['S','A'], ['S','B'], ['A','C'], ['B','D'], ['C','D'], ['D','T'] ], maxActive: 2, hint: null, solutionNodes: ['B', 'D'] },
+            { id: 15, nodes: [ {id:'S', x:80, y:160, isStart:true}, {id:'A', x:200, y:60}, {id:'B', x:200, y:160}, {id:'C', x:200, y:260}, {id:'D', x:360, y:160}, {id:'T', x:480, y:160, isTarget:true} ], edges: [ ['S','A'], ['S','B'], ['S','C'], ['A','D'], ['B','D'], ['C','D'], ['D','T'] ], maxActive: 2, hint: null, solutionNodes: ['A', 'D'] },
+            { id: 16, nodes: [ {id:'S', x:80, y:160, isStart:true}, {id:'A', x:200, y:100}, {id:'B', x:320, y:100}, {id:'C', x:200, y:220}, {id:'D', x:320, y:220}, {id:'T', x:480, y:160, isTarget:true} ], edges: [ ['S','A'], ['S','C'], ['A','B'], ['C','D'], ['B','T'], ['D','T'] ], maxActive: 2, hint: null, solutionNodes: ['C', 'D'] },
+            { id: 17, nodes: [ {id:'S', x:80, y:160, isStart:true}, {id:'A', x:180, y:160}, {id:'B', x:280, y:80}, {id:'C', x:280, y:240}, {id:'D', x:380, y:160}, {id:'T', x:480, y:160, isTarget:true} ], edges: [ ['S','A'], ['A','B'], ['A','C'], ['B','D'], ['C','D'], ['D','T'] ], maxActive: 3, hint: null, solutionNodes: ['A', 'B', 'D'] },
+            { id: 18, nodes: [ {id:'S', x:80, y:80, isStart:true}, {id:'A', x:220, y:80}, {id:'B', x:220, y:240}, {id:'C', x:360, y:160}, {id:'T', x:480, y:160, isTarget:true} ], edges: [ ['S','A'], ['S','B'], ['A','B'], ['A','C'], ['B','C'], ['C','T'] ], maxActive: 2, hint: null, solutionNodes: ['A', 'C'] },
+            { id: 19, nodes: [ {id:'S', x:60, y:160, isStart:true}, {id:'A', x:180, y:80}, {id:'B', x:180, y:240}, {id:'C', x:300, y:80}, {id:'D', x:300, y:240}, {id:'E', x:400, y:160}, {id:'T', x:500, y:160, isTarget:true} ], edges: [ ['S','A'], ['S','B'], ['A','C'], ['B','D'], ['C','E'], ['D','E'], ['E','T'] ], maxActive: 3, hint: null, solutionNodes: ['A', 'C', 'E'] },
+            { id: 20, nodes: [ {id:'S', x:60, y:160, isStart:true}, {id:'A', x:180, y:60}, {id:'B', x:180, y:260}, {id:'C', x:300, y:160}, {id:'D', x:420, y:160}, {id:'T', x:520, y:160, isTarget:true} ], edges: [ ['S','A'], ['S','B'], ['A','C'], ['B','C'], ['C','D'], ['D','T'] ], maxActive: 3, hint: null, solutionNodes: ['A', 'C', 'D'] }
+        ];
+
+        let g3State = {
+            activeNodes: new Set(),
+            toggleCount: 0
+        };
+
+        function renderGame3Level() {
+            const idx = state.gameStats[3].currentIdx;
+            const q = game3Questions[idx];
+
+            g3State.activeNodes.clear();
+            g3State.toggleCount = 0;
+
+            document.getElementById('g3-level-indicator').innerText = `${idx + 1} / 20`;
+            document.getElementById('g3-level-title').innerText = `Topologi Jaringan Stasiun #${idx + 1}`;
+            document.getElementById('g3-max-limit').innerText = q.maxActive;
+            document.getElementById('g3-active-count').innerText = "0";
+            document.getElementById('g3-toggle-count').innerText = "0 kali";
+            document.getElementById('g3-connection-status').innerText = "TERPUTUS";
+            document.getElementById('g3-connection-status').className = "font-bold text-rose-400";
+            document.getElementById('g3-feedback').classList.add('hidden');
+
+            // Handle Hint vs No-Hint display
+            const hintBox = document.getElementById('g3-instruction-box');
+            const hintBadge = document.getElementById('g3-hint-badge');
+
+            if (q.hint) {
+                hintBox.innerText = `Petunjuk: ${q.hint}`;
+                hintBadge.innerText = "Petunjuk: Aktif";
+                hintBadge.className = "text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2.5 py-1 rounded-md font-semibold";
+            } else {
+                hintBox.innerText = "SOAL TINGKAT LANJUT: Tanpa petunjuk! Analisis topologi jalur secara mandiri untuk mencapai stasiun T.";
+                hintBadge.innerText = "No Hints Mode";
+                hintBadge.className = "text-xs bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2.5 py-1 rounded-md font-semibold";
+            }
+
+            drawNetworkSVG();
+        }
+
+        function toggleNode(nodeId) {
+            const idx = state.gameStats[3].currentIdx;
+            const q = game3Questions[idx];
+
+            // Don't toggle Start or Target
+            if (nodeId === 'S' || nodeId === 'T') return;
+
+            if (g3State.activeNodes.has(nodeId)) {
+                g3State.activeNodes.delete(nodeId);
+            } else {
+                // Check Max Limit Constraint!
+                if (g3State.activeNodes.size >= q.maxActive) {
+                    const feedback = document.getElementById('g3-feedback');
+                    feedback.classList.remove('hidden', 'bg-emerald-500/20', 'text-emerald-300');
+                    feedback.classList.add('bg-amber-500/20', 'text-amber-300');
+                    feedback.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> Batas stasiun aktif tercapai (Maks: ${q.maxActive})! Matikan stasiun lain terlebih dahulu.`;
+                    return;
+                }
+                g3State.activeNodes.add(nodeId);
+            }
+
+            g3State.toggleCount++;
+            document.getElementById('g3-toggle-count').innerText = `${g3State.toggleCount} kali`;
+            document.getElementById('g3-active-count').innerText = g3State.activeNodes.size;
+
+            checkConnectivity();
+            drawNetworkSVG();
+        }
+
+        function checkConnectivity() {
+            const idx = state.gameStats[3].currentIdx;
+            const q = game3Questions[idx];
+
+            // Build adjacency list of currently active nodes
+            const adj = {};
+            q.nodes.forEach(n => adj[n.id] = []);
+            q.edges.forEach(([u, v]) => {
+                adj[u].push(v);
+                adj[v].push(u);
+            });
+
+            // BFS from 'S' considering only active perantara nodes + S & T
+            const queue = ['S'];
+            const visited = new Set(['S']);
+            let connected = false;
+
+            while (queue.length > 0) {
+                const curr = queue.shift();
+                if (curr === 'T') {
+                    connected = true;
+                    break;
+                }
+
+                for (const neighbor of adj[curr]) {
+                    if (!visited.has(neighbor)) {
+                        // Neighbor can be visited if it is 'T' OR it is in activeNodes
+                        if (neighbor === 'T' || g3State.activeNodes.has(neighbor)) {
+                            visited.add(neighbor);
+                            queue.push(neighbor);
+                        }
+                    }
+                }
+            }
+
+            const statusEl = document.getElementById('g3-connection-status');
+            if (connected) {
+                statusEl.innerText = "TERHUBUNG (SIAP)";
+                statusEl.className = "font-bold text-emerald-400 animate-pulse";
+            } else {
+                statusEl.innerText = "TERPUTUS";
+                statusEl.className = "font-bold text-rose-400";
+            }
+
+            return connected;
+        }
+
+        function drawNetworkSVG() {
+            const idx = state.gameStats[3].currentIdx;
+            const q = game3Questions[idx];
+            const svg = document.getElementById('g3-network-svg');
+            svg.innerHTML = '';
+
+            // Map node coords
+            const nodeMap = {};
+            q.nodes.forEach(n => nodeMap[n.id] = n);
+
+            // Draw Edges First
+            q.edges.forEach(([u, v]) => {
+                const n1 = nodeMap[u];
+                const n2 = nodeMap[v];
+                const isActiveEdge = (u === 'S' || g3State.activeNodes.has(u)) && (v === 'T' || g3State.activeNodes.has(v) || v === 'S');
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', n1.x);
+                line.setAttribute('y1', n1.y);
+                line.setAttribute('x2', n2.x);
+                line.setAttribute('y2', n2.y);
+                line.setAttribute('stroke', isActiveEdge ? '#10b981' : '#334155');
+                line.setAttribute('stroke-width', isActiveEdge ? '4' : '2');
+                if (isActiveEdge) {
+                    line.setAttribute('stroke-dasharray', '6 3');
+                }
+                svg.appendChild(line);
+            });
+
+            // Draw Nodes
+            q.nodes.forEach(n => {
+                const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                group.setAttribute('cursor', n.isStart || n.isTarget ? 'default' : 'pointer');
+                group.onclick = () => toggleNode(n.id);
+
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', n.x);
+                circle.setAttribute('cy', n.y);
+                circle.setAttribute('r', '22');
+
+                let fillColor = '#1e293b';
+                let strokeColor = '#64748b';
+
+                if (n.isStart) {
+                    fillColor = '#065f46';
+                    strokeColor = '#10b981';
+                } else if (n.isTarget) {
+                    fillColor = '#881337';
+                    strokeColor = '#f43f5e';
+                } else if (g3State.activeNodes.has(n.id)) {
+                    fillColor = '#312e81';
+                    strokeColor = '#6366f1';
+                }
+
+                circle.setAttribute('fill', fillColor);
+                circle.setAttribute('stroke', strokeColor);
+                circle.setAttribute('stroke-width', '3');
+
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', n.x);
+                text.setAttribute('y', n.y + 5);
+                text.setAttribute('fill', '#ffffff');
+                text.setAttribute('font-weight', 'bold');
+                text.setAttribute('font-size', '14');
+                text.setAttribute('text-anchor', 'middle');
+                text.textContent = n.id;
+
+                group.appendChild(circle);
+                group.appendChild(text);
+                svg.appendChild(group);
+            });
+        }
+
+        function resetCurrentNetwork() {
+            g3State.activeNodes.clear();
+            g3State.toggleCount = 0;
+            document.getElementById('g3-active-count').innerText = "0";
+            document.getElementById('g3-toggle-count').innerText = "0 kali";
+            checkConnectivity();
+            drawNetworkSVG();
+        }
+
+        function submitGame3Answer() {
+            const idx = state.gameStats[3].currentIdx;
+            const q = game3Questions[idx];
+            const isConnected = checkConnectivity();
+            const feedback = document.getElementById('g3-feedback');
+            feedback.classList.remove('hidden', 'bg-rose-500/20', 'text-rose-300', 'bg-emerald-500/20', 'text-emerald-300');
+
+            if (isConnected) {
+                feedback.classList.add('bg-emerald-500/20', 'text-emerald-300');
+                feedback.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> Jaringan Terhubung! Sukses mengaktifkan transmisi.`;
+
+                setTimeout(() => {
+                    if (idx < game3Questions.length - 1) {
+                        state.gameStats[3].currentIdx++;
+                        renderGame3Level();
+                    } else {
+                        state.gameStats[3].completed = true;
+                        showModalSuccess("Seluruh Game Selesai!", "Luar biasa! Kamu menyelesaikan 20 Soal Debug Jaringan!", () => {
+                            switchTab('evaluation');
+                        });
+                    }
+                }, 1200);
+            } else {
+                addMistake(3);
+                feedback.classList.add('bg-rose-500/20', 'text-rose-300');
+                feedback.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1"></i> Jalur belum terhubung penuh dari S ke T. Coba periksa koneksi antar stasiun!`;
+            }
+        }
+
+
+        /* ==========================================================================
+           EVALUATION REPORT SYSTEM
+           ========================================================================== */
+        function renderEvaluationScreen() {
+            document.getElementById('eval-student-name').innerText = state.playerName;
+
+            const totalTime = state.totalSeconds;
+            const totalErrors = state.gameStats[1].mistakes + state.gameStats[2].mistakes + state.gameStats[3].mistakes;
+
+            document.getElementById('eval-total-time').innerText = formatTime(totalTime);
+            document.getElementById('eval-total-errors').innerText = `${totalErrors} kali`;
+
+            // Completed count
+            let completedCount = 0;
+            if (state.gameStats[1].completed) completedCount++;
+            if (state.gameStats[2].completed) completedCount++;
+            if (state.gameStats[3].completed) completedCount++;
+            document.getElementById('eval-completed-modules').innerText = `${completedCount} / 3 Modul`;
+
+            // Breakdown
+            document.getElementById('eval-g1-time').innerText = formatTime(state.gameStats[1].timeSpent);
+            document.getElementById('eval-g1-err').innerText = `${state.gameStats[1].mistakes} kesalahan`;
+
+            document.getElementById('eval-g2-time').innerText = formatTime(state.gameStats[2].timeSpent);
+            document.getElementById('eval-g2-err').innerText = `${state.gameStats[2].mistakes} kesalahan`;
+
+            document.getElementById('eval-g3-time').innerText = formatTime(state.gameStats[3].timeSpent);
+            document.getElementById('eval-g3-err').innerText = `${state.gameStats[3].mistakes} kesalahan`;
+
+            // Calculate Grade
+            let grade = 'A+';
+            let desc = 'Sangat Unggul dalam Logika Komputasional';
+            let feedback = 'Siswa menunjukkan kemampuan analisis pola, pemecahan masalah jaringan, dan optimasi batasan daya yang luar biasa tanpa bergantung pada instruksi langsung.';
+
+            if (totalErrors > 10) {
+                grade = 'B';
+                desc = 'Pemikir Kritis Berpotensi';
+                feedback = 'Siswa mampu menyelesaikan tantangan, namun disarankan untuk lebih teliti dalam menghitung deret dan memeriksa rute sakelar sebelum melakukan pengujian.';
+            } else if (totalErrors > 4) {
+                grade = 'A';
+                desc = 'Analisa Logika Sangat Baik';
+                feedback = 'Siswa memiliki daya tangkap logika pola yang tangguh serta mampu menyesuaikan strategi saat batasan panel aktif diberlakukan.';
+            }
+
+            document.getElementById('eval-grade-badge').innerText = grade;
+            document.getElementById('eval-grade-desc').innerText = desc;
+            document.getElementById('eval-feedback-text').innerText = feedback;
+        }
+
+        function restartAll() {
+            state.totalSeconds = 0;
+            state.gameStats = {
+                1: { timeSpent: 0, mistakes: 0, completed: false, currentIdx: 0 },
+                2: { timeSpent: 0, mistakes: 0, completed: false, currentIdx: 0 },
+                3: { timeSpent: 0, mistakes: 0, completed: false, currentIdx: 0 }
+            };
+            document.getElementById('global-mistakes').innerText = "0";
+            document.getElementById('global-timer').innerText = "00:00";
+            switchTab('dashboard');
+        }
+
+
+        /* ==========================================================================
+           MODAL DIALOG HELPER (REPLACES ALERT)
+           ========================================================================== */
+        function showModalSuccess(title, message, callback) {
+            const modal = document.createElement('div');
+            modal.className = "fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4";
+            modal.innerHTML = `
+                <div class="bg-slate-800 border border-slate-700 rounded-3xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl">
+                    <div class="w-16 h-16 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto text-2xl">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">${title}</h3>
+                    <p class="text-xs text-slate-300">${message}</p>
+                    <button id="modal-btn-ok" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition">
+                        Lanjutkan Tantangan
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            document.getElementById('modal-btn-ok').onclick = () => {
+                document.body.removeChild(modal);
+                if (callback) callback();
+            };
+        }
+
+        // Initialize on load
+        window.onload = function () {
+            updateDashboardUI();
+        };
+    </script>
+</body>
+</html>
