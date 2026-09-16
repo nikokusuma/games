@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Labirin Pola Matematika 10x10</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            min-height: 100vh;
+            color: #f8fafc;
+            user-select: none;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(10, minmax(0, 1fr));
+            grid-template-rows: repeat(10, minmax(0, 1fr));
+            gap: 4px;
+            aspect-ratio: 1 / 1;
+            width: 100%;
+            max-width: 580px;
+            margin: 0 auto;
+            padding: 8px;
+            background: rgba(15, 23, 42, 0.75);
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+        }
+
+        .tile {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #1e293b;
+            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+        }
+
+        @media (min-width: 640px) {
+            .tile {
+                font-size: 1.05rem;
+            }
+        }
+
+        .tile:hover:not(.visited):not(.player) {
+            background: #334155;
+            color: #f8fafc;
+            transform: scale(1.03);
+        }
+
+        .tile.visited {
+            background: linear-gradient(135deg, #312e81 0%, #4338ca 100%);
+            color: #c7d2fe;
+            border-color: rgba(129, 140, 248, 0.3);
+            box-shadow: inset 0 0 8px rgba(99, 102, 241, 0.4);
+        }
+
+        .tile.player {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+            color: #ffffff !important;
+            border-color: #38bdf8 !important;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.8) !important;
+            z-index: 10;
+            transform: scale(1.08);
+            animation: pulse-glow 2s infinite;
+        }
+
+        .tile.start {
+            border: 2px solid #10b981;
+        }
+
+        .tile.start::after {
+            content: 'START';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            font-size: 0.5rem;
+            font-weight: 800;
+            color: #34d399;
+            letter-spacing: 0.5px;
+        }
+
+        .tile.finish {
+            border: 2px solid #f59e0b;
+            background: linear-gradient(135deg, #78350f 0%, #451a03 100%);
+            color: #fef3c7;
+        }
+
+        .tile.finish::after {
+            content: 'FINISH';
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            font-size: 0.5rem;
+            font-weight: 800;
+            color: #fbbf24;
+            letter-spacing: 0.5px;
+        }
+
+        .tile.hint-highlight {
+            animation: hint-bounce 0.8s infinite alternate;
+            border: 2px solid #facc15 !important;
+            background: #854d0e !important;
+            color: #fef08a !important;
+            z-index: 5;
+        }
+
+        .tile.wrong-shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+            background: #991b1b !important;
+            color: #fecaca !important;
+            border-color: #ef4444 !important;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 12px rgba(56, 189, 248, 0.6); }
+            50% { box-shadow: 0 0 22px rgba(56, 189, 248, 1); }
+        }
+
+        @keyframes hint-bounce {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.12); }
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+        }
+
+        .dpad-btn {
+            background: rgba(51, 65, 85, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.15s ease;
+        }
+
+        .dpad-btn:active {
+            background: #0284c7;
+            transform: scale(0.92);
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen justify-between p-2 sm:p-4">
+
+    <!-- MAIN CONTAINER -->
+    <div class="max-w-4xl mx-auto w-full flex-grow flex flex-col justify-between space-y-4">
+
+        <!-- HEADER SECTION -->
+        <header class="glass-card p-4 flex flex-col md:flex-row justify-between items-center gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-compass-drafting text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-xl sm:text-2xl tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-200 bg-clip-text text-transparent">
+                        Labirin Pola Matematika
+                    </h1>
+                    <p class="text-xs text-slate-400">Temukan jalan rahasia dengan mengikuti deret angka!</p>
+                </div>
+            </div>
+
+            <!-- LEVEL SELECTOR & CONTROLS -->
+            <div class="flex items-center gap-2 flex-wrap justify-center">
+                <label for="levelSelect" class="text-xs text-slate-400 font-semibold">Level:</label>
+                <select id="levelSelect" class="bg-slate-800 text-slate-100 border border-slate-700 rounded-lg px-3 py-1.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+                    <!-- Levels generated dynamically -->
+                </select>
+
+                <button id="soundToggleBtn" onclick="toggleSound()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition text-sm flex items-center gap-1.5" title="Mute/Unmute">
+                    <i id="soundIcon" class="fa-solid fa-volume-high text-indigo-400"></i>
+                </button>
+
+                <button onclick="openRulesModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition text-sm flex items-center gap-1.5">
+                    <i class="fa-solid fa-circle-info text-cyan-400"></i>
+                    <span class="hidden sm:inline font-semibold">Aturan</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- GAME STATUS PANEL -->
+        <div class="glass-card p-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <!-- PATTERN QUESTION / RULE -->
+            <div class="flex-1 text-center md:text-left">
+                <div class="flex items-center justify-center md:justify-start gap-2 mb-1">
+                    <span id="levelBadge" class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-bold px-2.5 py-0.5 rounded-full">
+                        Level 1 / 10
+                    </span>
+                    <span id="levelDifficulty" class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold px-2.5 py-0.5 rounded-full">
+                        Sangat Mudah
+                    </span>
+                </div>
+                <h2 id="patternTitle" class="font-bold text-lg text-amber-300">
+                    Pola: Kelipatan 2
+                </h2>
+                <p id="patternDesc" class="text-xs text-slate-300 mt-0.5">
+                    Mulai dari 2, ikuti urutan bilangan genap (+2 tiap langkah).
+                </p>
+            </div>
+
+            <!-- TARGET & LIVES & TIMER -->
+            <div class="flex items-center gap-4 sm:gap-6 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
+                <!-- TARGET NEXT NUMBER -->
+                <div class="text-center px-2">
+                    <div class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Target Berikutnya</div>
+                    <div id="targetNumber" class="text-xl font-extrabold text-cyan-400">
+                        2
+                    </div>
+                </div>
+
+                <div class="h-8 w-px bg-slate-800"></div>
+
+                <!-- LIVES -->
+                <div class="text-center px-2">
+                    <div class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Nyawa</div>
+                    <div id="livesContainer" class="flex gap-1 text-red-500 text-sm mt-0.5">
+                        <i class="fa-solid fa-heart"></i>
+                        <i class="fa-solid fa-heart"></i>
+                        <i class="fa-solid fa-heart"></i>
+                    </div>
+                </div>
+
+                <div class="h-8 w-px bg-slate-800"></div>
+
+                <!-- TIMER -->
+                <div class="text-center px-2">
+                    <div class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Waktu</div>
+                    <div id="timerDisplay" class="text-lg font-bold text-emerald-400">00:00</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN GAME AREA -->
+        <main class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+            
+            <!-- LABYRINTH GRID (8 Cols on Desktop) -->
+            <div class="lg:col-span-8 flex justify-center">
+                <div id="mazeGrid" class="grid-container">
+                    <!-- 10x10 = 100 tiles generated dynamically -->
+                </div>
+            </div>
+
+            <!-- SIDEBAR CONTROLS & HINTS (4 Cols on Desktop) -->
+            <div class="lg:col-span-4 flex flex-col justify-between space-y-4">
+                
+                <!-- ACTION BUTTONS -->
+                <div class="glass-card p-4 flex flex-col gap-2">
+                    <button onclick="useHint()" class="w-full py-2.5 px-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-extrabold rounded-xl shadow-lg shadow-amber-500/20 transition flex items-center justify-center gap-2 text-sm">
+                        <i class="fa-solid fa-lightbulb"></i>
+                        <span>Bantuan Petunjuk (<span id="hintCount">3</span>)</span>
+                    </button>
+
+                    <button onclick="resetLevel()" class="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl border border-slate-700 transition flex items-center justify-center gap-2 text-sm">
+                        <i class="fa-solid fa-rotate-left text-indigo-400"></i>
+                        <span>Ulangi Level Ini</span>
+                    </button>
+                </div>
+
+                <!-- ON-SCREEN DPAD FOR TOUCH & MOBILE DEVICES -->
+                <div class="glass-card p-4 text-center">
+                    <div class="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Navigasi Sentuh / Klik</div>
+                    <div class="w-36 h-36 mx-auto grid grid-cols-3 grid-rows-3 gap-1">
+                        <div></div>
+                        <button onclick="movePlayer('UP')" class="dpad-btn rounded-t-xl flex items-center justify-center text-slate-200 text-xl">
+                            <i class="fa-solid fa-chevron-up"></i>
+                        </button>
+                        <div></div>
+
+                        <button onclick="movePlayer('LEFT')" class="dpad-btn rounded-l-xl flex items-center justify-center text-slate-200 text-xl">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <div class="flex items-center justify-center text-slate-500 text-xs font-bold bg-slate-900/50 rounded-md">
+                            <i class="fa-solid fa-arrows-up-down-left-right"></i>
+                        </div>
+                        <button onclick="movePlayer('RIGHT')" class="dpad-btn rounded-r-xl flex items-center justify-center text-slate-200 text-xl">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+
+                        <div></div>
+                        <button onclick="movePlayer('DOWN')" class="dpad-btn rounded-b-xl flex items-center justify-center text-slate-200 text-xl">
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <div></div>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-2">Bisa juga gunakan tombol <b>Panah Keyboard</b> atau <b>WASD</b>.</p>
+                </div>
+
+                <!-- QUICK SEQUENCE GUIDE -->
+                <div class="glass-card p-3 text-xs text-slate-300">
+                    <div class="font-bold text-indigo-300 mb-1 flex items-center gap-1.5">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                        <span>Tips Matematika</span>
+                    </div>
+                    <p id="sequenceGuideText">
+                        Perhatikan selisih atau pola dari deret angka. Setiap petak berikutnya harus tepat merupakan suku lanjutannya!
+                    </p>
+                </div>
+            </div>
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="text-center text-xs text-slate-500 py-2">
+            Game Labirin Pola Matematika 10x10 &copy; 2026. Dibuat dengan HTML5, Tailwind CSS, & JS.
+        </footer>
+    </div>
+
+    <!-- MODAL: LEVEL VICTORY -->
+    <div id="victoryModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden z-50 flex items-center justify-center p-4">
+        <div class="glass-card max-w-md w-full p-6 text-center shadow-2xl border border-indigo-500/30 transform transition-all scale-100">
+            <div class="w-16 h-16 bg-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 border border-amber-500/30 shadow-lg shadow-amber-500/20">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <h3 class="text-2xl font-black text-white mb-1">Level Selesai!</h3>
+            <p class="text-sm text-slate-300 mb-4">Luar biasa! Anda berhasil menemukan pola dan menyelesaikan labirin.</p>
+
+            <div class="bg-slate-900/80 rounded-xl p-4 mb-5 border border-slate-800 grid grid-cols-2 gap-3 text-left">
+                <div>
+                    <span class="text-xs text-slate-400 font-semibold block">Waktu</span>
+                    <span id="winTime" class="text-base font-bold text-cyan-400">00:45</span>
+                </div>
+                <div>
+                    <span class="text-xs text-slate-400 font-semibold block">Sisa Nyawa</span>
+                    <span id="winLives" class="text-base font-bold text-red-400">❤️❤️❤️</span>
+                </div>
+                <div class="col-span-2">
+                    <span class="text-xs text-slate-400 font-semibold block">Rating Performa</span>
+                    <div id="starRating" class="text-amber-400 text-lg mt-0.5">
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="resetLevel(); closeModal('victoryModal');" class="flex-1 py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl transition text-sm">
+                    Coba Lagi
+                </button>
+                <button id="nextLevelBtn" onclick="nextLevel()" class="flex-1 py-3 px-4 bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 text-white font-extrabold rounded-xl transition text-sm shadow-lg shadow-indigo-500/25">
+                    Level Berikutnya <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: GAME OVER -->
+    <div id="gameOverModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden z-50 flex items-center justify-center p-4">
+        <div class="glass-card max-w-md w-full p-6 text-center shadow-2xl border border-red-500/30">
+            <div class="w-16 h-16 bg-red-500/20 text-red-400 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 border border-red-500/30 shadow-lg shadow-red-500/20">
+                <i class="fa-solid fa-heart-crack"></i>
+            </div>
+            <h3 class="text-2xl font-black text-white mb-1">Kehabisan Nyawa!</h3>
+            <p class="text-sm text-slate-300 mb-6">Anda salah memilih petak angka beberapa kali. Periksa kembali rumus polanya dan coba lagi!</p>
+
+            <button onclick="resetLevel(); closeModal('gameOverModal');" class="w-full py-3 px-4 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-extrabold rounded-xl transition text-sm shadow-lg shadow-red-500/25">
+                <i class="fa-solid fa-rotate-left mr-1"></i> Ulangi Level Ini
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL: RULES / INSTRUCTIONS -->
+    <div id="rulesModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden z-50 flex items-center justify-center p-4">
+        <div class="glass-card max-w-lg w-full p-6 shadow-2xl border border-slate-700">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-book-open text-cyan-400"></i> Cara Bermain
+                </h3>
+                <button onclick="closeModal('rulesModal')" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
+                <div class="flex items-start gap-3 bg-slate-900/50 p-3 rounded-lg border border-slate-800">
+                    <span class="bg-indigo-500/20 text-indigo-400 font-bold rounded-lg w-6 h-6 flex items-center justify-center shrink-0 text-xs">1</span>
+                    <p>Mulai dari petak <b>START</b> di sudut kiri atas `(0,0)` dan capai petak <b>FINISH</b> di kanan bawah `(9,9)`.</p>
+                </div>
+
+                <div class="flex items-start gap-3 bg-slate-900/50 p-3 rounded-lg border border-slate-800">
+                    <span class="bg-indigo-500/20 text-indigo-400 font-bold rounded-lg w-6 h-6 flex items-center justify-center shrink-0 text-xs">2</span>
+                    <p>Setiap langkah hanya boleh berpindah ke petak yang bernilai **suku berikutnya** sesuai dengan **Pola Matematika** pada level aktif.</p>
+                </div>
+
+                <div class="flex items-start gap-3 bg-slate-900/50 p-3 rounded-lg border border-slate-800">
+                    <span class="bg-indigo-500/20 text-indigo-400 font-bold rounded-lg w-6 h-6 flex items-center justify-center shrink-0 text-xs">3</span>
+                    <p>Jika melangkah ke angka yang tidak sesuai pola, Anda akan kehilangan <b>1 Nyawa</b> (❤️). Sisa nyawa ada 3.</p>
+                </div>
+
+                <div class="flex items-start gap-3 bg-slate-900/50 p-3 rounded-lg border border-slate-800">
+                    <span class="bg-indigo-500/20 text-indigo-400 font-bold rounded-lg w-6 h-6 flex items-center justify-center shrink-0 text-xs">4</span>
+                    <p>Gunakan tombol **Panah Keyboard**, **WASD**, atau **D-Pad Sentuh** untuk melangkah.</p>
+                </div>
+            </div>
+
+            <button onclick="closeModal('rulesModal')" class="w-full mt-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition text-sm">
+                Mengerti, Ayo Bermain!
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // LEVEL DATA CONFIGURATION (10 Levels from Easiest to Hardest)
+        const LEVEL_CONFIGS = [
+            {
+                level: 1,
+                title: "Pola: Penjumlahan +2 (Genap)",
+                difficulty: "Sangat Mudah",
+                diffColor: "emerald",
+                desc: "Tambah +2 setiap langkah (2, 4, 6, 8, 10, ...)",
+                guide: "Pola paling sederhana. Cukup cari angka genap yang bertambah 2.",
+                sequenceGen: (len) => Array.from({length: len}, (_, i) => (i + 1) * 2),
+                distractorGen: (correctVal) => {
+                    let d = correctVal + (Math.random() < 0.5 ? -1 : 1);
+                    return d <= 0 ? correctVal + 3 : d;
+                }
+            },
+            {
+                level: 2,
+                title: "Pola: Kelipatan 5",
+                difficulty: "Sangat Mudah",
+                diffColor: "emerald",
+                desc: "Tambah +5 setiap langkah (5, 10, 15, 20, 25, ...)",
+                guide: "Angka kelipatan 5 selalu diakhiri angka 0 atau 5.",
+                sequenceGen: (len) => Array.from({length: len}, (_, i) => (i + 1) * 5),
+                distractorGen: (correctVal) => {
+                    let off = Math.floor(Math.random() * 4) + 1;
+                    return Math.max(1, correctVal + (Math.random() < 0.5 ? off : -off));
+                }
+            },
+            {
+                level: 3,
+                title: "Pola: Deret Aritmatika (+3)",
+                difficulty: "Mudah",
+                diffColor: "emerald",
+                desc: "Mulai dari 1, tambah +3 setiap langkah (1, 4, 7, 10, 13, ...)",
+                guide: "Setiap langkah ditambahkan tepat 3 ke angka sebelumnya.",
+                sequenceGen: (len) => Array.from({length: len}, (_, i) => 1 + i * 3),
+                distractorGen: (correctVal) => {
+                    let off = Math.random() < 0.5 ? 1 : 2;
+                    return Math.max(1, correctVal + (Math.random() < 0.5 ? off : -off));
+                }
+            },
+            {
+                level: 4,
+                title: "Pola: Pengurangan Aritmatika (-4)",
+                difficulty: "Mudah",
+                diffColor: "blue",
+                desc: "Mulai dari 120, kurangi -4 setiap langkah (120, 116, 112, ...)",
+                guide: "Deret angka berkurang secara konsisten sebesar 4.",
+                sequenceGen: (len) => Array.from({length: len}, (_, i) => 120 - i * 4),
+                distractorGen: (correctVal) => {
+                    let off = Math.random() < 0.5 ? 2 : 3;
+                    return correctVal + (Math.random() < 0.5 ? off : -off);
+                }
+            },
+            {
+                level: 5,
+                title: "Pola: Kelipatan 7",
+                difficulty: "Sedang",
+                diffColor: "blue",
+                desc: "Deret kelipatan 7 (7, 14, 21, 28, 35, 42, ...)",
+                guide: "Ingat perkalian 7! Cari hasil dari 7 x N.",
+                sequenceGen: (len) => Array.from({length: len}, (_, i) => (i + 1) * 7),
+                distractorGen: (correctVal) => {
+                    let off = Math.floor(Math.random() * 5) + 1;
+                    return Math.max(1, correctVal + (Math.random() < 0.5 ? off : -off));
+                }
+            },
+            {
+                level: 6,
+                title: "Pola: Deret Geometri (Perkalian x2)",
+                difficulty: "Sedang",
+                diffColor: "amber",
+                desc: "Mulai dari 1, kalikan 2 setiap langkah (1, 2, 4, 8, 16, 32, ...)",
+                guide: "Setiap angka berlipat ganda dari angka sebelumnya.",
+                sequenceGen: (len) => Array.from({length: len}, (_, i) => Math.pow(2, i)),
+                distractorGen: (correctVal) => {
+                    let off = Math.floor(correctVal * 0.25) + 1;
+                    return Math.max(1, correctVal + (Math.random() < 0.5 ? off : -off));
+                }
+            },
+            {
+                level: 7,
+                title: "Pola: Bilangan Kuadrat (n²)",
+                difficulty: "Sulit",
+                diffColor: "amber",
+                desc: "Pangkat dua berturut-turut (1, 4, 9, 16, 25, 36, 49, ...)",
+                guide: "Angka kuadrat: 1x1, 2x2, 3x3, 4x4, 5x5, dan seterusnya.",
+                sequenceGen: (len) => Array.from({length: len}, (_, i) => (i + 1) * (i + 1)),
+                distractorGen: (correctVal) => {
+                    let off = Math.floor(Math.random() * 3) + 1;
+                    return Math.max(1, correctVal + (Math.random() < 0.5 ? off : -off));
+                }
+            },
+            {
+                level: 8,
+                title: "Pola: Deret Bilangan Prima",
+                difficulty: "Sulit",
+                diffColor: "rose",
+                desc: "Urutan bilangan prima (2, 3, 5, 7, 11, 13, 17, 19, 23, ...)",
+                guide: "Bilangan prima hanya bisa dibagi 1 dan dirinya sendiri.",
+                sequenceGen: (len) => getPrimes(len),
+                distractorGen: (correctVal) => {
+                    let candidate = correctVal + (Math.random() < 0.5 ? 2 : 4);
+                    // distractor should not be prime if possible
+                    return candidate;
+                }
+            },
+            {
+                level: 9,
+                title: "Pola: Deret Fibonacci",
+                difficulty: "Sangat Sulit",
+                diffColor: "rose",
+                desc: "Penjumlahan 2 angka sebelumnya (1, 2, 3, 5, 8, 13, 21, 34, ...)",
+                guide: "Suku berikutnya = (suku sebelumnya) + (suku sebelum-sebelumnya).",
+                sequenceGen: (len) => getFibonacci(len),
+                distractorGen: (correctVal) => {
+                    let off = Math.floor(Math.random() * 4) + 1;
+                    return Math.max(1, correctVal + (Math.random() < 0.5 ? off : -off));
+                }
+            },
+            {
+                level: 10,
+                title: "Pola: Beda Bertingkat (+1, +2, +3, +4...)",
+                difficulty: "Master Matematika",
+                diffColor: "purple",
+                desc: "Penambahan bertambah +1 tiap langkah (1, 2, 4, 7, 11, 16, 22, ...)",
+                guide: "Selisih antar angka terus naik: +1, lalu +2, +3, +4, +5...",
+                sequenceGen: (len) => getSecondaryDifferenceSeq(len),
+                distractorGen: (correctVal) => {
+                    let off = Math.floor(Math.random() * 3) + 1;
+                    return Math.max(1, correctVal + (Math.random() < 0.5 ? off : -off));
+                }
+            }
+        ];
+
+        // Math Helper Functions
+        function getPrimes(count) {
+            let primes = [];
+            let num = 2;
+            while (primes.length < count) {
+                if (isPrime(num)) primes.push(num);
+                num++;
+            }
+            return primes;
+        }
+
+        function isPrime(n) {
+            if (n < 2) return false;
+            for (let i = 2; i <= Math.sqrt(n); i++) {
+                if (n % i === 0) return false;
+            }
+            return true;
+        }
+
+        function getFibonacci(count) {
+            let fib = [1, 2];
+            while (fib.length < count) {
+                fib.push(fib[fib.length - 1] + fib[fib.length - 2]);
+            }
+            return fib.slice(0, count);
+        }
+
+        function getSecondaryDifferenceSeq(count) {
+            let seq = [1];
+            let diff = 1;
+            for (let i = 1; i < count; i++) {
+                seq.push(seq[i - 1] + diff);
+                diff++;
+            }
+            return seq;
+        }
+
+        // AUDIO SYNTHESIZER (Web Audio API - No external assets required)
+        let soundEnabled = true;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'step') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'error') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.linearRampToValueAtTime(90, now + 0.25);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'win') {
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                    notes.forEach((freq, idx) => {
+                        const noteOsc = audioCtx.createOscillator();
+                        const noteGain = audioCtx.createGain();
+                        noteOsc.connect(noteGain);
+                        noteGain.connect(audioCtx.destination);
+                        noteOsc.type = 'triangle';
+                        noteOsc.frequency.setValueAtTime(freq, now + idx * 0.1);
+                        noteGain.gain.setValueAtTime(0.2, now + idx * 0.1);
+                        noteGain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.3);
+                        noteOsc.start(now + idx * 0.1);
+                        noteOsc.stop(now + idx * 0.1 + 0.3);
+                    });
+                }
+            } catch (e) {
+                console.log("Audio not supported or blocked");
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('soundIcon');
+            if (soundEnabled) {
+                icon.className = 'fa-solid fa-volume-high text-indigo-400';
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-slate-500';
+            }
+        }
+
+        // GAME STATE
+        const GRID_SIZE = 10;
+        let currentLevelIdx = 0;
+        let gridValues = []; // 10x10 array
+        let solutionPath = []; // array of {r, c}
+        let sequenceValues = []; // values along path
+        let playerPathIndex = 0;
+        let lives = 3;
+        let hintsRemaining = 3;
+        let timerSeconds = 0;
+        let timerInterval = null;
+        let activeHintTile = null;
+
+        // MAZE GENERATION: Guaranteed Backtracking DFS Path Finder
+        function generateGuaranteedMazePath(rows, cols) {
+            let maxAttempts = 150;
+            let bestPath = [];
+
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                let visited = Array.from({ length: rows }, () => Array(cols).fill(false));
+                let path = [{ r: 0, c: 0 }];
+                visited[0][0] = true;
+
+                if (dfsPath(0, 0, rows - 1, cols - 1, visited, path, rows, cols)) {
+                    // We want a twisting path with reasonable length (e.g. 20-35 steps for 10x10)
+                    if (path.length >= 22 && path.length <= 40) {
+                        return path;
+                    }
+                    if (path.length > bestPath.length) {
+                        bestPath = path;
+                    }
+                }
+            }
+            return bestPath.length > 0 ? bestPath : generateSimplePath(rows, cols);
+        }
+
+        function dfsPath(r, c, targetR, targetC, visited, path, rows, cols) {
+            if (r === targetR && c === targetC) return true;
+
+            let directions = [
+                { r: -1, c: 0 }, { r: 1, c: 0 }, { r: 0, c: -1 }, { r: 0, c: 1 }
+            ];
+            // Shuffle directions for randomized organic path
+            directions.sort(() => Math.random() - 0.5);
+
+            for (let dir of directions) {
+                let nr = r + dir.r;
+                let nc = c + dir.c;
+
+                if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !visited[nr][nc]) {
+                    visited[nr][nc] = true;
+                    path.push({ r: nr, c: nc });
+
+                    if (dfsPath(nr, nc, targetR, targetC, visited, path, rows, cols)) {
+                        return true;
+                    }
+
+                    path.pop();
+                    // Leave visited = true to avoid cyclic dead ends
+                }
+            }
+            return false;
+        }
+
+        // Fallback generator in rare cases
+        function generateSimplePath(rows, cols) {
+            let path = [];
+            let r = 0, c = 0;
+            path.push({ r, c });
+            while (r < rows - 1 || c < cols - 1) {
+                if (r === rows - 1) c++;
+                else if (c === cols - 1) r++;
+                else if (Math.random() < 0.5) r++;
+                else c++;
+                path.push({ r, c });
+            }
+            return path;
+        }
+
+        function initLevel(levelIndex) {
+            currentLevelIdx = levelIndex;
+            const config = LEVEL_CONFIGS[currentLevelIdx];
+
+            // Reset States
+            lives = 3;
+            hintsRemaining = 3;
+            playerPathIndex = 0;
+            activeHintTile = null;
+            updateLivesUI();
+            updateHintUI();
+
+            // Update UI Labels
+            document.getElementById('levelBadge').innerText = `Level ${config.level} / 10`;
+            document.getElementById('levelDifficulty').innerText = config.difficulty;
+            document.getElementById('patternTitle').innerText = config.title;
+            document.getElementById('patternDesc').innerText = config.desc;
+            document.getElementById('sequenceGuideText').innerText = config.guide;
+
+            // Generate Path & Sequence
+            solutionPath = generateGuaranteedMazePath(GRID_SIZE, GRID_SIZE);
+            sequenceValues = config.sequenceGen(solutionPath.length);
+
+            // Populate Grid Data (10x10)
+            gridValues = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(null));
+
+            // Fill Solution Path with Sequence
+            for (let i = 0; i < solutionPath.length; i++) {
+                let pos = solutionPath[i];
+                gridValues[pos.r][pos.c] = sequenceValues[i];
+            }
+
+            // Fill Non-Path Tiles with Distractors
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    if (gridValues[r][c] === null) {
+                        let candidate;
+                        let validDistractor = false;
+                        let attempts = 0;
+
+                        while (!validDistractor && attempts < 50) {
+                            attempts++;
+                            candidate = config.distractorGen(sequenceValues[Math.floor(Math.random() * sequenceValues.length)]);
+                            
+                            // RULE: Distractor adjacent to path[k] MUST NOT equal sequenceValues[k+1]
+                            validDistractor = true;
+                            let adjDirs = [{r:-1,c:0},{r:1,c:0},{r:0,c:-1},{r:0,c:1}];
+                            
+                            for (let dir of adjDirs) {
+                                let ar = r + dir.r;
+                                let ac = c + dir.c;
+                                if (ar >= 0 && ar < GRID_SIZE && ac >= 0 && ac < GRID_SIZE) {
+                                    // check if adjacent cell is path step k
+                                    let pathIdx = solutionPath.findIndex(p => p.r === ar && p.c === ac);
+                                    if (pathIdx !== -1 && pathIdx < solutionPath.length - 1) {
+                                        let requiredNextVal = sequenceValues[pathIdx + 1];
+                                        if (candidate === requiredNextVal) {
+                                            validDistractor = false;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        gridValues[r][c] = candidate;
+                    }
+                }
+            }
+
+            // Render Board UI
+            renderBoard();
+            updateTargetUI();
+
+            // Reset & Start Timer
+            startTimer();
+        }
+
+        function renderBoard() {
+            const mazeGrid = document.getElementById('mazeGrid');
+            mazeGrid.innerHTML = '';
+
+            const currentPos = solutionPath[playerPathIndex];
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const tile = document.createElement('div');
+                    tile.id = `tile-${r}-${c}`;
+                    tile.className = 'tile';
+                    tile.innerText = gridValues[r][c];
+
+                    // Identify Start and Finish
+                    if (r === 0 && c === 0) tile.classList.add('start');
+                    if (r === GRID_SIZE - 1 && c === GRID_SIZE - 1) tile.classList.add('finish');
+
+                    // Check if visited in path
+                    let visitedStep = -1;
+                    for (let step = 0; step <= playerPathIndex; step++) {
+                        if (solutionPath[step].r === r && solutionPath[step].c === c) {
+                            visitedStep = step;
+                            break;
+                        }
+                    }
+
+                    if (visitedStep !== -1) {
+                        tile.classList.add('visited');
+                    }
+
+                    // Player Current Location
+                    if (currentPos.r === r && currentPos.c === c) {
+                        tile.classList.add('player');
+                        tile.innerHTML = `<span class="z-10">${gridValues[r][c]}</span><i class="fa-solid fa-location-dot absolute -top-2 text-xs text-cyan-300 animate-bounce"></i>`;
+                    }
+
+                    // Allow direct click on adjacent tiles
+                    tile.addEventListener('click', () => handleTileClick(r, c));
+
+                    mazeGrid.appendChild(tile);
+                }
+            }
+        }
+
+        function handleTileClick(r, c) {
+            const currentPos = solutionPath[playerPathIndex];
+            const dr = Math.abs(currentPos.r - r);
+            const dc = Math.abs(currentPos.c - c);
+
+            // Must be adjacent (1 step horizontally or vertically)
+            if ((dr === 1 && dc === 0) || (dr === 0 && dc === 1)) {
+                let dir = null;
+                if (r < currentPos.r) dir = 'UP';
+                else if (r > currentPos.r) dir = 'DOWN';
+                else if (c < currentPos.c) dir = 'LEFT';
+                else if (c > currentPos.c) dir = 'RIGHT';
+
+                if (dir) movePlayer(dir);
+            }
+        }
+
+        function movePlayer(direction) {
+            const currentPos = solutionPath[playerPathIndex];
+            let nextR = currentPos.r;
+            let nextC = currentPos.c;
+
+            if (direction === 'UP') nextR--;
+            else if (direction === 'DOWN') nextR++;
+            else if (direction === 'LEFT') nextC--;
+            else if (direction === 'RIGHT') nextC++;
+
+            // Boundary Check
+            if (nextR < 0 || nextR >= GRID_SIZE || nextC < 0 || nextC >= GRID_SIZE) {
+                return;
+            }
+
+            // Check if stepping BACK onto previous tile (allowed without penalty)
+            if (playerPathIndex > 0) {
+                let prevPos = solutionPath[playerPathIndex - 1];
+                if (prevPos.r === nextR && prevPos.c === nextC) {
+                    playerPathIndex--;
+                    playSound('step');
+                    renderBoard();
+                    updateTargetUI();
+                    return;
+                }
+            }
+
+            // Check if stepping onto CORRECT Next Path Tile
+            const correctNextPos = solutionPath[playerPathIndex + 1];
+            if (correctNextPos && nextR === correctNextPos.r && nextC === correctNextPos.c) {
+                // Correct Move!
+                playerPathIndex++;
+                playSound('step');
+                clearHintHighlight();
+
+                // Check Win Condition
+                if (playerPathIndex === solutionPath.length - 1) {
+                    renderBoard();
+                    handleLevelVictory();
+                } else {
+                    renderBoard();
+                    updateTargetUI();
+                }
+            } else {
+                // WRONG MOVE!
+                playSound('error');
+                shakeTile(nextR, nextC);
+                deductLife();
+            }
+        }
+
+        function shakeTile(r, c) {
+            const tile = document.getElementById(`tile-${r}-${c}`);
+            if (tile) {
+                tile.classList.add('wrong-shake');
+                setTimeout(() => {
+                    tile.classList.remove('wrong-shake');
+                }, 400);
+            }
+        }
+
+        function deductLife() {
+            lives--;
+            updateLivesUI();
+
+            if (lives <= 0) {
+                clearInterval(timerInterval);
+                document.getElementById('gameOverModal').classList.remove('hidden');
+            }
+        }
+
+        function updateLivesUI() {
+            const container = document.getElementById('livesContainer');
+            let heartsHTML = '';
+            for (let i = 0; i < 3; i++) {
+                if (i < lives) {
+                    heartsHTML += '<i class="fa-solid fa-heart text-red-500"></i>';
+                } else {
+                    heartsHTML += '<i class="fa-regular fa-heart text-slate-600"></i>';
+                }
+            }
+            container.innerHTML = heartsHTML;
+        }
+
+        function updateTargetUI() {
+            const nextVal = sequenceValues[playerPathIndex + 1];
+            const targetEl = document.getElementById('targetNumber');
+            if (nextVal !== undefined) {
+                targetEl.innerText = nextVal;
+            } else {
+                targetEl.innerText = 'FINISH';
+            }
+        }
+
+        function useHint() {
+            if (hintsRemaining <= 0) return;
+            const nextPos = solutionPath[playerPathIndex + 1];
+            if (!nextPos) return;
+
+            hintsRemaining--;
+            updateHintUI();
+
+            clearHintHighlight();
+            const tile = document.getElementById(`tile-${nextPos.r}-${nextPos.c}`);
+            if (tile) {
+                tile.classList.add('hint-highlight');
+                activeHintTile = tile;
+                setTimeout(() => {
+                    clearHintHighlight();
+                }, 2500);
+            }
+        }
+
+        function clearHintHighlight() {
+            if (activeHintTile) {
+                activeHintTile.classList.remove('hint-highlight');
+                activeHintTile = null;
+            }
+        }
+
+        function updateHintUI() {
+            document.getElementById('hintCount').innerText = hintsRemaining;
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerSeconds = 0;
+            updateTimerDisplay();
+
+            timerInterval = setInterval(() => {
+                timerSeconds++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
+            const secs = (timerSeconds % 60).toString().padStart(2, '0');
+            document.getElementById('timerDisplay').innerText = `${mins}:${secs}`;
+        }
+
+        function handleLevelVictory() {
+            clearInterval(timerInterval);
+            playSound('win');
+
+            // Trigger Confetti
+            try {
+                confetti({
+                    particleCount: 80,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            } catch (e) {}
+
+            const mins = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
+            const secs = (timerSeconds % 60).toString().padStart(2, '0');
+            document.getElementById('winTime').innerText = `${mins}:${secs}`;
+
+            // Calculate Stars based on remaining lives
+            let starsHTML = '';
+            for (let i = 0; i < 3; i++) {
+                if (i < lives) starsHTML += '<i class="fa-solid fa-star text-amber-400 mr-1"></i>';
+                else starsHTML += '<i class="fa-regular fa-star text-slate-600 mr-1"></i>';
+            }
+            document.getElementById('starRating').innerHTML = starsHTML;
+
+            // Lives display in modal
+            let heartsHTML = '';
+            for (let i = 0; i < lives; i++) heartsHTML += '❤️';
+            document.getElementById('winLives').innerText = heartsHTML;
+
+            // Show/Hide Next Level Button
+            const nextBtn = document.getElementById('nextLevelBtn');
+            if (currentLevelIdx >= LEVEL_CONFIGS.length - 1) {
+                nextBtn.innerHTML = 'Selamat! Semua Level Tamat <i class="fa-solid fa-crown ml-1"></i>';
+                nextBtn.onclick = () => {
+                    closeModal('victoryModal');
+                    initLevel(0);
+                };
+            } else {
+                nextBtn.innerHTML = 'Level Berikutnya <i class="fa-solid fa-arrow-right ml-1"></i>';
+                nextBtn.onclick = () => {
+                    closeModal('victoryModal');
+                    nextLevel();
+                };
+            }
+
+            document.getElementById('victoryModal').classList.remove('hidden');
+        }
+
+        function resetLevel() {
+            initLevel(currentLevelIdx);
+        }
+
+        function nextLevel() {
+            if (currentLevelIdx < LEVEL_CONFIGS.length - 1) {
+                currentLevelIdx++;
+                document.getElementById('levelSelect').value = currentLevelIdx;
+                initLevel(currentLevelIdx);
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function openRulesModal() {
+            document.getElementById('rulesModal').classList.remove('hidden');
+        }
+
+        // Keyboard Arrow & WASD Navigation
+        window.addEventListener('keydown', (e) => {
+            const activeModal = document.querySelector('.fixed:not(.hidden)');
+            if (activeModal) return; // ignore controls if modal is open
+
+            switch (e.key) {
+                case 'ArrowUp':
+                case 'w':
+                case 'W':
+                    e.preventDefault();
+                    movePlayer('UP');
+                    break;
+                case 'ArrowDown':
+                case 's':
+                case 'S':
+                    e.preventDefault();
+                    movePlayer('DOWN');
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                    e.preventDefault();
+                    movePlayer('LEFT');
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                    e.preventDefault();
+                    movePlayer('RIGHT');
+                    break;
+            }
+        });
+
+        // Initialize Level Dropdown & Start First Level
+        window.onload = () => {
+            const levelSelect = document.getElementById('levelSelect');
+            levelSelect.innerHTML = '';
+
+            LEVEL_CONFIGS.forEach((cfg, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.innerText = `Lvl ${cfg.level}: ${cfg.title.split(':')[1] || cfg.title}`;
+                levelSelect.appendChild(opt);
+            });
+
+            levelSelect.addEventListener('change', (e) => {
+                initLevel(parseInt(e.target.value));
+            });
+
+            // Start Level 1
+            initLevel(0);
+        };
+    </script>
+</body>
+</html>
