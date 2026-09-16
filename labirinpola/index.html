@@ -493,14 +493,20 @@
             },
             {
                 level: 6,
-                title: "Pola: Deret Geometri (Perkalian x2)",
+                title: "Pola: Selang-Seling (+4, lalu +2)",
                 difficulty: "Sedang",
                 diffColor: "amber",
-                desc: "Mulai dari 1, kalikan 2 setiap langkah (1, 2, 4, 8, 16, 32, ...)",
-                guide: "Setiap angka berlipat ganda dari angka sebelumnya.",
-                sequenceGen: (len) => Array.from({length: len}, (_, i) => Math.pow(2, i)),
+                desc: "Mulai dari 2, bergantian +4 lalu +2 (2, 6, 8, 12, 14, 18, ...)",
+                guide: "Perhatikan perubahannya: tambah 4, lalu tambah 2, lalu tambah 4 lagi!",
+                sequenceGen: (len) => {
+                    let seq = [2];
+                    for (let i = 1; i < len; i++) {
+                        seq.push(seq[i - 1] + (i % 2 !== 0 ? 4 : 2));
+                    }
+                    return seq;
+                },
                 distractorGen: (correctVal) => {
-                    let off = Math.floor(correctVal * 0.25) + 1;
+                    let off = Math.floor(Math.random() * 3) + 1;
                     return Math.max(1, correctVal + (Math.random() < 0.5 ? off : -off));
                 }
             },
@@ -533,12 +539,18 @@
             },
             {
                 level: 9,
-                title: "Pola: Deret Fibonacci",
+                title: "Pola: Selang-Seling (+6, lalu -2)",
                 difficulty: "Sangat Sulit",
                 diffColor: "rose",
-                desc: "Penjumlahan 2 angka sebelumnya (1, 2, 3, 5, 8, 13, 21, 34, ...)",
-                guide: "Suku berikutnya = (suku sebelumnya) + (suku sebelum-sebelumnya).",
-                sequenceGen: (len) => getFibonacci(len),
+                desc: "Mulai dari 5, bergantian +6 lalu -2 (5, 11, 9, 15, 13, 19, ...)",
+                guide: "Perhatikan perubahannya: tambah 6, lalu kurangi 2, lalu tambah 6 lagi!",
+                sequenceGen: (len) => {
+                    let seq = [5];
+                    for (let i = 1; i < len; i++) {
+                        seq.push(seq[i - 1] + (i % 2 !== 0 ? 6 : -2));
+                    }
+                    return seq;
+                },
                 distractorGen: (correctVal) => {
                     let off = Math.floor(Math.random() * 4) + 1;
                     return Math.max(1, correctVal + (Math.random() < 0.5 ? off : -off));
