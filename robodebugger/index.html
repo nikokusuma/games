@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game 3: Temukan Bug (Debugging)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                        sans: ['Plus Jakarta Sans', 'sans-serif']
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Fredoka', 'Plus Jakarta Sans', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .grid-tile {
+            transition: all 0.2s ease;
+        }
+        .robot-anim {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .pulse-subtle {
+            animation: pulse-slow 2s infinite ease-in-out;
+        }
+        @keyframes pulse-slow {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .shake-bug {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+        /* Custom scrollbar for blocks tray */
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+    <!-- TOP HEADER -->
+    <header class="bg-slate-800/90 backdrop-blur border-b border-slate-700/60 sticky top-0 z-30 px-4 py-3 shadow-md">
+        <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <!-- Game Title & Badge -->
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-600 text-white p-2.5 rounded-2xl shadow-lg shadow-indigo-500/30 flex items-center justify-center">
+                    <span class="text-2xl">🐞</span>
+                </div>
+                <div>
+                    <h1 class="font-fredoka text-xl sm:text-2xl font-bold tracking-wide text-white flex items-center gap-2">
+                        Temukan Bug! <span class="text-xs bg-indigo-500/20 text-indigo-300 font-semibold px-2.5 py-0.5 rounded-full border border-indigo-500/30">Debugging</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Deteksi kesalahan algoritma & perbaiki jalur robot</p>
+                </div>
+            </div>
+
+            <!-- Global Action Controls -->
+            <div class="flex items-center gap-2 sm:gap-3 ml-auto">
+                <!-- Level Selector Modal Button -->
+                <button id="btn-level-menu" onclick="openLevelModal()" class="bg-slate-700 hover:bg-slate-600 active:scale-95 text-white text-sm font-bold px-3.5 py-2 rounded-xl border border-slate-600 transition flex items-center gap-2 shadow-sm">
+                    <span>🎮 Level <span id="current-level-num" class="text-indigo-400 font-extrabold">1</span>/20</span>
+                    <span class="text-xs opacity-60">▼</span>
+                </button>
+
+                <!-- Sound Toggle -->
+                <button id="btn-sound" onclick="toggleSound()" class="bg-slate-700 hover:bg-slate-600 active:scale-95 text-white p-2.5 rounded-xl border border-slate-600 transition" title="Suara On/Off">
+                    <span id="sound-icon" class="text-lg">🔊</span>
+                </button>
+
+                <!-- Help Info Button -->
+                <button onclick="openHelpModal()" class="bg-indigo-600/20 hover:bg-indigo-600/30 active:scale-95 text-indigo-300 text-sm font-bold p-2.5 rounded-xl border border-indigo-500/30 transition">
+                    <span class="text-lg">❓</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN GAME WORKSPACE -->
+    <main class="max-w-6xl w-full mx-auto p-3 sm:p-5 flex-1 flex flex-col lg:flex-row gap-5 items-stretch justify-center">
+        
+        <!-- LEFT PANEL: GRID BOARD & STATUS -->
+        <section class="flex-1 bg-slate-800/60 backdrop-blur rounded-3xl p-4 sm:p-6 border border-slate-700/80 shadow-xl flex flex-col justify-between items-center relative overflow-hidden">
+            
+            <!-- Level Meta Bar -->
+            <div class="w-full flex items-center justify-between mb-4 bg-slate-900/60 p-3 rounded-2xl border border-slate-700/50">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs uppercase font-bold tracking-wider text-slate-400">Tingkat Kesulitan:</span>
+                    <span id="difficulty-badge" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        Mudah
+                    </span>
+                </div>
+                
+                <!-- Iteration / Trial Counter Indicator -->
+                <div class="flex items-center gap-2 bg-indigo-950/80 px-3.5 py-1.5 rounded-xl border border-indigo-500/40">
+                    <span class="text-lg">🧪</span>
+                    <div class="text-right">
+                        <span class="text-[10px] text-indigo-300 block leading-tight font-semibold uppercase">Uji Coba Kode</span>
+                        <span class="text-sm font-bold text-white font-mono"><span id="trial-counter" class="text-amber-400 text-base">0</span> Iterasi</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description / Hint Box -->
+            <div id="level-hint-box" class="w-full bg-slate-900/40 border border-slate-700/40 rounded-xl p-3 mb-4 text-xs sm:text-sm text-slate-300 flex items-start gap-2.5">
+                <span class="text-base flex-shrink-0">💡</span>
+                <p id="level-instruction-text" class="leading-relaxed">
+                    Robot ingin mencapai Bintang ⭐! Namun, ada bug pada kode di bawah. Temukan & perbaiki panah yang salah arah!
+                </p>
+            </div>
+
+            <!-- Interactive Grid Container -->
+            <div class="relative my-auto flex items-center justify-center p-2 sm:p-4 w-full">
+                <div id="grid-board" class="grid gap-1.5 sm:gap-2 bg-slate-900 p-2 sm:p-3 rounded-2xl border-2 border-slate-700 shadow-2xl relative">
+                    <!-- Tiles will be dynamically injected here -->
+                </div>
+            </div>
+
+            <!-- Execution Status Banner -->
+            <div id="execution-status-bar" class="w-full mt-4 min-h-[44px] flex items-center justify-center bg-slate-900/80 rounded-xl border border-slate-700 px-4 py-2 text-center text-xs sm:text-sm font-semibold text-slate-400">
+                <span>Tekan tombol <strong class="text-emerald-400">Uji Coba Kode 🧪</strong> untuk menjalankan robot.</span>
+            </div>
+        </section>
+
+        <!-- RIGHT PANEL: CODE EDITOR & ALGORITHM TRAY -->
+        <section class="w-full lg:w-[480px] bg-slate-800/80 backdrop-blur rounded-3xl p-4 sm:p-6 border border-slate-700/80 shadow-xl flex flex-col justify-between">
+            <div>
+                <!-- Panel Title & Controls -->
+                <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-700/80">
+                    <div>
+                        <h2 class="font-fredoka text-lg font-bold text-white flex items-center gap-2">
+                            <span>📜 Rantai Kode Algoritma</span>
+                        </h2>
+                        <p class="text-xs text-slate-400">Klik blok untuk **memutar panah** atau hapus (🗑️)</p>
+                    </div>
+                    <button onclick="resetCodeToBuggy()" class="bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-600 transition flex items-center gap-1.5" title="Kembalikan ke kode awal berpenyakit bug">
+                        <span>🔄 Reset Bug</span>
+                    </button>
+                </div>
+
+                <!-- Code Sequence Display Container -->
+                <div class="mb-4">
+                    <div id="code-blocks-container" class="flex flex-wrap gap-2.5 min-h-[140px] max-h-[320px] overflow-y-auto p-3 bg-slate-900/90 rounded-2xl border-2 border-slate-700/80 custom-scrollbar items-start content-start">
+                        <!-- Code blocks rendered dynamically -->
+                    </div>
+                </div>
+
+                <!-- Block Manipulators / Add Block Palette -->
+                <div class="bg-slate-900/50 p-3 rounded-2xl border border-slate-700/60 mb-4">
+                    <div class="text-[11px] font-bold text-slate-400 uppercase mb-2 tracking-wider flex justify-between items-center">
+                        <span>➕ Tambah Blok Panah Baru:</span>
+                        <span class="text-[10px] text-slate-500 font-normal">Klik untuk menyisipkan</span>
+                    </div>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button onclick="appendBlock('UP')" class="bg-slate-800 hover:bg-indigo-600 active:scale-95 text-white font-bold py-2 rounded-xl border border-slate-700 transition flex flex-col items-center justify-center gap-0.5 text-xs">
+                            <span class="text-base">⬆️</span>
+                            <span class="text-[10px]">ATAS</span>
+                        </button>
+                        <button onclick="appendBlock('RIGHT')" class="bg-slate-800 hover:bg-indigo-600 active:scale-95 text-white font-bold py-2 rounded-xl border border-slate-700 transition flex flex-col items-center justify-center gap-0.5 text-xs">
+                            <span class="text-base">➡️</span>
+                            <span class="text-[10px]">KANAN</span>
+                        </button>
+                        <button onclick="appendBlock('DOWN')" class="bg-slate-800 hover:bg-indigo-600 active:scale-95 text-white font-bold py-2 rounded-xl border border-slate-700 transition flex flex-col items-center justify-center gap-0.5 text-xs">
+                            <span class="text-base">⬇️</span>
+                            <span class="text-[10px]">BAWAH</span>
+                        </button>
+                        <button onclick="appendBlock('LEFT')" class="bg-slate-800 hover:bg-indigo-600 active:scale-95 text-white font-bold py-2 rounded-xl border border-slate-700 transition flex flex-col items-center justify-center gap-0.5 text-xs">
+                            <span class="text-base">⬅️</span>
+                            <span class="text-[10px]">KIRI</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PRIMARY ACTION BUTTON: TEST CODE 🧪 -->
+            <div class="pt-2">
+                <button id="btn-test-code" onclick="startExecution()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 active:scale-[0.98] text-white font-fredoka text-lg font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-emerald-900/40 border border-emerald-400/30 transition flex items-center justify-center gap-3">
+                    <span class="text-2xl animate-bounce">🧪</span>
+                    <span>UJI COBA KODE!</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-950 py-3 px-4 border-t border-slate-800 text-center text-xs text-slate-500">
+        Game Edutainment Algoritma & Debugging Anak &bull; Belajar Berpikir Komputasional
+    </footer>
+
+    <!-- MODAL: LEVEL SELECTOR -->
+    <div id="modal-level-select" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-800 border border-slate-700 rounded-3xl max-w-xl w-full p-6 shadow-2xl relative max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-700 mb-4">
+                <h3 class="font-fredoka text-xl font-bold text-white flex items-center gap-2">
+                    <span>🗺️ Pilih Level Debugging</span>
+                </h3>
+                <button onclick="closeLevelModal()" class="text-slate-400 hover:text-white p-1 rounded-lg text-lg">✕</button>
+            </div>
+            
+            <div id="levels-grid-container" class="grid grid-cols-4 sm:grid-cols-5 gap-3 overflow-y-auto p-1 custom-scrollbar flex-1">
+                <!-- Level cards rendered dynamically -->
+            </div>
+
+            <div class="mt-5 pt-3 border-t border-slate-700 flex justify-between items-center text-xs text-slate-400">
+                <span>⭐ = Penilaian Bintang berdasarkan jumlah uji coba.</span>
+                <button onclick="closeLevelModal()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-4 py-2 rounded-xl">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: LEVEL VICTORY CELEBRATION -->
+    <div id="modal-victory" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-800 border-2 border-indigo-500/50 rounded-3xl max-w-md w-full p-6 text-center shadow-2xl relative transform transition-all scale-100">
+            <div class="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-4xl mx-auto mb-3 border border-emerald-500/40 animate-bounce">
+                🎉
+            </div>
+            <h2 class="font-fredoka text-2xl font-bold text-white mb-1">Hore! Bug Berhasil Diperbaiki!</h2>
+            <p class="text-sm text-slate-300 mb-4">Robot berhasil mencapai Bintang ⭐ tanpa menabrak rintangan!</p>
+
+            <!-- Rating Stars Display -->
+            <div id="victory-stars" class="flex items-center justify-center gap-2 text-3xl mb-4">
+                <!-- Stars rendered via JS -->
+            </div>
+
+            <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-700 mb-6 text-left text-xs space-y-1.5">
+                <div class="flex justify-between">
+                    <span class="text-slate-400">Jumlah Uji Coba (Iterasi):</span>
+                    <span id="victory-trials" class="font-bold text-amber-400">2 Kali</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-400">Predikat Pencapaian:</span>
+                    <span id="victory-grade" class="font-bold text-indigo-300">Master Debugger 🌟</span>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="retryCurrentLevel()" class="flex-1 bg-slate-700 hover:bg-slate-600 active:scale-95 text-white font-bold py-3 rounded-2xl transition text-sm">
+                    🔄 Coba Lagi
+                </button>
+                <button id="btn-next-level" onclick="nextLevel()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold py-3 rounded-2xl transition text-sm shadow-lg shadow-indigo-600/30">
+                    Level Berikutnya ➡️
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: HOW TO PLAY / HELP -->
+    <div id="modal-help" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-800 border border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl text-slate-200">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-700 mb-4">
+                <h3 class="font-fredoka text-xl font-bold text-white flex items-center gap-2">
+                    <span>📖 Cara Bermain Debugging</span>
+                </h3>
+                <button onclick="closeHelpModal()" class="text-slate-400 hover:text-white p-1 rounded-lg text-lg">✕</button>
+            </div>
+            
+            <div class="space-y-3.5 text-xs sm:text-sm leading-relaxed">
+                <div class="flex items-start gap-3 bg-slate-900/60 p-3 rounded-2xl border border-slate-700/50">
+                    <span class="text-xl bg-indigo-500/20 p-2 rounded-xl text-indigo-300">1️⃣</span>
+                    <div>
+                        <strong class="text-white block font-semibold mb-0.5">Cari Letak Bug (Kesalahan)</strong>
+                        <span>Perhatikan rute robot di papan. Kode awal sengaja memiliki instruksi panah yang salah atau berlebih.</span>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-3 bg-slate-900/60 p-3 rounded-2xl border border-slate-700/50">
+                    <span class="text-xl bg-emerald-500/20 p-2 rounded-xl text-emerald-300">2️⃣</span>
+                    <div>
+                        <strong class="text-white block font-semibold mb-0.5">Perbaiki Kode</strong>
+                        <span>Klik **Blok Panah** untuk memutar arahnya (ATAS ➡️ KANAN ➡️ BAWAH ➡️ KIRI), atau klik ikon **🗑️ Hapus** jika ada blok berlebih!</span>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-3 bg-slate-900/60 p-3 rounded-2xl border border-slate-700/50">
+                    <span class="text-xl bg-amber-500/20 p-2 rounded-xl text-amber-300">3️⃣</span>
+                    <div>
+                        <strong class="text-white block font-semibold mb-0.5">Uji Coba Kode 🧪</strong>
+                        <span>Tekan tombol hijau untuk menjalankan program. Raih **3 Bintang** dengan menyelesaikan level dalam **≤ 2 kali uji coba**!</span>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="closeHelpModal()" class="w-full mt-5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-2xl transition text-sm">
+                Saya Mengerti, Mulai Main!
+            </button>
+        </div>
+    </div>
+
+    <!-- GAME LOGIC ENGINE -->
+    <script>
+        // Audio Synthesizer via Web Audio API
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) {
+                        this.ctx = new AudioContext();
+                    }
+                }
+            }
+
+            playStep() {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+                
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(320, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(540, this.ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+                
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.08);
+            }
+
+            playRotate() {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.1);
+            }
+
+            playDelete() {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(500, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(200, this.ctx.currentTime + 0.12);
+                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.12);
+            }
+
+            playBug() {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(160, this.ctx.currentTime);
+                osc.frequency.setValueAtTime(110, this.ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.35);
+            }
+
+            playWin() {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.2, this.ctx.currentTime + idx * 0.12);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + idx * 0.12 + 0.25);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(this.ctx.currentTime + idx * 0.12);
+                    osc.stop(this.ctx.currentTime + idx * 0.12 + 0.25);
+                });
+            }
+        }
+
+        const sounds = new SoundEngine();
+
+        /**
+         * 20 LEVELS CONFIGURATION
+         * Grid Coords: x (col 0..N-1), y (row 0..N-1)
+         * Directions: UP (0,-1), RIGHT (1,0), DOWN (0,1), LEFT (-1,0)
+         */
+        const LEVELS_DATA = [
+            // Level 1: Basic rotation (1 bug)
+            {
+                id: 1, difficulty: "Dasar",
+                gridSize: 4, start: { x: 0, y: 0 }, goal: { x: 3, y: 0 }, walls: [],
+                buggyCode: ['RIGHT', 'RIGHT', 'DOWN'],
+                hint: "Panah terakhir mengarah ke BAWAH. Putar menjadi KANAN agar mencapai bintang!"
+            },
+            // Level 2: Basic rotation (1 bug)
+            {
+                id: 2, difficulty: "Dasar",
+                gridSize: 4, start: { x: 1, y: 3 }, goal: { x: 2, y: 1 }, walls: [],
+                buggyCode: ['UP', 'LEFT', 'UP'],
+                hint: "Arah ke-2 salah menunjuk ke KIRI. Putar ke KANAN!"
+            },
+            // Level 3: Vertical track fix
+            {
+                id: 3, difficulty: "Dasar",
+                gridSize: 4, start: { x: 2, y: 0 }, goal: { x: 2, y: 3 }, walls: [],
+                buggyCode: ['DOWN', 'DOWN', 'UP'],
+                hint: "Langkah ke-3 kembali ke ATAS! Ubah menjadi BAWAH."
+            },
+            // Level 4: Simple corner fix
+            {
+                id: 4, difficulty: "Dasar",
+                gridSize: 4, start: { x: 0, y: 1 }, goal: { x: 2, y: 2 }, walls: [{x: 1, y: 1}],
+                buggyCode: ['RIGHT', 'RIGHT', 'DOWN', 'RIGHT'],
+                hint: "Robot menabrak tembok di (1,1) jika belok terlalu cepat! Ubah instruksi ke-2 ke BAWAH."
+            },
+            // Level 5: Redundant back step (1 block to replace/rotate)
+            {
+                id: 5, difficulty: "Dasar",
+                gridSize: 4, start: { x: 1, y: 3 }, goal: { x: 3, y: 1 }, walls: [],
+                buggyCode: ['UP', 'RIGHT', 'RIGHT', 'LEFT'],
+                hint: "Langkah terakhir justru mundur ke KIRI. Putar panah itu ke ATAS!"
+            },
+
+            // Level 6: Wall detour (1 bug)
+            {
+                id: 6, difficulty: "Menengah",
+                gridSize: 5, start: { x: 0, y: 0 }, goal: { x: 3, y: 1 }, walls: [{ x: 1, y: 0 }],
+                buggyCode: ['DOWN', 'RIGHT', 'RIGHT', 'UP'],
+                hint: "Ada tembok menghalangi di atas. Cari rute memutar yang aman!"
+            },
+            // Level 7: Extra bad block (delete required)
+            {
+                id: 7, difficulty: "Menengah",
+                gridSize: 5, start: { x: 0, y: 3 }, goal: { x: 3, y: 2 }, walls: [],
+                buggyCode: ['UP', 'RIGHT', 'LEFT', 'RIGHT', 'RIGHT', 'DOWN'],
+                hint: "Ada blok 'KIRI' mubazir di tengah rantai! Hapus (🗑️) blok tersebut."
+            },
+            // Level 8: 2 arrow bugs
+            {
+                id: 8, difficulty: "Menengah",
+                gridSize: 5, start: { x: 0, y: 0 }, goal: { x: 3, y: 2 }, walls: [{x: 2, y: 0}],
+                buggyCode: ['DOWN', 'RIGHT', 'DOWN', 'DOWN', 'RIGHT'],
+                hint: "Terdapat 2 panah berturut-turut yang salah arah. Perbaiki rantai jalurnya!"
+            },
+            // Level 9: Obstacle detour fix
+            {
+                id: 9, difficulty: "Menengah",
+                gridSize: 5, start: { x: 0, y: 1 }, goal: { x: 3, y: 3 }, walls: [{ x: 2, y: 1 }, { x: 2, y: 2 }],
+                buggyCode: ['RIGHT', 'RIGHT', 'UP', 'UP', 'DOWN'],
+                hint: "Tembok ganda menghadang! Ubah instruksi agar mengitari bawah tembok."
+            },
+            // Level 10: 1 delete + 1 rotate
+            {
+                id: 10, difficulty: "Menengah",
+                gridSize: 5, start: { x: 1, y: 4 }, goal: { x: 3, y: 1 }, walls: [{ x: 2, y: 3 }],
+                buggyCode: ['UP', 'RIGHT', 'UP', 'LEFT', 'LEFT', 'UP'],
+                hint: "Hapus 1 blok KIRI berlebih dan putar panah selebihnya ke arah bintang."
+            },
+
+            // Level 11: Multi-step zig-zag
+            {
+                id: 11, difficulty: "Mahir",
+                gridSize: 6, start: { x: 0, y: 0 }, goal: { x: 2, y: 4 }, walls: [{ x: 1, y: 1 }, { x: 0, y: 3 }],
+                buggyCode: ['DOWN', 'DOWN', 'RIGHT', 'DOWN', 'LEFT', 'DOWN'],
+                hint: "Langkah menyimpang ke KIRI menabrak batas. Koreksi rute tangga ini."
+            },
+            // Level 12: Wall maze
+            {
+                id: 12, difficulty: "Mahir",
+                gridSize: 6, start: { x: 1, y: 0 }, goal: { x: 4, y: 2 }, walls: [{ x: 2, y: 0 }, { x: 2, y: 1 }],
+                buggyCode: ['RIGHT', 'UP', 'RIGHT', 'UP', 'DOWN', 'RIGHT'],
+                hint: "Dua tembok menghalangi di atas. Bawa robot memutar lewat kanan!"
+            },
+            // Level 13: Delete redundant loop & rotate
+            {
+                id: 13, difficulty: "Mahir",
+                gridSize: 6, start: { x: 0, y: 3 }, goal: { x: 3, y: 0 }, walls: [{ x: 1, y: 2 }],
+                buggyCode: ['UP', 'RIGHT', 'UP', 'LEFT', 'LEFT', 'UP', 'RIGHT'],
+                hint: "Robot berputar-putar tanpa hasil. Hapus blok nyasar dan luruskan rute!"
+            },
+            // Level 14: Staircase pattern with 2 bugs
+            {
+                id: 14, difficulty: "Mahir",
+                gridSize: 6, start: { x: 0, y: 0 }, goal: { x: 4, y: 3 }, walls: [{ x: 1, y: 1 }, { x: 3, y: 2 }],
+                buggyCode: ['DOWN', 'RIGHT', 'DOWN', 'DOWN', 'RIGHT', 'UP', 'RIGHT'],
+                hint: "Pola zig-zag tangga terganggu oleh panah menyimpang. Sesuaikan arahnya."
+            },
+            // Level 15: Delete 2 reverse blocks
+            {
+                id: 15, difficulty: "Mahir",
+                gridSize: 6, start: { x: 0, y: 0 }, goal: { x: 3, y: 3 }, walls: [{ x: 2, y: 1 }],
+                buggyCode: ['RIGHT', 'RIGHT', 'LEFT', 'DOWN', 'DOWN', 'UP', 'RIGHT', 'DOWN'],
+                hint: "Ada 2 panah bolak-balik (KIRI & ATAS) yang membuang langkah. Hapus keduanya!"
+            },
+
+            // Level 16: Complex maze (Delete 2 & Rotate 1)
+            {
+                id: 16, difficulty: "Kompleks",
+                gridSize: 7, start: { x: 0, y: 1 }, goal: { x: 4, y: 3 }, walls: [{ x: 1, y: 1 }, { x: 2, y: 1 }, { x: 3, y: 1 }],
+                buggyCode: ['RIGHT', 'DOWN', 'RIGHT', 'UP', 'LEFT', 'LEFT', 'RIGHT', 'DOWN', 'RIGHT'],
+                hint: "Robot terjebak dalam looping ke KIRI. Hapus 2 blok mundur dan arahkan ke bawah tembok."
+            },
+            // Level 17: Delete 3 loop blocks
+            {
+                id: 17, difficulty: "Kompleks",
+                gridSize: 7, start: { x: 1, y: 0 }, goal: { x: 4, y: 4 }, walls: [{ x: 2, y: 2 }, { x: 3, y: 2 }],
+                buggyCode: ['DOWN', 'RIGHT', 'RIGHT', 'UP', 'LEFT', 'DOWN', 'RIGHT', 'DOWN', 'DOWN'],
+                hint: "Algoritma mengalami 'dead loop' 3 langkah di tengah. Hapus putaran tak berguna itu!"
+            },
+            // Level 18: Trap maze (Delete 3 & Rotate 1)
+            {
+                id: 18, difficulty: "Kompleks",
+                gridSize: 7, start: { x: 0, y: 2 }, goal: { x: 4, y: 0 }, walls: [{ x: 1, y: 1 }, { x: 3, y: 1 }],
+                buggyCode: ['RIGHT', 'UP', 'RIGHT', 'RIGHT', 'DOWN', 'DOWN', 'LEFT', 'UP', 'RIGHT', 'UP'],
+                hint: "Jalan buntu! Hapus 3 instruksi jebakan yang membawa robot turun."
+            },
+            // Level 19: Long path (Delete 4 extra blocks)
+            {
+                id: 19, difficulty: "Kompleks",
+                gridSize: 7, start: { x: 1, y: 5 }, goal: { x: 4, y: 1 }, walls: [{ x: 2, y: 3 }, { x: 3, y: 3 }, { x: 4, y: 3 }],
+                buggyCode: ['UP', 'UP', 'RIGHT', 'DOWN', 'DOWN', 'LEFT', 'UP', 'UP', 'RIGHT', 'RIGHT', 'UP'],
+                hint: "Ada 4 blok putar-putar yang membuat robot bolak-balik di selatan tembok. Hapus!"
+            },
+            // Level 20: Ultimate Debug Challenge
+            {
+                id: 20, difficulty: "Kompleks",
+                gridSize: 7, start: { x: 0, y: 1 }, goal: { x: 5, y: 5 }, walls: [{ x: 1, y: 2 }, { x: 3, y: 3 }, { x: 4, y: 3 }],
+                buggyCode: ['DOWN', 'RIGHT', 'DOWN', 'RIGHT', 'UP', 'UP', 'LEFT', 'DOWN', 'RIGHT', 'DOWN', 'RIGHT', 'DOWN'],
+                hint: "Master Debugger Test! Bersihkan 4 blok muter-muter dan koreksi 2 panah untuk rute efisien."
+            }
+        ];
+
+        // GAME STATE
+        let currentLevelIdx = 0;
+        let currentCode = [];
+        let trialCount = 0;
+        let isExecuting = false;
+        let executionTimer = null;
+        let robotPos = { x: 0, y: 0 };
+        let levelStars = {}; // Store stars per level in localStorage
+
+        // Load saved stars from LocalStorage
+        try {
+            const saved = localStorage.getItem('debug_game_stars');
+            if (saved) levelStars = JSON.parse(saved);
+        } catch (e) {
+            console.warn("Storage access limited", e);
+        }
+
+        // DOM ELEMENTS
+        const gridBoard = document.getElementById('grid-board');
+        const codeContainer = document.getElementById('code-blocks-container');
+        const trialCounterEl = document.getElementById('trial-counter');
+        const currentLevelNumEl = document.getElementById('current-level-num');
+        const diffBadgeEl = document.getElementById('difficulty-badge');
+        const levelHintText = document.getElementById('level-instruction-text');
+        const statusBarEl = document.getElementById('execution-status-bar');
+
+        // Direction Meta Helpers
+        const DIR_MAP = {
+            'UP': { symbol: '⬆️', name: 'ATAS', dx: 0, dy: -1, next: 'RIGHT' },
+            'RIGHT': { symbol: '➡️', name: 'KANAN', dx: 1, dy: 0, next: 'DOWN' },
+            'DOWN': { symbol: '⬇️', name: 'BAWAH', dx: 0, dy: 1, next: 'LEFT' },
+            'LEFT': { symbol: '⬅️', name: 'KIRI', dx: -1, dy: 0, next: 'UP' }
+        };
+
+        // Initialize App on DOM Loaded
+        window.addEventListener('DOMContentLoaded', () => {
+            loadLevel(0);
+        });
+
+        // Load Level Data
+        function loadLevel(idx) {
+            if (isExecuting) stopExecution();
+
+            currentLevelIdx = idx;
+            const level = LEVELS_DATA[currentLevelIdx];
+            
+            // Reset states
+            currentCode = [...level.buggyCode];
+            trialCount = 0;
+            robotPos = { ...level.start };
+
+            // Update Header Meta
+            currentLevelNumEl.textContent = level.id;
+            trialCounterEl.textContent = trialCount;
+            levelHintText.textContent = level.hint;
+
+            // Difficulty styling
+            diffBadgeEl.textContent = level.difficulty;
+            if (level.difficulty === 'Dasar') {
+                diffBadgeEl.className = "text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+            } else if (level.difficulty === 'Menengah') {
+                diffBadgeEl.className = "text-xs font-bold px-2.5 py-1 rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/30";
+            } else if (level.difficulty === 'Mahir') {
+                diffBadgeEl.className = "text-xs font-bold px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30";
+            } else {
+                diffBadgeEl.className = "text-xs font-bold px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30";
+            }
+
+            // Render Views
+            renderGrid();
+            renderCodeTray();
+            updateStatusText("Perbaiki panah atau hapus blok yang salah, lalu klik Uji Coba Kode 🧪!");
+        }
+
+        // Render 2D Grid Map
+        function renderGrid() {
+            const level = LEVELS_DATA[currentLevelIdx];
+            const size = level.gridSize;
+
+            gridBoard.style.gridTemplateColumns = `repeat(${size}, minmax(0, 1fr))`;
+            gridBoard.innerHTML = '';
+
+            for (let y = 0; y < size; y++) {
+                for (let x = 0; x < size; x++) {
+                    const tile = document.createElement('div');
+                    tile.id = `tile-${x}-${y}`;
+                    
+                    // Determine Tile Type
+                    const isStart = (x === level.start.x && y === level.start.y);
+                    const isGoal = (x === level.goal.x && y === level.goal.y);
+                    const isWall = level.walls.some(w => w.x === x && w.y === y);
+                    const isRobot = (x === robotPos.x && y === robotPos.y);
+
+                    // Dynamic Tile Sizing
+                    let tileSize = size > 5 ? 'w-10 h-10 sm:w-12 sm:h-12' : 'w-12 h-12 sm:w-14 sm:h-14';
+
+                    tile.className = `${tileSize} rounded-xl flex items-center justify-center text-xl sm:text-2xl font-bold grid-tile relative border transition-all duration-200 `;
+
+                    if (isWall) {
+                        tile.classList.add('bg-slate-800', 'border-slate-700', 'shadow-inner');
+                        tile.innerHTML = `<span class="opacity-80">🧱</span>`;
+                    } else if (isGoal) {
+                        tile.classList.add('bg-amber-500/20', 'border-amber-400/50', 'shadow-lg', 'pulse-subtle');
+                        tile.innerHTML = `<span>⭐</span>`;
+                    } else if (isStart && !isRobot) {
+                        tile.classList.add('bg-indigo-950/40', 'border-indigo-500/30');
+                        tile.innerHTML = `<span class="text-xs text-indigo-400 font-mono">START</span>`;
+                    } else {
+                        tile.classList.add('bg-slate-800/40', 'border-slate-700/40');
+                    }
+
+                    // Render Robot on top tile
+                    if (isRobot) {
+                        tile.classList.add('ring-2', 'ring-indigo-400', 'bg-indigo-600/30');
+                        tile.innerHTML = `<div class="robot-anim text-2xl filter drop-shadow-md">🤖</div>`;
+                    }
+
+                    gridBoard.appendChild(tile);
+                }
+            }
+        }
+
+        // Render Code Blocks Array Tray
+        function renderCodeTray() {
+            codeContainer.innerHTML = '';
+
+            if (currentCode.length === 0) {
+                codeContainer.innerHTML = `
+                    <div class="w-full h-28 flex flex-col items-center justify-center text-slate-500 text-xs gap-1">
+                        <span>📭 Rantai kode kosong.</span>
+                        <span>Tambahkan blok panah baru dari menu di bawah!</span>
+                    </div>
+                `;
+                return;
+            }
+
+            currentCode.forEach((dirKey, index) => {
+                const dir = DIR_MAP[dirKey];
+                const blockEl = document.createElement('div');
+                blockEl.id = `code-block-${index}`;
+                blockEl.className = `group bg-slate-800 hover:bg-slate-700/90 active:scale-95 border-2 border-slate-600/80 hover:border-indigo-400 rounded-2xl p-2.5 flex items-center gap-2 shadow-md cursor-pointer transition select-none relative`;
+
+                blockEl.innerHTML = `
+                    <!-- Step Index Badge -->
+                    <span class="text-[10px] font-bold text-slate-400 bg-slate-900/80 px-1.5 py-0.5 rounded-md font-mono">${index + 1}</span>
+                    
+                    <!-- Arrow Symbol & Clickable Area for Rotation -->
+                    <div onclick="rotateBlock(${index})" class="flex items-center gap-1.5 pr-1">
+                        <span class="text-xl transform transition-transform group-hover:scale-110">${dir.symbol}</span>
+                        <span class="text-xs font-bold text-white tracking-wide">${dir.name}</span>
+                    </div>
+
+                    <!-- Delete Button -->
+                    <button onclick="deleteBlock(${index}, event)" class="ml-1 p-1 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 rounded-lg transition" title="Hapus Blok">
+                        <span class="text-xs">🗑️</span>
+                    </button>
+                `;
+
+                codeContainer.appendChild(blockEl);
+            });
+        }
+
+        // Rotate Arrow Direction on Click
+        function rotateBlock(index) {
+            if (isExecuting) return;
+            sounds.playRotate();
+            const currentDir = currentCode[index];
+            currentCode[index] = DIR_MAP[currentDir].next;
+            renderCodeTray();
+        }
+
+        // Delete Block
+        function deleteBlock(index, event) {
+            if (event) event.stopPropagation();
+            if (isExecuting) return;
+            sounds.playDelete();
+            currentCode.splice(index, 1);
+            renderCodeTray();
+        }
+
+        // Append New Block
+        function appendBlock(dir) {
+            if (isExecuting) return;
+            if (currentCode.length >= 16) {
+                updateStatusText("⚠️ Maksimal 16 blok instruksi per rantai!", "text-amber-400");
+                return;
+            }
+            sounds.playRotate();
+            currentCode.push(dir);
+            renderCodeTray();
+
+            // Auto scroll container to end
+            setTimeout(() => {
+                codeContainer.scrollTop = codeContainer.scrollHeight;
+            }, 50);
+        }
+
+        // Reset Code back to level initial buggy code
+        function resetCodeToBuggy() {
+            if (isExecuting) return;
+            sounds.playDelete();
+            const level = LEVELS_DATA[currentLevelIdx];
+            currentCode = [...level.buggyCode];
+            robotPos = { ...level.start };
+            renderGrid();
+            renderCodeTray();
+            updateStatusText("Kode dikembalikan ke susunan bug awal.", "text-slate-400");
+        }
+
+        // START ALGORITHM EXECUTION (TEST CODE)
+        function startExecution() {
+            if (isExecuting) return;
+            if (currentCode.length === 0) {
+                updateStatusText("⚠️ Rantai kode masih kosong! Tambahkan blok panah.", "text-amber-400");
+                return;
+            }
+
+            // Increment Trial Counter
+            trialCount++;
+            trialCounterEl.textContent = trialCount;
+
+            isExecuting = true;
+            document.getElementById('btn-test-code').disabled = true;
+            document.getElementById('btn-test-code').classList.add('opacity-50', 'cursor-not-allowed');
+
+            // Reset Robot Position to Start
+            const level = LEVELS_DATA[currentLevelIdx];
+            robotPos = { ...level.start };
+            renderGrid();
+
+            updateStatusText("🧪 Menjalankan algoritma... Perhatikan gerak robot!", "text-emerald-400");
+
+            let step = 0;
+
+            executionTimer = setInterval(() => {
+                // Clear previous block highlights
+                document.querySelectorAll('[id^="code-block-"]').forEach(el => {
+                    el.classList.remove('ring-2', 'ring-emerald-400', 'bg-emerald-950/40');
+                });
+
+                if (step < currentCode.length) {
+                    // Highlight active code block
+                    const activeBlock = document.getElementById(`code-block-${step}`);
+                    if (activeBlock) {
+                        activeBlock.classList.add('ring-2', 'ring-emerald-400', 'bg-emerald-950/40');
+                        activeBlock.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+
+                    // Get Direction
+                    const dirKey = currentCode[step];
+                    const dir = DIR_MAP[dirKey];
+
+                    // Calculate next candidate position
+                    const nextX = robotPos.x + dir.dx;
+                    const nextY = robotPos.y + dir.dy;
+
+                    // Check Out-of-bounds or Wall collision
+                    const isOutOfBounds = (nextX < 0 || nextX >= level.gridSize || nextY < 0 || nextY >= level.gridSize);
+                    const isWall = level.walls.some(w => w.x === nextX && w.y === nextY);
+
+                    if (isOutOfBounds || isWall) {
+                        // BUG DETECTED!
+                        stopExecution();
+                        sounds.playBug();
+
+                        // Shake robot tile
+                        const currentTile = document.getElementById(`tile-${robotPos.x}-${robotPos.y}`);
+                        if (currentTile) currentTile.classList.add('shake-bug');
+
+                        if (activeBlock) {
+                            activeBlock.classList.remove('ring-emerald-400');
+                            activeBlock.classList.add('ring-2', 'ring-rose-500', 'bg-rose-950/50');
+                        }
+
+                        const bugReason = isOutOfBounds ? "keluar dari batas papan" : "menabrak tembok 🧱";
+                        updateStatusText(`🐛 BUG DITEMUKAN! Pada Langkah ${step + 1}, robot ${bugReason}!`, "text-rose-400 font-bold");
+                        return;
+                    }
+
+                    // Move Robot
+                    robotPos = { x: nextX, y: nextY };
+                    sounds.playStep();
+                    renderGrid();
+
+                    // Check Goal Reached
+                    if (robotPos.x === level.goal.x && robotPos.y === level.goal.y) {
+                        stopExecution();
+                        sounds.playWin();
+                        updateStatusText("🎯 BINTANG TERCAPAI! Algoritma berhasil diperbaiki!", "text-amber-300 font-bold");
+                        setTimeout(() => showVictoryModal(), 500);
+                        return;
+                    }
+
+                    step++;
+                } else {
+                    // Execution finished but goal not reached
+                    stopExecution();
+                    sounds.playBug();
+                    updateStatusText(`⚠️ Kode selesai, tapi robot belum mencapai Bintang ⭐. Tambahkan atau perbaiki panah!`, "text-amber-400");
+                }
+            }, 450);
+        }
+
+        // Stop Execution Timer & Reset Controls
+        function stopExecution() {
+            isExecuting = false;
+            if (executionTimer) clearInterval(executionTimer);
+            executionTimer = null;
+
+            const btn = document.getElementById('btn-test-code');
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        // Update Bottom Status Message Bar
+        function updateStatusText(text, textColorClass = "text-slate-300") {
+            statusBarEl.className = `w-full mt-4 min-h-[44px] flex items-center justify-center bg-slate-900/90 rounded-xl border border-slate-700 px-4 py-2 text-center text-xs sm:text-sm ${textColorClass}`;
+            statusBarEl.innerHTML = `<span>${text}</span>`;
+        }
+
+        // Calculate Stars based on Trial Counter
+        function calculateStars(trials) {
+            if (trials <= 2) return 3;
+            if (trials <= 4) return 2;
+            return 1;
+        }
+
+        // Display Victory Celebration Modal
+        function showVictoryModal() {
+            const modal = document.getElementById('modal-victory');
+            const starsContainer = document.getElementById('victory-stars');
+            const trialsEl = document.getElementById('victory-trials');
+            const gradeEl = document.getElementById('victory-grade');
+
+            const starsCount = calculateStars(trialCount);
+
+            // Save high score / stars
+            const levelId = LEVELS_DATA[currentLevelIdx].id;
+            if (!levelStars[levelId] || levelStars[levelId] < starsCount) {
+                levelStars[levelId] = starsCount;
+                try {
+                    localStorage.setItem('debug_game_stars', JSON.stringify(levelStars));
+                } catch (e) {}
+            }
+
+            // Render Stars
+            starsContainer.innerHTML = '';
+            for (let i = 1; i <= 3; i++) {
+                const star = document.createElement('span');
+                star.textContent = '⭐';
+                star.className = i <= starsCount ? 'scale-100 opacity-100 filter drop-shadow' : 'scale-90 opacity-30 grayscale';
+                starsContainer.appendChild(star);
+            }
+
+            trialsEl.textContent = `${trialCount} Iterasi Percobaan`;
+
+            if (starsCount === 3) gradeEl.textContent = "Master Debugger Sempurna! 🌟🌟🌟";
+            else if (starsCount === 2) gradeEl.textContent = "Detektif Bug Cermat! 🌟🌟";
+            else gradeEl.textContent = "Tetap Semangat & Teliti! 🌟";
+
+            // Next level button display
+            const btnNext = document.getElementById('btn-next-level');
+            if (currentLevelIdx >= LEVELS_DATA.length - 1) {
+                btnNext.style.display = 'none';
+            } else {
+                btnNext.style.display = 'block';
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function retryCurrentLevel() {
+            document.getElementById('modal-victory').classList.add('hidden');
+            loadLevel(currentLevelIdx);
+        }
+
+        function nextLevel() {
+            document.getElementById('modal-victory').classList.add('hidden');
+            if (currentLevelIdx < LEVELS_DATA.length - 1) {
+                loadLevel(currentLevelIdx + 1);
+            }
+        }
+
+        // Open Level Selection Modal Grid
+        function openLevelModal() {
+            const container = document.getElementById('levels-grid-container');
+            container.innerHTML = '';
+
+            LEVELS_DATA.forEach((lvl, idx) => {
+                const isCurrent = idx === currentLevelIdx;
+                const stars = levelStars[lvl.id] || 0;
+
+                const card = document.createElement('button');
+                card.onclick = () => {
+                    closeLevelModal();
+                    loadLevel(idx);
+                };
+
+                card.className = `p-3 rounded-2xl border flex flex-col items-center justify-between gap-1 transition ${
+                    isCurrent 
+                        ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg ring-2 ring-indigo-400' 
+                        : 'bg-slate-900/80 hover:bg-slate-700 border-slate-700 text-slate-200'
+                }`;
+
+                let starDisplay = stars > 0 ? '⭐'.repeat(stars) : '<span class="text-[10px] text-slate-500">Belum</span>';
+
+                card.innerHTML = `
+                    <span class="text-[10px] font-bold text-slate-400 uppercase">Lvl</span>
+                    <span class="font-fredoka text-xl font-bold">${lvl.id}</span>
+                    <div class="text-xs h-4 flex items-center">${starDisplay}</div>
+                `;
+
+                container.appendChild(card);
+            });
+
+            document.getElementById('modal-level-select').classList.remove('hidden');
+        }
+
+        function closeLevelModal() {
+            document.getElementById('modal-level-select').classList.add('hidden');
+        }
+
+        function openHelpModal() {
+            document.getElementById('modal-help').classList.remove('hidden');
+        }
+
+        function closeHelpModal() {
+            document.getElementById('modal-help').classList.add('hidden');
+        }
+
+        // Toggle Sound Engine Mute
+        function toggleSound() {
+            sounds.muted = !sounds.muted;
+            document.getElementById('sound-icon').textContent = sounds.muted ? '🔇' : '🔊';
+        }
+    </script>
+</body>
+</html>
