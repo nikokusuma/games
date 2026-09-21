@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Labirin Robot - 40 Level</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Fredoka & Nunito for friendly kid typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                        nunito: ['Nunito', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #e0e7ff 100%);
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .grid-cell {
+            transition: all 0.15s ease-in-out;
+        }
+
+        .robot-pop {
+            animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .bounce-gentle {
+            animation: bounceGentle 1.5s infinite ease-in-out;
+        }
+
+        @keyframes bounceGentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        .glow-target {
+            animation: glowPulse 1.2s infinite alternate;
+        }
+
+        @keyframes glowPulse {
+            0% { transform: scale(0.92); filter: drop-shadow(0 0 2px #f59e0b); }
+            100% { transform: scale(1.08); filter: drop-shadow(0 0 8px #fbbf24); }
+        }
+
+        .shake {
+            animation: shakeAnim 0.3s ease-in-out;
+        }
+
+        @keyframes shakeAnim {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-4px); }
+            40%, 80% { transform: translateX(4px); }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            animation: confettiFall 2.5s ease-out infinite;
+        }
+
+        @keyframes confettiFall {
+            0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(320px) rotate(720deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between p-2 md:p-5 overflow-x-hidden">
+
+    <div class="w-full max-w-md mx-auto flex flex-col items-center gap-2 md:gap-3">
+
+        <!-- Header Title & Mascot -->
+        <header class="w-full text-center">
+            <div class="inline-flex items-center gap-2 bg-white/90 backdrop-blur px-4 py-1.5 rounded-full shadow-md border-2 border-blue-300 mb-0.5">
+                <span class="text-2xl md:text-3xl bounce-gentle">🤖</span>
+                <h1 class="text-xl md:text-2xl font-extrabold text-blue-600 tracking-wide">LABIRIN ROBOT</h1>
+            </div>
+            <p class="text-xs font-semibold text-blue-800/80">Bantu Robot menemukan Baterai Energinya!</p>
+        </header>
+
+        <!-- Status Panel: Level & Moves -->
+        <div class="w-full flex justify-between items-center bg-white rounded-2xl p-2.5 md:p-3 shadow-lg border-2 border-indigo-100">
+            <!-- Level & Grid Badge -->
+            <div class="flex items-center gap-1.5">
+                <span class="bg-indigo-600 text-white font-black px-2.5 py-1 text-xs md:text-sm rounded-xl shadow">
+                    LEVEL <span id="level-num">1</span>/40
+                </span>
+                <span id="grid-size-badge" class="bg-purple-100 text-purple-700 font-extrabold px-2 py-1 text-xs rounded-lg border border-purple-300">
+                    5x5
+                </span>
+            </div>
+
+            <!-- Steps Count -->
+            <div class="flex items-center gap-1 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200">
+                <span class="text-base">🐾</span>
+                <span class="text-xs text-amber-800 font-bold">Langkah:</span>
+                <span id="step-count" class="text-xs md:text-sm font-black text-amber-600">0</span>
+            </div>
+
+            <!-- Sound & Reset Buttons -->
+            <div class="flex gap-1.5">
+                <button id="btn-sound" onclick="toggleSound()" class="bg-gray-100 hover:bg-gray-200 p-1.5 rounded-xl text-base shadow-sm border border-gray-300 transition" title="Suara On/Off">
+                    🔊
+                </button>
+                <button onclick="resetCurrentLevel()" class="bg-red-100 hover:bg-red-200 text-red-600 px-2 py-1.5 rounded-xl text-xs font-bold shadow-sm border border-red-300 transition flex items-center gap-0.5" title="Ulang Level">
+                    🔄 Ulang
+                </button>
+            </div>
+        </div>
+
+        <!-- DYNAMIC LABYRINTH BOARD CONTAINER -->
+        <div id="board-container" class="relative w-full aspect-square bg-slate-800 p-2 md:p-2.5 rounded-3xl shadow-2xl border-4 border-indigo-400 flex items-center justify-center">
+            <div id="grid-board" class="grid gap-1 md:gap-1.5 w-full h-full">
+                <!-- Cells injected dynamically by JS -->
+            </div>
+        </div>
+
+        <!-- Instruction hint -->
+        <div class="text-center text-xs font-bold text-slate-500 my-0.5">
+            Tekan Tombol Panah Di Bawah Untuk Berjalan ⬇️
+        </div>
+
+        <!-- DIRECTIONAL CONTROLS (D-PAD) -->
+        <div class="w-full max-w-[260px] md:max-w-[280px]">
+            <div class="grid grid-cols-3 gap-1.5 text-center">
+                <!-- Top Row: UP -->
+                <div></div>
+                <button onclick="moveRobot('UP')" class="bg-gradient-to-b from-blue-400 to-blue-600 active:from-blue-600 active:to-blue-800 text-white font-extrabold py-3 rounded-2xl shadow-lg border-b-4 border-blue-800 active:border-b-0 active:translate-y-1 text-base flex flex-col items-center justify-center transition">
+                    <span class="text-lg leading-none">⬆️</span>
+                    <span class="text-[10px] md:text-xs font-black uppercase mt-0.5">Atas</span>
+                </button>
+                <div></div>
+
+                <!-- Middle Row: LEFT, DOWN, RIGHT -->
+                <button onclick="moveRobot('LEFT')" class="bg-gradient-to-b from-blue-400 to-blue-600 active:from-blue-600 active:to-blue-800 text-white font-extrabold py-3 rounded-2xl shadow-lg border-b-4 border-blue-800 active:border-b-0 active:translate-y-1 text-base flex flex-col items-center justify-center transition">
+                    <span class="text-lg leading-none">⬅️</span>
+                    <span class="text-[10px] md:text-xs font-black uppercase mt-0.5">Kiri</span>
+                </button>
+
+                <button onclick="moveRobot('DOWN')" class="bg-gradient-to-b from-blue-400 to-blue-600 active:from-blue-600 active:to-blue-800 text-white font-extrabold py-3 rounded-2xl shadow-lg border-b-4 border-blue-800 active:border-b-0 active:translate-y-1 text-base flex flex-col items-center justify-center transition">
+                    <span class="text-lg leading-none">⬇️</span>
+                    <span class="text-[10px] md:text-xs font-black uppercase mt-0.5">Bawah</span>
+                </button>
+
+                <button onclick="moveRobot('RIGHT')" class="bg-gradient-to-b from-blue-400 to-blue-600 active:from-blue-600 active:to-blue-800 text-white font-extrabold py-3 rounded-2xl shadow-lg border-b-4 border-blue-800 active:border-b-0 active:translate-y-1 text-base flex flex-col items-center justify-center transition">
+                    <span class="text-lg leading-none">➡️</span>
+                    <span class="text-[10px] md:text-xs font-black uppercase mt-0.5">Kanan</span>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- LEVEL WIN MODAL -->
+    <div id="modal-win" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl p-5 max-w-xs w-full text-center shadow-2xl border-4 border-amber-400 relative overflow-hidden transform transition-all scale-100">
+            <div id="confetti-container" class="absolute inset-0 pointer-events-none"></div>
+
+            <div class="text-5xl mb-2 animate-bounce">🔋🌟</div>
+            <h2 class="text-2xl font-black text-emerald-600 mb-1">HEBAT SEKALI!</h2>
+            <p class="text-xs font-bold text-gray-600 mb-3">Robot berhasil mengumpulkan energi!</p>
+
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-2.5 mb-4">
+                <p class="text-xs text-amber-800 font-bold">Total Langkah:</p>
+                <p id="win-steps" class="text-xl font-black text-amber-600">0</p>
+            </div>
+
+            <button onclick="nextLevel()" class="w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-black py-3 px-5 rounded-2xl shadow-lg text-base border-b-4 border-green-800 active:translate-y-1 transition">
+                LANJUT LEVEL <span id="next-level-btn-num">2</span> ➡️
+            </button>
+        </div>
+    </div>
+
+    <!-- FINAL GAME COMPLETE MODAL (LEVEL 40 CLEARED) -->
+    <div id="modal-game-over" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-gradient-to-b from-yellow-100 to-amber-200 rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl border-4 border-yellow-400 relative overflow-hidden">
+            <div class="text-6xl mb-2 bounce-gentle">🏆👑</div>
+            <h2 class="text-2xl md:text-3xl font-black text-amber-800 mb-2">KAMU JUARA SEJATI!</h2>
+            <p class="text-xs md:text-sm font-bold text-amber-900 mb-5">Luar biasa! Kamu berhasil menuntaskan semua 40 Labirin dari ukuran 5x5 hingga 8x8!</p>
+
+            <button onclick="restartAllGame()" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-black py-3.5 px-5 rounded-2xl shadow-xl text-base border-b-4 border-indigo-900 active:translate-y-1 transition">
+                🔁 MAIN LAGI DARI LEVEL 1
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /* ===================================================
+           1. AUDIO SYNTHESIZER (Web Audio API - No external file dependencies)
+           =================================================== */
+        let audioCtx = null;
+        let isSoundOn = true;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!isSoundOn) return;
+            initAudio();
+            if (!audioCtx) return;
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'move') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(380, now);
+                osc.frequency.exponentialRampToValueAtTime(650, now + 0.07);
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.07);
+                osc.start(now);
+                osc.stop(now + 0.07);
+            } else if (type === 'bump') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(130, now);
+                osc.frequency.exponentialRampToValueAtTime(50, now + 0.1);
+                gain.gain.setValueAtTime(0.18, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'win') {
+                const notes = [261.63, 329.63, 392.00, 523.25];
+                notes.forEach((freq, idx) => {
+                    const noteOsc = audioCtx.createOscillator();
+                    const noteGain = audioCtx.createGain();
+                    noteOsc.connect(noteGain);
+                    noteGain.connect(audioCtx.destination);
+                    noteOsc.type = 'triangle';
+                    noteOsc.frequency.setValueAtTime(freq, now + idx * 0.09);
+                    noteGain.gain.setValueAtTime(0.2, now + idx * 0.09);
+                    noteGain.gain.linearRampToValueAtTime(0.01, now + idx * 0.09 + 0.22);
+                    noteOsc.start(now + idx * 0.09);
+                    noteOsc.stop(now + idx * 0.09 + 0.22);
+                });
+            }
+        }
+
+        function toggleSound() {
+            isSoundOn = !isSoundOn;
+            document.getElementById('btn-sound').innerText = isSoundOn ? '🔊' : '🔇';
+        }
+
+        /* ===================================================
+           2. MAZE DATASET (40 Verifiable & Solvable Levels)
+           Levels 1-20: 5x5 Grid
+           Levels 21-30: 6x6 Grid
+           Levels 31-35: 7x7 Grid
+           Levels 36-40: 8x8 Grid
+           =================================================== */
+        const MAZES = [
+            // --- LEVEL 1 to 20 (GRID 5x5) ---
+            { size: 5, start: {r:0, c:0}, goal: {r:4, c:4}, walls: [{r:1, c:1}, {r:2, c:2}] },
+            { size: 5, start: {r:0, c:0}, goal: {r:4, c:0}, walls: [{r:1, c:0}, {r:1, c:1}, {r:1, c:2}] },
+            { size: 5, start: {r:0, c:0}, goal: {r:0, c:4}, walls: [{r:0, c:1}, {r:1, c:3}] },
+            { size: 5, start: {r:0, c:0}, goal: {r:4, c:4}, walls: [{r:2, c:1}, {r:2, c:2}, {r:2, c:3}] },
+            { size: 5, start: {r:4, c:0}, goal: {r:0, c:4}, walls: [{r:3, c:1}, {r:2, c:2}, {r:1, c:3}] },
+            { size: 5, start: {r:0, c:2}, goal: {r:4, c:2}, walls: [{r:1, c:2}, {r:2, c:1}, {r:2, c:3}] },
+            { size: 5, start: {r:0, c:0}, goal: {r:4, c:4}, walls: [{r:0, c:2}, {r:1, c:2}, {r:2, c:2}, {r:3, c:4}] },
+            { size: 5, start: {r:0, c:0}, goal: {r:4, c:0}, walls: [{r:2, c:0}, {r:2, c:1}, {r:3, c:3}] },
+            // Level 9 Fixed: Path goes around wall via (0,4) -> (2,4) -> goal (2,0)
+            { size: 5, start: {r:0, c:0}, goal: {r:2, c:0}, walls: [{r:1, c:0}, {r:1, c:1}, {r:1, c:2}, {r:1, c:3}] },
+            { size: 5, start: {r:2, c:0}, goal: {r:2, c:4}, walls: [{r:1, c:2}, {r:2, c:2}, {r:3, c:2}] },
+            { size: 5, start: {r:0, c:4}, goal: {r:4, c:0}, walls: [{r:1, c:1}, {r:1, c:3}, {r:3, c:1}, {r:3, c:3}] },
+            { size: 5, start: {r:0, c:0}, goal: {r:2, c:2}, walls: [{r:0, c:1}, {r:1, c:1}, {r:3, c:1}, {r:3, c:2}] },
+            { size: 5, start: {r:0, c:0}, goal: {r:4, c:4}, walls: [{r:1, c:0}, {r:1, c:1}, {r:1, c:2}, {r:1, c:3}, {r:3, c:1}, {r:3, c:2}, {r:3, c:3}, {r:3, c:4}] },
+            { size: 5, start: {r:4, c:0}, goal: {r:0, c:4}, walls: [{r:4, c:1}, {r:3, c:2}, {r:2, c:3}, {r:1, c:4}] },
+            { size: 5, start: {r:0, c:0}, goal: {r:4, c:4}, walls: [{r:1, c:1}, {r:2, c:1}, {r:3, c:1}, {r:1, c:3}, {r:2, c:3}, {r:3, c:3}] },
+            { size: 5, start: {r:0, c:0}, goal: {r:4, c:0}, walls: [{r:1, c:0}, {r:1, c:1}, {r:1, c:2}, {r:1, c:3}, {r:3, c:1}, {r:3, c:2}, {r:3, c:3}, {r:3, c:4}] },
+            { size: 5, start: {r:0, c:2}, goal: {r:4, c:2}, walls: [{r:0, c:1}, {r:0, c:3}, {r:2, c:2}, {r:3, c:1}, {r:3, c:3}] },
+            { size: 5, start: {r:0, c:0}, goal: {r:4, c:4}, walls: [{r:0, c:3}, {r:1, c:1}, {r:2, c:3}, {r:3, c:1}] },
+            { size: 5, start: {r:0, c:0}, goal: {r:4, c:2}, walls: [{r:2, c:0}, {r:2, c:1}, {r:2, c:3}, {r:2, c:4}] },
+            { size: 5, start: {r:0, c:0}, goal: {r:4, c:4}, walls: [{r:0, c:1}, {r:2, c:0}, {r:2, c:1}, {r:2, c:2}, {r:2, c:3}, {r:4, c:3}] },
+
+            // --- LEVEL 21 to 30 (GRID 6x6) ---
+            { size: 6, start: {r:0, c:0}, goal: {r:5, c:5}, walls: [{r:1, c:1}, {r:2, c:2}, {r:3, c:3}, {r:4, c:4}] },
+            { size: 6, start: {r:0, c:0}, goal: {r:5, c:0}, walls: [{r:1, c:0}, {r:1, c:1}, {r:1, c:2}, {r:1, c:3}, {r:1, c:4}] },
+            { size: 6, start: {r:0, c:0}, goal: {r:0, c:5}, walls: [{r:0, c:1}, {r:1, c:1}, {r:2, c:1}, {r:3, c:1}, {r:4, c:1}] },
+            { size: 6, start: {r:0, c:0}, goal: {r:5, c:5}, walls: [{r:2, c:0}, {r:2, c:1}, {r:2, c:2}, {r:2, c:3}, {r:2, c:4}] },
+            { size: 6, start: {r:5, c:0}, goal: {r:0, c:5}, walls: [{r:4, c:1}, {r:3, c:2}, {r:2, c:3}, {r:1, c:4}] },
+            { size: 6, start: {r:0, c:3}, goal: {r:5, c:3}, walls: [{r:2, c:0}, {r:2, c:1}, {r:2, c:2}, {r:2, c:4}, {r:2, c:5}] },
+            { size: 6, start: {r:0, c:0}, goal: {r:5, c:5}, walls: [{r:1, c:1}, {r:1, c:2}, {r:1, c:3}, {r:3, c:2}, {r:3, c:3}, {r:3, c:4}] },
+            { size: 6, start: {r:0, c:0}, goal: {r:3, c:3}, walls: [{r:2, c:2}, {r:4, c:2}, {r:4, c:3}, {r:4, c:4}] },
+            { size: 6, start: {r:0, c:0}, goal: {r:5, c:0}, walls: [{r:1, c:0}, {r:1, c:1}, {r:1, c:2}, {r:3, c:2}, {r:3, c:3}, {r:3, c:4}, {r:3, c:5}] },
+            { size: 6, start: {r:0, c:0}, goal: {r:5, c:5}, walls: [{r:0, c:2}, {r:1, c:2}, {r:2, c:2}, {r:3, c:4}, {r:4, c:4}, {r:5, c:4}] },
+
+            // --- LEVEL 31 to 35 (GRID 7x7) ---
+            { size: 7, start: {r:0, c:0}, goal: {r:6, c:6}, walls: [{r:1, c:1}, {r:2, c:2}, {r:3, c:3}, {r:4, c:4}, {r:5, c:5}] },
+            { size: 7, start: {r:0, c:0}, goal: {r:6, c:0}, walls: [{r:2, c:0}, {r:2, c:1}, {r:2, c:2}, {r:2, c:3}, {r:2, c:4}, {r:2, c:5}] },
+            { size: 7, start: {r:0, c:3}, goal: {r:6, c:3}, walls: [{r:3, c:0}, {r:3, c:1}, {r:3, c:2}, {r:3, c:4}, {r:3, c:5}, {r:3, c:6}] },
+            { size: 7, start: {r:0, c:0}, goal: {r:6, c:6}, walls: [{r:1, c:0}, {r:1, c:1}, {r:1, c:2}, {r:1, c:3}, {r:1, c:4}, {r:1, c:5}, {r:3, c:1}, {r:3, c:2}, {r:3, c:3}, {r:3, c:4}, {r:3, c:5}, {r:3, c:6}, {r:5, c:0}, {r:5, c:1}, {r:5, c:2}, {r:5, c:3}, {r:5, c:4}, {r:5, c:5}] },
+            { size: 7, start: {r:6, c:0}, goal: {r:0, c:6}, walls: [{r:5, c:1}, {r:4, c:2}, {r:3, c:3}, {r:2, c:4}, {r:1, c:5}] },
+
+            // --- LEVEL 36 to 40 (GRID 8x8) ---
+            { size: 8, start: {r:0, c:0}, goal: {r:7, c:7}, walls: [{r:1, c:1}, {r:2, c:2}, {r:3, c:3}, {r:4, c:4}, {r:5, c:5}, {r:6, c:6}] },
+            { size: 8, start: {r:0, c:0}, goal: {r:7, c:0}, walls: [{r:2, c:0}, {r:2, c:1}, {r:2, c:2}, {r:2, c:3}, {r:2, c:4}, {r:2, c:5}, {r:2, c:6}] },
+            { size: 8, start: {r:0, c:4}, goal: {r:7, c:4}, walls: [{r:3, c:0}, {r:3, c:1}, {r:3, c:2}, {r:3, c:3}, {r:3, c:5}, {r:3, c:6}, {r:3, c:7}] },
+            { size: 8, start: {r:0, c:0}, goal: {r:7, c:7}, walls: [{r:1, c:1}, {r:1, c:2}, {r:1, c:3}, {r:3, c:4}, {r:3, c:5}, {r:3, c:6}, {r:5, c:1}, {r:5, c:2}, {r:5, c:3}] },
+            { size: 8, start: {r:7, c:0}, goal: {r:0, c:7}, walls: [{r:6, c:1}, {r:5, c:2}, {r:4, c:3}, {r:3, c:4}, {r:2, c:5}, {r:1, c:6}] }
+        ];
+
+        /* ===================================================
+           3. GAME STATE & VARIABLES
+           Always starts at Level 1 when opened/refreshed.
+           =================================================== */
+        let currentLevelIndex = 0; // Index 0 = Level 1
+        let robotPos = { r: 0, c: 0 };
+        let stepsCount = 0;
+        let isLevelComplete = false;
+
+        window.onload = function() {
+            loadLevel(0); // Always auto reset to Level 1
+            setupKeyboardAndTouch();
+        };
+
+        function loadLevel(index) {
+            currentLevelIndex = index;
+            const levelData = MAZES[currentLevelIndex];
+            robotPos = { ...levelData.start };
+            stepsCount = 0;
+            isLevelComplete = false;
+
+            // Update Header Stats
+            document.getElementById('level-num').innerText = currentLevelIndex + 1;
+            document.getElementById('step-count').innerText = stepsCount;
+
+            // Update Grid Size Badge
+            const badge = document.getElementById('grid-size-badge');
+            badge.innerText = `${levelData.size}x${levelData.size}`;
+
+            renderBoard();
+        }
+
+        function renderBoard() {
+            const gridBoard = document.getElementById('grid-board');
+            gridBoard.innerHTML = '';
+
+            const levelData = MAZES[currentLevelIndex];
+            const size = levelData.size;
+
+            // Set dynamic CSS Grid Columns & Rows based on level size
+            gridBoard.style.gridTemplateColumns = `repeat(${size}, minmax(0, 1fr))`;
+            gridBoard.style.gridTemplateRows = `repeat(${size}, minmax(0, 1fr))`;
+
+            // Adjust font size based on grid dimension
+            let emojiSizeClass = 'text-2xl md:text-3xl';
+            if (size === 6) emojiSizeClass = 'text-xl md:text-2xl';
+            if (size === 7) emojiSizeClass = 'text-lg md:text-xl';
+            if (size === 8) emojiSizeClass = 'text-base md:text-lg';
+
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = `grid-cell rounded-xl md:rounded-2xl flex items-center justify-center ${emojiSizeClass} relative select-none shadow-inner transition-all duration-150`;
+                    cell.id = `cell-${r}-${c}`;
+
+                    const isRobot = (robotPos.r === r && robotPos.c === c);
+                    const isGoal = (levelData.goal.r === r && levelData.goal.c === c);
+                    const isWall = levelData.walls.some(w => w.r === r && w.c === c);
+                    const isStart = (levelData.start.r === r && levelData.start.c === c);
+
+                    if (isWall) {
+                        cell.classList.add('bg-slate-700', 'border', 'border-slate-900', 'shadow-md');
+                        cell.innerHTML = '🪨';
+                    } else {
+                        cell.classList.add('bg-slate-100', 'border', 'border-indigo-100');
+
+                        if (isStart && !isRobot) {
+                            cell.innerHTML = '<span class="text-[9px] md:text-xs font-black text-indigo-300">START</span>';
+                        }
+
+                        if (isGoal) {
+                            cell.innerHTML = '<span class="glow-target">🔋</span>';
+                        }
+
+                        if (isRobot) {
+                            cell.classList.remove('bg-slate-100');
+                            cell.classList.add('bg-blue-200', 'border-blue-400', 'shadow-lg');
+                            const robotElem = document.createElement('div');
+                            robotElem.className = `robot-pop bounce-gentle ${emojiSizeClass}`;
+                            robotElem.innerText = '🤖';
+                            cell.appendChild(robotElem);
+                        }
+                    }
+
+                    gridBoard.appendChild(cell);
+                }
+            }
+        }
+
+        /* ===================================================
+           4. ROBOT MOVEMENT LOGIC
+           =================================================== */
+        function moveRobot(direction) {
+            if (isLevelComplete) return;
+
+            let newR = robotPos.r;
+            let newC = robotPos.c;
+
+            if (direction === 'UP') newR -= 1;
+            if (direction === 'DOWN') newR += 1;
+            if (direction === 'LEFT') newC -= 1;
+            if (direction === 'RIGHT') newC += 1;
+
+            const levelData = MAZES[currentLevelIndex];
+            const maxIdx = levelData.size - 1;
+
+            // 1. Boundary Check
+            if (newR < 0 || newR > maxIdx || newC < 0 || newC > maxIdx) {
+                triggerBumpAnimation();
+                playSound('bump');
+                return;
+            }
+
+            // 2. Wall / Obstacle Check
+            const hitsWall = levelData.walls.some(w => w.r === newR && w.c === newC);
+
+            if (hitsWall) {
+                triggerBumpAnimation();
+                playSound('bump');
+                return;
+            }
+
+            // Valid Move
+            robotPos = { r: newR, c: newC };
+            stepsCount++;
+            document.getElementById('step-count').innerText = stepsCount;
+            playSound('move');
+
+            renderBoard();
+
+            // 3. Goal Reached Check
+            if (robotPos.r === levelData.goal.r && robotPos.c === levelData.goal.c) {
+                handleLevelComplete();
+            }
+        }
+
+        function triggerBumpAnimation() {
+            const container = document.getElementById('board-container');
+            container.classList.add('shake');
+            setTimeout(() => {
+                container.classList.remove('shake');
+            }, 300);
+        }
+
+        /* ===================================================
+           5. LEVEL COMPLETION & MODALS
+           =================================================== */
+        function handleLevelComplete() {
+            isLevelComplete = true;
+            playSound('win');
+
+            if (currentLevelIndex < MAZES.length - 1) {
+                document.getElementById('win-steps').innerText = stepsCount;
+                document.getElementById('next-level-btn-num').innerText = currentLevelIndex + 2;
+
+                spawnConfetti();
+
+                setTimeout(() => {
+                    document.getElementById('modal-win').classList.remove('hidden');
+                }, 200);
+            } else {
+                // Final Level 40 Cleared!
+                setTimeout(() => {
+                    document.getElementById('modal-game-over').classList.remove('hidden');
+                }, 200);
+            }
+        }
+
+        function nextLevel() {
+            document.getElementById('modal-win').classList.add('hidden');
+            loadLevel(currentLevelIndex + 1);
+        }
+
+        function resetCurrentLevel() {
+            loadLevel(currentLevelIndex);
+        }
+
+        function restartAllGame() {
+            document.getElementById('modal-game-over').classList.add('hidden');
+            loadLevel(0); // Restart from level 1
+        }
+
+        /* ===================================================
+           6. CONTROLS (Keyboard & Touch Gestures)
+           =================================================== */
+        function setupKeyboardAndTouch() {
+            window.addEventListener('keydown', (e) => {
+                if (['ArrowUp', 'KeyW'].includes(e.code)) moveRobot('UP');
+                if (['ArrowDown', 'KeyS'].includes(e.code)) moveRobot('DOWN');
+                if (['ArrowLeft', 'KeyA'].includes(e.code)) moveRobot('LEFT');
+                if (['ArrowRight', 'KeyD'].includes(e.code)) moveRobot('RIGHT');
+            });
+
+            let touchStartX = 0;
+            let touchStartY = 0;
+
+            const board = document.getElementById('board-container');
+
+            board.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }, { passive: true });
+
+            board.addEventListener('touchend', (e) => {
+                const touchEndX = e.changedTouches[0].screenX;
+                const touchEndY = e.changedTouches[0].screenY;
+
+                const diffX = touchEndX - touchStartX;
+                const diffY = touchEndY - touchStartY;
+
+                if (Math.abs(diffX) > 25 || Math.abs(diffY) > 25) {
+                    if (Math.abs(diffX) > Math.abs(diffY)) {
+                        if (diffX > 0) moveRobot('RIGHT');
+                        else moveRobot('LEFT');
+                    } else {
+                        if (diffY > 0) moveRobot('DOWN');
+                        else moveRobot('UP');
+                    }
+                }
+            }, { passive: true });
+        }
+
+        function spawnConfetti() {
+            const container = document.getElementById('confetti-container');
+            container.innerHTML = '';
+            const colors = ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6'];
+
+            for (let i = 0; i < 20; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti rounded-sm';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = (Math.random() * 0.4) + 's';
+                container.appendChild(confetti);
+            }
+        }
+    </script>
+</body>
+</html>
