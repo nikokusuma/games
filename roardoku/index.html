@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meowdoku - Game Teka-Teki Logika Kucing</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Canvas Confetti CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'cat-pink': '#FF8EAE',
+                        'cat-purple': '#A288E3',
+                        'cat-cream': '#FAF3F0',
+                        'cat-card': '#FFF9F5',
+                        'cat-dark': '#4A3E3D',
+                    },
+                    fontFamily: {
+                        'fredoka': ['Fredoka', 'sans-serif'],
+                        'quicksand': ['Quicksand', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: #F8F1EB;
+            color: #4A3E3D;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .board-grid {
+            display: grid;
+            grid-template-columns: repeat(10, minmax(0, 1fr));
+            grid-template-rows: repeat(10, minmax(0, 1fr));
+            aspect-ratio: 1 / 1;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 10px 25px -5px rgba(74, 62, 61, 0.15), 0 8px 10px -6px rgba(74, 62, 61, 0.1);
+        }
+
+        .cell {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(1rem, 3.5vw, 1.8rem);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-sizing: border-box;
+        }
+
+        .cell:hover {
+            filter: brightness(0.93);
+        }
+
+        .cell:active {
+            transform: scale(0.92);
+        }
+
+        /* Region borders */
+        .border-t-region { border-top: 3px solid #3d3231 !important; }
+        .border-b-region { border-bottom: 3px solid #3d3231 !important; }
+        .border-l-region { border-left: 3px solid #3d3231 !important; }
+        .border-r-region { border-right: 3px solid #3d3231 !important; }
+
+        .border-t-thin { border-top: 1px dashed rgba(74, 62, 61, 0.25); }
+        .border-b-thin { border-bottom: 1px dashed rgba(74, 62, 61, 0.25); }
+        .border-l-thin { border-left: 1px dashed rgba(74, 62, 61, 0.25); }
+        .border-r-thin { border-right: 1px dashed rgba(74, 62, 61, 0.25); }
+
+        /* Error shaking animation */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-4px); }
+            40%, 80% { transform: translateX(4px); }
+        }
+        .error-shake {
+            animation: shake 0.35s ease-in-out;
+            background-color: #FFB4B4 !important;
+        }
+
+        /* Pop animation for placing items */
+        @keyframes pop {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.15); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .pop-in {
+            animation: pop 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F8F1EB;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D8C4B6;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between items-center p-2 sm:p-4">
+
+    <!-- Header Area -->
+    <header class="w-full max-w-xl flex items-center justify-between my-2 px-2">
+        <div class="flex items-center gap-2">
+            <div class="w-10 h-10 rounded-2xl bg-cat-pink flex items-center justify-center text-white text-xl shadow-md transform -rotate-6">
+                <i class="fa-solid font-fredoka">🐱</i>
+            </div>
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold font-fredoka text-cat-dark tracking-wide leading-none">Meowdoku</h1>
+                <p class="text-xs font-semibold text-gray-500 mt-0.5">Cari 10 Kucing di Wilayahnya!</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button id="btn-sound" onclick="toggleSound()" class="w-9 h-9 rounded-xl bg-white border border-stone-200 text-stone-600 hover:bg-stone-50 flex items-center justify-center shadow-sm transition">
+                <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+            </button>
+            <button onclick="openModal('help-modal')" class="w-9 h-9 rounded-xl bg-white border border-stone-200 text-stone-600 hover:bg-stone-50 flex items-center justify-center shadow-sm transition">
+                <i class="fa-solid fa-circle-question"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Status Dashboard -->
+    <main class="w-full max-w-xl flex flex-col items-center gap-3">
+        <div class="w-full bg-cat-card border border-amber-100 rounded-2xl p-3 shadow-sm flex items-center justify-between text-sm sm:text-base font-semibold text-cat-dark">
+            <!-- Hearts -->
+            <div class="flex items-center gap-1.5 bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-100">
+                <span class="text-xs text-rose-400 font-bold uppercase tracking-wider hidden sm:inline">Nyawa:</span>
+                <div id="hearts-container" class="flex gap-1 text-rose-500 text-base">
+                    <i class="fa-solid fa-heart"></i>
+                    <i class="fa-solid fa-heart"></i>
+                    <i class="fa-solid fa-heart"></i>
+                </div>
+            </div>
+
+            <!-- Cat Found Counter -->
+            <div class="flex items-center gap-2 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200/60">
+                <span class="text-xl">🐱</span>
+                <span id="cats-count" class="font-bold font-fredoka text-amber-900">0 / 10</span>
+            </div>
+
+            <!-- Timer -->
+            <div class="flex items-center gap-2 bg-stone-100 px-3 py-1.5 rounded-xl text-stone-700">
+                <i class="fa-regular fa-clock text-stone-500"></i>
+                <span id="timer" class="font-mono font-bold">00:00</span>
+            </div>
+        </div>
+
+        <!-- Game Board Container -->
+        <div class="relative w-full flex justify-center items-center my-1">
+            <div id="board" class="board-grid rounded-2xl overflow-hidden border-4 border-stone-800 bg-white">
+                <!-- Cells will be dynamically generated by JS -->
+            </div>
+        </div>
+
+        <!-- Controls & Tools Toolbar -->
+        <div class="w-full bg-cat-card border border-stone-200 rounded-2xl p-2.5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+            
+            <!-- Input Mode Selector -->
+            <div class="flex items-center bg-stone-100 p-1 rounded-xl w-full sm:w-auto justify-center">
+                <button id="mode-cat" onclick="setInputMode('CAT')" class="flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold font-fredoka text-sm flex items-center justify-center gap-2 transition bg-white text-cat-dark shadow-sm">
+                    <span class="text-base">🐱</span> Kucing
+                </button>
+                <button id="mode-x" onclick="setInputMode('X')" class="flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold font-fredoka text-sm flex items-center justify-center gap-2 transition text-stone-500 hover:text-stone-800">
+                    <span class="text-base text-rose-500 font-black">❌</span> Tanda (X)
+                </button>
+            </div>
+
+            <!-- Game Actions -->
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button id="btn-hint" onclick="getHint()" title="Bantuan Logika" class="flex-1 sm:flex-none px-3 py-2 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-xl font-bold font-fredoka text-xs sm:text-sm flex items-center justify-center gap-1.5 transition">
+                    <i class="fa-solid fa-lightbulb text-amber-600"></i> Hint (<span id="hint-count">2</span>)
+                </button>
+                <button onclick="resetCurrentBoard()" title="Reset Papan Ini" class="flex-1 sm:flex-none px-3 py-2 bg-stone-200 hover:bg-stone-300 text-stone-700 rounded-xl font-bold font-fredoka text-xs sm:text-sm flex items-center justify-center gap-1.5 transition">
+                    <i class="fa-solid fa-rotate-left"></i> Reset
+                </button>
+                <button onclick="startNewGame()" title="Acak & Mulai Game Baru" class="flex-1 sm:flex-none px-3.5 py-2 bg-cat-pink hover:bg-rose-400 text-white rounded-xl font-bold font-fredoka text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm transition">
+                    <i class="fa-solid fa-dice"></i> Game Baru
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick Help Tip -->
+        <p class="text-xs text-stone-500 text-center px-2">
+            💡 <span class="font-semibold">Tips PC:</span> Klik kiri untuk taruh item aktif, Klik kanan untuk pasang/hapus tanda <b>❌</b>.
+        </p>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full text-center text-xs text-stone-400 my-3 font-medium">
+        Meowdoku &bull; Teka-Teki Logika Kucing 10 Wilayah
+    </footer>
+
+    <!-- Rules / Help Modal -->
+    <div id="help-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-stone-100 flex flex-col gap-4 relative animate-pop">
+            <button onclick="closeModal('help-modal')" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-stone-100 text-stone-500 hover:bg-stone-200 flex items-center justify-center">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-700 text-xl">
+                    <i class="fa-solid fa-book-open"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold font-fredoka text-cat-dark">Cara Bermain Meowdoku</h2>
+                    <p class="text-xs text-stone-500">Aturan dasar teka-teki wilayah kucing</p>
+                </div>
+            </div>
+
+            <div class="space-y-3 text-sm text-stone-600 overflow-y-max max-h-[60vh] pr-1">
+                <div class="flex gap-3 items-start bg-amber-50/60 p-2.5 rounded-xl border border-amber-100">
+                    <span class="text-lg">🐱</span>
+                    <p><b>10 Kucing Harus Ditemukan:</b> Papan berukuran 10x10 dibagi menjadi 10 wilayah berwarna. Setiap wilayah berisi tepat <b>1 Kucing</b>.</p>
+                </div>
+
+                <div class="flex gap-3 items-start bg-purple-50/60 p-2.5 rounded-xl border border-purple-100">
+                    <span class="text-lg">↔️</span>
+                    <p><b>1 Per Baris & Kolom:</b> Setiap baris mendatar dan kolom tegak hanya boleh berisi <b>1 Kucing</b> saja.</p>
+                </div>
+
+                <div class="flex gap-3 items-start bg-rose-50/60 p-2.5 rounded-xl border border-rose-100">
+                    <span class="text-lg">🚫</span>
+                    <p><b>Dilarang Bersentuhan:</b> Kucing tidak boleh saling bersentuhan secara horizontal, vertikal, maupun <b>diagonal</b>!</p>
+                </div>
+
+                <div class="flex gap-3 items-start bg-stone-50 p-2.5 rounded-xl border border-stone-200">
+                    <span class="text-lg">❌</span>
+                    <p><b>Gunakan Tanda X:</b> Gunakan Tanda Silang (❌) pada kotak yang mustahil ada kucingnya untuk membantu eliminasimu.</p>
+                </div>
+            </div>
+
+            <button onclick="closeModal('help-modal')" class="w-full py-3 bg-cat-pink hover:bg-rose-400 text-white font-bold font-fredoka rounded-xl shadow-md transition">
+                Mengerti, Ayo Bermain!
+            </button>
+        </div>
+    </div>
+
+    <!-- Victory Modal -->
+    <div id="victory-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-stone-100 flex flex-col items-center text-center gap-4 relative">
+            
+            <div class="w-20 h-20 rounded-full bg-amber-100 border-4 border-amber-300 flex items-center justify-center text-4xl shadow-inner -mt-10 animate-bounce">
+                🐱
+            </div>
+
+            <div>
+                <h2 class="text-2xl font-bold font-fredoka text-cat-dark">Selamat! Puzzle Selesai! 🎉</h2>
+                <p class="text-sm text-stone-500 mt-1">Kamu berhasil menemukan kesepuluh wilayah kucing dengan sempurna!</p>
+            </div>
+
+            <!-- Stats -->
+            <div class="w-full bg-stone-50 rounded-2xl p-3 border border-stone-200 flex justify-around">
+                <div class="flex flex-col items-center">
+                    <span class="text-xs text-stone-400 font-semibold uppercase">Waktu</span>
+                    <span id="victory-time" class="text-lg font-bold font-mono text-stone-700">00:00</span>
+                </div>
+                <div class="w-px bg-stone-200"></div>
+                <div class="flex flex-col items-center">
+                    <span class="text-xs text-stone-400 font-semibold uppercase">Sisa Nyawa</span>
+                    <div id="victory-hearts" class="text-rose-500 text-sm mt-1"></div>
+                </div>
+            </div>
+
+            <button onclick="closeModal('victory-modal'); startNewGame();" class="w-full py-3 bg-cat-pink hover:bg-rose-400 text-white font-bold font-fredoka rounded-xl shadow-md transition text-lg flex items-center justify-center gap-2">
+                <i class="fa-solid fa-dice"></i> Mainkan Papan Baru
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- GAME PARAMETERS & CONSTANTS ---
+        const SIZE = 10;
+        const TOTAL_CATS = 10;
+
+        // 10 Distinct Soft Aesthetic Pastel Colors for Regions
+        const REGION_COLORS = [
+            '#FFD1DC', // Pastel Pink
+            '#C1E1C1', // Pastel Green
+            '#AEC6CF', // Pastel Blue
+            '#FDFD96', // Pastel Yellow
+            '#E6E6FA', // Lavender
+            '#FAB1A0', // Peach
+            '#B2EBF2', // Cyan / Light Teal
+            '#FFE5B4', // Warm Sand / Apricot
+            '#D7BDE2', // Soft Purple
+            '#D5F5E3'  // Soft Mint
+        ];
+
+        // --- GAME STATE ---
+        let boardSolution = null;   // { cats: [{r,c}], regions: 10x10 array }
+        let userBoard = [];         // 10x10 array: 'EMPTY', 'CAT', 'MARK'
+        let hearts = 3;
+        let hintsRemaining = 2;
+        let foundCatsCount = 0;
+        let currentInputMode = 'CAT'; // 'CAT' or 'X'
+        let timerSeconds = 0;
+        let timerInterval = null;
+        let soundEnabled = true;
+
+        // Web Audio API context
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'cat') {
+                    // Cute Meow Pitch Bend
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(750, now + 0.12);
+                    osc.frequency.exponentialRampToValueAtTime(600, now + 0.25);
+
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.28);
+
+                    osc.start(now);
+                    osc.stop(now + 0.28);
+                } else if (type === 'mark') {
+                    // Soft Click
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(150, now + 0.05);
+
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.06);
+
+                    osc.start(now);
+                    osc.stop(now + 0.06);
+                } else if (type === 'error') {
+                    // Error Low Buzz
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.linearRampToValueAtTime(100, now + 0.2);
+
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                } else if (type === 'win') {
+                    // Victory Chime
+                    const notes = [523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, idx) => {
+                        const noteOsc = audioCtx.createOscillator();
+                        const noteGain = audioCtx.createGain();
+                        noteOsc.connect(noteGain);
+                        noteGain.connect(audioCtx.destination);
+
+                        noteOsc.type = 'sine';
+                        noteOsc.frequency.setValueAtTime(freq, now + idx * 0.1);
+
+                        noteGain.gain.setValueAtTime(0.2, now + idx * 0.1);
+                        noteGain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.3);
+
+                        noteOsc.start(now + idx * 0.1);
+                        noteOsc.stop(now + idx * 0.1 + 0.3);
+                    });
+                }
+            } catch (e) {
+                // Audio not supported or blocked
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('sound-icon');
+            if (soundEnabled) {
+                icon.className = 'fa-solid fa-volume-high';
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-stone-400';
+            }
+        }
+
+        // --- STREAMING_CHUNK: Random Procedural Board Generator... ---
+        /**
+         * Generates a 10x10 puzzle guaranteed to have a valid solution with 10 cats & 10 contiguous color regions.
+         * Enforces that every board has exactly two 1-cell regions and two 2-cell regions.
+         */
+        function generateRandomBoard() {
+            let cats = null;
+
+            // Step 1: Find 10 valid non-attacking cat positions (Rooks + King adjacency rule)
+            function solveCatPlacement() {
+                const cols = new Array(SIZE);
+                const usedCols = new Array(SIZE).fill(false);
+
+                function backtrack(row) {
+                    if (row === SIZE) return true;
+
+                    // Randomized column order
+                    const colOrder = Array.from({length: SIZE}, (_, i) => i).sort(() => Math.random() - 0.5);
+
+                    for (let c of colOrder) {
+                        if (usedCols[c]) continue;
+
+                        // Check King-distance (adjacent cells including diagonal) with previously placed cats
+                        let valid = true;
+                        for (let r = 0; r < row; r++) {
+                            let prevC = cols[r];
+                            if (Math.abs(row - r) <= 1 && Math.abs(c - prevC) <= 1) {
+                                valid = false;
+                                break;
+                            }
+                        }
+
+                        if (valid) {
+                            cols[row] = c;
+                            usedCols[c] = true;
+                            if (backtrack(row + 1)) return true;
+                            usedCols[c] = false;
+                        }
+                    }
+                    return false;
+                }
+
+                if (backtrack(0)) {
+                    return cols.map((c, r) => ({ r, c }));
+                }
+                return null;
+            }
+
+            while (!cats) {
+                cats = solveCatPlacement();
+            }
+
+            // Step 2: Grow 10 contiguous regions starting from each cat seed
+            const regionGrid = Array.from({ length: SIZE }, () => Array(SIZE).fill(-1));
+            const frontiers = Array.from({ length: SIZE }, () => []);
+            const regionSizes = new Array(SIZE).fill(1);
+            const caps = new Array(SIZE).fill(SIZE * SIZE);
+
+            // Randomly designate two regions to be size 1 and two regions to be size 2
+            const regIds = Array.from({ length: SIZE }, (_, i) => i).sort(() => Math.random() - 0.5);
+            
+            caps[regIds[0]] = 1;
+            caps[regIds[1]] = 1;
+            caps[regIds[2]] = 2;
+            caps[regIds[3]] = 2;
+
+            cats.forEach((cat, id) => {
+                regionGrid[cat.r][cat.c] = id;
+                getOrthogonalNeighbors(cat.r, cat.c).forEach(n => frontiers[id].push(n));
+            });
+
+            let remainingCells = SIZE * SIZE - SIZE;
+
+            while (remainingCells > 0) {
+                // Filter valid unassigned frontiers for regions that haven't reached their cap
+                const activeRegions = [];
+                for (let i = 0; i < SIZE; i++) {
+                    frontiers[i] = frontiers[i].filter(cell => regionGrid[cell.r][cell.c] === -1);
+                    if (frontiers[i].length > 0 && regionSizes[i] < caps[i]) {
+                        activeRegions.push(i);
+                    }
+                }
+
+                if (activeRegions.length === 0) {
+                    // If trapped, re-run generation
+                    return generateRandomBoard();
+                }
+
+                // Pick a random active region to grow
+                const regId = activeRegions[Math.floor(Math.random() * activeRegions.length)];
+                const frontier = frontiers[regId];
+                const randIdx = Math.floor(Math.random() * frontier.length);
+                const cell = frontier.splice(randIdx, 1)[0];
+
+                if (regionGrid[cell.r][cell.c] === -1) {
+                    regionGrid[cell.r][cell.c] = regId;
+                    regionSizes[regId]++;
+                    remainingCells--;
+
+                    getOrthogonalNeighbors(cell.r, cell.c).forEach(n => {
+                        if (regionGrid[n.r][n.c] === -1) {
+                            frontiers[regId].push(n);
+                        }
+                    });
+                }
+            }
+
+            // Verify counts to ensure there are at least two 1-cell regions and two 2-cell regions
+            const counts = new Array(SIZE).fill(0);
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    counts[regionGrid[r][c]]++;
+                }
+            }
+
+            const countOnes = counts.filter(c => c === 1).length;
+            const countTwos = counts.filter(c => c === 2).length;
+
+            if (countOnes < 2 || countTwos < 2) {
+                return generateRandomBoard();
+            }
+
+            return {
+                cats: cats,
+                regions: regionGrid
+            };
+        }
+
+        function getOrthogonalNeighbors(r, c) {
+            const res = [];
+            const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+            for (let [dr, dc] of dirs) {
+                let nr = r + dr, nc = c + dc;
+                if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) {
+                    res.push({ r: nr, c: nc });
+                }
+            }
+            return res;
+        }
+
+        // --- STREAMING_CHUNK: Board Rendering & UI Logic... ---
+        function renderBoard() {
+            const boardEl = document.getElementById('board');
+            boardEl.innerHTML = '';
+
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    const cellEl = document.createElement('div');
+                    const regionId = boardSolution.regions[r][c];
+                    
+                    cellEl.className = 'cell';
+                    cellEl.dataset.r = r;
+                    cellEl.dataset.c = c;
+                    cellEl.style.backgroundColor = REGION_COLORS[regionId];
+
+                    // Region Boundary Thick Borders
+                    if (r === 0 || boardSolution.regions[r - 1][c] !== regionId) cellEl.classList.add('border-t-region');
+                    else cellEl.classList.add('border-t-thin');
+
+                    if (r === SIZE - 1 || boardSolution.regions[r + 1][c] !== regionId) cellEl.classList.add('border-b-region');
+                    else cellEl.classList.add('border-b-thin');
+
+                    if (c === 0 || boardSolution.regions[r][c - 1] !== regionId) cellEl.classList.add('border-l-region');
+                    else cellEl.classList.add('border-l-thin');
+
+                    if (c === SIZE - 1 || boardSolution.regions[r][c + 1] !== regionId) cellEl.classList.add('border-r-region');
+                    else cellEl.classList.add('border-r-thin');
+
+                    // Set Cell Content based on userBoard state
+                    updateCellUI(cellEl, userBoard[r][c]);
+
+                    // Event Listeners
+                    cellEl.addEventListener('click', (e) => handleCellClick(r, c));
+                    cellEl.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        handleCellRightClick(r, c);
+                    });
+
+                    boardEl.appendChild(cellEl);
+                }
+            }
+
+            updateStatsDisplay();
+        }
+
+        function updateCellUI(cellEl, state) {
+            cellEl.innerHTML = '';
+            if (state === 'CAT') {
+                const catSpan = document.createElement('span');
+                catSpan.className = 'pop-in';
+                catSpan.textContent = '🐱';
+                cellEl.appendChild(catSpan);
+            } else if (state === 'MARK') {
+                const xSpan = document.createElement('span');
+                xSpan.className = 'pop-in text-rose-500 font-black text-sm sm:text-base';
+                xSpan.textContent = '❌';
+                cellEl.appendChild(xSpan);
+            }
+        }
+
+        // --- STREAMING_CHUNK: User Input & Rules Validation... ---
+        function handleCellClick(r, c) {
+            if (hearts <= 0) return;
+
+            const currentState = userBoard[r][c];
+
+            if (currentInputMode === 'CAT') {
+                if (currentState === 'CAT') {
+                    // Remove Cat
+                    userBoard[r][c] = 'EMPTY';
+                    playSound('mark');
+                } else {
+                    // Place Cat and check constraints
+                    placeCatWithValidation(r, c);
+                }
+            } else {
+                // 'X' Mode
+                if (currentState === 'MARK') {
+                    userBoard[r][c] = 'EMPTY';
+                    playSound('mark');
+                } else if (currentState === 'EMPTY') {
+                    userBoard[r][c] = 'MARK';
+                    playSound('mark');
+                }
+            }
+
+            refreshBoardState();
+            checkWinCondition();
+        }
+
+        function handleCellRightClick(r, c) {
+            if (hearts <= 0) return;
+
+            // Toggle Mark X on Right Click
+            if (userBoard[r][c] === 'MARK') {
+                userBoard[r][c] = 'EMPTY';
+                playSound('mark');
+            } else {
+                userBoard[r][c] = 'MARK';
+                playSound('mark');
+            }
+
+            refreshBoardState();
+            checkWinCondition();
+        }
+
+        function isSolutionCat(r, c) {
+            return boardSolution.cats.some(cat => cat.r === r && cat.c === c);
+        }
+
+        function placeCatWithValidation(r, c) {
+            // Cek apakah posisi (r, c) benar-benar posisi Kucing dalam solusi
+            if (!isSolutionCat(r, c)) {
+                // Jika SALAH: Munculkan tanda silang (❌) yang benar & kurangi nyawa
+                userBoard[r][c] = 'MARK';
+                hearts--;
+                playSound('error');
+                highlightCellError(r, c);
+                updateHeartsDisplay();
+
+                if (hearts <= 0) {
+                    setTimeout(() => {
+                        alert("Yah, Nyawa Kamu Habis! 😿 Mari coba lagi dengan game baru.");
+                        startNewGame();
+                    }, 400);
+                }
+                return;
+            }
+
+            // Jika BENAR: Pasang Kucing!
+            userBoard[r][c] = 'CAT';
+            playSound('cat');
+
+            // Otomatis beri tanda X di sekitar baris, kolom, wilayah, & diagonal
+            autoFillXForCat(r, c);
+        }
+
+        function highlightCellError(r, c) {
+            const cell = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+            if (cell) {
+                cell.classList.add('error-shake');
+                setTimeout(() => cell.classList.remove('error-shake'), 400);
+            }
+        }
+
+        function autoFillXForCat(r, c) {
+            const regId = boardSolution.regions[r][c];
+
+            for (let i = 0; i < SIZE; i++) {
+                for (let j = 0; j < SIZE; j++) {
+                    if (i === r && j === c) continue;
+                    if (userBoard[i][j] === 'CAT') continue;
+
+                    // If same row, same col, same region, or adjacent (King's move)
+                    if (i === r || j === c || boardSolution.regions[i][j] === regId || (Math.abs(r - i) <= 1 && Math.abs(c - j) <= 1)) {
+                        userBoard[i][j] = 'MARK';
+                    }
+                }
+            }
+        }
+
+        function highlightConflicts(r, c, conflicts) {
+            const allPoints = [{ r, c }, ...conflicts];
+            allPoints.forEach(p => {
+                const cell = document.querySelector(`.cell[data-r="${p.r}"][data-c="${p.c}"]`);
+                if (cell) {
+                    cell.classList.add('error-shake');
+                    setTimeout(() => cell.classList.remove('error-shake'), 400);
+                }
+            });
+        }
+
+        function refreshBoardState() {
+            foundCatsCount = 0;
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    const cellEl = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+                    if (cellEl) {
+                        updateCellUI(cellEl, userBoard[r][c]);
+                    }
+                    if (userBoard[r][c] === 'CAT') {
+                        foundCatsCount++;
+                    }
+                }
+            }
+            updateStatsDisplay();
+        }
+
+        // --- STREAMING_CHUNK: Game Control Helpers & Hints... ---
+        function setInputMode(mode) {
+            currentInputMode = mode;
+            const catBtn = document.getElementById('mode-cat');
+            const xBtn = document.getElementById('mode-x');
+
+            if (mode === 'CAT') {
+                catBtn.className = 'flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold font-fredoka text-sm flex items-center justify-center gap-2 transition bg-white text-cat-dark shadow-sm';
+                xBtn.className = 'flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold font-fredoka text-sm flex items-center justify-center gap-2 transition text-stone-500 hover:text-stone-800';
+            } else {
+                xBtn.className = 'flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold font-fredoka text-sm flex items-center justify-center gap-2 transition bg-white text-cat-dark shadow-sm';
+                catBtn.className = 'flex-1 sm:flex-none px-4 py-2 rounded-lg font-bold font-fredoka text-sm flex items-center justify-center gap-2 transition text-stone-500 hover:text-stone-800';
+            }
+        }
+
+        function updateHintDisplay() {
+            const hintBtn = document.getElementById('btn-hint');
+            const hintCountEl = document.getElementById('hint-count');
+            if (hintCountEl) {
+                hintCountEl.textContent = hintsRemaining;
+            }
+            if (hintBtn) {
+                if (hintsRemaining <= 0) {
+                    hintBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    hintBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+        }
+
+        function getHint() {
+            if (hearts <= 0 || hintsRemaining <= 0) return;
+
+            // Find a cat location from boardSolution that hasn't been found yet
+            const missingCats = boardSolution.cats.filter(cat => userBoard[cat.r][cat.c] !== 'CAT');
+
+            if (missingCats.length > 0) {
+                hintsRemaining--;
+                updateHintDisplay();
+
+                // Pick one missing cat
+                const hintCat = missingCats[Math.floor(Math.random() * missingCats.length)];
+                placeCatWithValidation(hintCat.r, hintCat.c);
+                refreshBoardState();
+                checkWinCondition();
+            }
+        }
+
+        function resetCurrentBoard() {
+            userBoard = Array.from({ length: SIZE }, () => Array(SIZE).fill('EMPTY'));
+            hearts = 3;
+            hintsRemaining = 2;
+            updateHintDisplay();
+            refreshBoardState();
+            updateHeartsDisplay();
+        }
+
+        function startNewGame() {
+            boardSolution = generateRandomBoard();
+            userBoard = Array.from({ length: SIZE }, () => Array(SIZE).fill('EMPTY'));
+            hearts = 3;
+            hintsRemaining = 2;
+            foundCatsCount = 0;
+
+            updateHintDisplay();
+            renderBoard();
+            updateHeartsDisplay();
+            resetTimer();
+        }
+
+        function checkWinCondition() {
+            if (foundCatsCount === TOTAL_CATS) {
+                // Verify no conflicts on whole board
+                let valid = true;
+                for (let cat of boardSolution.cats) {
+                    if (userBoard[cat.r][cat.c] !== 'CAT') {
+                        valid = false;
+                        break;
+                    }
+                }
+
+                if (valid) {
+                    stopTimer();
+                    playSound('win');
+                    triggerConfetti();
+
+                    document.getElementById('victory-time').textContent = formatTime(timerSeconds);
+
+                    // Render Hearts in Victory Modal
+                    const heartsContainer = document.getElementById('victory-hearts');
+                    heartsContainer.innerHTML = '';
+                    for (let i = 0; i < hearts; i++) {
+                        heartsContainer.innerHTML += '<i class="fa-solid fa-heart mr-1"></i>';
+                    }
+
+                    openModal('victory-modal');
+                }
+            }
+        }
+
+        // --- STREAMING_CHUNK: Timer & UI Utilities... ---
+        function updateStatsDisplay() {
+            document.getElementById('cats-count').textContent = `${foundCatsCount} / ${TOTAL_CATS}`;
+        }
+
+        function updateHeartsDisplay() {
+            const container = document.getElementById('hearts-container');
+            container.innerHTML = '';
+            for (let i = 0; i < 3; i++) {
+                if (i < hearts) {
+                    container.innerHTML += '<i class="fa-solid fa-heart pop-in"></i>';
+                } else {
+                    container.innerHTML += '<i class="fa-regular fa-heart text-stone-300"></i>';
+                }
+            }
+        }
+
+        function resetTimer() {
+            stopTimer();
+            timerSeconds = 0;
+            document.getElementById('timer').textContent = "00:00";
+            timerInterval = setInterval(() => {
+                timerSeconds++;
+                document.getElementById('timer').textContent = formatTime(timerSeconds);
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+        }
+
+        function formatTime(sec) {
+            const m = Math.floor(sec / 60).toString().padStart(2, '0');
+            const s = (sec % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function triggerConfetti() {
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
+        }
+
+        // --- INITIALIZATION ---
+        window.onload = function() {
+            startNewGame();
+        };
+    </script>
+</body>
+</html>
