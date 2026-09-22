@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Flip Masters - 10 Levels</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap');
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: radial-gradient(circle at top center, #1e1b4b 0%, #0f172a 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        .font-game {
+            font-family: 'Fredoka', cursive;
+        }
+
+        /* 3D Flip Card Effect */
+        .card-perspective {
+            perspective: 1000px;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+
+        .card-inner.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        /* Matched cards return to closed face-down state (0deg) with dimmed appearance */
+        .card-inner.is-matched {
+            transform: rotateY(0deg) scale(0.95) !important;
+            opacity: 0.4;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-front {
+            background: linear-gradient(135deg, #312e81 0%, #1e1b4b 100%);
+            border: 2px solid #6366f1;
+            color: #818cf8;
+        }
+
+        .card-front:hover {
+            border-color: #a5b4fc;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #38bdf8;
+            transform: rotateY(180deg);
+            color: #f8fafc;
+        }
+
+        /* Custom styling for front side of matched closed cards */
+        .card-inner.is-matched .card-front {
+            border-color: #34d399;
+            background: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
+            box-shadow: 0 0 12px rgba(52, 211, 153, 0.3);
+            color: #34d399;
+        }
+
+        .glow-effect {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #312e81;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen justify-between overflow-x-hidden">
+
+    <header class="bg-slate-900/80 backdrop-blur-md border-b border-indigo-900/50 sticky top-0 z-30 px-4 py-3">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <!-- Title / Brand -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-brain"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-game font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300">
+                        Memory Flip
+                    </h1>
+                    <p class="text-xs text-indigo-300/70 hidden sm:block">10 Level Tantangan Memori</p>
+                </div>
+            </div>
+
+            <!-- Controls & Level Info -->
+            <div class="flex items-center gap-2 sm:gap-4">
+                <button id="btn-sound" onclick="toggleSound()" class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 text-indigo-300 flex items-center justify-center transition active:scale-95" title="Suara On/Off">
+                    <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+                </button>
+
+                <button onclick="showLevelSelectModal()" class="px-3 py-2 rounded-xl bg-indigo-600/80 hover:bg-indigo-600 border border-indigo-400/30 text-white font-medium text-sm flex items-center gap-2 transition shadow-lg shadow-indigo-600/20 active:scale-95">
+                    <i class="fa-solid fa-layer-group"></i>
+                    <span>Pilih Level</span>
+                </button>
+
+                <button onclick="restartLevel()" class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 text-amber-400 flex items-center justify-center transition active:scale-95" title="Ulang Level Ini">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow flex flex-col items-center justify-start p-3 sm:p-6 max-w-6xl w-full mx-auto gap-4">
+
+        <!-- Status Dashboard -->
+        <div class="w-full bg-slate-800/60 backdrop-blur-md rounded-2xl p-4 border border-indigo-900/40 shadow-xl grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+            <!-- Level -->
+            <div class="bg-slate-900/60 rounded-xl p-2.5 border border-indigo-500/20 flex flex-col justify-center">
+                <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Level</span>
+                <span id="stat-level" class="text-xl sm:text-2xl font-game font-bold text-indigo-400">1 / 10</span>
+            </div>
+
+            <!-- Kartu Terbuka / Pasangan -->
+            <div class="bg-slate-900/60 rounded-xl p-2.5 border border-indigo-500/20 flex flex-col justify-center">
+                <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Progres Pasangan</span>
+                <span id="stat-pairs" class="text-xl sm:text-2xl font-game font-bold text-emerald-400">0 / 5</span>
+            </div>
+
+            <!-- Langkah (Moves) -->
+            <div class="bg-slate-900/60 rounded-xl p-2.5 border border-indigo-500/20 flex flex-col justify-center">
+                <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Langkah</span>
+                <span id="stat-moves" class="text-xl sm:text-2xl font-game font-bold text-purple-400">0</span>
+            </div>
+
+            <!-- Waktu -->
+            <div class="bg-slate-900/60 rounded-xl p-2.5 border border-indigo-500/20 flex flex-col justify-center">
+                <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Waktu</span>
+                <span id="stat-timer" class="text-xl sm:text-2xl font-game font-bold text-sky-400">00:00</span>
+            </div>
+        </div>
+
+        <!-- Powerups & Theme Bar -->
+        <div class="w-full flex items-center justify-between gap-2 px-1">
+            <div class="flex items-center gap-2">
+                <span id="cards-info-tag" class="text-xs sm:text-sm text-indigo-300/80 bg-indigo-950/60 border border-indigo-800/40 px-3 py-1.5 rounded-lg">
+                    <i class="fa-solid fa-clone mr-1"></i> Total Kartu: <strong id="total-cards-count" class="text-white">10</strong>
+                </span>
+            </div>
+
+            <!-- Hint / Peek Powerup Button -->
+            <button id="btn-hint" onclick="useHintPowerup()" class="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-medium text-xs sm:text-sm flex items-center gap-2 transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed">
+                <i class="fa-solid fa-eye"></i>
+                <span>Intip ( <span id="hint-count">1</span> )</span>
+            </button>
+        </div>
+
+        <!-- Card Grid Container -->
+        <div id="game-grid-container" class="w-full flex items-center justify-center my-auto min-h-[380px] py-2">
+            <div id="cards-grid" class="grid gap-2 sm:gap-3 w-full max-w-5xl justify-center items-center">
+                <!-- Dynamic Cards Inserted Here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-3 text-xs text-slate-500 border-t border-slate-800/60 bg-slate-950/40">
+        Memory Flip Masters &bull; Asah Daya Ingatmu Lewat 10 Tingkat
+    </footer>
+
+    <!-- Modal Level Select -->
+    <div id="modal-level-select" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-indigo-500/30 rounded-3xl p-6 max-w-2xl w-full shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
+            <!-- Header -->
+            <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+                <div>
+                    <h2 class="text-2xl font-game font-bold text-indigo-300">Pilih Level</h2>
+                    <p class="text-xs text-slate-400">Setiap level menambah jumlah kartu secara bertahap!</p>
+                </div>
+                <button onclick="closeModal('modal-level-select')" class="text-slate-400 hover:text-white p-2 rounded-lg text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Level Grid (1 to 10) -->
+            <div id="levels-list" class="grid grid-cols-2 sm:grid-cols-5 gap-3 my-6 overflow-y-auto pr-1">
+                <!-- Level buttons dynamically generated -->
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="pt-3 border-t border-slate-800 flex justify-between items-center text-xs text-slate-400">
+                <span><i class="fa-solid fa-star text-amber-400 mr-1"></i>Kumpulkan Bintang</span>
+                <button onclick="resetGameProgress()" class="text-rose-400 hover:underline">Reset Progres</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Level Complete -->
+    <div id="modal-level-complete" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-gradient-to-b from-slate-900 to-indigo-950 border border-indigo-500/40 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl text-center relative overflow-hidden transform transition-all scale-100">
+            <!-- Glow Background Effect -->
+            <div class="absolute -top-12 -left-12 w-32 h-32 bg-indigo-500/20 rounded-full blur-2xl"></div>
+            <div class="absolute -bottom-12 -right-12 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl"></div>
+
+            <div class="w-20 h-20 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-4xl mb-4 shadow-lg shadow-emerald-500/20">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+
+            <h3 class="text-2xl font-game font-bold text-white mb-1">Level <span id="completed-level-num">1</span> Selesai!</h3>
+            <p class="text-sm text-indigo-200/80 mb-6">Hebat! Ingatanmu luar biasa tajam!</p>
+
+            <!-- Stars Rating -->
+            <div id="stars-container" class="flex items-center justify-center gap-2 text-3xl text-amber-400 mb-6">
+                <i class="fa-solid fa-star animate-bounce"></i>
+                <i class="fa-solid fa-star animate-bounce delay-100"></i>
+                <i class="fa-solid fa-star animate-bounce delay-200"></i>
+            </div>
+
+            <!-- Stats Summary -->
+            <div class="bg-slate-950/60 rounded-2xl p-4 border border-indigo-900/50 grid grid-cols-2 gap-3 mb-6 text-sm">
+                <div>
+                    <span class="block text-slate-400 text-xs uppercase">Total Waktu</span>
+                    <strong id="completed-time" class="text-sky-300 font-game text-base">00:30</strong>
+                </div>
+                <div>
+                    <span class="block text-slate-400 text-xs uppercase">Total Langkah</span>
+                    <strong id="completed-moves" class="text-purple-300 font-game text-base">12</strong>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-3">
+                <button onclick="restartLevel(); closeModal('modal-level-complete');" class="flex-1 py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-medium text-sm transition active:scale-95">
+                    <i class="fa-solid fa-rotate-right mr-1"></i> Ulangi
+                </button>
+                <button id="btn-next-level" onclick="nextLevel()" class="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold text-sm transition shadow-lg shadow-indigo-500/30 active:scale-95">
+                    Level Berikutnya <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Game All Completed Victory -->
+    <div id="modal-all-complete" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900 border border-amber-500/50 rounded-3xl p-8 max-w-md w-full shadow-2xl text-center relative overflow-hidden">
+            <div class="w-24 h-24 bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 rounded-full flex items-center justify-center mx-auto text-5xl mb-4 shadow-xl shadow-amber-500/30">
+                <i class="fa-solid fa-crown"></i>
+            </div>
+
+            <h3 class="text-3xl font-game font-bold text-amber-300 mb-2">SELAMAT!</h3>
+            <p class="text-sm text-slate-200 mb-6">Kamu telah menuntaskan seluruh <strong>10 Level</strong> Memory Flip dengan total 50 Kartu!</p>
+
+            <button onclick="showLevelSelectModal(); closeModal('modal-all-complete');" class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-slate-950 font-bold text-base transition shadow-lg shadow-amber-500/20 active:scale-95">
+                Mainkan Kembali Level Favorit
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- GAME CONFIGURATION & DATA ---
+        // Level configuration: Level 1 has 10 cards (5 pairs), Level 10 has 50 cards (25 pairs)
+        // Scaled progressively across 10 levels
+        const LEVEL_CONFIGS = [
+            { level: 1,  cards: 10, pairs: 5,  hints: 2 },
+            { level: 2,  cards: 14, pairs: 7,  hints: 2 },
+            { level: 3,  cards: 18, pairs: 9,  hints: 2 },
+            { level: 4,  cards: 22, pairs: 11, hints: 1 },
+            { level: 5,  cards: 26, pairs: 13, hints: 1 },
+            { level: 6,  cards: 30, pairs: 15, hints: 1 },
+            { level: 7,  cards: 34, pairs: 17, hints: 1 },
+            { level: 8,  cards: 38, pairs: 19, hints: 1 },
+            { level: 9,  cards: 44, pairs: 22, hints: 1 },
+            { level: 10, cards: 50, pairs: 25, hints: 1 }
+        ];
+
+        // Rich Icon Pool for Cards (FontAwesome icons with distinct vibrant colors)
+        const ICON_POOL = [
+            { icon: 'fa-solid fa-rocket', color: '#f43f5e' },
+            { icon: 'fa-solid fa-gem', color: '#ec4899' },
+            { icon: 'fa-solid fa-ghost', color: '#a855f7' },
+            { icon: 'fa-solid fa-dragon', color: '#6366f1' },
+            { icon: 'fa-solid fa-gamepad', color: '#3b82f6' },
+            { icon: 'fa-solid fa-bolt', color: '#0ea5e9' },
+            { icon: 'fa-solid fa-fire', color: '#f97316' },
+            { icon: 'fa-solid fa-puzzle-piece', color: '#10b981' },
+            { icon: 'fa-solid fa-star', color: '#eab308' },
+            { icon: 'fa-solid fa-heart', color: '#ef4444' },
+            { icon: 'fa-solid fa-anchor', color: '#0284c7' },
+            { icon: 'fa-solid fa-flask', color: '#8b5cf6' },
+            { icon: 'fa-solid fa-magnet', color: '#d97706' },
+            { icon: 'fa-solid fa-mask', color: '#059669' },
+            { icon: 'fa-solid fa-shield-halved', color: '#2563eb' },
+            { icon: 'fa-solid fa-headset', color: '#ec4899' },
+            { icon: 'fa-solid fa-compass', color: '#14b8a6' },
+            { icon: 'fa-solid fa-dice-d20', color: '#a855f7' },
+            { icon: 'fa-solid fa-hat-wizard', color: '#6366f1' },
+            { icon: 'fa-solid fa-spaghetti-monster-flying', color: '#f43f5e' },
+            { icon: 'fa-solid fa-shuttle-space', color: '#38bdf8' },
+            { icon: 'fa-solid fa-meteor', color: '#fb923c' },
+            { icon: 'fa-solid fa-wand-magic-sparkles', color: '#f472b6' },
+            { icon: 'fa-solid fa-key', color: '#facc15' },
+            { icon: 'fa-solid fa-trophy', color: '#fbbf24' },
+            { icon: 'fa-solid fa-crown', color: '#eab308' },
+            { icon: 'fa-solid fa-plane', color: '#06b6d4' },
+            { icon: 'fa-solid fa-guitar', color: '#e11d48' },
+            { icon: 'fa-solid fa-car-side', color: '#22c55e' },
+            { icon: 'fa-solid fa-lightbulb', color: '#f59e0b' }
+        ];
+
+        // State variables
+        let currentLevel = 1;
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let movesCount = 0;
+        let isLockBoard = false;
+        let timerInterval = null;
+        let secondsElapsed = 0;
+        let soundEnabled = true;
+        let hintsRemaining = 1;
+        let levelData = {}; // Saved progress from localStorage
+
+        // Audio Synth using Tone.js
+        let flipSynth, matchSynth, winSynth, wrongSynth;
+
+        function initAudio() {
+            try {
+                flipSynth = new Tone.Synth({
+                    oscillator: { type: "sine" },
+                    envelope: { attack: 0.005, decay: 0.1, sustain: 0, release: 0.1 }
+                }).toDestination();
+                flipSynth.volume.value = -12;
+
+                matchSynth = new Tone.PolySynth(Tone.Synth).toDestination();
+                matchSynth.volume.value = -10;
+
+                wrongSynth = new Tone.Synth({
+                    oscillator: { type: "triangle" },
+                    envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.1 }
+                }).toDestination();
+                wrongSynth.volume.value = -14;
+
+                winSynth = new Tone.PolySynth(Tone.Synth).toDestination();
+                winSynth.volume.value = -8;
+            } catch (e) {
+                console.log("Audio initialized on first user click");
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                if (Tone.context.state !== 'running') {
+                    Tone.start();
+                }
+                if (!flipSynth) initAudio();
+
+                if (type === 'flip' && flipSynth) {
+                    flipSynth.triggerAttackRelease("C5", "16n");
+                } else if (type === 'match' && matchSynth) {
+                    matchSynth.triggerAttackRelease(["E5", "G5", "C6"], "8n");
+                } else if (type === 'wrong' && wrongSynth) {
+                    wrongSynth.triggerAttackRelease("G3", "16n");
+                } else if (type === 'win' && winSynth) {
+                    winSynth.triggerAttackRelease(["C5", "E5", "G5", "C6"], "4n");
+                }
+            } catch (e) {
+                // Ignore audio context errors gracefully
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('sound-icon');
+            if (soundEnabled) {
+                icon.className = 'fa-solid fa-volume-high';
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-slate-500';
+            }
+        }
+
+        function loadProgress() {
+            const saved = localStorage.getItem('memory_flip_progress');
+            if (saved) {
+                try {
+                    levelData = JSON.parse(saved);
+                } catch (e) {
+                    levelData = {};
+                }
+            } else {
+                levelData = { 1: { unlocked: true, stars: 0, bestMoves: null, bestTime: null } };
+            }
+        }
+
+        function saveProgress(level, stars, moves, time) {
+            if (!levelData[level]) {
+                levelData[level] = { unlocked: true, stars: 0, bestMoves: moves, bestTime: time };
+            }
+            levelData[level].stars = Math.max(levelData[level].stars || 0, stars);
+            if (!levelData[level].bestMoves || moves < levelData[level].bestMoves) {
+                levelData[level].bestMoves = moves;
+            }
+            if (!levelData[level].bestTime || time < levelData[level].bestTime) {
+                levelData[level].bestTime = time;
+            }
+
+            // Unlock next level
+            if (level < 10) {
+                if (!levelData[level + 1]) {
+                    levelData[level + 1] = { unlocked: true, stars: 0, bestMoves: null, bestTime: null };
+                } else {
+                    levelData[level + 1].unlocked = true;
+                }
+            }
+
+            localStorage.setItem('memory_flip_progress', JSON.stringify(levelData));
+        }
+
+        function resetGameProgress() {
+            localStorage.removeItem('memory_flip_progress');
+            levelData = { 1: { unlocked: true, stars: 0, bestMoves: null, bestTime: null } };
+            renderLevelSelectGrid();
+            closeModal('modal-level-select');
+            startLevel(1);
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            secondsElapsed = 0;
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+            const secs = (secondsElapsed % 60).toString().padStart(2, '0');
+            document.getElementById('stat-timer').textContent = `${mins}:${secs}`;
+        }
+
+        function startLevel(lvlNum) {
+            currentLevel = lvlNum;
+            const config = LEVEL_CONFIGS.find(c => c.level === currentLevel) || LEVEL_CONFIGS[0];
+
+            matchedPairs = 0;
+            movesCount = 0;
+            flippedCards = [];
+            isLockBoard = false;
+            hintsRemaining = config.hints;
+
+            // Update UI elements
+            document.getElementById('stat-level').textContent = `${currentLevel} / 10`;
+            document.getElementById('stat-pairs').textContent = `0 / ${config.pairs}`;
+            document.getElementById('stat-moves').textContent = `0`;
+            document.getElementById('total-cards-count').textContent = `${config.cards}`;
+            document.getElementById('hint-count').textContent = `${hintsRemaining}`;
+            document.getElementById('btn-hint').disabled = false;
+
+            startTimer();
+            generateGrid(config);
+        }
+
+        function restartLevel() {
+            startLevel(currentLevel);
+        }
+
+        function generateGrid(config) {
+            const gridContainer = document.getElementById('cards-grid');
+            gridContainer.innerHTML = '';
+
+            // Pick icons for pairs
+            const selectedIcons = [...ICON_POOL].sort(() => 0.5 - Math.random()).slice(0, config.pairs);
+            
+            // Duplicate to create pairs and shuffle
+            let cardDeck = [];
+            selectedIcons.forEach((item, index) => {
+                cardDeck.push({ pairId: index, icon: item.icon, color: item.color });
+                cardDeck.push({ pairId: index, icon: item.icon, color: item.color });
+            });
+            cardDeck.sort(() => 0.5 - Math.random());
+
+            // Determine Grid Columns based on card count for perfect responsive fit
+            let colsClass = 'grid-cols-4 sm:grid-cols-5';
+            let cardSizeClass = 'h-24 sm:h-28 text-3xl sm:text-4xl';
+
+            if (config.cards <= 10) {
+                colsClass = 'grid-cols-5';
+                cardSizeClass = 'h-24 sm:h-32 text-3xl sm:text-4xl';
+            } else if (config.cards <= 18) {
+                colsClass = 'grid-cols-4 sm:grid-cols-6';
+                cardSizeClass = 'h-20 sm:h-28 text-2xl sm:text-3xl';
+            } else if (config.cards <= 30) {
+                colsClass = 'grid-cols-5 sm:grid-cols-6 md:grid-cols-6';
+                cardSizeClass = 'h-16 sm:h-24 text-xl sm:text-2xl';
+            } else if (config.cards <= 40) {
+                colsClass = 'grid-cols-6 sm:grid-cols-8 md:grid-cols-8';
+                cardSizeClass = 'h-14 sm:h-20 text-lg sm:text-2xl';
+            } else { // 50 cards
+                colsClass = 'grid-cols-5 sm:grid-cols-10 md:grid-cols-10';
+                cardSizeClass = 'h-12 sm:h-16 md:h-20 text-base sm:text-xl md:text-2xl';
+            }
+
+            gridContainer.className = `grid ${colsClass} gap-1.5 sm:gap-2.5 w-full max-w-5xl justify-center items-center my-auto`;
+
+            // Create Card elements
+            cardDeck.forEach((cardData, idx) => {
+                const cardElem = document.createElement('div');
+                cardElem.className = `card-perspective w-full ${cardSizeClass}`;
+                cardElem.setAttribute('data-pair', cardData.pairId);
+                cardElem.setAttribute('data-index', idx);
+
+                cardElem.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <i class="fa-solid fa-question text-indigo-400/50"></i>
+                        </div>
+                        <div class="card-back">
+                            <i class="${cardData.icon}" style="color: ${cardData.color}"></i>
+                        </div>
+                    </div>
+                `;
+
+                cardElem.addEventListener('click', () => flipCard(cardElem));
+                gridContainer.appendChild(cardElem);
+            });
+        }
+
+        function flipCard(cardElem) {
+            if (isLockBoard) return;
+            const inner = cardElem.querySelector('.card-inner');
+            if (inner.classList.contains('is-flipped') || inner.classList.contains('is-matched')) return;
+
+            playSound('flip');
+            inner.classList.add('is-flipped');
+            flippedCards.push(cardElem);
+
+            if (flippedCards.length === 2) {
+                movesCount++;
+                document.getElementById('stat-moves').textContent = movesCount;
+                checkMatch();
+            }
+        }
+
+        function checkMatch() {
+            isLockBoard = true;
+            const [card1, card2] = flippedCards;
+            const match1 = card1.getAttribute('data-pair');
+            const match2 = card2.getAttribute('data-pair');
+
+            const inner1 = card1.querySelector('.card-inner');
+            const inner2 = card2.querySelector('.card-inner');
+
+            if (match1 === match2) {
+                // Match Found! Cards flip back closed (face-down) with a checkmark badge
+                setTimeout(() => {
+                    playSound('match');
+                    inner1.classList.remove('is-flipped');
+                    inner2.classList.remove('is-flipped');
+                    inner1.classList.add('is-matched');
+                    inner2.classList.add('is-matched');
+
+                    // Replace front icon with a checkmark badge
+                    const front1 = card1.querySelector('.card-front');
+                    const front2 = card2.querySelector('.card-front');
+                    if (front1) front1.innerHTML = '<i class="fa-solid fa-check text-emerald-400"></i>';
+                    if (front2) front2.innerHTML = '<i class="fa-solid fa-check text-emerald-400"></i>';
+
+                    matchedPairs++;
+                    const config = LEVEL_CONFIGS.find(c => c.level === currentLevel);
+                    document.getElementById('stat-pairs').textContent = `${matchedPairs} / ${config.pairs}`;
+
+                    flippedCards = [];
+                    isLockBoard = false;
+
+                    // Check level completion
+                    if (matchedPairs === config.pairs) {
+                        onLevelComplete();
+                    }
+                }, 500);
+            } else {
+                // Not a match
+                setTimeout(() => {
+                    playSound('wrong');
+                    inner1.classList.remove('is-flipped');
+                    inner2.classList.remove('is-flipped');
+                    flippedCards = [];
+                    isLockBoard = false;
+                }, 850);
+            }
+        }
+
+        function useHintPowerup() {
+            if (hintsRemaining <= 0 || isLockBoard) return;
+            hintsRemaining--;
+            document.getElementById('hint-count').textContent = hintsRemaining;
+            if (hintsRemaining === 0) {
+                document.getElementById('btn-hint').disabled = true;
+            }
+
+            isLockBoard = true;
+            const unMatchedCards = Array.from(document.querySelectorAll('.card-inner:not(.is-matched):not(.is-flipped)'));
+            
+            // Briefly reveal unmatched cards
+            unMatchedCards.forEach(card => card.classList.add('is-flipped'));
+
+            setTimeout(() => {
+                unMatchedCards.forEach(card => card.classList.remove('is-flipped'));
+                isLockBoard = false;
+            }, 1200);
+        }
+
+        function onLevelComplete() {
+            stopTimer();
+            playSound('win');
+
+            // Calculate Stars based on moves efficiency
+            const config = LEVEL_CONFIGS.find(c => c.level === currentLevel);
+            const minMovesPossible = config.pairs;
+            let stars = 1;
+            if (movesCount <= minMovesPossible + 3) {
+                stars = 3;
+            } else if (movesCount <= minMovesPossible + 8) {
+                stars = 2;
+            }
+
+            saveProgress(currentLevel, stars, movesCount, secondsElapsed);
+
+            // Confetti effect
+            try {
+                confetti({
+                    particleCount: 80,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            } catch(e) {}
+
+            if (currentLevel < 10) {
+                document.getElementById('completed-level-num').textContent = currentLevel;
+                document.getElementById('completed-moves').textContent = movesCount;
+                document.getElementById('completed-time').textContent = document.getElementById('stat-timer').textContent;
+
+                // Render Stars
+                const starsContainer = document.getElementById('stars-container');
+                starsContainer.innerHTML = '';
+                for (let i = 0; i < 3; i++) {
+                    const star = document.createElement('i');
+                    if (i < stars) {
+                        star.className = 'fa-solid fa-star text-amber-400 animate-bounce';
+                    } else {
+                        star.className = 'fa-regular fa-star text-slate-600';
+                    }
+                    starsContainer.appendChild(star);
+                }
+
+                openModal('modal-level-complete');
+            } else {
+                // Game Finished! Level 10 Complete!
+                openModal('modal-all-complete');
+            }
+        }
+
+        function nextLevel() {
+            closeModal('modal-level-complete');
+            if (currentLevel < 10) {
+                startLevel(currentLevel + 1);
+            }
+        }
+
+        function showLevelSelectModal() {
+            renderLevelSelectGrid();
+            openModal('modal-level-select');
+        }
+
+        function renderLevelSelectGrid() {
+            const container = document.getElementById('levels-list');
+            container.innerHTML = '';
+
+            LEVEL_CONFIGS.forEach(cfg => {
+                const data = levelData[cfg.level] || { unlocked: cfg.level === 1, stars: 0 };
+                const btn = document.createElement('button');
+
+                if (data.unlocked) {
+                    btn.className = `flex flex-col items-center justify-between p-3.5 rounded-2xl border transition relative overflow-hidden active:scale-95 ${
+                        cfg.level === currentLevel 
+                        ? 'bg-indigo-600/30 border-indigo-400 ring-2 ring-indigo-500/50' 
+                        : 'bg-slate-800 hover:bg-slate-700/80 border-slate-700'
+                    }`;
+
+                    let starsHtml = '';
+                    for (let i = 0; i < 3; i++) {
+                        if (i < (data.stars || 0)) {
+                            starsHtml += `<i class="fa-solid fa-star text-amber-400 text-xs"></i>`;
+                        } else {
+                            starsHtml += `<i class="fa-regular fa-star text-slate-600 text-xs"></i>`;
+                        }
+                    }
+
+                    btn.innerHTML = `
+                        <div class="text-xs font-semibold text-indigo-300 uppercase">Lvl ${cfg.level}</div>
+                        <div class="text-xl font-game font-bold text-white my-1">${cfg.cards} <span class="text-xs font-normal text-slate-400">Kartu</span></div>
+                        <div class="flex items-center gap-0.5 mt-1">${starsHtml}</div>
+                    `;
+
+                    btn.onclick = () => {
+                        closeModal('modal-level-select');
+                        startLevel(cfg.level);
+                    };
+                } else {
+                    // Locked level
+                    btn.className = 'flex flex-col items-center justify-center p-3.5 rounded-2xl bg-slate-900/50 border border-slate-800/80 opacity-50 cursor-not-allowed';
+                    btn.innerHTML = `
+                        <i class="fa-solid fa-lock text-slate-500 text-lg mb-1"></i>
+                        <div class="text-xs font-semibold text-slate-500">Lvl ${cfg.level}</div>
+                        <div class="text-xs text-slate-600">${cfg.cards} Kartu</div>
+                    `;
+                }
+
+                container.appendChild(btn);
+            });
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            loadProgress();
+            startLevel(1);
+        };
+    </script>
+</body>
+</html>
