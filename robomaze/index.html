@@ -1019,7 +1019,7 @@
       if (currentLevelIndex + 1 < LEVELS.length) {
         loadLevel(currentLevelIndex + 1);
       } else {
-        alert("Selamat! Kamu telah menyelesaikan seluruh 20 Level Game Robot Labirin!");
+        window.location.href = "https://nikokusuma.github.io/games/robomaze2/";
       }
     }
 
@@ -1091,9 +1091,20 @@
     }
 
     function openWinModal() {
+      const isLastLevel = currentLevelIndex === LEVELS.length - 1;
       document.getElementById('winLevelNum').textContent = currentLevelIndex + 1;
       document.getElementById('winEnergyLeft').textContent = currentEnergy;
       document.getElementById('winStepsTaken').textContent = stepsTaken;
+      
+      const nextBtn = document.getElementById('nextLevelBtn');
+      if (nextBtn) {
+        if (isLastLevel) {
+          nextBtn.innerHTML = 'Lanjut ke Robomaze 2 <i class="fa-solid fa-arrow-right ml-1"></i>';
+        } else {
+          nextBtn.innerHTML = 'Level Lanjut <i class="fa-solid fa-arrow-right ml-1"></i>';
+        }
+      }
+
       document.getElementById('winModal').classList.remove('hidden');
     }
 
