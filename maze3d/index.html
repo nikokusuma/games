@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Stealth Food Runner - Bright Maze Edition</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f9ff;
+            color: #0f172a;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        .radar-border {
+            box-shadow: 0 4px 20px rgba(14, 165, 233, 0.25);
+            border: 2px solid rgba(14, 165, 233, 0.6);
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
+        }
+        .energy-bar-fill {
+            transition: width 0.2s linear, background-color 0.3s ease;
+        }
+        /* Mobile Touch D-Pad */
+        .d-btn {
+            background: rgba(15, 23, 42, 0.15);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: #0f172a;
+        }
+        .d-btn:active {
+            background: rgba(14, 165, 233, 0.4);
+        }
+    </style>
+</head>
+<body class="w-full h-full">
+
+    <!-- 3D Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- UI Overlay Layer -->
+    <div class="relative z-10 w-full h-screen pointer-events-none flex flex-col justify-between p-4 md:p-6">
+        
+        <!-- Top HUD Bar -->
+        <div class="flex justify-between items-start w-full max-w-5xl mx-auto">
+            <!-- Level & Energy Info -->
+            <div class="glass-panel p-4 rounded-2xl w-72 md:w-80 pointer-events-auto shadow-xl">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs font-bold tracking-widest text-sky-600 uppercase flex items-center gap-1.5">
+                        <i class="fa-solid fa-layer-group"></i> Level <span id="level-display" class="text-lg text-slate-900 font-extrabold">1</span> / 10
+                    </span>
+                    <span id="status-badge" class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold border border-emerald-300">
+                        Aman
+                    </span>
+                </div>
+
+                <!-- Energy Meter -->
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs font-bold">
+                        <span class="text-slate-700 flex items-center gap-1"><i class="fa-solid fa-bolt text-amber-500"></i> Energi Staminamu</span>
+                        <span id="energy-text" class="text-amber-600">100%</span>
+                    </div>
+                    <div class="w-full h-3.5 bg-slate-200 rounded-full overflow-hidden p-0.5 border border-slate-300">
+                        <div id="energy-bar" class="energy-bar-fill h-full bg-gradient-to-r from-amber-400 to-emerald-500 rounded-full w-full"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Radar / MiniMap Container -->
+            <div class="glass-panel p-2.5 rounded-2xl radar-border pointer-events-auto flex flex-col items-center">
+                <div class="text-[10px] font-extrabold tracking-wider text-sky-600 uppercase mb-1 flex items-center gap-1">
+                    <i class="fa-solid fa-radar animate-pulse text-sky-500"></i> Radar Peta
+                </div>
+                <canvas id="radar-canvas" width="130" height="130" class="rounded-xl bg-sky-950/90 shadow-inner"></canvas>
+                <span class="text-[9px] text-slate-500 mt-1.5 font-medium italic">*Makanan & Penjaga tidak tampak di radar</span>
+            </div>
+        </div>
+
+        <!-- Controls Hint (Desktop) -->
+        <div class="hidden md:flex justify-center mb-2">
+            <div class="glass-panel px-5 py-2.5 rounded-full text-xs font-semibold text-slate-700 flex items-center gap-4 shadow-lg border border-white">
+                <span><kbd class="px-2 py-1 bg-slate-200 border border-slate-300 rounded text-slate-800 font-mono shadow-sm">WASD</kbd> / <kbd class="px-2 py-1 bg-slate-200 border border-slate-300 rounded text-slate-800 font-mono shadow-sm">PANAH</kbd> Jalan</span>
+                <span class="text-slate-300">•</span>
+                <span><i class="fa-solid fa-burger text-amber-500 text-sm"></i> Ambil Makanan untuk Energi</span>
+                <span class="text-slate-300">•</span>
+                <span><i class="fa-solid fa-user-ninja text-rose-500 text-sm"></i> Hindari NPC Penjaga</span>
+            </div>
+        </div>
+
+        <!-- Mobile Touch Controls -->
+        <div class="md:hidden flex justify-between items-end w-full pointer-events-auto">
+            <div class="grid grid-cols-3 gap-2 w-36 h-36">
+                <div></div>
+                <button id="btn-up" class="d-btn rounded-2xl flex items-center justify-center text-xl shadow-md"><i class="fa-solid fa-chevron-up"></i></button>
+                <div></div>
+                <button id="btn-left" class="d-btn rounded-2xl flex items-center justify-center text-xl shadow-md"><i class="fa-solid fa-chevron-left"></i></button>
+                <button id="btn-down" class="d-btn rounded-2xl flex items-center justify-center text-xl shadow-md"><i class="fa-solid fa-chevron-down"></i></button>
+                <button id="btn-right" class="d-btn rounded-2xl flex items-center justify-center text-xl shadow-md"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Game Modal -->
+    <div id="modal-start" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4">
+        <div class="glass-panel max-w-md w-full p-6 rounded-3xl text-center space-y-5 border border-white shadow-2xl">
+            <div class="w-16 h-16 bg-gradient-to-tr from-sky-400 to-emerald-400 rounded-2xl flex items-center justify-center mx-auto text-3xl text-white shadow-lg shadow-sky-500/30">
+                <i class="fa-solid fa-person-running"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-black tracking-wide text-slate-800">LABIRIN 3D: FOOD RUNNER</h1>
+                <p class="text-slate-600 text-sm mt-1">Temukan garis finish sebelum energimu habis!</p>
+            </div>
+            
+            <div class="bg-sky-50/80 p-4 rounded-2xl text-left text-xs space-y-2 text-slate-700 border border-sky-100">
+                <p class="font-extrabold text-amber-600 flex items-center gap-1.5 text-sm">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Aturan & Mekanisme Game:
+                </p>
+                <ul class="list-disc list-inside space-y-1 text-slate-600 font-medium">
+                    <li>Gunakan tombol <b class="text-slate-900">WASD / Panah</b> untuk bergerak.</li>
+                    <li>Energi berkurang <b class="text-rose-600">jauh lebih cepat saat kamu bergerak</b>!</li>
+                    <li>Cari <b class="text-amber-600">Makanan 3D</b> (Burger, Apel) untuk mengisi energi.</li>
+                    <li>Mulai <b class="text-sky-600">Level 5</b>, terdapat <b>NPC Penjaga</b>. Manfaatkan <b class="text-emerald-600">jalan berputar / jalur alternatif</b> untuk memutar & mengecoh mereka!</li>
+                    <li><b class="text-sky-700">Peta Radar</b> hanya menampilkan labirin & finish (makanan & NPC disembunyikan).</li>
+                </ul>
+            </div>
+
+            <button id="btn-start" class="w-full py-3.5 bg-gradient-to-r from-sky-500 to-emerald-500 hover:from-sky-400 hover:to-emerald-400 text-white font-bold text-base rounded-2xl shadow-lg shadow-sky-500/30 active:scale-95 transition-all">
+                Mulai Berlari <i class="fa-solid fa-play ml-1.5"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="modal-gameover" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-md p-4">
+        <div class="glass-panel max-w-md w-full p-6 rounded-3xl text-center space-y-5 border border-rose-200 shadow-2xl">
+            <div class="w-16 h-16 bg-rose-100 text-rose-600 border border-rose-300 rounded-2xl flex items-center justify-center mx-auto text-3xl shadow-md">
+                <i id="gameover-icon" class="fa-solid fa-skull"></i>
+            </div>
+            <div>
+                <h2 id="gameover-title" class="text-2xl font-black text-rose-600">Gagal!</h2>
+                <p id="gameover-msg" class="text-slate-600 text-sm mt-1 font-medium">Energi kamu telah habis sepenuhnya.</p>
+            </div>
+            <button id="btn-restart" class="w-full py-3.5 bg-rose-500 hover:bg-rose-400 text-white font-bold rounded-2xl shadow-lg shadow-rose-500/30 active:scale-95 transition-all">
+                Coba Lagi <i class="fa-solid fa-rotate-right ml-1"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Level Complete Modal -->
+    <div id="modal-next" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4">
+        <div class="glass-panel max-w-md w-full p-6 rounded-3xl text-center space-y-5 border border-emerald-200 shadow-2xl">
+            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 border border-emerald-300 rounded-2xl flex items-center justify-center mx-auto text-3xl shadow-md">
+                <i class="fa-solid fa-flag-checkered"></i>
+            </div>
+            <div>
+                <h2 class="text-2xl font-black text-emerald-600">Level Selesai!</h2>
+                <p class="text-slate-600 text-sm mt-1 font-medium">Kamu berhasil menemukan garis finish!</p>
+            </div>
+            <button id="btn-next" class="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-bold rounded-2xl shadow-lg shadow-emerald-500/30 active:scale-95 transition-all">
+                Lanjut ke Level Berikutnya <i class="fa-solid fa-arrow-right ml-1"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Victory All Levels Modal -->
+    <div id="modal-win" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-md p-4">
+        <div class="glass-panel max-w-md w-full p-6 rounded-3xl text-center space-y-5 border border-amber-300 shadow-2xl">
+            <div class="w-20 h-20 bg-amber-100 text-amber-500 border border-amber-300 rounded-3xl flex items-center justify-center mx-auto text-4xl animate-bounce shadow-md">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <div>
+                <h2 class="text-3xl font-black text-amber-600">SELAMAT! Pemenang!</h2>
+                <p class="text-slate-700 text-sm mt-1 font-semibold">Kamu telah menaklukkan seluruh 10 Level Labirin!</p>
+            </div>
+            <button id="btn-restart-all" class="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-2xl shadow-lg shadow-amber-500/30 active:scale-95 transition-all">
+                Mainkan Lagi Dari Awal <i class="fa-solid fa-rotate-right ml-1"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- GAME CONFIG & STATE ---
+        const TOTAL_LEVELS = 10;
+        let currentLevel = 1;
+        let isGameRunning = false;
+        
+        let energy = 100;
+        const ENERGY_DRAIN_IDLE = 1.0; // Energy drain rate per sec standing still
+        const ENERGY_DRAIN_MOVE = 7.0; // Energy drains faster when moving!
+
+        // Maze Grid Dimensions based on level
+        let gridCols = 9;
+        let gridRows = 9;
+        let mazeGrid = []; // 0 = path, 1 = wall
+        let cellSize = 4; // 3D unit size per cell
+
+        let startCoord = { x: 0, z: 0 };
+        let finishCoord = { x: 0, z: 0 };
+
+        // Keyboard & Touch state
+        const keys = { forward: false, backward: false, left: false, right: false };
+
+        // Three.js Core Objects
+        let scene, camera, renderer;
+        let playerGroup, playerBody, leftLeg, rightLeg;
+        let finishMesh, finishLight;
+        let mazeWallsGroup, foodGroup, guardsGroup;
+
+        // Entities data arrays
+        let foodList = []; // { mesh, gridX, gridZ }
+        let guardList = []; // { group, targetPos, speed, gridX, gridZ }
+
+        // Clock & Delta
+        const clock = new THREE.Clock();
+
+        // Recursive Maze Generator with random Start & Finish (not locked to corners)
+        function generateMaze(cols, rows) {
+            // Ensure odd dimensions for proper wall/path maze structure
+            cols = cols % 2 === 0 ? cols + 1 : cols;
+            rows = rows % 2 === 0 ? rows + 1 : rows;
+
+            // Initialize grid with 1s (walls)
+            let grid = Array(rows).fill(0).map(() => Array(cols).fill(1));
+
+            function carve(x, y) {
+                grid[y][x] = 0;
+                const dirs = [
+                    [0, -2], [0, 2], [-2, 0], [2, 0]
+                ].sort(() => Math.random() - 0.5);
+
+                for (let [dx, dy] of dirs) {
+                    let nx = x + dx, ny = y + dy;
+                    if (nx > 0 && nx < cols - 1 && ny > 0 && ny < rows - 1 && grid[ny][nx] === 1) {
+                        grid[y + dy / 2][x + dx / 2] = 0;
+                        carve(nx, ny);
+                    }
+                }
+            }
+
+            // Start carving from random odd cell
+            let startX = 1 + Math.floor(Math.random() * ((cols - 1) / 2)) * 2;
+            let startY = 1 + Math.floor(Math.random() * ((rows - 1) / 2)) * 2;
+            carve(startX, startY);
+
+            // Remove random interior walls to create circular paths & alternative loop routes for stealth maneuvers
+            let removableWalls = [];
+            for (let r = 1; r < rows - 1; r++) {
+                for (let c = 1; c < cols - 1; c++) {
+                    if (grid[r][c] === 1) {
+                        let horizontal = (c > 0 && c < cols - 1 && grid[r][c - 1] === 0 && grid[r][c + 1] === 0);
+                        let vertical = (r > 0 && r < rows - 1 && grid[r - 1][c] === 0 && grid[r + 1][c] === 0);
+                        if ((horizontal && !vertical) || (!horizontal && vertical)) {
+                            removableWalls.push({ x: c, z: r });
+                        }
+                    }
+                }
+            }
+            // Open 30% of separating walls to guarantee alternate bypass paths around guards
+            removableWalls.sort(() => Math.random() - 0.5);
+            let removeCount = Math.floor(removableWalls.length * 0.30);
+            for (let i = 0; i < removeCount; i++) {
+                let w = removableWalls[i];
+                grid[w.z][w.x] = 0;
+            }
+
+            // Find all open paths
+            let openCells = [];
+            for (let r = 1; r < rows - 1; r++) {
+                for (let c = 1; c < cols - 1; c++) {
+                    if (grid[r][c] === 0) openCells.push({ x: c, z: r });
+                }
+            }
+
+            // Pick Start Position from open cells
+            let startIdx = Math.floor(Math.random() * openCells.length);
+            startCoord = openCells[startIdx];
+
+            // Pick Finish Position far away from start (not fixed to bottom-right or top-left)
+            let bestFinish = openCells[0];
+            let maxDist = 0;
+            openCells.forEach(cell => {
+                let dist = Math.abs(cell.x - startCoord.x) + Math.abs(cell.z - startCoord.z);
+                if (dist > maxDist) {
+                    maxDist = dist;
+                    bestFinish = cell;
+                }
+            });
+            finishCoord = bestFinish;
+
+            gridCols = cols;
+            gridRows = rows;
+            mazeGrid = grid;
+        }
+
+        function initThreeJS() {
+            const container = document.getElementById('canvas-container');
+            container.innerHTML = ''; // Clear existing
+
+            scene = new THREE.Scene();
+            // BRIGHT THEME: Sky Blue background with soft atmospheric fog
+            scene.background = new THREE.Color(0xe0f2fe); // Soft bright sky blue
+            scene.fog = new THREE.FogExp2(0xe0f2fe, 0.018);
+
+            camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // BRIGHT LIGHTING setup
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.75); // Bright natural ambient light
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0xfffbeb, 1.1); // Warm sunlight
+            sunLight.position.set(35, 60, 25);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 2048;
+            sunLight.shadow.mapSize.height = 2048;
+            sunLight.shadow.camera.near = 0.5;
+            sunLight.shadow.camera.far = 180;
+            let d = 50;
+            sunLight.shadow.camera.left = -d;
+            sunLight.shadow.camera.right = d;
+            sunLight.shadow.camera.top = d;
+            sunLight.shadow.camera.bottom = -d;
+            scene.add(sunLight);
+
+            // Subtle fill light
+            const fillLight = new THREE.DirectionalLight(0xbae6fd, 0.4);
+            fillLight.position.set(-20, 30, -20);
+            scene.add(fillLight);
+
+            // Groups
+            mazeWallsGroup = new THREE.Group();
+            foodGroup = new THREE.Group();
+            guardsGroup = new THREE.Group();
+            scene.add(mazeWallsGroup);
+            scene.add(foodGroup);
+            scene.add(guardsGroup);
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function createPlayerMesh() {
+            playerGroup = new THREE.Group();
+
+            // Materials
+            const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.5 });
+            const shirtMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.3 }); // Vibrant Cyan shirt
+            const pantsMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.6 }); // Slate pants
+
+            // Torso
+            const torsoGeo = new THREE.BoxGeometry(0.7, 1.0, 0.4);
+            const torso = new THREE.Mesh(torsoGeo, shirtMat);
+            torso.position.y = 1.1;
+            torso.castShadow = true;
+            playerGroup.add(torso);
+
+            // Head
+            const headGeo = new THREE.SphereGeometry(0.32, 16, 16);
+            const head = new THREE.Mesh(headGeo, skinMat);
+            head.position.y = 1.85;
+            head.castShadow = true;
+            playerGroup.add(head);
+
+            // Eyes (Facing Forward +Z)
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0x0f172a });
+            const eyeGeo = new THREE.BoxGeometry(0.08, 0.08, 0.08);
+            const eyeL = new THREE.Mesh(eyeGeo, eyeMat);
+            eyeL.position.set(0.12, 1.9, 0.28);
+            const eyeR = eyeL.clone();
+            eyeR.position.x = -0.12;
+            playerGroup.add(eyeL);
+            playerGroup.add(eyeR);
+
+            // Legs
+            const legGeo = new THREE.BoxGeometry(0.28, 0.8, 0.3);
+            leftLeg = new THREE.Mesh(legGeo, pantsMat);
+            leftLeg.position.set(0.18, 0.4, 0);
+            leftLeg.castShadow = true;
+
+            rightLeg = new THREE.Mesh(legGeo, pantsMat);
+            rightLeg.position.set(-0.18, 0.4, 0);
+            rightLeg.castShadow = true;
+
+            playerGroup.add(leftLeg);
+            playerGroup.add(rightLeg);
+
+            // Gentle point light attached to player
+            const playerLight = new THREE.PointLight(0xfff176, 0.5, 8);
+            playerLight.position.set(0, 2.5, 0);
+            playerGroup.add(playerLight);
+
+            scene.add(playerGroup);
+        }
+
+        function build3DMazeWorld() {
+            // Clear old objects
+            while (mazeWallsGroup.children.length > 0) {
+                let obj = mazeWallsGroup.children.pop();
+                if (obj.geometry) obj.geometry.dispose();
+            }
+
+            const wallHeight = 2.8;
+            const wallGeo = new THREE.BoxGeometry(cellSize, wallHeight, cellSize);
+            
+            // BRIGHT THEME: Sandstone / Clean Light Gray Walls with distinct top trim
+            const wallMat = new THREE.MeshStandardMaterial({ 
+                color: 0xf1f5f9, 
+                roughness: 0.3,
+                metalness: 0.05
+            });
+
+            // Floor - Bright clean tiles
+            const floorWidth = gridCols * cellSize;
+            const floorHeight = gridRows * cellSize;
+            const floorGeo = new THREE.PlaneGeometry(floorWidth, floorHeight);
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.6 });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.set(floorWidth / 2 - cellSize / 2, 0, floorHeight / 2 - cellSize / 2);
+            floor.receiveShadow = true;
+            mazeWallsGroup.add(floor);
+
+            // Floor Grid Helper Accent Lines
+            const gridHelper = new THREE.GridHelper(Math.max(floorWidth, floorHeight), gridCols, 0x0284c7, 0xcbd5e1);
+            gridHelper.position.set(floorWidth / 2 - cellSize / 2, 0.02, floorHeight / 2 - cellSize / 2);
+            mazeWallsGroup.add(gridHelper);
+
+            // Build Walls
+            for (let r = 0; r < gridRows; r++) {
+                for (let c = 0; c < gridCols; c++) {
+                    if (mazeGrid[r][c] === 1) {
+                        const wall = new THREE.Mesh(wallGeo, wallMat);
+                        wall.position.set(c * cellSize, wallHeight / 2, r * cellSize);
+                        wall.castShadow = true;
+                        wall.receiveShadow = true;
+                        mazeWallsGroup.add(wall);
+
+                        // Decorative Top Trim on Walls
+                        const capGeo = new THREE.BoxGeometry(cellSize * 1.02, 0.2, cellSize * 1.02);
+                        const capMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.3 });
+                        const cap = new THREE.Mesh(capGeo, capMat);
+                        cap.position.set(c * cellSize, wallHeight + 0.1, r * cellSize);
+                        mazeWallsGroup.add(cap);
+                    }
+                }
+            }
+
+            // Create Finish Line Marker
+            createFinishLine();
+        }
+
+        function createFinishLine() {
+            if (finishMesh) scene.remove(finishMesh);
+
+            const group = new THREE.Group();
+            const padGeo = new THREE.CylinderGeometry(1.2, 1.2, 0.15, 24);
+            const padMat = new THREE.MeshStandardMaterial({ color: 0x10b981, emissive: 0x059669, emissiveIntensity: 0.8 });
+            const pad = new THREE.Mesh(padGeo, padMat);
+            pad.position.y = 0.08;
+            group.add(pad);
+
+            // Rotating Finish Ring Beam
+            const ringGeo = new THREE.TorusGeometry(1.0, 0.1, 16, 32);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0x34d399 });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = Math.PI / 2;
+            ring.position.y = 1.4;
+            group.add(ring);
+
+            finishLight = new THREE.PointLight(0x10b981, 2.5, 10);
+            finishLight.position.y = 2;
+            group.add(finishLight);
+
+            group.position.set(finishCoord.x * cellSize, 0, finishCoord.z * cellSize);
+            finishMesh = group;
+            scene.add(finishMesh);
+        }
+
+        function spawnFoodItems() {
+            // Clear old food
+            while (foodGroup.children.length > 0) foodGroup.remove(foodGroup.children[0]);
+            foodList = [];
+
+            // Food spawn count scales with level
+            const foodCount = Math.floor(4 + currentLevel * 1.5);
+
+            let openCells = [];
+            for (let r = 1; r < gridRows - 1; r++) {
+                for (let c = 1; c < gridCols - 1; c++) {
+                    if (mazeGrid[r][c] === 0 && !(c === startCoord.x && r === startCoord.z) && !(c === finishCoord.x && r === finishCoord.z)) {
+                        openCells.push({ x: c, z: r });
+                    }
+                }
+            }
+
+            openCells.sort(() => Math.random() - 0.5);
+
+            for (let i = 0; i < Math.min(foodCount, openCells.length); i++) {
+                const coord = openCells[i];
+                const foodType = i % 3 === 0 ? 'burger' : (i % 3 === 1 ? 'apple' : 'pizza');
+                const foodMesh = create3DFoodMesh(foodType);
+                foodMesh.position.set(coord.x * cellSize, 0.8, coord.z * cellSize);
+                foodGroup.add(foodMesh);
+
+                foodList.push({
+                    mesh: foodMesh,
+                    gridX: coord.x,
+                    gridZ: coord.z
+                });
+            }
+        }
+
+        function create3DFoodMesh(type) {
+            const group = new THREE.Group();
+
+            if (type === 'burger') {
+                const bunB = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.15), new THREE.MeshStandardMaterial({ color: 0xd97706 }));
+                bunB.position.y = 0;
+                const patty = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.12), new THREE.MeshStandardMaterial({ color: 0x451a03 }));
+                patty.position.y = 0.12;
+                const cheese = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.05, 0.7), new THREE.MeshStandardMaterial({ color: 0xeab308 }));
+                cheese.position.y = 0.2;
+                const bunT = new THREE.Mesh(new THREE.SphereGeometry(0.42, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xd97706 }));
+                bunT.position.y = 0.22;
+                group.add(bunB, patty, cheese, bunT);
+            } else if (type === 'apple') {
+                const body = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.3 }));
+                body.position.y = 0.25;
+                const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.2), new THREE.MeshStandardMaterial({ color: 0x78350f }));
+                stem.position.y = 0.6;
+                group.add(body, stem);
+            } else { // Pizza slice
+                const crust = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.1, 3), new THREE.MeshStandardMaterial({ color: 0xf59e0b }));
+                crust.position.y = 0.1;
+                const topping = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.11, 3), new THREE.MeshStandardMaterial({ color: 0xd97706 }));
+                topping.position.y = 0.12;
+                group.add(crust, topping);
+            }
+
+            return group;
+        }
+
+        function spawnGuards() {
+            while (guardsGroup.children.length > 0) guardsGroup.remove(guardsGroup.children[0]);
+            guardList = [];
+
+            if (currentLevel < 5) return; // Guards appear starting from level 5
+
+            const guardCount = Math.min(1 + (currentLevel - 5), 5); // 1 guard at level 5 up to 6 at level 10
+
+            let openCells = [];
+            for (let r = 1; r < gridRows - 1; r++) {
+                for (let c = 1; c < gridCols - 1; c++) {
+                    if (mazeGrid[r][c] === 0) {
+                        let distToStart = Math.abs(c - startCoord.x) + Math.abs(r - startCoord.z);
+                        if (distToStart > 4) { // Keep away from initial spawn
+                            openCells.push({ x: c, z: r });
+                        }
+                    }
+                }
+            }
+
+            openCells.sort(() => Math.random() - 0.5);
+
+            for (let i = 0; i < Math.min(guardCount, openCells.length); i++) {
+                const coord = openCells[i];
+
+                const guardGroup = new THREE.Group();
+                const bodyMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.4 }); // High visibility Guard
+                const armorMat = new THREE.MeshStandardMaterial({ color: 0x991b1b });
+
+                const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.5), bodyMat);
+                body.position.y = 1.1;
+                body.castShadow = true;
+
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), armorMat);
+                head.position.y = 1.9;
+                head.castShadow = true;
+
+                guardGroup.add(body, head);
+
+                // Red Spotlight for Guard's Vision Cone
+                const spotLight = new THREE.SpotLight(0xef4444, 4, 10, Math.PI / 4.5, 0.5, 1);
+                spotLight.position.set(0, 1.8, 0.3);
+                
+                const targetObj = new THREE.Object3D();
+                targetObj.position.set(0, 0, 5);
+                guardGroup.add(targetObj);
+                spotLight.target = targetObj;
+                guardGroup.add(spotLight);
+
+                // Visible Red Vision Cone Floor Projection
+                const coneGeo = new THREE.ConeGeometry(3.5, 8, 16);
+                const coneMat = new THREE.MeshBasicMaterial({ color: 0xef4444, transparent: true, opacity: 0.35, depthWrite: false });
+                const coneMesh = new THREE.Mesh(coneGeo, coneMat);
+                coneMesh.rotation.x = -Math.PI / 2;
+                coneMesh.position.set(0, 0.05, 4);
+                guardGroup.add(coneMesh);
+
+                guardGroup.position.set(coord.x * cellSize, 0, coord.z * cellSize);
+                guardsGroup.add(guardGroup);
+
+                guardList.push({
+                    group: guardGroup,
+                    gridX: coord.x,
+                    gridZ: coord.z,
+                    targetPos: null,
+                    speed: 2.0 + (currentLevel * 0.18)
+                });
+            }
+        }
+
+        function setupControls() {
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') keys.forward = true;
+                if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') keys.backward = true;
+                if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') keys.left = true;
+                if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') keys.right = true;
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') keys.forward = false;
+                if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') keys.backward = false;
+                if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') keys.left = false;
+                if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') keys.right = false;
+            });
+
+            // Mobile D-Pad Touch Listeners
+            const bindTouch = (id, key) => {
+                const btn = document.getElementById(id);
+                if (!btn) return;
+                btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key] = true; });
+                btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[key] = false; });
+                btn.addEventListener('mousedown', () => { keys[key] = true; });
+                btn.addEventListener('mouseup', () => { keys[key] = false; });
+            };
+
+            bindTouch('btn-up', 'forward');
+            bindTouch('btn-down', 'backward');
+            bindTouch('btn-left', 'left');
+            bindTouch('btn-right', 'right');
+
+            // Modal Trigger Buttons
+            document.getElementById('btn-start').onclick = startGame;
+            document.getElementById('btn-restart').onclick = restartLevel;
+            document.getElementById('btn-next').onclick = nextLevel;
+            document.getElementById('btn-restart-all').onclick = () => {
+                currentLevel = 1;
+                restartLevel();
+            };
+        }
+
+        function loadLevel(lvl) {
+            currentLevel = lvl;
+            energy = 100;
+            document.getElementById('level-display').innerText = currentLevel;
+
+            // Scale maze grid size per level (Level 1: 9x9, Level 10: 27x27)
+            const size = 7 + (currentLevel * 2);
+            generateMaze(size, size);
+
+            initThreeJS();
+            createPlayerMesh();
+            build3DMazeWorld();
+            spawnFoodItems();
+            spawnGuards();
+
+            // Set Player Initial Position
+            playerGroup.position.set(startCoord.x * cellSize, 0, startCoord.z * cellSize);
+            playerGroup.rotation.y = 0;
+
+            updateEnergyHUD();
+            drawRadar();
+        }
+
+        function startGame() {
+            document.getElementById('modal-start').classList.add('hidden');
+            isGameRunning = true;
+            clock.start();
+        }
+
+        function restartLevel() {
+            document.getElementById('modal-gameover').classList.add('hidden');
+            document.getElementById('modal-win').classList.add('hidden');
+            loadLevel(currentLevel);
+            isGameRunning = true;
+            clock.start();
+        }
+
+        function nextLevel() {
+            document.getElementById('modal-next').classList.add('hidden');
+            if (currentLevel >= TOTAL_LEVELS) {
+                document.getElementById('modal-win').classList.remove('hidden');
+                isGameRunning = false;
+            } else {
+                loadLevel(currentLevel + 1);
+                isGameRunning = true;
+                clock.start();
+            }
+        }
+
+        function updatePlayer(delta) {
+            if (!isGameRunning) return;
+
+            const moveSpeed = 6.8;
+            const rotSpeed = 3.6;
+            let isMoving = false;
+
+            // Rotation
+            if (keys.left) playerGroup.rotation.y += rotSpeed * delta;
+            if (keys.right) playerGroup.rotation.y -= rotSpeed * delta;
+
+            // Translation direction vector
+            const moveVector = new THREE.Vector3();
+
+            if (keys.forward) {
+                moveVector.z += Math.cos(playerGroup.rotation.y);
+                moveVector.x += Math.sin(playerGroup.rotation.y);
+                isMoving = true;
+            }
+            if (keys.backward) {
+                moveVector.z -= Math.cos(playerGroup.rotation.y);
+                moveVector.x -= Math.sin(playerGroup.rotation.y);
+                isMoving = true;
+            }
+
+            if (isMoving) {
+                moveVector.normalize().multiplyScalar(moveSpeed * delta);
+
+                // Calculate Next Position with Collision Detection
+                const newX = playerGroup.position.x + moveVector.x;
+                const newZ = playerGroup.position.z + moveVector.z;
+
+                if (!checkWallCollision(newX, playerGroup.position.z)) {
+                    playerGroup.position.x = newX;
+                }
+                if (!checkWallCollision(playerGroup.position.x, newZ)) {
+                    playerGroup.position.z = newZ;
+                }
+
+                // Leg swing animation while walking
+                const time = clock.getElapsedTime() * 12;
+                leftLeg.rotation.x = Math.sin(time) * 0.6;
+                rightLeg.rotation.x = -Math.sin(time) * 0.6;
+            } else {
+                // Reset legs standing still
+                leftLeg.rotation.x = 0;
+                rightLeg.rotation.x = 0;
+            }
+
+            // Energy Depletion System (Moves much faster when running)
+            const drainRate = isMoving ? ENERGY_DRAIN_MOVE : ENERGY_DRAIN_IDLE;
+            energy -= drainRate * delta;
+
+            if (energy <= 0) {
+                energy = 0;
+                triggerGameOver("Energi Habis!", "Kamu kelelahan karena kekurangan makanan di dalam labirin.");
+            }
+            updateEnergyHUD();
+
+            // TOP-DOWN OVERHEAD ISOMETRIC CAMERA VIEW
+            // High elevation (Y: 15) and angled slightly backward (Z: -7) for wide maze visibility
+            const cameraOffset = new THREE.Vector3(0, 15, -7).applyAxisAngle(new THREE.Vector3(0, 1, 0), playerGroup.rotation.y);
+            camera.position.copy(playerGroup.position).add(cameraOffset);
+            
+            // Look down at player with forward focal offset for smoother navigation view
+            const lookTarget = new THREE.Vector3().copy(playerGroup.position).add(
+                new THREE.Vector3(0, 0, 2).applyAxisAngle(new THREE.Vector3(0, 1, 0), playerGroup.rotation.y)
+            );
+            camera.lookAt(lookTarget);
+
+            // Check Food Pickup
+            checkFoodCollision();
+
+            // Check Finish Line Reached
+            const distToFinish = playerGroup.position.distanceTo(finishMesh.position);
+            if (distToFinish < 1.3) {
+                isGameRunning = false;
+                document.getElementById('modal-next').classList.remove('hidden');
+            }
+        }
+
+        function checkWallCollision(px, pz) {
+            const buffer = 0.55; // Radius player collision box
+            const gridX = Math.round(px / cellSize);
+            const gridZ = Math.round(pz / cellSize);
+
+            // Check surrounding 3x3 cells
+            for (let r = gridZ - 1; r <= gridZ + 1; r++) {
+                for (let c = gridX - 1; c <= gridX + 1; c++) {
+                    if (r >= 0 && r < gridRows && c >= 0 && c < gridCols) {
+                        if (mazeGrid[r][c] === 1) {
+                            const wallX = c * cellSize;
+                            const wallZ = r * cellSize;
+
+                            // AABB Collision check
+                            if (Math.abs(px - wallX) < (cellSize / 2 + buffer) &&
+                                Math.abs(pz - wallZ) < (cellSize / 2 + buffer)) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        function checkFoodCollision() {
+            for (let i = foodList.length - 1; i >= 0; i--) {
+                const item = foodList[i];
+                const dist = playerGroup.position.distanceTo(item.mesh.position);
+                if (dist < 1.3) {
+                    // Collect Food! Restores +35% stamina
+                    foodGroup.remove(item.mesh);
+                    foodList.splice(i, 1);
+                    energy = Math.min(100, energy + 35);
+                    updateEnergyHUD();
+                }
+            }
+        }
+
+        function updateGuards(delta) {
+            if (currentLevel < 5 || !isGameRunning) return;
+
+            let isSpotted = false;
+
+            guardList.forEach(guard => {
+                const currentPos = guard.group.position;
+                
+                // Patrol Target Choice: pick adjacent open path cell
+                if (!guard.targetPos || currentPos.distanceTo(guard.targetPos) < 0.3) {
+                    let curGX = Math.round(currentPos.x / cellSize);
+                    let curGZ = Math.round(currentPos.z / cellSize);
+
+                    let neighbors = [
+                        { x: curGX + 1, z: curGZ },
+                        { x: curGX - 1, z: curGZ },
+                        { x: curGX, z: curGZ + 1 },
+                        { x: curGX, z: curGZ - 1 }
+                    ].filter(n => n.x >= 0 && n.x < gridCols && n.z >= 0 && n.z < gridRows && mazeGrid[n.z][n.x] === 0);
+
+                    if (neighbors.length > 0) {
+                        let nextCell = neighbors[Math.floor(Math.random() * neighbors.length)];
+                        guard.targetPos = new THREE.Vector3(nextCell.x * cellSize, 0, nextCell.z * cellSize);
+                    }
+                }
+
+                if (guard.targetPos) {
+                    const dir = new THREE.Vector3().subVectors(guard.targetPos, currentPos).normalize();
+                    guard.group.position.add(dir.clone().multiplyScalar(guard.speed * delta));
+
+                    // Rotate guard to face movement direction
+                    const angle = Math.atan2(dir.x, dir.z);
+                    guard.group.rotation.y = angle;
+                }
+
+                // LINE OF SIGHT / VISION CHECK
+                const distToPlayer = guard.group.position.distanceTo(playerGroup.position);
+                
+                // 1. Direct Physical Touch
+                if (distToPlayer < 1.1) {
+                    isSpotted = true;
+                }
+
+                // 2. Vision Cone Check
+                if (distToPlayer < 7.5) {
+                    const forwardVec = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), guard.group.rotation.y);
+                    const toPlayerVec = new THREE.Vector3().subVectors(playerGroup.position, guard.group.position).normalize();
+
+                    const dot = forwardVec.dot(toPlayerVec);
+                    if (dot > 0.65) { // Angle within ~48 degrees
+                        // Raycast check for wall obstruction
+                        const raycaster = new THREE.Raycaster(
+                            new THREE.Vector3(guard.group.position.x, 1.5, guard.group.position.z),
+                            toPlayerVec
+                        );
+                        const intersects = raycaster.intersectObjects(mazeWallsGroup.children);
+                        
+                        if (intersects.length === 0 || intersects[0].distance > distToPlayer) {
+                            isSpotted = true;
+                        }
+                    }
+                }
+            });
+
+            const badge = document.getElementById('status-badge');
+            if (isSpotted) {
+                badge.className = "text-xs px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 font-extrabold border border-rose-300 animate-pulse";
+                badge.innerText = "TERLIHAT!";
+                triggerGameOver("Tertangkap Penjaga!", "Kamu terlihat atau menabrak NPC Penjaga labirin!");
+            } else {
+                badge.className = "text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold border border-emerald-300";
+                badge.innerText = "Aman";
+            }
+        }
+
+        function triggerGameOver(title, msg) {
+            isGameRunning = false;
+            document.getElementById('gameover-title').innerText = title;
+            document.getElementById('gameover-msg').innerText = msg;
+            document.getElementById('modal-gameover').classList.remove('hidden');
+        }
+
+        function updateEnergyHUD() {
+            const bar = document.getElementById('energy-bar');
+            const text = document.getElementById('energy-text');
+
+            bar.style.width = `${Math.max(0, energy)}%`;
+            text.innerText = `${Math.round(energy)}%`;
+
+            if (energy > 50) {
+                bar.className = "energy-bar-fill h-full bg-gradient-to-r from-amber-400 to-emerald-500 rounded-full";
+            } else if (energy > 25) {
+                bar.className = "energy-bar-fill h-full bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full";
+            } else {
+                bar.className = "energy-bar-fill h-full bg-gradient-to-r from-rose-600 to-red-500 rounded-full animate-pulse";
+            }
+        }
+
+        function drawRadar() {
+            const canvas = document.getElementById('radar-canvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.clearRect(0, 0, w, h);
+
+            const scaleX = w / gridCols;
+            const scaleY = h / gridRows;
+
+            // Draw Maze Walls
+            ctx.fillStyle = "rgba(14, 116, 144, 0.9)";
+            for (let r = 0; r < gridRows; r++) {
+                for (let c = 0; c < gridCols; c++) {
+                    if (mazeGrid[r][c] === 1) {
+                        ctx.fillRect(c * scaleX, r * scaleY, scaleX + 0.5, scaleY + 0.5);
+                    }
+                }
+            }
+
+            // Draw Finish Line (Glowing Emerald Green)
+            ctx.fillStyle = "#10b981";
+            ctx.shadowColor = "#34d399";
+            ctx.shadowBlur = 8;
+            ctx.beginPath();
+            ctx.arc((finishCoord.x + 0.5) * scaleX, (finishCoord.z + 0.5) * scaleY, scaleX * 0.45, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0; // Reset shadow
+
+            // Note: Makanan & NPC Penjaga SENGAJA TIDAK DITAMPILKAN di peta radar!
+
+            // Draw Player Position & Direction Pointer Marker
+            if (playerGroup) {
+                const px = (playerGroup.position.x / cellSize + 0.5) * scaleX;
+                const pz = (playerGroup.position.z / cellSize + 0.5) * scaleY;
+
+                ctx.save();
+                ctx.translate(px, pz);
+                ctx.rotate(-playerGroup.rotation.y);
+
+                // Cyan Dot with Direction Pointer Arrow
+                ctx.fillStyle = "#38bdf8";
+                ctx.beginPath();
+                ctx.arc(0, 0, scaleX * 0.4, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = "#ffffff";
+                ctx.beginPath();
+                ctx.moveTo(0, scaleX * 0.6);
+                ctx.lineTo(-scaleX * 0.3, -scaleX * 0.2);
+                ctx.lineTo(scaleX * 0.3, -scaleX * 0.2);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.restore();
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const delta = clock.getDelta();
+
+            if (isGameRunning) {
+                updatePlayer(delta);
+                updateGuards(delta);
+
+                // Rotate 3D Food items
+                foodList.forEach(item => {
+                    item.mesh.rotation.y += 1.8 * delta;
+                });
+
+                // Animate Finish Line Ring
+                if (finishMesh) {
+                    finishMesh.children[1].rotation.z += 2 * delta;
+                }
+
+                drawRadar();
+            }
+
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
+        }
+
+        function onWindowResize() {
+            if (camera && renderer) {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        }
+
+        // Initialize Application on Window Load
+        window.onload = function () {
+            setupControls();
+            loadLevel(1);
+            animate();
+        };
+    </script>
+</body>
+</html>
