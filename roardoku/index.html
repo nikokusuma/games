@@ -530,10 +530,182 @@
                 return generateRandomBoard();
             }
 
+            // Step 3: Verify that the puzzle can be solved 100% deterministically without guessing or hints
+            if (!canSolveLogically(regionGrid)) {
+                return generateRandomBoard();
+            }
+
             return {
                 cats: cats,
                 regions: regionGrid
             };
+        }
+
+        /**
+         * Deterministic solver engine (Constraint Propagation & Point-Line Reduction).
+         * Returns true if the puzzle can be completed 100% purely using logical deduction without guessing.
+         */
+        function canSolveLogically(regionGrid) {
+            const pos = Array.from({ length: SIZE }, () => Array(SIZE).fill(true));
+            const catsFound = Array.from({ length: SIZE }, () => Array(SIZE).fill(false));
+            let catCount = 0;
+
+            function placeCat(r, c) {
+                if (catsFound[r][c]) return;
+                catsFound[r][c] = true;
+                catCount++;
+                const regId = regionGrid[r][c];
+
+                for (let i = 0; i < SIZE; i++) {
+                    for (let j = 0; j < SIZE; j++) {
+                        if (i === r && j === c) continue;
+                        if (i === r || j === c || regionGrid[i][j] === regId || (Math.abs(r - i) <= 1 && Math.abs(c - j) <= 1)) {
+                            pos[i][j] = false;
+                        }
+                    }
+                }
+            }
+
+            let changed = true;
+            while (changed && catCount < SIZE) {
+                changed = false;
+
+                // 1. Direct Deductions: Unique candidate in Row, Column, or Region
+                for (let r = 0; r < SIZE; r++) {
+                    if (catsFound[r].some(val => val)) continue;
+                    const candidates = [];
+                    for (let c = 0; c < SIZE; c++) {
+                        if (pos[r][c]) candidates.push(c);
+                    }
+                    if (candidates.length === 1) {
+                        placeCat(r, candidates[0]);
+                        changed = true;
+                    }
+                }
+
+                for (let c = 0; c < SIZE; c++) {
+                    let colHasCat = false;
+                    for (let r = 0; r < SIZE; r++) {
+                        if (catsFound[r][c]) { colHasCat = true; break; }
+                    }
+                    if (colHasCat) continue;
+
+                    const candidates = [];
+                    for (let r = 0; r < SIZE; r++) {
+                        if (pos[r][c]) candidates.push(r);
+                    }
+                    if (candidates.length === 1) {
+                        placeCat(candidates[0], c);
+                        changed = true;
+                    }
+                }
+
+                for (let reg = 0; reg < SIZE; reg++) {
+                    let regHasCat = false;
+                    for (let r = 0; r < SIZE; r++) {
+                        for (let c = 0; c < SIZE; c++) {
+                            if (regionGrid[r][c] === reg && catsFound[r][c]) {
+                                regHasCat = true;
+                                break;
+                            }
+                        }
+                        if (regHasCat) break;
+                    }
+                    if (regHasCat) continue;
+
+                    const candidates = [];
+                    for (let r = 0; r < SIZE; r++) {
+                        for (let c = 0; c < SIZE; c++) {
+                            if (regionGrid[r][c] === reg && pos[r][c]) {
+                                candidates.push({ r, c });
+                            }
+                        }
+                    }
+                    if (candidates.length === 1) {
+                        placeCat(candidates[0].r, candidates[0].c);
+                        changed = true;
+                    }
+                }
+
+                if (changed) continue;
+
+                // 2. Advanced Deductions (Point-Line Reductions)
+                for (let reg = 0; reg < SIZE; reg++) {
+                    const candidates = [];
+                    for (let r = 0; r < SIZE; r++) {
+                        for (let c = 0; c < SIZE; c++) {
+                            if (regionGrid[r][c] === reg && pos[r][c]) {
+                                candidates.push({ r, c });
+                            }
+                        }
+                    }
+                    if (candidates.length === 0) continue;
+
+                    const sameRow = candidates.every(cell => cell.r === candidates[0].r);
+                    if (sameRow) {
+                        const targetRow = candidates[0].r;
+                        for (let c = 0; c < SIZE; c++) {
+                            if (regionGrid[targetRow][c] !== reg && pos[targetRow][c]) {
+                                pos[targetRow][c] = false;
+                                changed = true;
+                            }
+                        }
+                    }
+
+                    const sameCol = candidates.every(cell => cell.c === candidates[0].c);
+                    if (sameCol) {
+                        const targetCol = candidates[0].c;
+                        for (let r = 0; r < SIZE; r++) {
+                            if (regionGrid[r][targetCol] !== reg && pos[r][targetCol]) {
+                                pos[r][targetCol] = false;
+                                changed = true;
+                            }
+                        }
+                    }
+                }
+
+                for (let r = 0; r < SIZE; r++) {
+                    const candidates = [];
+                    for (let c = 0; c < SIZE; c++) {
+                        if (pos[r][c]) candidates.push({ r, c });
+                    }
+                    if (candidates.length === 0) continue;
+                    const sameReg = candidates.every(cell => regionGrid[cell.r][cell.c] === regionGrid[candidates[0].r][candidates[0].c]);
+                    if (sameReg) {
+                        const targetReg = regionGrid[candidates[0].r][candidates[0].c];
+                        for (let i = 0; i < SIZE; i++) {
+                            for (let j = 0; j < SIZE; j++) {
+                                if (regionGrid[i][j] === targetReg && i !== r && pos[i][j]) {
+                                    pos[i][j] = false;
+                                    changed = true;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                for (let c = 0; c < SIZE; c++) {
+                    const candidates = [];
+                    for (let r = 0; r < SIZE; r++) {
+                        if (pos[r][c]) candidates.push({ r, c });
+                    }
+                    if (candidates.length === 0) continue;
+                    const sameReg = candidates.every(cell => regionGrid[cell.r][cell.c] === regionGrid[candidates[0].r][candidates[0].c]);
+                    if (sameReg) {
+                        const targetReg = regionGrid[candidates[0].r][candidates[0].c];
+                        for (let i = 0; i < SIZE; i++) {
+                            for (let j = 0; j < SIZE; j++) {
+                                if (regionGrid[i][j] === targetReg && j !== c && pos[i][j]) {
+                                    pos[i][j] = false;
+                                    changed = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return catCount === SIZE;
         }
 
         function getOrthogonalNeighbors(r, c) {
