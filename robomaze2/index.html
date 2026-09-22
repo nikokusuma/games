@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robot Labirin - Mission Energy</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font Inter & Orbitron -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: linear-gradient(135deg, #f0f4f9 0%, #e2e8f0 100%);
+            color: #1e293b;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+        
+        /* Strict Uniform Grid Tile Styles */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            gap: 4px;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+        }
+
+        .tile {
+            width: 100%;
+            height: 100%;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease-in-out;
+            position: relative;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        /* Bright Light Theme Tile Types */
+        .tile-wall {
+            background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+            border: 1px solid #64748b;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
+        }
+
+        .tile-empty {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
+
+        .tile-battery {
+            background: #d1fae5;
+            border: 2px solid #10b981;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+        }
+
+        .tile-obstacle {
+            background: #fee2e2;
+            border: 2px solid #ef4444;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+        }
+
+        .tile-start {
+            background: #e0f2fe;
+            border: 2px solid #0284c7;
+        }
+
+        .tile-finish {
+            background: #f3e8ff;
+            border: 2px solid #9333ea;
+            box-shadow: 0 0 12px rgba(147, 51, 234, 0.35);
+            animation: pulse-finish 2s infinite alternate;
+        }
+
+        @keyframes pulse-finish {
+            0% { box-shadow: 0 0 6px rgba(147, 51, 234, 0.3); }
+            100% { box-shadow: 0 0 16px rgba(147, 51, 234, 0.7); }
+        }
+
+        .robot-glow {
+            filter: drop-shadow(0 2px 6px rgba(2, 132, 199, 0.6));
+            transition: transform 0.15s ease-out;
+        }
+
+        /* Energy Bar Animation */
+        .energy-bar-fill {
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s;
+        }
+
+        /* Glassmorphism Panel Bright Mode */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(203, 213, 225, 0.8);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between p-2 sm:p-4">
+
+    <!-- Header Controls & Status -->
+    <header class="w-full max-w-lg glass-panel rounded-xl p-3 sm:p-4 mb-2">
+        <div class="flex justify-between items-center mb-2">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-robot text-sky-600 text-2xl animate-bounce"></i>
+                <h1 class="font-orbitron text-lg sm:text-xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-sky-600 to-indigo-600">
+                    ROBO-LABIRIN
+                </h1>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="btn-sound" onclick="toggleSound()" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm transition border border-slate-300 font-semibold shadow-sm" title="Suara">
+                    <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+                </button>
+                <button onclick="openLevelSelect()" class="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-semibold text-sm transition shadow-md shadow-sky-600/20 flex items-center space-x-1">
+                    <i class="fa-solid fa-th-large"></i>
+                    <span>Level <span id="lbl-level-num">1</span>/30</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Tier Goal Banner -->
+        <div id="tier-banner" class="bg-slate-50/90 rounded-lg p-2 text-xs text-slate-700 border border-slate-200 flex items-center justify-between mb-3 shadow-inner">
+            <div class="flex items-center space-x-2">
+                <i id="tier-icon" class="fa-solid fa-circle-info text-sky-600 text-sm"></i>
+                <span id="tier-desc" class="font-semibold">Target: Cari jalan menuju Portal Finis.</span>
+            </div>
+            <span id="tier-badge" class="px-2 py-0.5 rounded text-[10px] font-orbitron font-bold bg-sky-100 text-sky-800 border border-sky-300">TIER 1</span>
+        </div>
+
+        <!-- Energy Gauge -->
+        <div class="space-y-1">
+            <div class="flex justify-between items-center text-xs sm:text-sm font-orbitron">
+                <span class="text-slate-600 flex items-center gap-1 font-bold">
+                    <i class="fa-solid fa-bolt text-amber-500"></i> ENERGI LANGKAH:
+                </span>
+                <span id="lbl-energy-text" class="font-bold text-sky-700 text-base">10 / 10</span>
+            </div>
+            <div class="w-full bg-slate-200 h-3.5 rounded-full overflow-hidden p-0.5 border border-slate-300">
+                <div id="energy-bar" class="energy-bar-fill h-full bg-gradient-to-r from-emerald-500 to-sky-500 rounded-full" style="width: 100%;"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Game Board Container -->
+    <main class="w-full max-w-lg flex flex-col items-center justify-center relative my-auto">
+        <div class="w-full glass-panel p-2.5 sm:p-3 rounded-2xl">
+            <!-- 10x10 Game Grid (All tiles strictly equal size) -->
+            <div id="game-grid" class="grid-container w-full">
+                <!-- Tiles dynamically generated here -->
+            </div>
+        </div>
+
+        <!-- Quick Status Metrics Below Grid -->
+        <div class="w-full flex justify-between items-center mt-3 px-1 text-xs font-bold text-slate-600">
+            <div class="flex items-center gap-1.5 bg-white/90 px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+                <i class="fa-solid fa-battery-full text-emerald-600"></i>
+                <span>Baterai: <span id="lbl-battery-count" class="text-slate-900">0</span></span>
+            </div>
+            <div class="flex items-center gap-1.5 bg-white/90 px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+                <i class="fa-solid fa-triangle-exclamation text-rose-500"></i>
+                <span>Rintangan: <span id="lbl-obstacle-count" class="text-slate-900">0</span></span>
+            </div>
+            <button onclick="resetLevel()" class="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 px-3 py-1.5 rounded-lg transition flex items-center gap-1 active:scale-95 shadow-sm font-bold">
+                <i class="fa-solid fa-rotate-left"></i>
+                <span>Reset</span>
+            </button>
+        </div>
+    </main>
+
+    <!-- Virtual Controls for Mobile & Touch -->
+    <footer class="w-full max-w-lg mt-3 mb-1">
+        <div class="flex justify-center items-center">
+            <div class="grid grid-cols-3 gap-2 w-48 sm:w-56">
+                <div></div>
+                <button onclick="movePlayer(0, -1)" class="h-12 rounded-xl bg-white hover:bg-slate-100 active:bg-sky-600 text-sky-600 active:text-white border border-slate-300 flex items-center justify-center text-xl shadow-md transition active:scale-90 font-bold">
+                    <i class="fa-solid fa-chevron-up"></i>
+                </button>
+                <div></div>
+                <button onclick="movePlayer(-1, 0)" class="h-12 rounded-xl bg-white hover:bg-slate-100 active:bg-sky-600 text-sky-600 active:text-white border border-slate-300 flex items-center justify-center text-xl shadow-md transition active:scale-90 font-bold">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button onclick="movePlayer(0, 1)" class="h-12 rounded-xl bg-white hover:bg-slate-100 active:bg-sky-600 text-sky-600 active:text-white border border-slate-300 flex items-center justify-center text-xl shadow-md transition active:scale-90 font-bold">
+                    <i class="fa-solid fa-chevron-down"></i>
+                </button>
+                <button onclick="movePlayer(1, 0)" class="h-12 rounded-xl bg-white hover:bg-slate-100 active:bg-sky-600 text-sky-600 active:text-white border border-slate-300 flex items-center justify-center text-xl shadow-md transition active:scale-90 font-bold">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL 1: Level Select Modal -->
+    <div id="modal-level-select" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-5 border border-slate-300 shadow-2xl flex flex-col w-full max-w-md max-h-[85vh]">
+            <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-200">
+                <h2 class="font-orbitron text-lg font-bold text-sky-700 flex items-center gap-2">
+                    <i class="fa-solid fa-map"></i> Pilih Level (1 - 30)
+                </h2>
+                <button onclick="closeLevelSelect()" class="text-slate-400 hover:text-slate-700 text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="text-xs text-slate-600 mb-3 space-y-1 font-semibold">
+                <p><span class="text-sky-600 font-bold">Lvl 1-10:</span> Navigasi Dasar (Sisa Energi 0-3)</p>
+                <p><span class="text-amber-600 font-bold">Lvl 11-20:</span> Wajib Ambil Baterai (+1 Obstacle di L15-20)</p>
+                <p><span class="text-purple-600 font-bold">Lvl 21-30:</span> Sisa Energi Wajib PAS 0 saat Finis!</p>
+            </div>
+
+            <!-- Scrollable Level Grid -->
+            <div id="level-buttons-grid" class="grid grid-cols-5 gap-2 overflow-y-auto p-1 pr-2 my-2 flex-grow">
+                <!-- Level buttons generated by JS -->
+            </div>
+
+            <button onclick="closeLevelSelect()" class="mt-3 w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm border border-slate-300 transition">
+                Tutup
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Level Victory Modal -->
+    <div id="modal-victory" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-6 border border-emerald-300 text-center shadow-2xl animate-scale-up">
+            <div class="w-16 h-16 bg-emerald-100 border border-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 text-emerald-600 text-3xl animate-bounce">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <h2 class="font-orbitron text-xl font-bold text-emerald-600 mb-1">LEVEL SELESAI!</h2>
+            <p id="victory-subtitle" class="text-xs text-slate-600 font-semibold mb-4">Misi berhasil diselesaikan dengan sukses!</p>
+
+            <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 space-y-2 text-xs mb-5 font-semibold">
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Sisa Energi:</span>
+                    <span id="win-energy-left" class="font-bold text-sky-600">0</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Baterai Diambil:</span>
+                    <span id="win-batteries" class="font-bold text-emerald-600">0</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Rintangan Dilewati:</span>
+                    <span id="win-obstacles" class="font-bold text-rose-600">0</span>
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="resetLevel()" class="w-1/2 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm border border-slate-300 transition">
+                    Ulangi
+                </button>
+                <button id="btn-next-level" onclick="nextLevel()" class="w-1/2 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-md shadow-emerald-600/30 transition">
+                    Lanjut <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: Game Over Modal -->
+    <div id="modal-fail" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-6 border border-rose-300 text-center shadow-2xl">
+            <div class="w-16 h-16 bg-rose-100 border border-rose-400 rounded-full flex items-center justify-center mx-auto mb-3 text-rose-600 text-3xl">
+                <i class="fa-solid fa-battery-empty"></i>
+            </div>
+            <h2 class="font-orbitron text-xl font-bold text-rose-600 mb-1">ENERGI HABIS!</h2>
+            <p id="fail-reason" class="text-xs text-slate-600 font-semibold mb-5">Robot kehabisan energi sebelum mencapai garis finis.</p>
+
+            <button onclick="resetLevel()" class="w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm shadow-md shadow-rose-600/30 transition">
+                <i class="fa-solid fa-rotate-left mr-1"></i> Coba Lagi
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /* ====================================================================
+           GAME CONSTANTS & TILE DEFINITIONS
+           ==================================================================== */
+        const GRID_SIZE = 10;
+        
+        // Tile Types
+        const TILE = {
+            EMPTY: 0,
+            WALL: 1,
+            BATTERY: 2,   // Restores +3 steps of energy
+            OBSTACLE: 3,  // Costs 3 steps of energy (1 base + 2 extra)
+            START: 4,
+            FINISH: 5
+        };
+
+        // Audio Effects Synthesizer using Web Audio API
+        let soundEnabled = true;
+        let audioCtx = null;
+
+        function playSynthSound(type) {
+            if (!soundEnabled) return;
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'move') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(320, now);
+                    osc.frequency.exponentialRampToValueAtTime(160, now + 0.08);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'battery') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.setValueAtTime(660, now + 0.08);
+                    osc.frequency.setValueAtTime(880, now + 0.16);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'obstacle') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(140, now);
+                    osc.frequency.linearRampToValueAtTime(70, now + 0.15);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } else if (type === 'win') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                    osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                    osc.frequency.setValueAtTime(1046.50, now + 0.3); // C6
+                    gain.gain.setValueAtTime(0.22, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                } else if (type === 'fail') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.linearRampToValueAtTime(90, now + 0.3);
+                    gain.gain.setValueAtTime(0.18, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                }
+            } catch (e) {
+                console.error("Audio playback error:", e);
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('sound-icon');
+            if (soundEnabled) {
+                icon.className = "fa-solid fa-volume-high";
+            } else {
+                icon.className = "fa-solid fa-volume-xmark text-rose-500";
+            }
+        }
+
+        /* ====================================================================
+           GAME STATE MANAGEMENT & PROGRESSION
+           ==================================================================== */
+        let currentLevel = 1;
+        let maxUnlockedLevel = parseInt(localStorage.getItem('robo_max_level') || '1');
+        
+        let grid = [];
+        let playerPos = { x: 0, y: 0 };
+        let startPos = { x: 0, y: 0 };
+        let finishPos = { x: 9, y: 9 };
+        
+        let currentEnergy = 0;
+        let initialEnergy = 0;
+        let batteriesCollected = 0;
+        let obstaclesCrossed = 0;
+        let isLevelComplete = false;
+
+        /* ====================================================================
+           LEVEL GENERATION & PATHFINDING SOLVER
+           Guarantees all 30 levels comply strictly with rule constraints!
+           ==================================================================== */
+        function seededRandom(seed) {
+            let x = Math.sin(seed++) * 10000;
+            return x - Math.floor(x);
+        }
+
+        function generateLevel(lvl) {
+            let rnd = (s) => seededRandom(lvl * 100 + s);
+
+            let board = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(TILE.EMPTY));
+
+            let sPos = { x: 0, y: 0 };
+            let fPos = { x: 9, y: 9 };
+
+            let wallDensity = 0.18 + (lvl * 0.005);
+            if (lvl >= 21) wallDensity = 0.28;
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    if ((r <= 1 && c <= 1) || (r >= 8 && c >= 8)) continue;
+                    if (rnd(r * 10 + c) < wallDensity) {
+                        board[r][c] = TILE.WALL;
+                    }
+                }
+            }
+
+            function findCanonicalPath(currentBoard) {
+                let queue = [{ x: sPos.x, y: sPos.y, path: [{x: sPos.x, y: sPos.y}] }];
+                let visited = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(false));
+                visited[sPos.y][sPos.x] = true;
+
+                while (queue.length > 0) {
+                    let { x, y, path } = queue.shift();
+                    if (x === fPos.x && y === fPos.y) return path;
+
+                    const dirs = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+                    for (let [dx, dy] of dirs) {
+                        let nx = x + dx, ny = y + dy;
+                        if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE) {
+                            if (!visited[ny][nx] && currentBoard[ny][nx] !== TILE.WALL) {
+                                visited[ny][nx] = true;
+                                queue.push({ x: nx, y: ny, path: [...path, {x: nx, y: ny}] });
+                            }
+                        }
+                    }
+                }
+                return null;
+            }
+
+            let path = findCanonicalPath(board);
+            if (!path) {
+                for (let i = 0; i < GRID_SIZE; i++) {
+                    board[i][i] = TILE.EMPTY;
+                    if (i + 1 < GRID_SIZE) board[i][i+1] = TILE.EMPTY;
+                }
+                path = findCanonicalPath(board);
+            }
+
+            let batteriesNeeded = 0;
+            let obstaclesNeeded = 0;
+
+            if (lvl >= 11 && lvl <= 20) {
+                batteriesNeeded = 1 + (lvl >= 16 ? 1 : 0);
+            } else if (lvl >= 21) {
+                batteriesNeeded = 2;
+            }
+
+            if (lvl >= 15 && lvl <= 20) {
+                obstaclesNeeded = 1;
+            } else if (lvl >= 21) {
+                obstaclesNeeded = 2;
+            }
+
+            let pathStepIdx = Math.floor(path.length / (batteriesNeeded + 1));
+            for (let b = 1; b <= batteriesNeeded; b++) {
+                let idx = Math.min(path.length - 2, Math.max(1, b * pathStepIdx));
+                let p = path[idx];
+                board[p.y][p.x] = TILE.BATTERY;
+            }
+
+            for (let o = 1; o <= obstaclesNeeded; o++) {
+                let idx = Math.min(path.length - 2, Math.max(1, Math.floor((o + 0.5) * (path.length / (obstaclesNeeded + 1)))));
+                let p = path[idx];
+                if (board[p.y][p.x] === TILE.EMPTY) {
+                    board[p.y][p.x] = TILE.OBSTACLE;
+                }
+            }
+
+            board[sPos.y][sPos.x] = TILE.START;
+            board[fPos.y][fPos.x] = TILE.FINISH;
+
+            let totalPathCost = 0;
+            let batteryCountOnPath = 0;
+
+            for (let i = 1; i < path.length; i++) {
+                let pt = path[i];
+                let type = board[pt.y][pt.x];
+
+                if (type === TILE.OBSTACLE) {
+                    totalPathCost += 3;
+                } else if (type === TILE.BATTERY) {
+                    totalPathCost += 1;
+                    batteryCountOnPath++;
+                } else {
+                    totalPathCost += 1;
+                }
+            }
+
+            let totalBatteryGain = batteryCountOnPath * 3;
+            let targetEnergyRemaining = 0;
+
+            if (lvl <= 10) {
+                targetEnergyRemaining = (lvl % 3);
+            } else if (lvl <= 20) {
+                targetEnergyRemaining = ((lvl + 1) % 3) + 1;
+            } else {
+                targetEnergyRemaining = 0;
+            }
+
+            let calculatedInitialEnergy = totalPathCost - totalBatteryGain + targetEnergyRemaining;
+
+            if (calculatedInitialEnergy < 3) {
+                calculatedInitialEnergy = 3;
+            }
+
+            return {
+                board: board,
+                start: sPos,
+                finish: fPos,
+                initialEnergy: calculatedInitialEnergy,
+                targetRemaining: targetEnergyRemaining,
+                minObstaclesReq: obstaclesNeeded
+            };
+        }
+
+        /* ====================================================================
+           UI & GRID RENDERING
+           ==================================================================== */
+        function loadLevel(levelNum) {
+            currentLevel = levelNum;
+            isLevelComplete = false;
+            
+            const levelData = generateLevel(levelNum);
+            grid = levelData.board;
+            startPos = { ...levelData.start };
+            finishPos = { ...levelData.finish };
+            playerPos = { ...levelData.start };
+            
+            initialEnergy = levelData.initialEnergy;
+            currentEnergy = initialEnergy;
+            batteriesCollected = 0;
+            obstaclesCrossed = 0;
+
+            document.getElementById('lbl-level-num').innerText = currentLevel;
+            document.getElementById('lbl-battery-count').innerText = "0";
+            document.getElementById('lbl-obstacle-count').innerText = "0";
+
+            updateEnergyUI();
+            updateTierBanner();
+            renderGrid();
+        }
+
+        function updateTierBanner() {
+            const desc = document.getElementById('tier-desc');
+            const badge = document.getElementById('tier-badge');
+            const icon = document.getElementById('tier-icon');
+
+            if (currentLevel <= 10) {
+                badge.innerText = "TIER 1 (LVL 1-10)";
+                badge.className = "px-2 py-0.5 rounded text-[10px] font-orbitron font-bold bg-sky-100 text-sky-800 border border-sky-300";
+                desc.innerText = "Capai portal finis. Sisa energi maks 3, min 0.";
+                icon.className = "fa-solid fa-compass text-sky-600 text-sm";
+            } else if (currentLevel <= 20) {
+                badge.innerText = "TIER 2 (LVL 11-20)";
+                badge.className = "px-2 py-0.5 rounded text-[10px] font-orbitron font-bold bg-amber-100 text-amber-800 border border-amber-300";
+                if (currentLevel >= 15) {
+                    desc.innerText = "Wajib ambil Baterai & lewat minimal 1 Rintangan!";
+                } else {
+                    desc.innerText = "Wajib ambil Baterai energi agar langkah cukup!";
+                }
+                icon.className = "fa-solid fa-battery-half text-amber-600 text-sm";
+            } else {
+                badge.innerText = "TIER 3 (LVL 21-30)";
+                badge.className = "px-2 py-0.5 rounded text-[10px] font-orbitron font-bold bg-purple-100 text-purple-800 border border-purple-300";
+                desc.innerText = "Sisa energi saat di Finis HARUS PAS 0!";
+                icon.className = "fa-solid fa-bullseye text-purple-600 text-sm";
+            }
+        }
+
+        function updateEnergyUI() {
+            document.getElementById('lbl-energy-text').innerText = `${currentEnergy} / ${initialEnergy}`;
+            
+            const pct = Math.max(0, Math.min(100, (currentEnergy / initialEnergy) * 100));
+            const bar = document.getElementById('energy-bar');
+            bar.style.width = `${pct}%`;
+
+            if (pct > 50) {
+                bar.className = "energy-bar-fill h-full bg-gradient-to-r from-emerald-500 to-sky-500 rounded-full";
+            } else if (pct > 25) {
+                bar.className = "energy-bar-fill h-full bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full";
+            } else {
+                bar.className = "energy-bar-fill h-full bg-gradient-to-r from-rose-600 to-red-500 rounded-full";
+            }
+        }
+
+        function renderGrid() {
+            const container = document.getElementById('game-grid');
+            container.innerHTML = '';
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const tileType = grid[r][c];
+                    const div = document.createElement('div');
+                    div.id = `tile-${r}-${c}`;
+                    div.className = "tile font-bold select-none";
+
+                    if (tileType === TILE.WALL) {
+                        div.classList.add('tile-wall');
+                        div.innerHTML = `<i class="fa-solid fa-cube text-slate-500/70 text-xs"></i>`;
+                    } else if (tileType === TILE.EMPTY) {
+                        div.classList.add('tile-empty');
+                    } else if (tileType === TILE.BATTERY) {
+                        div.classList.add('tile-battery');
+                        div.innerHTML = `<i class="fa-solid fa-battery-charging text-emerald-600 animate-pulse text-sm sm:text-base"></i>`;
+                    } else if (tileType === TILE.OBSTACLE) {
+                        div.classList.add('tile-obstacle');
+                        div.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-600 text-xs sm:text-sm animate-bounce"></i>`;
+                    } else if (tileType === TILE.START) {
+                        div.classList.add('tile-start');
+                        div.innerHTML = `<span class="text-[9px] sm:text-[10px] font-orbitron text-sky-700 font-bold">START</span>`;
+                    } else if (tileType === TILE.FINISH) {
+                        div.classList.add('tile-finish');
+                        div.innerHTML = `<i class="fa-solid fa-flag-checkered text-purple-700 text-sm sm:text-base"></i>`;
+                    }
+
+                    if (r === playerPos.y && c === playerPos.x) {
+                        const robot = document.createElement('div');
+                        robot.className = "absolute inset-0 flex items-center justify-center robot-glow z-10";
+                        robot.innerHTML = `<i class="fa-solid fa-robot text-sky-600 text-xl sm:text-2xl"></i>`;
+                        div.appendChild(robot);
+                    }
+
+                    container.appendChild(div);
+                }
+            }
+        }
+
+        /* ====================================================================
+           PLAYER MOVEMENT & GAME RULES LOGIC
+           ==================================================================== */
+        function movePlayer(dx, dy) {
+            if (isLevelComplete) return;
+
+            const targetX = playerPos.x + dx;
+            const targetY = playerPos.y + dy;
+
+            if (targetX < 0 || targetX >= GRID_SIZE || targetY < 0 || targetY >= GRID_SIZE) {
+                return;
+            }
+
+            const targetTile = grid[targetY][targetX];
+
+            if (targetTile === TILE.WALL) {
+                return;
+            }
+
+            let moveCost = 1;
+            if (targetTile === TILE.OBSTACLE) {
+                moveCost = 3;
+            }
+
+            if (currentEnergy < moveCost) {
+                playSynthSound('fail');
+                showGameOver("Energi tidak cukup untuk melewati ubin ini!");
+                return;
+            }
+
+            currentEnergy -= moveCost;
+
+            playerPos.x = targetX;
+            playerPos.y = targetY;
+
+            if (targetTile === TILE.BATTERY) {
+                currentEnergy += 3;
+                batteriesCollected++;
+                grid[targetY][targetX] = TILE.EMPTY;
+                document.getElementById('lbl-battery-count').innerText = batteriesCollected;
+                playSynthSound('battery');
+            } else if (targetTile === TILE.OBSTACLE) {
+                obstaclesCrossed++;
+                document.getElementById('lbl-obstacle-count').innerText = obstaclesCrossed;
+                playSynthSound('obstacle');
+            } else {
+                playSynthSound('move');
+            }
+
+            updateEnergyUI();
+            renderGrid();
+
+            if (playerPos.x === finishPos.x && playerPos.y === finishPos.y) {
+                checkWinConditions();
+                return;
+            }
+
+            if (currentEnergy === 0) {
+                if (!(playerPos.x === finishPos.x && playerPos.y === finishPos.y)) {
+                    setTimeout(() => {
+                        playSynthSound('fail');
+                        showGameOver("Sisa energi Anda 0 sebelum mencapai garis finis!");
+                    }, 150);
+                }
+            }
+        }
+
+        /* ====================================================================
+           WIN & FAIL CONDITION VERIFICATION
+           ==================================================================== */
+        function checkWinConditions() {
+            if (currentLevel >= 15 && currentLevel <= 20 && obstaclesCrossed < 1) {
+                playSynthSound('fail');
+                showGameOver("Aturan Level 15-20: Anda harus melewati minimal 1 rintangan!");
+                return;
+            }
+
+            if (currentLevel >= 11 && currentLevel <= 20 && batteriesCollected < 1) {
+                playSynthSound('fail');
+                showGameOver("Aturan Level 11-20: Anda harus mengambil baterai tambahan!");
+                return;
+            }
+
+            if (currentLevel >= 21) {
+                if (currentEnergy !== 0) {
+                    playSynthSound('fail');
+                    showGameOver(`Aturan Level 21-30: Perhitungan sisa energi harus PAS 0! (Sisa Anda: ${currentEnergy})`);
+                    return;
+                }
+                if (batteriesCollected < 1 || obstaclesCrossed < 1) {
+                    playSynthSound('fail');
+                    showGameOver("Level 21-30: Harus melewati rintangan dan mengambil baterai!");
+                    return;
+                }
+            } else {
+                if (currentEnergy > 3) {
+                    playSynthSound('fail');
+                    showGameOver(`Sisa energi maksimal di garis finis adalah 3! (Sisa Anda: ${currentEnergy})`);
+                    return;
+                }
+            }
+
+            isLevelComplete = true;
+            playSynthSound('win');
+
+            if (currentLevel === maxUnlockedLevel && maxUnlockedLevel < 30) {
+                maxUnlockedLevel++;
+                localStorage.setItem('robo_max_level', maxUnlockedLevel.toString());
+            }
+
+            document.getElementById('win-energy-left').innerText = currentEnergy;
+            document.getElementById('win-batteries').innerText = batteriesCollected;
+            document.getElementById('win-obstacles').innerText = obstaclesCrossed;
+
+            const modal = document.getElementById('modal-victory');
+            const nextBtn = document.getElementById('btn-next-level');
+
+            if (currentLevel >= 30) {
+                document.getElementById('victory-subtitle').innerText = "SELAMAT! Anda telah menyelesaikan seluruh 30 Level Robot Labirin!";
+                nextBtn.style.display = 'none';
+            } else {
+                document.getElementById('victory-subtitle').innerText = "Level diselesaikan sesuai dengan batasan energi!";
+                nextBtn.style.display = 'block';
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function showGameOver(reasonText) {
+            document.getElementById('fail-reason').innerText = reasonText;
+            document.getElementById('modal-fail').classList.remove('hidden');
+        }
+
+        function resetLevel() {
+            document.getElementById('modal-victory').classList.add('hidden');
+            document.getElementById('modal-fail').classList.add('hidden');
+            loadLevel(currentLevel);
+        }
+
+        function nextLevel() {
+            if (currentLevel < 30) {
+                document.getElementById('modal-victory').classList.add('hidden');
+                loadLevel(currentLevel + 1);
+            }
+        }
+
+        /* ====================================================================
+           KEYBOARD CONTROLS & LEVEL SELECTOR
+           ==================================================================== */
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+                e.preventDefault();
+                movePlayer(0, -1);
+            } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+                e.preventDefault();
+                movePlayer(0, 1);
+            } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                e.preventDefault();
+                movePlayer(-1, 0);
+            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                e.preventDefault();
+                movePlayer(1, 0);
+            } else if (e.key === 'r' || e.key === 'R') {
+                resetLevel();
+            }
+        });
+
+        function openLevelSelect() {
+            const gridContainer = document.getElementById('level-buttons-grid');
+            gridContainer.innerHTML = '';
+
+            for (let i = 1; i <= 30; i++) {
+                const btn = document.createElement('button');
+                const isUnlocked = i <= maxUnlockedLevel;
+                
+                let btnColor = "bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200";
+                if (isUnlocked) {
+                    if (i === currentLevel) {
+                        btnColor = "bg-sky-600 text-white font-bold border-sky-400 shadow-md shadow-sky-600/30 ring-2 ring-sky-400/50";
+                    } else if (i <= 10) {
+                        btnColor = "bg-white hover:bg-slate-100 text-sky-700 border-sky-200 shadow-sm";
+                    } else if (i <= 20) {
+                        btnColor = "bg-white hover:bg-slate-100 text-amber-700 border-amber-200 shadow-sm";
+                    } else {
+                        btnColor = "bg-white hover:bg-slate-100 text-purple-700 border-purple-200 shadow-sm";
+                    }
+                }
+
+                btn.className = `h-11 rounded-xl flex flex-col items-center justify-center text-xs transition border ${btnColor}`;
+                
+                if (isUnlocked) {
+                    btn.innerHTML = `<span class="font-orbitron font-bold text-sm">${i}</span>`;
+                    btn.onclick = () => {
+                        closeLevelSelect();
+                        loadLevel(i);
+                    };
+                } else {
+                    btn.innerHTML = `<i class="fa-solid fa-lock text-xs"></i><span class="text-[9px] font-orbitron">${i}</span>`;
+                }
+
+                gridContainer.appendChild(btn);
+            }
+
+            document.getElementById('modal-level-select').classList.remove('hidden');
+        }
+
+        function closeLevelSelect() {
+            document.getElementById('modal-level-select').classList.add('hidden');
+        }
+
+        window.onload = () => {
+            loadLevel(1);
+        };
+    </script>
+</body>
+</html>
