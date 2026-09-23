@@ -88,6 +88,11 @@
                 <button id="soundBtn" onclick="toggleSound()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 p-2.5 rounded-xl transition duration-200 flex items-center justify-center w-10 h-10 border border-slate-600">
                     <i id="soundIcon" class="fa-solid fa-volume-high"></i>
                 </button>
+                <!-- Indicator Kesalahan -->
+                <div class="flex items-center gap-1.5 bg-rose-950/60 border border-rose-500/40 text-rose-300 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-fredoka font-bold shadow-md">
+                    <i class="fa-solid fa-circle-exclamation text-rose-400"></i>
+                    <span>Salah: <span id="mistakeCountLabel">0</span></span>
+                </div>
                 <div class="bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-center shadow-lg font-fredoka font-bold text-sm sm:text-base border border-amber-300/30">
                     <span id="levelLabel">Level 1/10</span>
                 </div>
@@ -171,6 +176,18 @@
                 <p id="solvedSentenceText" class="font-fredoka text-cyan-300 text-lg sm:text-xl tracking-wide"></p>
             </div>
 
+            <!-- Stats Box: Catatan Kesalahan -->
+            <div class="grid grid-cols-2 gap-2 mb-4">
+                <div class="bg-slate-800/80 border border-slate-700 p-2.5 rounded-xl text-center">
+                    <span class="text-[11px] text-slate-400 block font-semibold">Salah di Level Ini</span>
+                    <span id="modalLevelMistakes" class="font-fredoka text-lg text-rose-400 font-bold">0x</span>
+                </div>
+                <div class="bg-slate-800/80 border border-slate-700 p-2.5 rounded-xl text-center">
+                    <span class="text-[11px] text-slate-400 block font-semibold">Total Salah Game</span>
+                    <span id="modalTotalMistakes" class="font-fredoka text-lg text-amber-400 font-bold">0x</span>
+                </div>
+            </div>
+
             <!-- Edu Fact Box -->
             <div class="bg-purple-950/50 border border-purple-500/30 rounded-2xl p-4 text-left mb-6">
                 <div class="flex items-center gap-2 text-purple-300 font-fredoka text-sm mb-1">
@@ -179,9 +196,9 @@
                 <p id="eduFactText" class="text-xs sm:text-sm text-slate-300 leading-relaxed"></p>
             </div>
 
-            <button id="nextLevelBtn" onclick="nextLevel()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-fredoka text-lg py-3 rounded-2xl shadow-lg transition duration-200 border border-emerald-300/30 flex items-center justify-center gap-2 active:scale-95">
-                <span>Lanjut Level Berikutnya</span>
-                <i class="fa-solid fa-arrow-right"></i>
+            <button id="nextLevelBtn" onclick="nextLevel()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-fredoka text-lg py-3 rounded-2xl shadow-lg transition duration-200 border border-emerald-300/30 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                <span id="nextBtnText">Lanjut Level Berikutnya</span>
+                <i id="nextBtnIcon" class="fa-solid fa-arrow-right"></i>
             </button>
         </div>
     </div>
@@ -261,6 +278,12 @@
         let isHintUsed = false;
         let soundEnabled = true;
         let audioCtx = null;
+
+        // Pencatatan Kesalahan & Proteksi Anti-Skip
+        let levelMistakes = 0;
+        let totalMistakes = 0;
+        let isModalOpen = false;
+        let canAdvanceLevel = false;
 
         // Initialize Web Audio Context on first interaction
         function initAudio() {
@@ -375,6 +398,11 @@
             userInputs = {};
             selectedNumber = null;
             isHintUsed = false;
+            levelMistakes = 0;
+            isModalOpen = false;
+            canAdvanceLevel = false;
+
+            updateMistakeUI();
 
             // Generate unique numbers for letters
             generateCipher(levelIndex);
@@ -394,6 +422,11 @@
             renderBoard();
             renderHintWord();
             renderKeyboard();
+        }
+
+        function updateMistakeUI() {
+            const label = document.getElementById('mistakeCountLabel');
+            if (label) label.innerText = levelMistakes;
         }
 
         // Render Hint Word displaying each letter with its corresponding Cipher Code Number
@@ -508,11 +541,24 @@
 
         // Handle Filling a Letter across all matching numbers
         function handleInputLetter(letter) {
-            if (!selectedNumber) return;
+            if (!selectedNumber || isModalOpen) return;
 
-            // Substitute letter for ALL instances of selected number
+            const correctChar = reverseCipherMap[selectedNumber];
+            const previousInput = userInputs[selectedNumber];
+
             userInputs[selectedNumber] = letter;
-            playSound('fill');
+
+            // Catat kesalahan jika tebakan salah dan belum diisi huruf salah yang sama
+            if (letter !== correctChar) {
+                if (previousInput !== letter) {
+                    levelMistakes++;
+                    totalMistakes++;
+                    updateMistakeUI();
+                    playSound('error');
+                }
+            } else {
+                playSound('fill');
+            }
 
             // Find next unsolved tile to make typing smooth
             autoAdvanceSelection();
@@ -596,6 +642,8 @@
 
         // Show Modal & Trigger Confetti
         function showVictoryModal() {
+            isModalOpen = true;
+            canAdvanceLevel = false;
             playSound('win');
             const levelData = LEVELS[currentLevelIndex];
 
@@ -610,6 +658,8 @@
 
             document.getElementById('solvedSentenceText').innerText = `"${levelData.sentence}"`;
             document.getElementById('eduFactText').innerText = levelData.fact;
+            document.getElementById('modalLevelMistakes').innerText = `${levelMistakes}x`;
+            document.getElementById('modalTotalMistakes').innerText = `${totalMistakes}x`;
 
             const modal = document.getElementById('victoryModal');
             const content = document.getElementById('modalContent');
@@ -618,18 +668,45 @@
             content.classList.remove('scale-90');
             content.classList.add('scale-100');
 
-            // Handle Last Level
+            // Proteksi Anti-Skip: Berikan waktu jeda (cooldown) sebelum tombol "Lanjut" aktif
             const nextBtn = document.getElementById('nextLevelBtn');
-            if (currentLevelIndex === LEVELS.length - 1) {
-                nextBtn.innerHTML = `<span>Selamat! Kamu Tamat!</span> <i class="fa-solid fa-trophy"></i>`;
-                nextBtn.onclick = () => {
-                    closeVictoryModal();
-                    loadLevel(0); // Restart from level 1
-                };
+            const nextBtnText = document.getElementById('nextBtnText');
+            const nextBtnIcon = document.getElementById('nextBtnIcon');
+            
+            nextBtn.disabled = true;
+
+            let countdown = 2;
+            const isLastLevel = currentLevelIndex === LEVELS.length - 1;
+
+            if (isLastLevel) {
+                nextBtnText.innerText = `Selesai! Tahan (${countdown}s)`;
+                nextBtnIcon.className = "fa-solid fa-trophy";
             } else {
-                nextBtn.innerHTML = `<span>Lanjut Level Berikutnya</span> <i class="fa-solid fa-arrow-right"></i>`;
-                nextBtn.onclick = () => nextLevel();
+                nextBtnText.innerText = `Tunggu sebentar... (${countdown}s)`;
+                nextBtnIcon.className = "fa-solid fa-hourglass-start";
             }
+
+            const interval = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    if (isLastLevel) {
+                        nextBtnText.innerText = `Selesai! Tahan (${countdown}s)`;
+                    } else {
+                        nextBtnText.innerText = `Tunggu sebentar... (${countdown}s)`;
+                    }
+                } else {
+                    clearInterval(interval);
+                    canAdvanceLevel = true;
+                    nextBtn.disabled = false;
+                    if (isLastLevel) {
+                        nextBtnText.innerText = "Selamat! Kamu Tamat!";
+                        nextBtnIcon.className = "fa-solid fa-trophy";
+                    } else {
+                        nextBtnText.innerText = "Lanjut Level Berikutnya";
+                        nextBtnIcon.className = "fa-solid fa-arrow-right";
+                    }
+                }
+            }, 800);
         }
 
         function closeVictoryModal() {
@@ -641,14 +718,19 @@
         }
 
         function nextLevel() {
+            if (!canAdvanceLevel) return;
             closeVictoryModal();
             if (currentLevelIndex < LEVELS.length - 1) {
                 loadLevel(currentLevelIndex + 1);
+            } else {
+                totalMistakes = 0;
+                loadLevel(0); // Restart from level 1
             }
         }
 
         // Physical Keyboard Event Listener
         window.addEventListener('keydown', (e) => {
+            if (isModalOpen) return; // Mencegah pencetan keyboard tidak sengaja menekan skip saat modal terbuka
             initAudio();
             const key = e.key.toUpperCase();
 
