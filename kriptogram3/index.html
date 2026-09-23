@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cryptogram Koding - Kelas 3 SD</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts: Fredoka & Nunito -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            purple: '#6d28d9',
+                            pink: '#ec4899',
+                            yellow: '#f59e0b',
+                            cyan: '#06b6d4',
+                            dark: '#0f172a',
+                            card: '#1e293b'
+                        }
+                    },
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                        nunito: ['Nunito', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+            min-height: 100vh;
+            user-select: none;
+        }
+        .tile-active {
+            box-shadow: 0 0 15px #f59e0b, 0 0 5px #f59e0b;
+            transform: scale(1.08);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="text-white flex flex-col justify-between min-h-screen p-2 sm:p-4">
+
+    <div class="max-w-4xl mx-auto w-full flex flex-col flex-grow">
+        <!-- Top Navigation / Header -->
+        <header class="flex items-center justify-between bg-slate-800/80 backdrop-blur-md p-3 sm:p-4 rounded-2xl border border-slate-700 shadow-xl mb-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-tr from-purple-600 to-pink-500 rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-purple-500/30">
+                    <i class="fa-solid fa-code-branch"></i>
+                </div>
+                <div>
+                    <h1 class="font-fredoka text-lg sm:text-2xl text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-pink-400 to-cyan-400">
+                        Cryptogram Koding
+                    </h1>
+                    <p class="text-xs text-slate-400 font-semibold">Anak Kelas 3 SD</p>
+                </div>
+            </div>
+
+            <!-- Level Badge & Controls -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <button id="soundBtn" onclick="toggleSound()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 p-2.5 rounded-xl transition duration-200 flex items-center justify-center w-10 h-10 border border-slate-600">
+                    <i id="soundIcon" class="fa-solid fa-volume-high"></i>
+                </button>
+                <div class="bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-center shadow-lg font-fredoka font-bold text-sm sm:text-base border border-amber-300/30">
+                    <span id="levelLabel">Level 1/10</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Mascot & Helper Dialogue -->
+        <section class="bg-slate-800/60 backdrop-blur border border-slate-700/60 rounded-2xl p-3 sm:p-4 mb-4 flex items-center gap-3 sm:gap-4 shadow-lg">
+            <div class="relative flex-shrink-0">
+                <div class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-b from-cyan-400 to-blue-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg animate-float border-2 border-cyan-200">
+                    🤖
+                </div>
+            </div>
+            <div class="flex-grow">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="font-fredoka text-cyan-400 font-bold text-sm sm:text-base">Kody Si Robot</span>
+                    <span id="themeBadge" class="text-xs bg-purple-900/80 text-purple-200 px-2.5 py-0.5 rounded-full border border-purple-500/40">Tema: Pengenalan Koding</span>
+                </div>
+                <p id="robotDialogue" class="text-slate-200 text-xs sm:text-sm leading-relaxed">
+                    Halo teman-teman! Yuk pemecahkan sandi rahasia di bawah ini. Tekan kotak atau gunakan Kata Bantuan ya!
+                </p>
+            </div>
+        </section>
+
+        <!-- Main Game Area -->
+        <main class="flex-grow flex flex-col justify-between">
+            <!-- Hint Word Card -->
+            <div class="bg-gradient-to-r from-purple-900/40 to-pink-900/40 border border-purple-500/30 rounded-2xl p-3 sm:p-4 mb-4 flex flex-wrap items-center justify-between gap-3 shadow-md">
+                <div class="flex items-center gap-3">
+                    <div class="bg-yellow-500/20 text-yellow-400 p-2.5 rounded-xl border border-yellow-500/30">
+                        <i class="fa-solid fa-lightbulb text-xl"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-purple-300 font-bold uppercase tracking-wider block">Kata Bantuan / Clue</span>
+                            <span id="hintWordStatus" class="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded-md">Belum Dipakai</span>
+                        </div>
+                        <!-- Container untuk menampilkan setiap huruf kata bantuan beserta angka sandinya -->
+                        <div id="hintWordTiles" class="flex items-center gap-1.5 flex-wrap mt-1.5">
+                            <!-- Populated dynamically by JS -->
+                        </div>
+                    </div>
+                </div>
+                <button id="useHintBtn" onclick="useHintWord()" class="w-full sm:w-auto bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-slate-9 font-fredoka font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-lg transition duration-200 flex items-center justify-center gap-2 border border-yellow-300 text-slate-900 active:scale-95">
+                    <i class="fa-solid fa-key"></i> Buka Huruf dari Kata Bantuan
+                </button>
+            </div>
+
+            <!-- Encrypted Words Display Grid -->
+            <div class="bg-slate-900/80 border border-slate-700 rounded-2xl p-4 sm:p-6 mb-4 min-h-[220px] flex flex-col justify-center items-center shadow-inner relative overflow-hidden">
+                <div id="cryptogramGrid" class="flex flex-wrap justify-center gap-y-4 gap-x-6 max-w-3xl w-full">
+                    <!-- Dynamic rendering of word tiles -->
+                </div>
+            </div>
+
+            <!-- On-Screen Keyboard -->
+            <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-3 sm:p-4 shadow-xl">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">Pilih Huruf:</span>
+                    <button onclick="clearCurrentSelection()" class="text-xs text-rose-400 hover:text-rose-300 font-bold flex items-center gap-1 transition">
+                        <i class="fa-solid fa-eraser"></i> Hapus Huruf
+                    </button>
+                </div>
+                <div id="virtualKeyboard" class="grid grid-cols-7 sm:grid-cols-9 md:grid-cols-13 gap-1.5 sm:gap-2">
+                    <!-- Virtual keyboard buttons generated by JS -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Level Complete Modal -->
+    <div id="victoryModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-all duration-300">
+        <div class="bg-slate-900 border-2 border-purple-500/50 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl transform scale-90 transition-all duration-300" id="modalContent">
+            <div class="w-20 h-20 bg-gradient-to-tr from-yellow-400 to-amber-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-4 shadow-lg shadow-yellow-500/30 animate-bounce">
+                🏆
+            </div>
+            <h2 class="font-fredoka text-2xl sm:text-3xl text-yellow-400 mb-2">Hebat Sekali!</h2>
+            <p class="text-slate-300 text-sm mb-4">Sandi rahasia berhasil terpecahkan:</p>
+
+            <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-3 mb-4">
+                <p id="solvedSentenceText" class="font-fredoka text-cyan-300 text-lg sm:text-xl tracking-wide"></p>
+            </div>
+
+            <!-- Edu Fact Box -->
+            <div class="bg-purple-950/50 border border-purple-500/30 rounded-2xl p-4 text-left mb-6">
+                <div class="flex items-center gap-2 text-purple-300 font-fredoka text-sm mb-1">
+                    <i class="fa-solid fa-graduation-cap text-yellow-400"></i> Tahukah Kamu?
+                </div>
+                <p id="eduFactText" class="text-xs sm:text-sm text-slate-300 leading-relaxed"></p>
+            </div>
+
+            <button id="nextLevelBtn" onclick="nextLevel()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-fredoka text-lg py-3 rounded-2xl shadow-lg transition duration-200 border border-emerald-300/30 flex items-center justify-center gap-2 active:scale-95">
+                <span>Lanjut Level Berikutnya</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- GAME LOGIC JAVASCRIPT -->
+    <script>
+        // Data 10 Level Khusus Koding Anak Kelas 3 SD
+        const LEVELS = [
+            {
+                id: 1,
+                sentence: "KODING ADALAH PERINTAH",
+                hintWord: "KODE",
+                fact: "Koding adalah cara kita memberikan instruksi atau perintah logis kepada komputer agar komputer bisa menjalankan tugas tertentu!"
+            },
+            {
+                id: 2,
+                sentence: "ALGORITMA LANGKAH LOGIS",
+                hintWord: "HALO",
+                fact: "Algoritma mirip seperti resep membuat kue! Yaitu langkah-langkah berurutan yang harus diikuti untuk menyelesaikan masalah."
+            },
+            {
+                id: 3,
+                sentence: "LOOP BERARTI MENGULANGI",
+                hintWord: "PUTAR",
+                fact: "Loop (perulangan) membuat komputer melakukan hal yang sama berkali-kali secara otomatis tanpa perlu menulis kode berulang kali."
+            },
+            {
+                id: 4,
+                sentence: "BUG ADALAH KESALAHAN KODE",
+                hintWord: "BOLA",
+                fact: "Istilah Bug berawal dari serangga asli yang masuk ke dalam mesin komputer jaman dulu hingga menyebabkan komputer error!"
+            },
+            {
+                id: 5,
+                sentence: "DEBUGGING MEMPERBAIKI BUG",
+                hintWord: "GAME",
+                fact: "Debugging adalah proses mencari dan memperbaiki kesalahan (bug) pada program komputer agar berjalan dengan benar."
+            },
+            {
+                id: 6,
+                sentence: "VARIABEL DISIMPAN DI MEMORI",
+                hintWord: "SIMPAN",
+                fact: "Variabel seperti kotak tempat menyimpan data (seperti skor game, nama pemain, atau jumlah nyawa)."
+            },
+            {
+                id: 7,
+                sentence: "IF ELSE UNTUK PILIHAN",
+                hintWord: "HUTAN",
+                fact: "If-Else adalah pengondisian. Contoh: JIKA tombol spasi ditekan, MAKA karakter melompat, JIKA TIDAK dia diam."
+            },
+            {
+                id: 8,
+                sentence: "FUNGSI KUMPULAN PERINTAH",
+                hintWord: "MESIN",
+                fact: "Fungsi (Function) adalah kumpulan beberapa perintah yang diberi nama khusus agar bisa dipakai berkali-kali dengan mudah."
+            },
+            {
+                id: 9,
+                sentence: "KOMPUTER MEMPROSES DATA",
+                hintWord: "OTAK",
+                fact: "Komputer bisa menghitung dan memproses jutaan data berupa angka, teks, dan gambar dalam hitungan detik!"
+            },
+            {
+                id: 10,
+                sentence: "KITA BISA MEMBUAT GAME",
+                hintWord: "MUSIK",
+                fact: "Dengan belajar koding sejak dini, kamu tidak hanya menjadi pemain game, tapi juga kreator pembuat game impianmu sendiri!"
+            }
+        ];
+
+        // Global State Variables
+        let currentLevelIndex = 0;
+        let cipherMap = {}; // Maps real letters (A-Z) to numbers (1-26)
+        let reverseCipherMap = {}; // Maps numbers to real letters
+        let userInputs = {}; // Stores user's guessed letter for each number: { "12": "K", "5": "O" }
+        let selectedNumber = null;
+        let isHintUsed = false;
+        let soundEnabled = true;
+        let audioCtx = null;
+
+        // Initialize Web Audio Context on first interaction
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        // Sound FX Synthesizer
+        function playSound(type) {
+            if (!soundEnabled) return;
+            initAudio();
+            if (!audioCtx) return;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.05);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
+            } else if (type === 'fill') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'hint') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, now); // D5
+                osc.frequency.setValueAtTime(880, now + 0.1); // A5
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } else if (type === 'win') {
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                notes.forEach((freq, index) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    o.type = 'triangle';
+                    o.frequency.setValueAtTime(freq, now + index * 0.08);
+                    g.gain.setValueAtTime(0.2, now + index * 0.08);
+                    g.gain.linearRampToValueAtTime(0.01, now + index * 0.08 + 0.2);
+                    o.start(now + index * 0.08);
+                    o.stop(now + index * 0.08 + 0.2);
+                });
+            } else if (type === 'error') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.linearRampToValueAtTime(150, now + 0.15);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now);
+                osc.stop(now + 0.15);
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('soundIcon');
+            if (soundEnabled) {
+                icon.className = 'fa-solid fa-volume-high';
+                playSound('click');
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-rose-400';
+            }
+        }
+
+        // Generate consistent number substitution mapping for level
+        function generateCipher(levelIndex) {
+            cipherMap = {};
+            reverseCipherMap = {};
+
+            // Seeded random-like shuffle based on level index so mapping is fixed per level
+            let numbers = Array.from({length: 26}, (_, i) => i + 1);
+            
+            // Fisher-Yates shuffle with simple deterministic random seed
+            let seed = (levelIndex + 1) * 9301 + 49297;
+            for (let i = numbers.length - 1; i > 0; i--) {
+                seed = (seed * 9301 + 49297) % 233280;
+                let rnd = seed / 233280;
+                let j = Math.floor(rnd * (i + 1));
+                [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+            }
+
+            for (let i = 0; i < 26; i++) {
+                const char = String.fromCharCode(65 + i);
+                const num = numbers[i];
+                cipherMap[char] = num;
+                reverseCipherMap[num] = char;
+            }
+        }
+
+        // Initialize and Load Level
+        function loadLevel(levelIndex) {
+            currentLevelIndex = levelIndex;
+            const levelData = LEVELS[currentLevelIndex];
+
+            // Reset level states
+            userInputs = {};
+            selectedNumber = null;
+            isHintUsed = false;
+
+            // Generate unique numbers for letters
+            generateCipher(levelIndex);
+
+            // Update UI Labels
+            document.getElementById('levelLabel').innerText = `Level ${levelData.id}/10`;
+            document.getElementById('hintWordStatus').innerText = "Belum Dipakai";
+            document.getElementById('hintWordStatus').className = "text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded-md";
+            
+            const useBtn = document.getElementById('useHintBtn');
+            useBtn.disabled = false;
+            useBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            document.getElementById('robotDialogue').innerText = `Level ${levelData.id}: Silakan isi kotak dengan huruf yang tepat. Perhatikan angka pada Kata Bantuan untuk membantumu menebak!`;
+
+            // Build Board, Hint Word Tiles with Cipher Numbers, and Keyboard
+            renderBoard();
+            renderHintWord();
+            renderKeyboard();
+        }
+
+        // Render Hint Word displaying each letter with its corresponding Cipher Code Number
+        function renderHintWord() {
+            const levelData = LEVELS[currentLevelIndex];
+            const hintContainer = document.getElementById('hintWordTiles');
+            if (!hintContainer) return;
+            hintContainer.innerHTML = '';
+
+            const hintWord = levelData.hintWord;
+            for (let i = 0; i < hintWord.length; i++) {
+                const char = hintWord[i];
+                const codeNum = cipherMap[char];
+
+                const tile = document.createElement('div');
+                tile.className = 'flex flex-col items-center bg-slate-800/90 border border-yellow-500/50 rounded-xl px-2.5 py-1 shadow-md';
+
+                const letterSpan = document.createElement('span');
+                letterSpan.className = 'font-fredoka text-yellow-300 font-bold text-sm sm:text-base leading-tight';
+                letterSpan.innerText = char;
+
+                const numSpan = document.createElement('span');
+                numSpan.className = 'text-[10px] sm:text-xs font-bold text-cyan-400 font-fredoka mt-0.5 bg-slate-900/80 px-1.5 py-0.5 rounded border border-slate-700';
+                numSpan.innerText = codeNum < 10 ? `0${codeNum}` : codeNum;
+
+                tile.appendChild(letterSpan);
+                tile.appendChild(numSpan);
+                hintContainer.appendChild(tile);
+            }
+        }
+
+        // Render Cryptogram Sentence Grid
+        function renderBoard() {
+            const levelData = LEVELS[currentLevelIndex];
+            const gridContainer = document.getElementById('cryptogramGrid');
+            gridContainer.innerHTML = '';
+
+            const words = levelData.sentence.split(' ');
+
+            words.forEach(word => {
+                const wordDiv = document.createElement('div');
+                wordDiv.className = 'flex gap-1.5 sm:gap-2 my-1';
+
+                for (let i = 0; i < word.length; i++) {
+                    const char = word[i];
+                    const codeNum = cipherMap[char];
+
+                    const tile = document.createElement('div');
+                    tile.className = 'flex flex-col items-center cursor-pointer transition-all duration-200';
+                    tile.onclick = () => selectCodeNumber(codeNum);
+
+                    // Top Box: User Input Letter
+                    const letterBox = document.createElement('div');
+                    const userLetter = userInputs[codeNum] || '';
+                    const isSelected = selectedNumber === codeNum;
+                    const isCorrect = userLetter === char;
+
+                    let bgStyle = 'bg-slate-800 text-slate-100 border-slate-600';
+                    if (isSelected) {
+                        bgStyle = 'bg-amber-500/20 text-yellow-300 border-amber-400 tile-active';
+                    } else if (userLetter !== '') {
+                        bgStyle = isCorrect 
+                            ? 'bg-emerald-950/60 text-emerald-400 border-emerald-500/80 font-bold' 
+                            : 'bg-rose-950/60 text-rose-300 border-rose-500/80 font-bold';
+                    }
+
+                    letterBox.className = `w-8 h-10 sm:w-11 sm:h-13 border-2 rounded-xl flex items-center justify-center font-fredoka text-lg sm:text-2xl shadow-md transition ${bgStyle}`;
+                    letterBox.innerText = userLetter;
+
+                    // Bottom Box: Encrypted Code Number
+                    const codeBox = document.createElement('div');
+                    codeBox.className = 'mt-1 text-[10px] sm:text-xs font-bold font-fredoka px-1.5 py-0.5 rounded-md bg-slate-800/90 text-cyan-400 border border-slate-700/80';
+                    codeBox.innerText = codeNum < 10 ? `0${codeNum}` : codeNum;
+
+                    tile.appendChild(letterBox);
+                    tile.appendChild(codeBox);
+                    wordDiv.appendChild(tile);
+                }
+
+                gridContainer.appendChild(wordDiv);
+            });
+
+            // Automatically select first empty tile if none selected
+            if (selectedNumber === null) {
+                const firstChar = levelData.sentence.replace(/\s/g, '')[0];
+                selectCodeNumber(cipherMap[firstChar]);
+            }
+        }
+
+        // Render On-Screen Keyboard
+        function renderKeyboard() {
+            const kbContainer = document.getElementById('virtualKeyboard');
+            kbContainer.innerHTML = '';
+
+            const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+            alphabet.forEach(letter => {
+                const btn = document.createElement('button');
+                btn.className = 'bg-slate-700 hover:bg-slate-600 active:bg-purple-600 text-slate-100 font-fredoka text-base sm:text-lg py-2 rounded-xl transition shadow border border-slate-600 active:scale-95 flex items-center justify-center';
+                btn.innerText = letter;
+                btn.onclick = () => handleInputLetter(letter);
+                kbContainer.appendChild(btn);
+            });
+        }
+
+        // Select an Encrypted Code Tile
+        function selectCodeNumber(codeNum) {
+            playSound('click');
+            selectedNumber = codeNum;
+            renderBoard();
+        }
+
+        // Handle Filling a Letter across all matching numbers
+        function handleInputLetter(letter) {
+            if (!selectedNumber) return;
+
+            // Substitute letter for ALL instances of selected number
+            userInputs[selectedNumber] = letter;
+            playSound('fill');
+
+            // Find next unsolved tile to make typing smooth
+            autoAdvanceSelection();
+            renderBoard();
+            checkVictory();
+        }
+
+        // Clear Current Letter
+        function clearCurrentSelection() {
+            if (selectedNumber && userInputs[selectedNumber]) {
+                playSound('click');
+                delete userInputs[selectedNumber];
+                renderBoard();
+            }
+        }
+
+        // Move cursor to next empty or unsolved slot
+        function autoAdvanceSelection() {
+            const levelData = LEVELS[currentLevelIndex];
+            const characters = levelData.sentence.replace(/\s/g, '').split('');
+
+            for (let char of characters) {
+                const num = cipherMap[char];
+                if (!userInputs[num]) {
+                    selectedNumber = num;
+                    return;
+                }
+            }
+        }
+
+        // Hint Word Feature implementation
+        function useHintWord() {
+            if (isHintUsed) return;
+
+            playSound('hint');
+            isHintUsed = true;
+            const levelData = LEVELS[currentLevelIndex];
+            const hintLetters = levelData.hintWord.split('');
+
+            // Automatically reveal all letters in the hint word
+            hintLetters.forEach(char => {
+                const num = cipherMap[char];
+                if (num) {
+                    userInputs[num] = char;
+                }
+            });
+
+            // Update Hint UI
+            document.getElementById('hintWordStatus').innerText = "Sudah Aktif!";
+            document.getElementById('hintWordStatus').className = "text-xs bg-emerald-900/80 text-emerald-300 border border-emerald-500/50 px-2 py-0.5 rounded-md font-bold";
+
+            const useBtn = document.getElementById('useHintBtn');
+            useBtn.disabled = true;
+            useBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            document.getElementById('robotDialogue').innerText = `Huruf dari kata "${levelData.hintWord}" telah terbuka di papan sandi! Sekarang giliranmu menebak sisanya!`;
+
+            autoAdvanceSelection();
+            renderBoard();
+            checkVictory();
+        }
+
+        // Check if current puzzle is completely solved correctly
+        function checkVictory() {
+            const levelData = LEVELS[currentLevelIndex];
+            const sentence = levelData.sentence;
+
+            for (let i = 0; i < sentence.length; i++) {
+                const realChar = sentence[i];
+                if (realChar === ' ') continue;
+
+                const codeNum = cipherMap[realChar];
+                if (userInputs[codeNum] !== realChar) {
+                    return; // Not completed or incorrect
+                }
+            }
+
+            // Victory Triggered!
+            setTimeout(showVictoryModal, 300);
+        }
+
+        // Show Modal & Trigger Confetti
+        function showVictoryModal() {
+            playSound('win');
+            const levelData = LEVELS[currentLevelIndex];
+
+            // Confetti effect
+            if (window.confetti) {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
+
+            document.getElementById('solvedSentenceText').innerText = `"${levelData.sentence}"`;
+            document.getElementById('eduFactText').innerText = levelData.fact;
+
+            const modal = document.getElementById('victoryModal');
+            const content = document.getElementById('modalContent');
+
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            content.classList.remove('scale-90');
+            content.classList.add('scale-100');
+
+            // Handle Last Level
+            const nextBtn = document.getElementById('nextLevelBtn');
+            if (currentLevelIndex === LEVELS.length - 1) {
+                nextBtn.innerHTML = `<span>Selamat! Kamu Tamat!</span> <i class="fa-solid fa-trophy"></i>`;
+                nextBtn.onclick = () => {
+                    closeVictoryModal();
+                    loadLevel(0); // Restart from level 1
+                };
+            } else {
+                nextBtn.innerHTML = `<span>Lanjut Level Berikutnya</span> <i class="fa-solid fa-arrow-right"></i>`;
+                nextBtn.onclick = () => nextLevel();
+            }
+        }
+
+        function closeVictoryModal() {
+            const modal = document.getElementById('victoryModal');
+            const content = document.getElementById('modalContent');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-90');
+        }
+
+        function nextLevel() {
+            closeVictoryModal();
+            if (currentLevelIndex < LEVELS.length - 1) {
+                loadLevel(currentLevelIndex + 1);
+            }
+        }
+
+        // Physical Keyboard Event Listener
+        window.addEventListener('keydown', (e) => {
+            initAudio();
+            const key = e.key.toUpperCase();
+
+            if (key >= 'A' && key <= 'Z' && key.length === 1) {
+                handleInputLetter(key);
+            } else if (e.key === 'Backspace') {
+                clearCurrentSelection();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            loadLevel(0);
+        };
+    </script>
+</body>
+</html>
