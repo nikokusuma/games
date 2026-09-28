@@ -141,6 +141,11 @@
                 <span id="totalStarsCount">0</span>
             </div>
 
+            <!-- Report Button -->
+            <button id="btnReportToggle" onclick="openReportModal()" class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center font-bold text-lg border-2 border-emerald-200 hover:bg-emerald-200 transition" title="Laporan Progress">
+                <i class="fa-solid fa-chart-pie"></i>
+            </button>
+
             <!-- Sound Toggle -->
             <button id="btnSoundToggle" onclick="toggleSound()" class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center font-bold text-lg border-2 border-indigo-200 hover:bg-indigo-200">
                 <i id="soundIcon" class="fa-solid fa-volume-high"></i>
@@ -180,7 +185,7 @@
         <section class="md:col-span-6 lg:col-span-5 flex flex-col gap-3">
             
             <!-- Command Queue Display -->
-            <div class="bg-white/95 rounded-3xl p-3 sm:p-4 shadow-xl border-4 border-white/50 flex flex-col justify-between min-h-[160px]">
+            <div class="bg-white/95 rounded-3xl p-3 sm:p-4 shadow-xl border-4 border-white/50 flex flex-col justify-between min-h-[180px]">
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
                         <i class="fa-solid fa-list-check text-brand-blue"></i> Urutan Langkah
@@ -188,9 +193,9 @@
                     <span id="commandCount" class="text-xs font-jakarta font-bold text-slate-400">0 perintah</span>
                 </div>
 
-                <!-- Command Cards Container -->
-                <div id="commandQueue" class="flex items-center gap-2 overflow-x-auto no-scrollbar p-2 bg-slate-100 min-h-[64px] rounded-2xl border-2 border-slate-200 border-dashed">
-                    <p id="emptyQueueText" class="text-xs text-slate-400 font-jakarta italic text-center w-full">
+                <!-- Command Cards Container (Dynamic Auto-Wrap & Responsive Growth) -->
+                <div id="commandQueue" class="flex flex-wrap items-center gap-2 overflow-y-auto no-scrollbar p-3 bg-slate-100 min-h-[90px] max-h-[220px] rounded-2xl border-2 border-slate-200 border-dashed transition-all duration-300">
+                    <p id="emptyQueueText" class="text-xs sm:text-sm text-slate-400 font-jakarta italic text-center w-full py-2">
                         Belum ada perintah. Klik tombol panah!
                     </p>
                 </div>
@@ -291,6 +296,56 @@
             <button onclick="closeFailModal()" class="btn-kid w-full bg-brand-orange text-white py-3 rounded-2xl font-bold text-base border-2 border-orange-400 flex items-center justify-center gap-2">
                 <i class="fa-solid fa-rotate-left"></i> Coba Lagi
             </button>
+        </div>
+    </div>
+
+    <!-- Progress Report Modal -->
+    <div id="reportModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-4 sm:p-6 shadow-2xl border-4 border-indigo-300 transform transition-all max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between pb-3 border-b-2 border-slate-100 mb-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg sm:text-xl font-bold text-slate-800 leading-tight">Laporan Progress Belajar</h2>
+                        <p class="text-xs font-jakarta text-slate-400">Otomatis reset saat halaman di-refresh</p>
+                    </div>
+                </div>
+                <button onclick="closeReportModal()" class="w-8 h-8 bg-slate-100 text-slate-500 hover:bg-slate-200 rounded-xl flex items-center justify-center font-bold">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-3 gap-2 sm:gap-3 mb-4 font-jakarta">
+                <div class="bg-indigo-50 border-2 border-indigo-100 rounded-2xl p-2.5 text-center">
+                    <span class="block text-[10px] text-indigo-400 font-bold uppercase">Selesai</span>
+                    <span id="reportCompletedCount" class="text-lg sm:text-2xl font-black text-indigo-600">0 / 20</span>
+                </div>
+                <div class="bg-amber-50 border-2 border-amber-100 rounded-2xl p-2.5 text-center">
+                    <span class="block text-[10px] text-amber-500 font-bold uppercase">Total Bintang</span>
+                    <span id="reportStarsCount" class="text-lg sm:text-2xl font-black text-amber-600">0 / 60</span>
+                </div>
+                <div class="bg-emerald-50 border-2 border-emerald-100 rounded-2xl p-2.5 text-center">
+                    <span class="block text-[10px] text-emerald-500 font-bold uppercase">Pencapaian</span>
+                    <span id="reportPercentage" class="text-lg sm:text-2xl font-black text-emerald-600">0%</span>
+                </div>
+            </div>
+
+            <!-- Level Detail List -->
+            <div class="flex-1 overflow-y-auto pr-1 no-scrollbar space-y-2">
+                <div id="reportList" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <!-- Level report items dynamically generated -->
+                </div>
+            </div>
+
+            <div class="pt-3 mt-2 border-t-2 border-slate-100 flex justify-between items-center text-xs font-jakarta text-slate-400">
+                <span class="flex items-center gap-1"><i class="fa-solid fa-rotate-left"></i> Refresh browser untuk reset progress</span>
+                <button onclick="closeReportModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-xl text-xs">
+                    Tutup
+                </button>
+            </div>
         </div>
     </div>
 
@@ -421,6 +476,14 @@
         let totalStars = 0;
         let levelStars = new Array(levels.length).fill(0);
 
+        // Track stats for each level (reset in-memory on page refresh)
+        let levelStats = levels.map(() => ({
+            completed: false,
+            stars: 0,
+            bestSteps: null,
+            attempts: 0
+        }));
+
         const GRID_SIZE = 5;
 
         // Command details map
@@ -533,14 +596,13 @@
 
         function updateQueueUI() {
             const queueContainer = document.getElementById('commandQueue');
-            const emptyText = document.getElementById('emptyQueueText');
             const countLabel = document.getElementById('commandCount');
 
             countLabel.innerText = `${commandQueue.length} perintah`;
 
             if (commandQueue.length === 0) {
                 queueContainer.innerHTML = `
-                    <p id="emptyQueueText" class="text-xs text-slate-400 font-jakarta italic text-center w-full">
+                    <p id="emptyQueueText" class="text-xs sm:text-sm text-slate-400 font-jakarta italic text-center w-full py-2">
                         Belum ada perintah. Klik tombol panah!
                     </p>
                 `;
@@ -548,14 +610,20 @@
             }
 
             queueContainer.innerHTML = '';
+
+            // Penyesuaian ukuran dinamis berdasarkan jumlah perintah
+            const isCompact = commandQueue.length > 8;
+            const cardPadding = isCompact ? 'px-2.5 py-1.5 text-xs' : 'px-3.5 py-2 text-sm sm:text-base';
+            const iconSize = isCompact ? 'text-base' : 'text-xl sm:text-2xl';
+
             commandQueue.forEach((cmdKey, index) => {
                 const cmd = COMMAND_DATA[cmdKey];
                 const card = document.createElement('div');
                 card.id = `cmd-card-${index}`;
-                card.className = `flex-shrink-0 px-2.5 py-1.5 rounded-xl border-2 flex items-center gap-1.5 text-xs font-bold shadow-sm ${cmd.color} transition-all`;
+                card.className = `flex-shrink-0 ${cardPadding} rounded-xl border-2 flex items-center gap-2 font-bold shadow-md ${cmd.color} transition-all duration-200 transform hover:scale-105 animate-fade-in`;
                 card.innerHTML = `
-                    <span class="text-xs font-jakarta opacity-75">${index + 1}.</span>
-                    <i class="fa-solid ${cmd.icon}"></i>
+                    <span class="font-jakarta opacity-80 text-xs">${index + 1}.</span>
+                    <i class="fa-solid ${cmd.icon} ${iconSize}"></i>
                     <span>${cmd.name}</span>
                 `;
                 queueContainer.appendChild(card);
@@ -574,6 +642,9 @@
             isRunning = true;
             document.getElementById('btnRun').disabled = true;
             document.getElementById('btnRun').classList.add('opacity-50');
+
+            // Record attempt count
+            levelStats[currentLevelIdx].attempts++;
 
             const lvl = levels[currentLevelIdx];
             robotPos = { ...lvl.start };
@@ -654,6 +725,14 @@
                 levelStars[currentLevelIdx] = stars;
             }
 
+            // Update stats report tracking
+            const stat = levelStats[currentLevelIdx];
+            stat.completed = true;
+            if (stat.stars < stars) stat.stars = stars;
+            if (stat.bestSteps === null || steps < stat.bestSteps) {
+                stat.bestSteps = steps;
+            }
+
             // Recalculate total stars
             totalStars = levelStars.reduce((acc, curr) => acc + curr, 0);
             document.getElementById('totalStarsCount').innerText = totalStars;
@@ -666,6 +745,63 @@
                 star.className = s <= stars ? 'fa-solid fa-star text-amber-400' : 'fa-solid fa-star text-slate-300';
                 starsContainer.appendChild(star);
             }
+        }
+
+        function openReportModal() {
+            playSound('click');
+            renderReportUI();
+            document.getElementById('reportModal').classList.remove('hidden');
+        }
+
+        function closeReportModal() {
+            document.getElementById('reportModal').classList.add('hidden');
+        }
+
+        function renderReportUI() {
+            const completedCount = levelStats.filter(s => s.completed).length;
+            const percentage = Math.round((completedCount / levels.length) * 100);
+
+            document.getElementById('reportCompletedCount').innerText = `${completedCount} / ${levels.length}`;
+            document.getElementById('reportStarsCount').innerText = `${totalStars} / 60`;
+            document.getElementById('reportPercentage').innerText = `${percentage}%`;
+
+            const listContainer = document.getElementById('reportList');
+            listContainer.innerHTML = '';
+
+            levels.forEach((lvl, idx) => {
+                const stat = levelStats[idx];
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-2xl border-2 flex items-center justify-between font-jakarta text-xs ${
+                    stat.completed ? 'bg-emerald-50/80 border-emerald-200' : 'bg-slate-50 border-slate-200'
+                }`;
+
+                let starsHtml = '';
+                for (let s = 1; s <= 3; s++) {
+                    starsHtml += `<i class="fa-solid fa-star ${s <= stat.stars ? 'text-amber-400' : 'text-slate-300'} text-xs"></i>`;
+                }
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl ${stat.completed ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-600'} font-bold flex items-center justify-center font-fredoka text-sm">
+                            ${lvl.id}
+                        </div>
+                        <div>
+                            <div class="font-bold font-fredoka text-slate-700 text-sm flex items-center gap-1.5">
+                                Level ${lvl.id}
+                                ${stat.completed ? '<span class="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold">Selesai</span>' : '<span class="text-[10px] bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded-full">Belum</span>'}
+                            </div>
+                            <div class="text-[11px] text-slate-500">
+                                ${stat.completed ? `Langkah terbaik: <b class="text-slate-700">${stat.bestSteps}</b> (Min: ${lvl.minSteps})` : `Target ideal: ${lvl.minSteps} langkah`}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end gap-1">
+                        <div class="flex gap-0.5">${starsHtml}</div>
+                        <span class="text-[10px] text-slate-400">Percobaan: ${stat.attempts}x</span>
+                    </div>
+                `;
+                listContainer.appendChild(card);
+            });
         }
 
         function changeLevel(delta) {
