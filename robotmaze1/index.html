@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robot Labirin - Coding Anak Kelas 1 SD</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+    <!-- Tone.js for Sound Effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            purple: '#6C5CE7',
+                            pink: '#FD79A8',
+                            yellow: '#FDCB6E',
+                            green: '#00B894',
+                            blue: '#0984E3',
+                            orange: '#E17055',
+                            dark: '#2D3436'
+                        }
+                    },
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                        jakarta: ['Plus Jakarta Sans', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Fredoka', cursive, sans-serif;
+            background: linear-gradient(135deg, #a8c0ff 0%, #3f2b96 100%);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Custom animation for active robot block */
+        @keyframes pulse-border {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(253, 203, 110, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(253, 203, 110, 0); }
+        }
+
+        .executing-cmd {
+            animation: pulse-border 0.6s infinite ease-in-out;
+            border-color: #FDCB6E !important;
+            background-color: #FFEAA7 !important;
+        }
+
+        /* Smooth visual robot movements */
+        .robot-avatar {
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Grid lines aesthetic */
+        .grid-cell {
+            background-color: rgba(255, 255, 255, 0.85);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+            transition: background-color 0.2s;
+        }
+
+        .grid-cell-start {
+            background-color: #E8F8F5 !important;
+            border: 2px dashed #00B894 !important;
+        }
+
+        .grid-cell-finish {
+            background-color: #FEF9E7 !important;
+            border: 2px dashed #FDCB6E !important;
+        }
+
+        .grid-cell-wall {
+            background: #636e72;
+            box-shadow: inset 0 -4px 0 #2d3436;
+        }
+
+        /* Custom scrollbar for commands */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Button press effects */
+        .btn-kid {
+            transition: all 0.1s ease;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.2);
+        }
+        .btn-kid:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between p-2 sm:p-4 text-slate-800">
+
+    <!-- Top Header Navigation -->
+    <header class="w-full max-w-4xl bg-white/95 backdrop-blur rounded-2xl p-3 sm:p-4 shadow-xl mb-3 border-4 border-white/50 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2 sm:gap-3">
+            <div class="bg-brand-purple text-white p-2.5 sm:p-3 rounded-2xl shadow-lg text-2xl sm:text-3xl">
+                <i class="fa-solid fa-robot"></i>
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-brand-dark tracking-wide">Robot Labirin</h1>
+                <p class="text-xs sm:text-sm font-jakarta text-slate-500 font-semibold">Coding Cilik SD Kelas 1</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 sm:gap-4 ml-auto">
+            <!-- Level Selector -->
+            <div class="flex items-center gap-2 bg-slate-100 p-1.5 sm:p-2 rounded-xl border-2 border-slate-200">
+                <button id="btnPrevLevel" onclick="changeLevel(-1)" class="w-8 h-8 sm:w-9 sm:h-9 bg-white text-slate-700 rounded-lg flex items-center justify-center font-bold shadow hover:bg-slate-50 disabled:opacity-40">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <div class="text-center px-1">
+                    <span class="block text-[10px] text-slate-400 font-jakarta font-bold uppercase">Level</span>
+                    <span id="levelLabel" class="text-base sm:text-lg font-bold text-brand-purple leading-none">1 / 20</span>
+                </div>
+                <button id="btnNextLevel" onclick="changeLevel(1)" class="w-8 h-8 sm:w-9 sm:h-9 bg-white text-slate-700 rounded-lg flex items-center justify-center font-bold shadow hover:bg-slate-50 disabled:opacity-40">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+
+            <!-- Stars display -->
+            <div class="flex items-center gap-1 bg-amber-100 border-2 border-amber-300 px-3 py-1.5 rounded-xl text-amber-700 font-bold text-sm sm:text-base">
+                <i class="fa-solid fa-star text-amber-500 text-lg"></i>
+                <span id="totalStarsCount">0</span>
+            </div>
+
+            <!-- Sound Toggle -->
+            <button id="btnSoundToggle" onclick="toggleSound()" class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center font-bold text-lg border-2 border-indigo-200 hover:bg-indigo-200">
+                <i id="soundIcon" class="fa-solid fa-volume-high"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Game Container -->
+    <main class="w-full max-w-4xl flex-1 grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 items-start mb-3">
+        
+        <!-- Left Side: Maze Grid (5x5) -->
+        <section class="md:col-span-6 lg:col-span-7 bg-white/95 rounded-3xl p-3 sm:p-5 shadow-xl border-4 border-white/50 flex flex-col items-center justify-between min-h-[380px] sm:min-h-[460px]">
+            <!-- Level Title & Instructions -->
+            <div class="w-full flex items-center justify-between mb-2">
+                <span id="levelGoalText" class="text-sm sm:text-base font-semibold text-slate-600 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100 flex items-center gap-2">
+                    <i class="fa-solid fa-bullseye text-brand-purple"></i> Bantu Robot ke Bintang!
+                </span>
+                <button onclick="resetCurrentLevel()" class="text-xs text-slate-500 hover:text-brand-purple flex items-center gap-1 font-jakarta font-bold">
+                    <i class="fa-solid fa-rotate-right"></i> Reset
+                </button>
+            </div>
+
+            <!-- 5x5 Board Wrapper -->
+            <div class="relative w-full aspect-square max-w-[340px] sm:max-w-[380px] p-2 bg-slate-200/80 rounded-2xl border-4 border-slate-300 shadow-inner">
+                <div id="mazeBoard" class="grid grid-cols-5 grid-rows-5 gap-1.5 sm:gap-2 w-full h-full relative">
+                    <!-- Grid cells dynamically generated by JS -->
+                </div>
+            </div>
+
+            <!-- Hint / Status info bar -->
+            <div id="statusMessage" class="mt-2 text-center text-xs sm:text-sm font-bold text-slate-600 h-6">
+                Pilih panah di bawah untuk memberi perintah pada Robot!
+            </div>
+        </section>
+
+        <!-- Right Side: Controls & Command Queue -->
+        <section class="md:col-span-6 lg:col-span-5 flex flex-col gap-3">
+            
+            <!-- Command Queue Display -->
+            <div class="bg-white/95 rounded-3xl p-3 sm:p-4 shadow-xl border-4 border-white/50 flex flex-col justify-between min-h-[160px]">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-brand-blue"></i> Urutan Langkah
+                    </h2>
+                    <span id="commandCount" class="text-xs font-jakarta font-bold text-slate-400">0 perintah</span>
+                </div>
+
+                <!-- Command Cards Container -->
+                <div id="commandQueue" class="flex items-center gap-2 overflow-x-auto no-scrollbar p-2 bg-slate-100 min-h-[64px] rounded-2xl border-2 border-slate-200 border-dashed">
+                    <p id="emptyQueueText" class="text-xs text-slate-400 font-jakarta italic text-center w-full">
+                        Belum ada perintah. Klik tombol panah!
+                    </p>
+                </div>
+
+                <!-- Queue Control Actions -->
+                <div class="flex gap-2 mt-3">
+                    <button onclick="undoLastCommand()" class="flex-1 bg-amber-100 text-amber-700 hover:bg-amber-200 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1 border border-amber-300 active:scale-95 transition">
+                        <i class="fa-solid fa-rotate-left"></i> Hapus 1
+                    </button>
+                    <button onclick="clearCommands()" class="flex-1 bg-rose-100 text-rose-700 hover:bg-rose-200 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1 border border-rose-300 active:scale-95 transition">
+                        <i class="fa-solid fa-trash-can"></i> Hapus Semua
+                    </button>
+                </div>
+            </div>
+
+            <!-- Direction Pad (D-Pad) -->
+            <div class="bg-white/95 rounded-3xl p-3 sm:p-4 shadow-xl border-4 border-white/50 flex flex-col items-center">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Tombol Perintah</h3>
+                
+                <div class="grid grid-cols-3 gap-2 w-full max-w-[240px]">
+                    <div></div>
+                    <!-- ATAS -->
+                    <button onclick="addCommand('UP')" class="btn-kid bg-brand-blue text-white hover:bg-blue-600 p-3 rounded-2xl font-bold flex flex-col items-center justify-center gap-0.5 border-2 border-blue-400">
+                        <i class="fa-solid fa-arrow-up text-xl sm:text-2xl"></i>
+                        <span class="text-[10px] tracking-wide uppercase">Atas</span>
+                    </button>
+                    <div></div>
+
+                    <!-- KIRI -->
+                    <button onclick="addCommand('LEFT')" class="btn-kid bg-brand-purple text-white hover:bg-indigo-600 p-3 rounded-2xl font-bold flex flex-col items-center justify-center gap-0.5 border-2 border-indigo-400">
+                        <i class="fa-solid fa-arrow-left text-xl sm:text-2xl"></i>
+                        <span class="text-[10px] tracking-wide uppercase">Kiri</span>
+                    </button>
+                    
+                    <!-- BAWAH -->
+                    <button onclick="addCommand('DOWN')" class="btn-kid bg-brand-blue text-white hover:bg-blue-600 p-3 rounded-2xl font-bold flex flex-col items-center justify-center gap-0.5 border-2 border-blue-400">
+                        <i class="fa-solid fa-arrow-down text-xl sm:text-2xl"></i>
+                        <span class="text-[10px] tracking-wide uppercase">Bawah</span>
+                    </button>
+
+                    <!-- KANAN -->
+                    <button onclick="addCommand('RIGHT')" class="btn-kid bg-brand-purple text-white hover:bg-indigo-600 p-3 rounded-2xl font-bold flex flex-col items-center justify-center gap-0.5 border-2 border-indigo-400">
+                        <i class="fa-solid fa-arrow-right text-xl sm:text-2xl"></i>
+                        <span class="text-[10px] tracking-wide uppercase">Kanan</span>
+                    </button>
+                </div>
+
+                <!-- Execute Button -->
+                <button id="btnRun" onclick="runRobot()" class="btn-kid w-full mt-4 bg-brand-green hover:bg-emerald-600 text-white py-3 sm:py-4 rounded-2xl font-bold text-base sm:text-lg flex items-center justify-center gap-2 border-2 border-emerald-400 shadow-lg tracking-wider uppercase">
+                    <i class="fa-solid fa-play text-xl"></i> Jalankan Robot!
+                </button>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Footer Guide -->
+    <footer class="w-full max-w-4xl text-center text-xs text-white/80 font-jakarta py-1">
+        Dibuat khusus untuk Pembelajaran Logika & Coding Pemula • SD Kelas 1
+    </footer>
+
+    <!-- Victory Modal -->
+    <div id="victoryModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center border-4 border-amber-300 transform transition-all scale-100">
+            <div class="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3 border-4 border-amber-400 text-amber-500 text-4xl animate-bounce">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-slate-800 mb-1">Hore! Berhasil! 🎉</h2>
+            <p class="text-sm font-jakarta text-slate-500 mb-4">Robot berhasil sampai ke Bintang!</p>
+            
+            <!-- Star Rating Earned -->
+            <div class="flex justify-center gap-2 text-3xl text-amber-400 mb-5" id="starsEarned">
+                <i class="fa-solid fa-star"></i>
+                <i class="fa-solid fa-star"></i>
+                <i class="fa-solid fa-star"></i>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <button onclick="nextLevelFromModal()" class="btn-kid w-full bg-brand-green text-white py-3 rounded-2xl font-bold text-base border-2 border-emerald-400 flex items-center justify-center gap-2">
+                    Level Selanjutnya <i class="fa-solid fa-arrow-right"></i>
+                </button>
+                <button onclick="closeVictoryModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 py-2.5 rounded-2xl font-bold text-sm font-jakarta">
+                    Ulangi Level Ini
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Failed / Wall Crash Modal -->
+    <div id="failModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center border-4 border-rose-300 transform transition-all">
+            <div class="w-20 h-20 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-3 border-4 border-rose-400 text-rose-500 text-4xl">
+                <i id="failIcon" class="fa-solid fa-circle-xmark"></i>
+            </div>
+            <h2 id="failTitle" class="text-2xl font-bold text-slate-800 mb-1">Aduh, Belum Sampai!</h2>
+            <p id="failDescription" class="text-sm font-jakarta text-slate-500 mb-5">Coba periksa lagi arah panahmu ya.</p>
+            
+            <button onclick="closeFailModal()" class="btn-kid w-full bg-brand-orange text-white py-3 rounded-2xl font-bold text-base border-2 border-orange-400 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-rotate-left"></i> Coba Lagi
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let soundEnabled = true;
+
+        // Tone.js Synth Setup
+        let moveSynth, winSynth, failSynth, clickSynth;
+
+        function initAudio() {
+            if (!moveSynth) {
+                moveSynth = new Tone.Synth({
+                    oscillator: { type: 'sine' },
+                    envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.1 }
+                }).toDestination();
+
+                clickSynth = new Tone.MembraneSynth().toDestination();
+
+                winSynth = new Tone.PolySynth(Tone.Synth).toDestination();
+
+                failSynth = new Tone.Synth({
+                    oscillator: { type: 'sawtooth' },
+                    envelope: { attack: 0.05, decay: 0.3, sustain: 0, release: 0.2 }
+                }).toDestination();
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                Tone.start();
+                initAudio();
+
+                if (type === 'click') {
+                    clickSynth.triggerAttackRelease('C4', '8n');
+                } else if (type === 'move') {
+                    moveSynth.triggerAttackRelease('E5', '16n');
+                } else if (type === 'win') {
+                    const now = Tone.now();
+                    winSynth.triggerAttackRelease(['C5', 'E5', 'G5'], '8n', now);
+                    winSynth.triggerAttackRelease(['C6'], '4n', now + 0.25);
+                } else if (type === 'fail') {
+                    failSynth.triggerAttackRelease('G2', '4n');
+                }
+            } catch(e) {
+                console.log('Audio playback waiting for interaction');
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('soundIcon');
+            if (soundEnabled) {
+                icon.className = 'fa-solid fa-volume-high';
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark';
+            }
+        }
+
+        // Grid is 5x5: Rows (0 to 4), Cols (0 to 4)
+        // start: {r, c}, finish: {r, c}, walls: [{r, c}]
+        const levels = [
+            // Level 1: Straight line right (Grade 1 intro)
+            { id: 1, start: {r: 4, c: 0}, finish: {r: 4, c: 3}, walls: [], minSteps: 3 },
+            
+            // Level 2: Straight line down
+            { id: 2, start: {r: 0, c: 1}, finish: {r: 3, c: 1}, walls: [], minSteps: 3 },
+
+            // Level 3: Simple L-shape right then up
+            { id: 3, start: {r: 3, c: 0}, finish: {r: 1, c: 2}, walls: [], minSteps: 4 },
+
+            // Level 4: Simple L-shape left then down
+            { id: 4, start: {r: 0, c: 4}, finish: {r: 2, c: 2}, walls: [], minSteps: 4 },
+
+            // Level 5: Introduce 1 wall
+            { id: 5, start: {r: 0, c: 0}, finish: {r: 0, c: 3}, walls: [{r: 0, c: 1}], minSteps: 5 },
+
+            // Level 6: 1 wall detour down
+            { id: 6, start: {r: 2, c: 0}, finish: {r: 2, c: 3}, walls: [{r: 2, c: 1}], minSteps: 5 },
+
+            // Level 7: Start bottom right, finish top left
+            { id: 7, start: {r: 4, c: 4}, finish: {r: 1, c: 4}, walls: [], minSteps: 3 },
+
+            // Level 8: Start middle left, finish top right with 2 walls
+            { id: 8, start: {r: 2, c: 0}, finish: {r: 0, c: 4}, walls: [{r: 1, c: 1}, {r: 1, c: 2}], minSteps: 6 },
+
+            // Level 9: Diagonal path avoiding corner wall
+            { id: 9, start: {r: 4, c: 0}, finish: {r: 0, c: 4}, walls: [{r: 2, c: 2}], minSteps: 8 },
+
+            // Level 10: U-Turn around a wall barrier
+            { id: 10, start: {r: 1, c: 1}, finish: {r: 3, c: 1}, walls: [{r: 2, c: 1}], minSteps: 4 },
+
+            // Level 11: Middle maze start
+            { id: 11, start: {r: 2, c: 2}, finish: {r: 0, c: 0}, walls: [{r: 1, c: 2}, {r: 2, c: 1}], minSteps: 4 },
+
+            // Level 12: Zig-zag corridor
+            { id: 12, start: {r: 0, c: 0}, finish: {r: 4, c: 0}, walls: [{r: 1, c: 0}, {r: 3, c: 0}], minSteps: 6 },
+
+            // Level 13: Wall blocking direct right
+            { id: 13, start: {r: 3, c: 1}, finish: {r: 3, c: 4}, walls: [{r: 3, c: 2}, {r: 3, c: 3}], minSteps: 5 },
+
+            // Level 14: Center island obstacle
+            { id: 14, start: {r: 0, c: 2}, finish: {r: 4, c: 2}, walls: [{r: 2, c: 2}, {r: 2, c: 3}], minSteps: 6 },
+
+            // Level 15: Cross the board upward
+            { id: 15, start: {r: 4, c: 2}, finish: {r: 0, c: 4}, walls: [{r: 2, c: 3}, {r: 1, c: 4}], minSteps: 6 },
+
+            // Level 16: Two step-down hurdles
+            { id: 16, start: {r: 1, c: 0}, finish: {r: 1, c: 4}, walls: [{r: 1, c: 1}, {r: 1, c: 3}], minSteps: 6 },
+
+            // Level 17: Multi-turn detour
+            { id: 17, start: {r: 4, c: 1}, finish: {r: 0, c: 3}, walls: [{r: 3, c: 1}, {r: 2, c: 2}, {r: 1, c: 3}], minSteps: 6 },
+
+            // Level 18: Bottom row bypass
+            { id: 18, start: {r: 3, c: 0}, finish: {r: 3, c: 4}, walls: [{r: 3, c: 1}, {r: 3, c: 2}, {r: 3, c: 3}], minSteps: 6 },
+
+            // Level 19: Tunnel run
+            { id: 19, start: {r: 0, c: 1}, finish: {r: 4, c: 3}, walls: [{r: 1, c: 1}, {r: 2, c: 1}, {r: 2, c: 3}, {r: 3, c: 3}], minSteps: 8 },
+
+            // Level 20: Grand Challenge Snake Spiral
+            { id: 20, start: {r: 0, c: 0}, finish: {r: 4, c: 4}, walls: [{r: 0, c: 2}, {r: 1, c: 2}, {r: 2, c: 2}, {r: 3, c: 1}, {r: 3, c: 2}], minSteps: 12 }
+        ];
+
+        let currentLevelIdx = 0;
+        let robotPos = { r: 0, c: 0 };
+        let commandQueue = [];
+        let isRunning = false;
+        let totalStars = 0;
+        let levelStars = new Array(levels.length).fill(0);
+
+        const GRID_SIZE = 5;
+
+        // Command details map
+        const COMMAND_DATA = {
+            'UP': { name: 'Atas', icon: 'fa-arrow-up', color: 'bg-brand-blue border-blue-400 text-white', dr: -1, dc: 0 },
+            'DOWN': { name: 'Bawah', icon: 'fa-arrow-down', color: 'bg-brand-blue border-blue-400 text-white', dr: 1, dc: 0 },
+            'LEFT': { name: 'Kiri', icon: 'fa-arrow-left', color: 'bg-brand-purple border-indigo-400 text-white', dr: 0, dc: -1 },
+            'RIGHT': { name: 'Kanan', icon: 'fa-arrow-right', color: 'bg-brand-purple border-indigo-400 text-white', dr: 0, dc: 1 }
+        };
+
+        function loadLevel(idx) {
+            currentLevelIdx = idx;
+            const lvl = levels[currentLevelIdx];
+            robotPos = { ...lvl.start };
+            commandQueue = [];
+            isRunning = false;
+
+            // Update UI Level Header
+            document.getElementById('levelLabel').innerText = `${lvl.id} / ${levels.length}`;
+            document.getElementById('btnPrevLevel').disabled = currentLevelIdx === 0;
+            document.getElementById('btnNextLevel').disabled = currentLevelIdx === levels.length - 1;
+
+            updateQueueUI();
+            renderBoard();
+            
+            document.getElementById('statusMessage').className = "mt-2 text-center text-xs sm:text-sm font-bold text-slate-600 h-6";
+            document.getElementById('statusMessage').innerText = "Bantu Robot susun urutan panah untuk sampai ke Bintang!";
+        }
+
+        function renderBoard() {
+            const board = document.getElementById('mazeBoard');
+            board.innerHTML = '';
+
+            const lvl = levels[currentLevelIdx];
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell rounded-xl flex items-center justify-center relative font-bold text-slate-300 text-xs';
+                    cell.dataset.r = r;
+                    cell.dataset.c = c;
+
+                    // Check if Start
+                    if (r === lvl.start.r && c === lvl.start.c) {
+                        cell.classList.add('grid-cell-start');
+                        const startBadge = document.createElement('span');
+                        startBadge.className = 'absolute top-1 left-1.5 text-[9px] font-extrabold text-emerald-600 uppercase';
+                        startBadge.innerText = 'START';
+                        cell.appendChild(startBadge);
+                    }
+
+                    // Check if Finish Goal
+                    if (r === lvl.finish.r && c === lvl.finish.c) {
+                        cell.classList.add('grid-cell-finish');
+                        const starIcon = document.createElement('div');
+                        starIcon.className = 'text-amber-500 text-2xl sm:text-3xl animate-pulse';
+                        starIcon.innerHTML = '<i class="fa-solid fa-star drop-shadow-md"></i>';
+                        cell.appendChild(starIcon);
+                    }
+
+                    // Check if Wall Obstacle
+                    const isWall = lvl.walls.some(w => w.r === r && w.c === c);
+                    if (isWall) {
+                        cell.classList.add('grid-cell-wall');
+                        const wallIcon = document.createElement('div');
+                        wallIcon.className = 'text-slate-200 text-xl sm:text-2xl';
+                        wallIcon.innerHTML = '<i class="fa-solid fa-block-brick"></i>';
+                        cell.appendChild(wallIcon);
+                    }
+
+                    // Render Robot Character
+                    if (r === robotPos.r && c === robotPos.c) {
+                        const robot = document.createElement('div');
+                        robot.id = 'robotSprite';
+                        robot.className = 'robot-avatar absolute inset-0 m-auto w-10 h-10 sm:w-12 sm:h-12 bg-brand-pink text-white rounded-2xl flex items-center justify-center text-xl sm:text-2xl shadow-lg border-2 border-white z-10';
+                        robot.innerHTML = '<i class="fa-solid fa-robot"></i>';
+                        cell.appendChild(robot);
+                    }
+
+                    board.appendChild(cell);
+                }
+            }
+        }
+
+        function addCommand(direction) {
+            if (isRunning) return;
+            if (commandQueue.length >= 15) {
+                document.getElementById('statusMessage').innerText = '⚠️ Maksimal 15 perintah sekali jalan!';
+                return;
+            }
+
+            playSound('click');
+            commandQueue.push(direction);
+            updateQueueUI();
+        }
+
+        function undoLastCommand() {
+            if (isRunning || commandQueue.length === 0) return;
+            playSound('click');
+            commandQueue.pop();
+            updateQueueUI();
+        }
+
+        function clearCommands() {
+            if (isRunning || commandQueue.length === 0) return;
+            playSound('click');
+            commandQueue = [];
+            updateQueueUI();
+        }
+
+        function updateQueueUI() {
+            const queueContainer = document.getElementById('commandQueue');
+            const emptyText = document.getElementById('emptyQueueText');
+            const countLabel = document.getElementById('commandCount');
+
+            countLabel.innerText = `${commandQueue.length} perintah`;
+
+            if (commandQueue.length === 0) {
+                queueContainer.innerHTML = `
+                    <p id="emptyQueueText" class="text-xs text-slate-400 font-jakarta italic text-center w-full">
+                        Belum ada perintah. Klik tombol panah!
+                    </p>
+                `;
+                return;
+            }
+
+            queueContainer.innerHTML = '';
+            commandQueue.forEach((cmdKey, index) => {
+                const cmd = COMMAND_DATA[cmdKey];
+                const card = document.createElement('div');
+                card.id = `cmd-card-${index}`;
+                card.className = `flex-shrink-0 px-2.5 py-1.5 rounded-xl border-2 flex items-center gap-1.5 text-xs font-bold shadow-sm ${cmd.color} transition-all`;
+                card.innerHTML = `
+                    <span class="text-xs font-jakarta opacity-75">${index + 1}.</span>
+                    <i class="fa-solid ${cmd.icon}"></i>
+                    <span>${cmd.name}</span>
+                `;
+                queueContainer.appendChild(card);
+            });
+        }
+
+        async function runRobot() {
+            if (isRunning) return;
+            if (commandQueue.length === 0) {
+                document.getElementById('statusMessage').className = "mt-2 text-center text-xs sm:text-sm font-bold text-rose-500 h-6";
+                document.getElementById('statusMessage').innerText = '⚠️ Tambahkan panah perintah dulu!';
+                playSound('fail');
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById('btnRun').disabled = true;
+            document.getElementById('btnRun').classList.add('opacity-50');
+
+            const lvl = levels[currentLevelIdx];
+            robotPos = { ...lvl.start };
+            renderBoard();
+
+            let currentStepPos = { ...robotPos };
+            let crashed = false;
+
+            for (let i = 0; i < commandQueue.length; i++) {
+                // Highlight executing card
+                const card = document.getElementById(`cmd-card-${i}`);
+                if (card) card.classList.add('executing-cmd');
+
+                const cmdKey = commandQueue[i];
+                const delta = COMMAND_DATA[cmdKey];
+
+                const nextR = currentStepPos.r + delta.dr;
+                const nextC = currentStepPos.c + delta.dc;
+
+                // Check bounds
+                if (nextR < 0 || nextR >= GRID_SIZE || nextC < 0 || nextC >= GRID_SIZE) {
+                    crashed = true;
+                    playSound('fail');
+                    showFailModal("Aduh, Robot Keluar Jalur!", "Robot menabrak batas labirin.");
+                    break;
+                }
+
+                // Check wall collision
+                const hitWall = lvl.walls.some(w => w.r === nextR && w.c === nextC);
+                if (hitWall) {
+                    crashed = true;
+                    playSound('fail');
+                    showFailModal("Aduh, Robot Menabrak Dinding!", "Hati-hati, ada rintangan dinding.");
+                    break;
+                }
+
+                // Valid move
+                currentStepPos = { r: nextR, c: nextC };
+                robotPos = { ...currentStepPos };
+                playSound('move');
+                renderBoard();
+
+                // Delay between movements for visual feedback
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                if (card) card.classList.remove('executing-cmd');
+            }
+
+            if (!crashed) {
+                // Check if reached finish
+                if (robotPos.r === lvl.finish.r && robotPos.c === lvl.finish.c) {
+                    playSound('win');
+                    calculateAndAwardStars();
+                    showVictoryModal();
+                } else {
+                    playSound('fail');
+                    showFailModal("Robot Belum Sampai!", "Robot berhenti sebelum Bintang. Tambahkan langkah lagi!");
+                }
+            }
+
+            isRunning = false;
+            document.getElementById('btnRun').disabled = false;
+            document.getElementById('btnRun').classList.remove('opacity-50');
+        }
+
+        function calculateAndAwardStars() {
+            const lvl = levels[currentLevelIdx];
+            const steps = commandQueue.length;
+            let stars = 1;
+
+            if (steps <= lvl.minSteps) {
+                stars = 3;
+            } else if (steps <= lvl.minSteps + 2) {
+                stars = 2;
+            }
+
+            if (stars > levelStars[currentLevelIdx]) {
+                levelStars[currentLevelIdx] = stars;
+            }
+
+            // Recalculate total stars
+            totalStars = levelStars.reduce((acc, curr) => acc + curr, 0);
+            document.getElementById('totalStarsCount').innerText = totalStars;
+
+            // Render modal stars
+            const starsContainer = document.getElementById('starsEarned');
+            starsContainer.innerHTML = '';
+            for (let s = 1; s <= 3; s++) {
+                const star = document.createElement('i');
+                star.className = s <= stars ? 'fa-solid fa-star text-amber-400' : 'fa-solid fa-star text-slate-300';
+                starsContainer.appendChild(star);
+            }
+        }
+
+        function changeLevel(delta) {
+            if (isRunning) return;
+            const newIdx = currentLevelIdx + delta;
+            if (newIdx >= 0 && newIdx < levels.length) {
+                playSound('click');
+                loadLevel(newIdx);
+            }
+        }
+
+        function resetCurrentLevel() {
+            if (isRunning) return;
+            playSound('click');
+            loadLevel(currentLevelIdx);
+        }
+
+        function showVictoryModal() {
+            document.getElementById('victoryModal').classList.remove('hidden');
+        }
+
+        function closeVictoryModal() {
+            document.getElementById('victoryModal').classList.add('hidden');
+            loadLevel(currentLevelIdx);
+        }
+
+        function nextLevelFromModal() {
+            document.getElementById('victoryModal').classList.add('hidden');
+            if (currentLevelIdx < levels.length - 1) {
+                loadLevel(currentLevelIdx + 1);
+            } else {
+                loadLevel(0); // Loop back or stay
+            }
+        }
+
+        function showFailModal(title, desc) {
+            document.getElementById('failTitle').innerText = title;
+            document.getElementById('failDescription').innerText = desc;
+            document.getElementById('failModal').classList.remove('hidden');
+        }
+
+        function closeFailModal() {
+            document.getElementById('failModal').classList.add('hidden');
+        }
+
+        // Initialize game on load
+        window.onload = function() {
+            loadLevel(0);
+        };
+    </script>
+</body>
+</html>
