@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labirin Pola: Angka, Warna & Bentuk</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .font-display {
+            font-family: 'Fredoka', cursive;
+        }
+        .grid-cell {
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .grid-cell:hover:not(.disabled) {
+            transform: translateY(-2px) scale(1.02);
+        }
+        .grid-cell:active:not(.disabled) {
+            transform: scale(0.95);
+        }
+        .shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+        .pulse-subtle {
+            animation: pulse-subtle 2s infinite;
+        }
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(1.03); }
+        }
+        /* Custom scrollbar for level select modal */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-between p-3 sm:p-6 select-none overflow-x-hidden">
+
+    <!-- Header Section -->
+    <header class="w-full max-w-xl flex items-center justify-between gap-2 mb-3">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="font-display text-xl sm:text-2xl font-bold tracking-wide bg-gradient-to-r from-amber-300 via-pink-400 to-indigo-300 bg-clip-text text-transparent">
+                    Labirin Pola
+                </h1>
+                <p class="text-xs text-slate-400 font-medium">Temukan Jalan Sesuai Pola!</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <!-- Audio Toggle Button -->
+            <button id="soundToggleBtn" onclick="toggleSound()" class="p-2.5 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-300 transition-colors">
+                <svg id="soundIconOn" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                </svg>
+                <svg id="soundIconOff" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                </svg>
+            </button>
+            
+            <!-- Level Select Button -->
+            <button onclick="openLevelModal()" class="px-3.5 py-2 rounded-xl bg-indigo-600/90 hover:bg-indigo-600 text-white font-semibold text-sm border border-indigo-400/30 flex items-center gap-1.5 shadow-md shadow-indigo-600/20 transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                </svg>
+                <span>Level <span id="currentLevelHeader">1</span></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Status & Info Card -->
+    <main class="w-full max-w-xl flex flex-col items-center gap-3">
+        <div class="w-full bg-slate-800/80 backdrop-blur border border-slate-700/80 rounded-2xl p-4 shadow-xl">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                    <span id="levelBadge" class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        Level 1
+                    </span>
+                    <span id="hintModeBadge" class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        Petunjuk Ada
+                    </span>
+                </div>
+                <div class="text-xs text-slate-400 font-semibold flex items-center gap-3">
+                    <span>Langkah: <strong id="stepCount" class="text-white">0</strong></span>
+                    <span>Kesalahan: <strong id="errorCount" class="text-rose-400">0</strong></span>
+                </div>
+            </div>
+
+            <!-- Pattern Sequence Display -->
+            <div class="mt-2">
+                <div class="flex items-center justify-between mb-1.5">
+                    <p id="patternTitle" class="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                        Pola Yang Harus Diikuti:
+                    </p>
+                    <span id="secretHintToggle" class="hidden text-[11px] text-amber-400 cursor-pointer underline hover:text-amber-300" onclick="toggleSecretHint()">
+                        Buka Bantuan
+                    </span>
+                </div>
+
+                <!-- Explicit Pattern Container (Levels 1-10) -->
+                <div id="explicitPatternContainer" class="flex items-center gap-2 overflow-x-auto py-1 min-h-[52px]">
+                    <!-- Pattern items injected via JS -->
+                </div>
+
+                <!-- Hidden Pattern Container (Levels 11-20) -->
+                <div id="hiddenPatternContainer" class="hidden flex flex-col items-center justify-center p-3 bg-slate-900/60 rounded-xl border border-slate-700/50 text-center">
+                    <div class="flex items-center gap-2 text-amber-300 font-bold text-sm">
+                        <svg class="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>POLA RAHASIA! (Tanpa Petunjuk)</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1">
+                        Amati ubin awal &amp; temukan urutan pola secara mandiri.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5x5 Grid Maze Board -->
+        <div class="relative w-full aspect-square max-w-[420px] bg-slate-800/90 border-2 border-slate-700/80 rounded-3xl p-3 sm:p-4 shadow-2xl shadow-black/50 flex flex-col justify-between">
+            <div id="gridBoard" class="grid grid-cols-5 gap-1.5 sm:gap-2.5 w-full h-full">
+                <!-- Cells generated via JS -->
+            </div>
+        </div>
+
+        <!-- Controls / Actions -->
+        <div class="w-full max-w-xl flex items-center justify-between gap-3 mt-1">
+            <button onclick="undoStep()" id="undoBtn" disabled class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700 text-slate-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                </svg>
+                <span>Mundur 1 Langkah</span>
+            </button>
+
+            <button onclick="resetCurrentLevel()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                <span>Ulangi Level</span>
+            </button>
+        </div>
+    </main>
+
+    <footer class="mt-4 text-center text-xs text-slate-500 font-medium">
+        Permainan Labirin Pola &copy; Level 1-10 (Petunjuk Ada) | Level 11-20 (Tantangan Rahasia)
+    </footer>
+
+    <!-- Level Select Modal -->
+    <div id="levelModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-slate-800 border border-slate-700 rounded-3xl p-5 sm:p-6 w-full max-w-md shadow-2xl transform scale-95 transition-transform duration-300 flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="font-display text-xl font-bold text-white">Pilih Level</h2>
+                    <p class="text-xs text-slate-400">Total 20 Tantangan Pola</p>
+                </div>
+                <button onclick="closeLevelModal()" class="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-700">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="overflow-y-auto pr-1">
+                <p class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Bagian 1: Petunjuk Pola Tampak (1-10)</p>
+                <div id="levelGrid1" class="grid grid-cols-5 gap-2.5 mb-5">
+                    <!-- Level buttons 1-10 -->
+                </div>
+
+                <p class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-2">Bagian 2: Pola Rahasia / Tanpa Petunjuk (11-20)</p>
+                <div id="levelGrid2" class="grid grid-cols-5 gap-2.5">
+                    <!-- Level buttons 11-20 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Victory Modal -->
+    <div id="victoryModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-slate-800 border-2 border-indigo-500/50 rounded-3xl p-6 sm:p-8 w-full max-w-sm text-center shadow-2xl transform scale-90 transition-transform duration-300">
+            <div class="w-20 h-20 bg-gradient-to-tr from-amber-400 to-yellow-300 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-500/30">
+                <svg class="w-10 h-10 text-slate-900" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 011.342 1.25l-.8 1.6 1.582 3.954A1 1 0 0118 11h-1.323l-1.582 3.954 1.599.8a1 1 0 01-1.25 1.342l-1.6-.8-3.954 1.582A1 1 0 0110 18v-1.323l-3.954-1.582-1.599.8a1 1 0 01-1.342-1.25l.8-1.6L2.323 11A1 1 0 013 10h1.323l1.582-3.954-1.599-.8a1 1 0 011.25-1.342l1.6.8L9 3.323A1 1 0 0110 2zm0 4a4 4 0 100 8 4 4 0 000-8z" clip-rule="evenodd"/>
+                </svg>
+            </div>
+
+            <h2 class="font-display text-2xl font-bold text-white mb-1">Hore! Berhasil!</h2>
+            <p class="text-sm text-slate-300 mb-4">Kamu telah menyelesaikan <strong id="vicLevelName" class="text-indigo-400">Level 1</strong></p>
+
+            <div class="bg-slate-900/60 rounded-2xl p-3 mb-6 border border-slate-700/50 flex justify-around text-center">
+                <div>
+                    <div class="text-xs text-slate-400 font-medium">Langkah</div>
+                    <div id="vicSteps" class="text-lg font-bold text-emerald-400">0</div>
+                </div>
+                <div class="border-r border-slate-700/80"></div>
+                <div>
+                    <div class="text-xs text-slate-400 font-medium">Salah</div>
+                    <div id="vicErrors" class="text-lg font-bold text-rose-400">0</div>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <button id="nextLevelBtn" onclick="nextLevel()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold text-sm shadow-lg shadow-indigo-500/30 transition-all">
+                    Lanjut Level Berikutnya
+                </button>
+                <button onclick="closeVictoryModal()" class="w-full py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 font-semibold text-xs transition-colors">
+                    Kembali ke Papan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Colors definition
+        const COLORS = {
+            red: { bg: 'bg-rose-500', border: 'border-rose-400', text: 'text-rose-400', hex: '#f43f5e' },
+            blue: { bg: 'bg-sky-500', border: 'border-sky-400', text: 'text-sky-400', hex: '#0ea5e9' },
+            green: { bg: 'bg-emerald-500', border: 'border-emerald-400', text: 'text-emerald-400', hex: '#10b981' },
+            yellow: { bg: 'bg-amber-400', border: 'border-amber-300', text: 'text-amber-300', hex: '#fbbf24' },
+            purple: { bg: 'bg-purple-500', border: 'border-purple-400', text: 'text-purple-400', hex: '#a855f7' }
+        };
+
+        // Shapes SVG mapping
+        const SHAPES = {
+            circle: `<circle cx="12" cy="12" r="8" fill="currentColor" />`,
+            square: `<rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor" />`,
+            triangle: `<polygon points="12,4 20,19 4,19" fill="currentColor" />`,
+            star: `<polygon points="12,2 15,8.5 22,9.5 17,14 18.5,21 12,17.5 5.5,21 7,14 2,9.5 9,8.5" fill="currentColor" />`,
+            diamond: `<polygon points="12,3 21,12 12,21 3,12" fill="currentColor" />`
+        };
+
+        // 20 Level definitions with specific pattern rules
+        const LEVEL_DEFINITIONS = [
+            // Levels 1 - 10: Explicit hints shown
+            { id: 1, name: "Level 1", hint: true, pattern: [{color:'red'}, {color:'blue'}] },
+            { id: 2, name: "Level 2", hint: true, pattern: [{shape:'circle'}, {shape:'square'}] },
+            { id: 3, name: "Level 3", hint: true, pattern: [{number:1}, {number:2}, {number:3}] },
+            { id: 4, name: "Level 4", hint: true, pattern: [{color:'red'}, {color:'green'}, {color:'blue'}] },
+            { id: 5, name: "Level 5", hint: true, pattern: [{shape:'triangle'}, {shape:'star'}, {shape:'circle'}] },
+            { id: 6, name: "Level 6", hint: true, pattern: [{color:'red', shape:'circle'}, {color:'blue', shape:'square'}] },
+            { id: 7, name: "Level 7", hint: true, pattern: [{number:1, shape:'circle'}, {number:2, shape:'triangle'}] },
+            { id: 8, name: "Level 8", hint: true, pattern: [{color:'red', number:1}, {color:'blue', number:2}, {color:'green', number:3}] },
+            { id: 9, name: "Level 9", hint: true, pattern: [{color:'red', shape:'circle', number:1}, {color:'blue', shape:'square', number:2}] },
+            { id: 10, name: "Level 10", hint: true, pattern: [{color:'red', shape:'star', number:1}, {color:'yellow', shape:'circle', number:2}, {color:'blue', shape:'square', number:3}] },
+
+            // Levels 11 - 20: Hidden hints (No explicit hint box)
+            { id: 11, name: "Level 11", hint: false, pattern: [{color:'yellow'}, {color:'purple'}] },
+            { id: 12, name: "Level 12", hint: false, pattern: [{shape:'diamond'}, {shape:'triangle'}] },
+            { id: 13, name: "Level 13", hint: false, pattern: [{number:4}, {number:2}, {number:1}] },
+            { id: 14, name: "Level 14", hint: false, pattern: [{color:'green', shape:'square'}, {color:'purple', shape:'triangle'}] },
+            { id: 15, name: "Level 15", hint: false, pattern: [{color:'blue', number:3}, {color:'red', number:5}] },
+            { id: 16, name: "Level 16", hint: false, pattern: [{shape:'star', number:2}, {shape:'diamond', number:4}] },
+            { id: 17, name: "Level 17", hint: false, pattern: [{color:'red', shape:'triangle', number:1}, {color:'green', shape:'circle', number:2}, {color:'blue', shape:'square', number:3}] },
+            { id: 18, name: "Level 18", hint: false, pattern: [{color:'purple', shape:'star', number:5}, {color:'yellow', shape:'diamond', number:3}, {color:'green', shape:'circle', number:1}] },
+            { id: 19, name: "Level 19", hint: false, pattern: [{color:'red', shape:'circle', number:1}, {color:'blue', shape:'square', number:2}, {color:'green', shape:'triangle', number:3}, {color:'yellow', shape:'star', number:4}] },
+            { id: 20, name: "Level 20", hint: false, pattern: [{color:'red', shape:'circle', number:1}, {color:'blue', shape:'triangle', number:2}, {color:'yellow', shape:'star', number:3}, {color:'purple', shape:'square', number:4}] }
+        ];
+
+        let audioCtx = null;
+        let isSoundEnabled = true;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!isSoundEnabled) return;
+            initAudio();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'step') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.exponentialRampToValueAtTime(660, now + 0.1);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'error') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.linearRampToValueAtTime(110, now + 0.25);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } else if (type === 'win') {
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    o.type = 'triangle';
+                    o.frequency.setValueAtTime(freq, now + idx * 0.1);
+                    g.gain.setValueAtTime(0.2, now + idx * 0.1);
+                    g.gain.linearRampToValueAtTime(0.01, now + idx * 0.1 + 0.25);
+                    o.start(now + idx * 0.1);
+                    o.stop(now + idx * 0.1 + 0.25);
+                });
+            } else if (type === 'undo') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(350, now);
+                osc.frequency.exponentialRampToValueAtTime(220, now + 0.12);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+                osc.start(now);
+                osc.stop(now + 0.12);
+            }
+        }
+
+        function toggleSound() {
+            isSoundEnabled = !isSoundEnabled;
+            document.getElementById('soundIconOn').classList.toggle('hidden', !isSoundEnabled);
+            document.getElementById('soundIconOff').classList.toggle('hidden', isSoundEnabled);
+        }
+
+        let currentLevelIdx = 0;
+        let gridData = []; // 5x5 grid cells
+        let solutionPath = []; // Array of {r, c} coordinates forming guaranteed valid path
+        let userPath = []; // Array of {r, c} user has stepped on
+        let errorCount = 0;
+        let stepCount = 0;
+        let unlockedLevels = parseInt(localStorage.getItem('labirin_unlocked')) || 1;
+
+        function generateLevel(levelConfig) {
+            const size = 5;
+            gridData = Array(size).fill(null).map(() => Array(size).fill(null));
+            userPath = [];
+            errorCount = 0;
+            stepCount = 0;
+
+            // 1. Generate guaranteed solution path from (0,0) to (4,4)
+            solutionPath = generateValidPath(size);
+
+            const pattern = levelConfig.pattern;
+
+            // 2. Populate solution path cells with pattern sequence
+            solutionPath.forEach((pos, index) => {
+                const patItem = pattern[index % pattern.length];
+                gridData[pos.r][pos.c] = createCellData(patItem, levelConfig);
+            });
+
+            // 3. Populate remaining grid cells with random attributes
+            const allColors = Object.keys(COLORS);
+            const allShapes = Object.keys(SHAPES);
+            const allNumbers = [1, 2, 3, 4, 5];
+
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    if (!gridData[r][c]) {
+                        // Create randomized cell
+                        gridData[r][c] = {
+                            color: allColors[Math.floor(Math.random() * allColors.length)],
+                            shape: allShapes[Math.floor(Math.random() * allShapes.length)],
+                            number: allNumbers[Math.floor(Math.random() * allNumbers.length)]
+                        };
+                    }
+                }
+            }
+
+            // Start player at (0,0) automatically
+            userPath.push({ r: 0, c: 0 });
+            updateUI();
+        }
+
+        // Random Walk algorithm from (0,0) to (4,4)
+        function generateValidPath(size) {
+            let path = [{ r: 0, c: 0 }];
+            let curr = { r: 0, c: 0 };
+            const visited = new Set(['0,0']);
+
+            while (curr.r !== size - 1 || curr.c !== size - 1) {
+                const neighbors = [];
+                const dirs = [
+                    { r: 1, c: 0 }, { r: 0, c: 1 }, // Favor down and right
+                    { r: 1, c: 0 }, { r: 0, c: 1 },
+                    { r: -1, c: 0 }, { r: 0, c: -1 }
+                ];
+
+                for (let d of dirs) {
+                    const nr = curr.r + d.r;
+                    const nc = curr.c + d.c;
+                    if (nr >= 0 && nr < size && nc >= 0 && nc < size && !visited.has(`${nr},${nc}`)) {
+                        neighbors.push({ r: nr, c: nc });
+                    }
+                }
+
+                if (neighbors.length === 0) {
+                    // Backtrack if stuck
+                    path = [{ r: 0, c: 0 }];
+                    curr = { r: 0, c: 0 };
+                    visited.clear();
+                    visited.add('0,0');
+                    continue;
+                }
+
+                // Pick random neighbor
+                const next = neighbors[Math.floor(Math.random() * neighbors.length)];
+                visited.add(`${next.r},${next.c}`);
+                path.push(next);
+                curr = next;
+            }
+
+            return path;
+        }
+
+        function createCellData(patItem, levelConfig) {
+            const allColors = Object.keys(COLORS);
+            const allShapes = Object.keys(SHAPES);
+            const allNumbers = [1, 2, 3, 4, 5];
+
+            return {
+                color: patItem.color || allColors[Math.floor(Math.random() * allColors.length)],
+                shape: patItem.shape || allShapes[Math.floor(Math.random() * allShapes.length)],
+                number: patItem.number || allNumbers[Math.floor(Math.random() * allNumbers.length)]
+            };
+        }
+
+        function isCellMatchingPattern(cell, patternStep) {
+            if (patternStep.color && cell.color !== patternStep.color) return false;
+            if (patternStep.shape && cell.shape !== patternStep.shape) return false;
+            if (patternStep.number && cell.number !== patternStep.number) return false;
+            return true;
+        }
+
+        function handleCellClick(r, c) {
+            const lastPos = userPath[userPath.length - 1];
+
+            // If clicked on current last tile, ignore
+            if (lastPos.r === r && lastPos.c === c) return;
+
+            // Check if cell was already visited in current path
+            const alreadyInPath = userPath.some(p => p.r === r && p.c === c);
+            if (alreadyInPath) return;
+
+            // Check if cell is orthogonally adjacent (Up, Down, Left, Right)
+            const dist = Math.abs(lastPos.r - r) + Math.abs(lastPos.c - c);
+            if (dist !== 1) return; // Not an adjacent cell
+
+            const levelConfig = LEVEL_DEFINITIONS[currentLevelIdx];
+            const pattern = levelConfig.pattern;
+            const nextPatternIndex = userPath.length % pattern.length;
+            const expectedPattern = pattern[nextPatternIndex];
+
+            const clickedCell = gridData[r][c];
+
+            if (isCellMatchingPattern(clickedCell, expectedPattern)) {
+                // Correct Move!
+                userPath.push({ r, c });
+                stepCount++;
+                playSound('step');
+                updateUI();
+
+                // Check Win Condition
+                if (r === 4 && c === 4) {
+                    handleVictory();
+                }
+            } else {
+                // Wrong Move!
+                errorCount++;
+                playSound('error');
+                
+                // Shake clicked cell
+                const cellEl = document.getElementById(`cell-${r}-${c}`);
+                if (cellEl) {
+                    cellEl.classList.add('shake', 'border-rose-500');
+                    setTimeout(() => {
+                        cellEl.classList.remove('shake', 'border-rose-500');
+                    }, 400);
+                }
+                updateUI();
+            }
+        }
+
+        function undoStep() {
+            if (userPath.length > 1) {
+                userPath.pop();
+                playSound('undo');
+                updateUI();
+            }
+        }
+
+        function resetCurrentLevel() {
+            generateLevel(LEVEL_DEFINITIONS[currentLevelIdx]);
+        }
+
+        function renderPatternHeader() {
+            const levelConfig = LEVEL_DEFINITIONS[currentLevelIdx];
+            const explicitContainer = document.getElementById('explicitPatternContainer');
+            const hiddenContainer = document.getElementById('hiddenPatternContainer');
+            const hintToggle = document.getElementById('secretHintToggle');
+
+            document.getElementById('levelBadge').innerText = levelConfig.name;
+            document.getElementById('currentLevelHeader').innerText = levelConfig.id;
+
+            if (levelConfig.hint) {
+                // Show Pattern Rules (Levels 1-10)
+                explicitContainer.classList.remove('hidden');
+                hiddenContainer.classList.add('hidden');
+                hintToggle.classList.add('hidden');
+                document.getElementById('patternTitle').innerText = "Pola Yang Harus Diikuti:";
+                document.getElementById('hintModeBadge').innerText = "Petunjuk Ada";
+                document.getElementById('hintModeBadge').className = "px-2.5 py-0.5 text-xs font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+
+                explicitContainer.innerHTML = '';
+                levelConfig.pattern.forEach((item, idx) => {
+                    const col = item.color ? COLORS[item.color] : { bg: 'bg-slate-700', text: 'text-slate-300', hex: '#cbd5e1' };
+                    const shpSvg = item.shape ? SHAPES[item.shape] : null;
+
+                    const itemEl = document.createElement('div');
+                    itemEl.className = `flex items-center gap-1.5 px-3 py-1.5 rounded-xl border ${col.bg}/20 border-slate-600 shadow-sm flex-shrink-0`;
+
+                    let content = '';
+                    if (shpSvg) {
+                        content += `<svg class="w-5 h-5 ${col.text}" viewBox="0 0 24 24">${shpSvg}</svg>`;
+                    } else if (item.color) {
+                        content += `<span class="w-4 h-4 rounded-full ${col.bg}"></span>`;
+                    }
+
+                    if (item.number) {
+                        content += `<span class="font-bold text-sm text-white">${item.number}</span>`;
+                    } else if (!shpSvg && item.color) {
+                        content += `<span class="text-xs font-semibold capitalize text-slate-200">${item.color}</span>`;
+                    } else if (shpSvg && !item.color) {
+                        content += `<span class="text-xs font-semibold capitalize text-slate-200">${item.shape}</span>`;
+                    }
+
+                    itemEl.innerHTML = content;
+                    explicitContainer.appendChild(itemEl);
+
+                    // Add arrow divider between items
+                    if (idx < levelConfig.pattern.length - 1) {
+                        const arrow = document.createElement('span');
+                        arrow.className = 'text-slate-500 font-bold text-sm';
+                        arrow.innerText = '➔';
+                        explicitContainer.appendChild(arrow);
+                    }
+                });
+            } else {
+                // Secret / Hidden Mode (Levels 11-20)
+                explicitContainer.classList.add('hidden');
+                hiddenContainer.classList.remove('hidden');
+                hintToggle.classList.remove('hidden');
+                document.getElementById('patternTitle').innerText = "Tantangan Rahasia:";
+                document.getElementById('hintModeBadge').innerText = "Pola Rahasia";
+                document.getElementById('hintModeBadge').className = "px-2.5 py-0.5 text-xs font-bold rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30";
+            }
+        }
+
+        function toggleSecretHint() {
+            const levelConfig = LEVEL_DEFINITIONS[currentLevelIdx];
+            const explicitContainer = document.getElementById('explicitPatternContainer');
+            const hiddenContainer = document.getElementById('hiddenPatternContainer');
+
+            if (explicitContainer.classList.contains('hidden')) {
+                // Temporarily reveal pattern
+                explicitContainer.classList.remove('hidden');
+                hiddenContainer.classList.add('hidden');
+                renderPatternHeader();
+                explicitContainer.classList.remove('hidden');
+                hiddenContainer.classList.add('hidden');
+                document.getElementById('secretHintToggle').innerText = "Sembunyikan Bantuan";
+            } else {
+                explicitContainer.classList.add('hidden');
+                hiddenContainer.classList.remove('hidden');
+                document.getElementById('secretHintToggle').innerText = "Buka Bantuan";
+            }
+        }
+
+        function renderGrid() {
+            const gridBoard = document.getElementById('gridBoard');
+            gridBoard.innerHTML = '';
+
+            const lastUserPos = userPath[userPath.length - 1];
+
+            for (let r = 0; r < 5; r++) {
+                for (let c = 0; c < 5; c++) {
+                    const cell = gridData[r][c];
+                    const colConfig = COLORS[cell.color];
+                    const shpSvg = SHAPES[cell.shape];
+
+                    const stepIndexInPath = userPath.findIndex(p => p.r === r && p.c === c);
+                    const isVisited = stepIndexInPath !== -1;
+                    const isCurrent = lastUserPos.r === r && lastUserPos.c === c;
+
+                    // Calculate adjacent highlightability
+                    const distToCurrent = Math.abs(lastUserPos.r - r) + Math.abs(lastUserPos.c - c);
+                    const isAdjacent = distToCurrent === 1 && !isVisited;
+
+                    const btn = document.createElement('button');
+                    btn.id = `cell-${r}-${c}`;
+                    btn.onclick = () => handleCellClick(r, c);
+
+                    // Styling classes calculation
+                    let baseClass = "grid-cell relative rounded-2xl flex flex-col items-center justify-center p-1 border-2 transition-all select-none ";
+
+                    if (isVisited) {
+                        if (isCurrent) {
+                            baseClass += `${colConfig.bg} border-amber-300 shadow-lg shadow-amber-400/30 scale-105 z-10 pulse-subtle `;
+                        } else {
+                            baseClass += `${colConfig.bg}/80 border-white/60 opacity-90 `;
+                        }
+                    } else if (isAdjacent) {
+                        baseClass += `bg-slate-800/90 border-indigo-400/60 hover:border-indigo-400 hover:bg-slate-700/80 cursor-pointer `;
+                    } else {
+                        baseClass += `bg-slate-800/60 border-slate-700/60 opacity-80 cursor-default `;
+                    }
+
+                    btn.className = baseClass;
+
+                    // Internal SVGs & HTML structure
+                    let innerHTML = ``;
+
+                    // Start / Finish Labels
+                    if (r === 0 && c === 0) {
+                        innerHTML += `<span class="absolute top-1 left-1.5 text-[9px] font-black uppercase text-amber-300 tracking-wider">START</span>`;
+                    } else if (r === 4 && c === 4) {
+                        innerHTML += `<span class="absolute top-1 right-1.5 text-[9px] font-black uppercase text-emerald-300 tracking-wider">FINISH</span>`;
+                    }
+
+                    // Path Step Number indicator
+                    if (isVisited) {
+                        innerHTML += `<span class="absolute top-1 right-1.5 text-[10px] font-black bg-black/40 text-white rounded-full w-4 h-4 flex items-center justify-center">${stepIndexInPath + 1}</span>`;
+                    }
+
+                    // Shape & Number
+                    const iconColorClass = isVisited ? 'text-white' : colConfig.text;
+                    innerHTML += `
+                        <div class="flex flex-col items-center justify-center gap-0.5 mt-1">
+                            <svg class="w-6 h-6 sm:w-8 sm:h-8 ${iconColorClass} drop-shadow" viewBox="0 0 24 24">
+                                ${shpSvg}
+                            </svg>
+                            <span class="font-extrabold text-sm sm:text-base leading-none text-white drop-shadow-md">${cell.number}</span>
+                        </div>
+                    `;
+
+                    btn.innerHTML = innerHTML;
+                    gridBoard.appendChild(btn);
+                }
+            }
+        }
+
+        function updateUI() {
+            renderPatternHeader();
+            renderGrid();
+
+            document.getElementById('stepCount').innerText = stepCount;
+            document.getElementById('errorCount').innerText = errorCount;
+
+            // Undo button state
+            document.getElementById('undoBtn').disabled = userPath.length <= 1;
+        }
+
+        function handleVictory() {
+            playSound('win');
+
+            // Trigger visual Confetti
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
+
+            // Unlock next level
+            if (currentLevelIdx + 1 < LEVEL_DEFINITIONS.length) {
+                if (currentLevelIdx + 2 > unlockedLevels) {
+                    unlockedLevels = currentLevelIdx + 2;
+                    localStorage.setItem('labirin_unlocked', unlockedLevels);
+                }
+            }
+
+            // Show Victory Modal
+            document.getElementById('vicLevelName').innerText = LEVEL_DEFINITIONS[currentLevelIdx].name;
+            document.getElementById('vicSteps').innerText = stepCount;
+            document.getElementById('vicErrors').innerText = errorCount;
+
+            const modal = document.getElementById('victoryModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-90');
+            }, 10);
+        }
+
+        function closeVictoryModal() {
+            const modal = document.getElementById('victoryModal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.add('scale-90');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function nextLevel() {
+            closeVictoryModal();
+            if (currentLevelIdx + 1 < LEVEL_DEFINITIONS.length) {
+                currentLevelIdx++;
+                generateLevel(LEVEL_DEFINITIONS[currentLevelIdx]);
+            } else {
+                alert("Selamat! Kamu telah menyelesaikan seluruh 20 Level!");
+            }
+        }
+
+        function openLevelModal() {
+            renderLevelModalGrid();
+            const modal = document.getElementById('levelModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeLevelModal() {
+            const modal = document.getElementById('levelModal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function selectLevel(idx) {
+            currentLevelIdx = idx;
+            closeLevelModal();
+            generateLevel(LEVEL_DEFINITIONS[currentLevelIdx]);
+        }
+
+        function renderLevelModalGrid() {
+            const grid1 = document.getElementById('levelGrid1');
+            const grid2 = document.getElementById('levelGrid2');
+            grid1.innerHTML = '';
+            grid2.innerHTML = '';
+
+            LEVEL_DEFINITIONS.forEach((lvl, idx) => {
+                const isUnlocked = idx + 1 <= unlockedLevels;
+                const isCurrent = idx === currentLevelIdx;
+
+                const btn = document.createElement('button');
+                btn.onclick = () => {
+                    if (isUnlocked) selectLevel(idx);
+                };
+
+                let btnStyle = "h-11 rounded-xl font-bold text-sm flex items-center justify-center transition-all border ";
+                if (isCurrent) {
+                    btnStyle += "bg-indigo-600 text-white border-indigo-400 shadow-lg shadow-indigo-600/40 ring-2 ring-indigo-300 ";
+                } else if (isUnlocked) {
+                    btnStyle += "bg-slate-700 hover:bg-slate-600 text-white border-slate-600 cursor-pointer ";
+                } else {
+                    btnStyle += "bg-slate-800/50 text-slate-600 border-slate-800/80 cursor-not-allowed ";
+                }
+
+                btn.className = btnStyle;
+
+                if (isUnlocked) {
+                    btn.innerText = lvl.id;
+                } else {
+                    btn.innerHTML = `<svg class="w-4 h-4 text-slate-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>`;
+                }
+
+                if (idx < 10) {
+                    grid1.appendChild(btn);
+                } else {
+                    grid2.appendChild(btn);
+                }
+            });
+        }
+
+        window.onload = function() {
+            generateLevel(LEVEL_DEFINITIONS[0]);
+        };
+    </script>
+</body>
+</html>
