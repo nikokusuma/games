@@ -767,6 +767,12 @@
 
         function handleVictory() {
             playSound('win');
+
+            // Hapus catatan kesalahan jika level berhasil diselesaikan kembali
+            if (state.errors[state.currentLevel]) {
+                delete state.errors[state.currentLevel];
+            }
+
             if (state.currentLevel === state.maxUnlockedLevel && state.maxUnlockedLevel < 30) {
                 state.maxUnlockedLevel++;
             }
