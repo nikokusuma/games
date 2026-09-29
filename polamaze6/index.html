@@ -163,7 +163,7 @@
                 <div>
                     <h3 class="text-2xl font-black text-slate-800">Hore, Berhasil!</h3>
                     <p id="victory-modal-msg" class="text-sm text-slate-600 mt-1">
-                        Kamu telah menyelesaikan Level <span id="victory-lvl-num">1</span> dengan sukses!
+                        Level <span id="victory-lvl-num" class="font-bold text-emerald-600">1</span> berhasil diselesaikan!
                     </p>
                 </div>
                 <div class="space-y-2">
@@ -382,9 +382,10 @@
 
             // Create pattern sequence
             const patternSeq = [];
-            const availableColors = Object.keys(COLOR_MAP);
-            const availableShapes = SHAPES.map(s => s.id);
-            const availableNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            // Shuffle available items so each level gets dynamic pattern combinations
+            const availableColors = Object.keys(COLOR_MAP).sort(() => Math.random() - 0.5);
+            const availableShapes = SHAPES.map(s => s.id).sort(() => Math.random() - 0.5);
+            const availableNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5);
 
             // Pick distinct elements for pattern items
             for (let i = 0; i < spec.seqLength; i++) {
@@ -555,20 +556,21 @@
 
         function createPatternBadge(item) {
             const div = document.createElement('div');
-            const colorData = item.color ? COLOR_MAP[item.color] : { bg: 'bg-slate-200', text: 'text-slate-700' };
+            // Fallback to indigo badge if color is not specified (e.g., number-only levels)
+            const colorData = item.color ? COLOR_MAP[item.color] : { bg: 'bg-indigo-600', text: 'text-indigo-600' };
             const shapeData = item.shape ? SHAPES.find(s => s.id === item.shape) : null;
 
-            div.className = `${colorData.bg} text-white px-2.5 py-1 rounded-xl shadow-sm text-xs font-bold flex items-center gap-1.5 border border-white/40`;
+            div.className = `${colorData.bg} text-white px-3 py-1.5 rounded-xl shadow-sm text-xs md:text-sm font-bold flex items-center gap-1.5 border border-white/40`;
 
             let innerHtml = '';
             if (shapeData) {
                 innerHtml += `<i class="fa-solid ${shapeData.icon}"></i>`;
             }
             if (item.number !== undefined) {
-                innerHtml += `<span>${item.number}</span>`;
+                innerHtml += `<span class="text-sm md:text-base font-black">${item.number}</span>`;
             }
             if (!shapeData && item.number === undefined && item.color) {
-                innerHtml += `<span>${colorData.name}</span>`;
+                innerHtml += `<span>${COLOR_MAP[item.color].name}</span>`;
             }
 
             div.innerHTML = innerHtml;
@@ -629,11 +631,11 @@
                         contentHtml += `<span class="absolute top-0.5 right-1 text-[10px]">🏆</span>`;
                     }
 
-                    // Player Marker
+                    // Player Marker - semi transparent overlay so number/shape under player remains clearly visible
                     if (isPlayerHere) {
                         contentHtml += `
-                            <div class="absolute inset-0 bg-yellow-400/90 rounded-2xl flex items-center justify-center text-2xl shadow-lg border-2 border-white animate-pulse z-10">
-                                🏃
+                            <div class="absolute inset-0 bg-yellow-300/40 rounded-2xl border-4 border-yellow-400 flex items-center justify-center shadow-md z-10 pointer-events-none">
+                                <span class="text-xl md:text-2xl drop-shadow-md">🏃</span>
                             </div>
                         `;
                     }
@@ -769,20 +771,25 @@
                 state.maxUnlockedLevel++;
             }
 
-            document.getElementById('victory-lvl-num').innerText = state.currentLevel;
-            
+            const msgEl = document.getElementById('victory-modal-msg');
             const btnNext = document.getElementById('btn-next-level');
+
             if (state.currentLevel >= 30) {
-                document.getElementById('victory-modal-msg').innerText = "Selamat! Kamu telah menyelesaikan seluruh 30 Level Labirin Pola!";
-                btnNext.innerText = "Ulangi / Pilih Level";
-                btnNext.onclick = showLevelSelect;
+                if (msgEl) msgEl.innerHTML = `Selamat! Kamu telah menyelesaikan seluruh <span class="font-bold text-emerald-600">30 Level</span> Labirin Pola!`;
+                if (btnNext) {
+                    btnNext.innerHTML = `Ulangi / Pilih Level <i class="fa-solid fa-rotate-right ml-1"></i>`;
+                    btnNext.onclick = showLevelSelect;
+                }
             } else {
-                document.getElementById('victory-modal-msg').innerText = `Level ${state.currentLevel} berhasil diselesaikan!`;
-                btnNext.innerText = "Lanjut Level Berikutnya";
-                btnNext.onclick = nextLevel;
+                if (msgEl) msgEl.innerHTML = `Level <span id="victory-lvl-num" class="font-bold text-emerald-600">${state.currentLevel}</span> berhasil diselesaikan!`;
+                if (btnNext) {
+                    btnNext.innerHTML = `Lanjut Level Berikutnya <i class="fa-solid fa-arrow-right ml-1"></i>`;
+                    btnNext.onclick = nextLevel;
+                }
             }
 
-            document.getElementById('victory-modal').classList.remove('hidden');
+            const victoryModal = document.getElementById('victory-modal');
+            if (victoryModal) victoryModal.classList.remove('hidden');
         }
 
         function nextLevel() {
