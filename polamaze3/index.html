@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Pola Labirin - Kelas 3 SD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fredoka', cursive, sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #fef3c7 50%, #f3e8ff 100%);
+            min-height: 100vh;
+        }
+        .grid-tile {
+            transition: all 0.2s ease-in-out;
+            user-select: none;
+        }
+        .grid-tile:hover:not(.disabled) {
+            transform: scale(1.05);
+        }
+        .grid-tile:active:not(.disabled) {
+            transform: scale(0.95);
+        }
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+        .bounce-in {
+            animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            80% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="text-slate-800 p-2 sm:p-4 flex flex-col items-center justify-between min-h-screen">
+
+    <!-- Header App -->
+    <header class="w-full max-w-2xl flex justify-between items-center bg-white/80 backdrop-blur rounded-2xl p-3 sm:p-4 shadow-md border-2 border-indigo-200 mb-4">
+        <div class="flex items-center gap-2">
+            <span class="text-3xl">🧩</span>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-indigo-700 leading-tight">Pola Labirin</h1>
+                <p class="text-xs text-indigo-500 font-semibold">Petualangan Logika Kelas 3 SD</p>
+            </div>
+        </div>
+        <button id="admin-btn" onclick="openAdminModal()" class="flex items-center gap-1 bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold px-3 py-1.5 rounded-xl shadow transition text-xs sm:text-sm">
+            <span>🔑</span> Admin
+        </button>
+    </header>
+
+    <main class="w-full max-w-2xl flex-1 flex flex-col justify-center items-center">
+
+        <!-- VIEW 1: LEVEL SELECTOR -->
+        <div id="view-level-select" class="w-full bg-white/90 backdrop-blur rounded-3xl p-4 sm:p-6 shadow-xl border-4 border-indigo-100 flex flex-col items-center">
+            <div class="text-center mb-5">
+                <h2 class="text-2xl font-bold text-slate-800">Pilih Level</h2>
+                <p class="text-xs sm:text-sm text-slate-500">Selesaikan level berurutan untuk membuka level berikutnya!</p>
+            </div>
+
+            <!-- Level Grid (1 to 25) -->
+            <div id="level-grid" class="grid grid-cols-5 gap-2 sm:gap-3 w-full max-h-[60vh] overflow-y-auto p-1">
+                <!-- Dynamically generated levels -->
+            </div>
+        </div>
+
+        <!-- VIEW 2: GAMEPLAY -->
+        <div id="view-game" class="w-full bg-white/90 backdrop-blur rounded-3xl p-4 sm:p-6 shadow-xl border-4 border-indigo-100 flex flex-col items-center hidden">
+            <!-- Top Controls -->
+            <div class="w-full flex justify-between items-center mb-3">
+                <button onclick="showLevelSelect()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-1.5 rounded-xl text-xs sm:text-sm transition flex items-center gap-1">
+                    ◀️ Menu Level
+                </button>
+                <div class="text-center">
+                    <span id="game-level-title" class="text-lg sm:text-xl font-bold text-indigo-800">Level 1</span>
+                </div>
+                <button onclick="resetCurrentLevel()" class="bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold px-3 py-1.5 rounded-xl text-xs sm:text-sm transition flex items-center gap-1">
+                    🔄 Ulangi
+                </button>
+            </div>
+
+            <!-- Pattern Hint Box -->
+            <div id="hint-box" class="w-full bg-indigo-50 border-2 border-indigo-200 rounded-2xl p-3 mb-4 text-center shadow-inner">
+                <p id="hint-text" class="text-xs sm:text-sm font-semibold text-indigo-900">Petunjuk Pola: ...</p>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="w-full flex justify-between items-center text-xs sm:text-sm font-bold mb-3 px-2">
+                <div class="text-red-500 bg-red-50 px-3 py-1 rounded-full border border-red-200">
+                    Salah (Jalan Ini): <span id="current-errors">0</span>
+                </div>
+                <div id="attempt-tracker" class="text-purple-600 bg-purple-50 px-3 py-1 rounded-full border border-purple-200 hidden">
+                    Percobaan Ke-: <span id="current-attempts">1</span>
+                </div>
+            </div>
+
+            <!-- 5x5 Game Board -->
+            <div id="game-board-container" class="relative p-2 bg-slate-100 rounded-2xl border-4 border-indigo-200 shadow-md">
+                <div id="game-board" class="grid grid-cols-5 gap-1.5 sm:gap-2.5 w-[280px] h-[280px] sm:w-[380px] sm:h-[380px]">
+                    <!-- 25 Cells -->
+                </div>
+            </div>
+
+            <p class="text-xs text-slate-500 mt-3 text-center">
+                Klik kotak berdampingan (atas, bawah, kiri, kanan) yang sesuai dengan urutan pola dari <span class="font-bold text-emerald-600">Mulai (🚩)</span> hingga <span class="font-bold text-amber-600">Finis (🏁)</span>!
+            </p>
+        </div>
+
+    </main>
+
+    <!-- Modal Admin -->
+    <div id="admin-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border-4 border-amber-300 bounce-in">
+            <h3 class="text-xl font-bold text-amber-800 mb-2 flex items-center gap-2">
+                🔑 Mode Admin
+            </h3>
+            <p class="text-xs text-slate-600 mb-4">Masukkan kata sandi admin untuk membuka semua level secara penuh.</p>
+            
+            <input type="password" id="admin-password" placeholder="Kata sandi admin..." class="w-full px-4 py-2 rounded-xl border-2 border-slate-300 focus:border-amber-500 focus:outline-none mb-4 text-center font-bold text-slate-700">
+            
+            <div class="flex gap-2">
+                <button onclick="closeAdminModal()" class="w-1/2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 rounded-xl text-sm transition">
+                    Batal
+                </button>
+                <button onclick="submitAdminPassword()" class="w-1/2 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 rounded-xl text-sm transition">
+                    Buka Level
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Level Complete / Sukses -->
+    <div id="success-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border-4 border-emerald-400 text-center bounce-in">
+            <div class="text-5xl mb-2">🎉</div>
+            <h3 class="text-2xl font-bold text-emerald-700 mb-1">Hebat! Kamu Berhasil!</h3>
+            <p id="success-modal-desc" class="text-xs sm:text-sm text-slate-600 mb-4">Kamu berhasil mencapai titik finish!</p>
+
+            <div class="bg-emerald-50 rounded-2xl p-3 mb-4 text-left text-xs sm:text-sm space-y-1 border border-emerald-200">
+                <div class="flex justify-between">
+                    <span class="text-slate-600">Kesalahan:</span>
+                    <span id="modal-stat-errors" class="font-bold text-slate-800">0</span>
+                </div>
+                <div id="modal-stat-attempts-container" class="flex justify-between hidden">
+                    <span class="text-slate-600">Total Percobaan:</span>
+                    <span id="modal-stat-attempts" class="font-bold text-purple-700">1</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-600">Status Selesai:</span>
+                    <span id="modal-stat-status" class="font-bold text-emerald-600">SUKSES ✨</span>
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="closeSuccessModal(); showLevelSelect();" class="w-1/2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-xl text-xs sm:text-sm transition">
+                    📋 Menu Level
+                </button>
+                <button id="btn-next-level" onclick="nextLevel()" class="w-1/2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-xl text-xs sm:text-sm transition">
+                    Lanjut ➔
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-800 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-2xl shadow-xl transition-all duration-300 opacity-0 pointer-events-none z-50">
+        Pesan Toast
+    </div>
+
+    <footer class="mt-4 text-center text-xs text-slate-500 font-semibold">
+        Game Edukasi Matematika & Logika - Kelas 3 SD
+    </footer>
+
+    <script>
+        /* -------------------------------------------------------------
+           WEB AUDIO SYNTHESIZER FOR SOUND EFFECTS
+           ------------------------------------------------------------- */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'step') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.exponentialRampToValueAtTime(880, now + 0.1);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'error') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.linearRampToValueAtTime(110, now + 0.25);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } else if (type === 'win') {
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const noteOsc = audioCtx.createOscillator();
+                    const noteGain = audioCtx.createGain();
+                    noteOsc.connect(noteGain);
+                    noteGain.connect(audioCtx.destination);
+                    noteOsc.type = 'triangle';
+                    noteOsc.frequency.value = freq;
+                    noteGain.gain.setValueAtTime(0.2, now + idx * 0.1);
+                    noteGain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.3);
+                    noteOsc.start(now + idx * 0.1);
+                    noteOsc.stop(now + idx * 0.1 + 0.3);
+                });
+            }
+        }
+
+        const SHAPES = {
+            star: { icon: '★', name: 'Bintang' },
+            circle: { icon: '●', name: 'Lingkaran' },
+            triangle: { icon: '▲', name: 'Segitiga' },
+            square: { icon: '■', name: 'Persegi' },
+            heart: { icon: '♥', name: 'Hati' }
+        };
+
+        const COLORS = {
+            red: { bg: 'bg-red-500', text: 'text-red-500', hex: '#ef4444', name: 'Merah' },
+            blue: { bg: 'bg-blue-500', text: 'text-blue-500', hex: '#3b82f6', name: 'Biru' },
+            green: { bg: 'bg-emerald-500', text: 'text-emerald-500', hex: '#10b981', name: 'Hijau' },
+            yellow: { bg: 'bg-amber-400', text: 'text-amber-500', hex: '#f59e0b', name: 'Kuning' },
+            purple: { bg: 'bg-purple-500', text: 'text-purple-500', hex: '#a855f7', name: 'Ungu' }
+        };
+
+        let levelStates = Array.from({ length: 25 }, (_, i) => ({
+            id: i + 1,
+            unlocked: i === 0, // Level 1 starts unlocked
+            completed: false,
+            lastErrors: null,
+            isSuccess: false, // True if last error === 0
+            attempts21_25: 0 // Track attempts for levels 21-25
+        }));
+
+        let currentLevelIdx = 0;
+        let currentStepIdx = 0;
+        let errorsThisRun = 0;
+        let attemptsThisRun = 1;
+        let activePath = [];
+
+        const levelConfigs = [
+            // LEVEL 1-5 (1 Combination: Pola Warna, Pola Bentuk, atau Pola Angka)
+            { id: 1, title: 'Level 1: Pola Warna', hint: 'Pola Warna: Merah 🔴 ➔ Biru 🔵 ➔ Merah 🔴 ➔ Biru 🔵', ruleType: ['color'], seq: [{c:'red'}, {c:'blue'}] },
+            { id: 2, title: 'Level 2: Pola Bentuk', hint: 'Pola Bentuk: Bintang ★ ➔ Lingkaran ● ➔ Bintang ★', ruleType: ['shape'], seq: [{s:'star'}, {s:'circle'}] },
+            { id: 3, title: 'Level 3: Pola Angka (+2)', hint: 'Pola Angka: 2 ➔ 4 ➔ 6 ➔ 8 ➔ 10 ... (+2)', ruleType: ['number'], seqNum: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26] },
+            { id: 4, title: 'Level 4: Pola Warna 3 Urutan', hint: 'Pola Warna: Hijau 🟢 ➔ Kuning 🟡 ➔ Ungu 🟣', ruleType: ['color'], seq: [{c:'green'}, {c:'yellow'}, {c:'purple'}] },
+            { id: 5, title: 'Level 5: Pola Angka (+3)', hint: 'Pola Angka: 1 ➔ 4 ➔ 7 ➔ 10 ➔ 13 ... (+3)', ruleType: ['number'], seqNum: [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34, 37] },
+
+            // LEVEL 6-12 (2 Kombinasi Pola)
+            { id: 6, title: 'Level 6: Warna + Bentuk', hint: 'Pola: Merah Bintang ★ ➔ Biru Lingkaran ●', ruleType: ['color', 'shape'], seq: [{c:'red', s:'star'}, {c:'blue', s:'circle'}] },
+            { id: 7, title: 'Level 7: Angka + Warna', hint: 'Pola: 1 Merah 🔴 ➔ 2 Hijau 🟢 ➔ 3 Merah 🔴 ➔ 4 Hijau 🟢', ruleType: ['number', 'color'], seqNum: [1,2,3,4,5,6,7,8,9,10,11,12,13], seq: [{c:'red'}, {c:'green'}] },
+            { id: 8, title: 'Level 8: Bentuk + Angka', hint: 'Pola: Segitiga (5) ➔ Persegi (10) ➔ Segitiga (5)', ruleType: ['shape', 'number'], seqNum: [5, 10, 5, 10, 5, 10, 5, 10, 5, 10, 5, 10, 5], seq: [{s:'triangle'}, {s:'square'}] },
+            { id: 9, title: 'Level 9: Warna + Bentuk 3-Step', hint: 'Pola: Merah Segitiga 🔺 ➔ Kuning Bintang ★ ➔ Hijau Hati ♥', ruleType: ['color', 'shape'], seq: [{c:'red', s:'triangle'}, {c:'yellow', s:'star'}, {c:'green', s:'heart'}] },
+            { id: 10, title: 'Level 10: Angka + Bentuk (+5)', hint: 'Pola: 5 Bintang ★ ➔ 10 Lingkaran ● ➔ 15 Bintang ★', ruleType: ['number', 'shape'], seqNum: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65], seq: [{s:'star'}, {s:'circle'}] },
+            { id: 11, title: 'Level 11: Warna + Angka (Genap)', hint: 'Pola: Biru (2) ➔ Ungu (4) ➔ Biru (6) ➔ Ungu (8)', ruleType: ['color', 'number'], seqNum: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26], seq: [{c:'blue'}, {c:'purple'}] },
+            { id: 12, title: 'Level 12: Bentuk + Warna', hint: 'Pola: Persegi Hijau 🟩 ➔ Hati Merah ❤️ ➔ Bintang Kuning ⭐️️', ruleType: ['shape', 'color'], seq: [{s:'square', c:'green'}, {s:'heart', c:'red'}, {s:'star', c:'yellow'}] },
+
+            // LEVEL 13-20 (Maksimal 3 Kombinasi Pola: Angka, Warna, & Bentuk)
+            { id: 13, title: 'Level 13: 3 Kombinasi Sederhana', hint: 'Pola: (1) Merah Bintang ★ ➔ (2) Biru Lingkaran ●', ruleType: ['number', 'color', 'shape'], seqNum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], seq: [{c:'red', s:'star'}, {c:'blue', s:'circle'}] },
+            { id: 14, title: 'Level 14: 3 Kombinasi (+2)', hint: 'Pola: (2) Hijau Segitiga 🔺 ➔ (4) Kuning Persegi 🟦 ➔ (6) Ungu Hati ♥', ruleType: ['number', 'color', 'shape'], seqNum: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26], seq: [{c:'green', s:'triangle'}, {c:'yellow', s:'square'}, {c:'purple', s:'heart'}] },
+            { id: 15, title: 'Level 15: 3 Kombinasi Kelipatan 10', hint: 'Pola: (10) Merah Bintang ★ ➔ (20) Biru Segitiga 🔺', ruleType: ['number', 'color', 'shape'], seqNum: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130], seq: [{c:'red', s:'star'}, {c:'blue', s:'triangle'}] },
+            { id: 16, title: 'Level 16: 3 Kombinasi Trilog', hint: 'Pola: (3) Ungu Hati ♥ ➔ (6) Hijau Bintang ★ ➔ (9) Merah Lingkaran ●', ruleType: ['number', 'color', 'shape'], seqNum: [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39], seq: [{c:'purple', s:'heart'}, {c:'green', s:'star'}, {c:'red', s:'circle'}] },
+            { id: 17, title: 'Level 17: 3 Kombinasi Ganjil', hint: 'Pola: (1) Kuning Persegi 🟦 ➔ (3) Biru Bintang ★', ruleType: ['number', 'color', 'shape'], seqNum: [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25], seq: [{c:'yellow', s:'square'}, {c:'blue', s:'star'}] },
+            { id: 18, title: 'Level 18: 3 Kombinasi (+5)', hint: 'Pola: (5) Merah Lingkaran ● ➔ (10) Kuning Hati ♥ ➔ (15) Hijau Segitiga 🔺', ruleType: ['number', 'color', 'shape'], seqNum: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65], seq: [{c:'red', s:'circle'}, {c:'yellow', s:'heart'}, {c:'green', s:'triangle'}] },
+            { id: 19, title: 'Level 19: 3 Kombinasi Ratusan', hint: 'Pola: (100) Biru Bintang ★ ➔ (200) Ungu Persegi 🟦', ruleType: ['number', 'color', 'shape'], seqNum: [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300], seq: [{c:'blue', s:'star'}, {c:'purple', s:'square'}] },
+            { id: 20, title: 'Level 20: 3 Kombinasi Master', hint: 'Pola: (4) Hijau Segitiga 🔺 ➔ (8) Merah Bintang ★ ➔ (12) Kuning Lingkaran ●', ruleType: ['number', 'color', 'shape'], seqNum: [4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52], seq: [{c:'green', s:'triangle'}, {c:'red', s:'star'}, {c:'yellow', s:'circle'}] },
+
+            // LEVEL 21-25 (MISTERI: Tanpa Petunjuk Pola, Mencatat Jumlah Percobaan)
+            { id: 21, title: 'Level 21: Rahasia 1', hint: '❓ Petunjuk: Rahasia! Temukan sendiri polanya dari jalur yang ada.', ruleType: ['color', 'shape'], seq: [{c:'red', s:'circle'}, {c:'blue', s:'square'}] },
+            { id: 22, title: 'Level 22: Rahasia 2', hint: '❓ Petunjuk: Rahasia! Perhatikan baik-baik angka dan warnanya.', ruleType: ['number', 'color'], seqNum: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26], seq: [{c:'yellow'}, {c:'purple'}] },
+            { id: 23, title: 'Level 23: Rahasia 3', hint: '❓ Petunjuk: Rahasia! Pola gabungan Bentuk dan Angka.', ruleType: ['shape', 'number'], seqNum: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130], seq: [{s:'heart'}, {s:'star'}] },
+            { id: 24, title: 'Level 24: Rahasia 4', hint: '❓ Petunjuk: Rahasia! Ada 3 kombinasi tersembunyi.', ruleType: ['number', 'color', 'shape'], seqNum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], seq: [{c:'green', s:'star'}, {c:'red', s:'triangle'}] },
+            { id: 25, title: 'Level 25: Rahasia Puncak', hint: '❓ Petunjuk: Misi Terakhir! Cari tahu 3 kombinasi pola tersembunyi!', ruleType: ['number', 'color', 'shape'], seqNum: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65], seq: [{c:'purple', s:'square'}, {c:'yellow', s:'circle'}, {c:'blue', s:'heart'}] }
+        ];
+
+        /* Fixed Valid Paths on 5x5 Grid from (0,0) to (4,4) */
+        const PRESET_PATHS = [
+            // Path 0 (Length 13)
+            [[0,0],[0,1],[0,2],[1,2],[2,2],[2,1],[2,0],[3,0],[4,0],[4,1],[4,2],[4,3],[4,4]],
+            // Path 1 (Length 11)
+            [[0,0],[1,0],[2,0],[2,1],[2,2],[1,2],[0,2],[0,3],[0,4],[1,4],[2,4],[3,4],[4,4]],
+            // Path 2 (Length 9)
+            [[0,0],[0,1],[1,1],[2,1],[2,2],[2,3],[3,3],[4,3],[4,4]],
+            // Path 3 (Length 11)
+            [[0,0],[1,0],[1,1],[1,2],[2,2],[3,2],[3,3],[3,4],[4,4]]
+        ];
+
+        let currentGridData = [];
+        let currentPathCoords = [];
+
+        function renderLevelSelector() {
+            const gridEl = document.getElementById('level-grid');
+            gridEl.innerHTML = '';
+
+            levelStates.forEach((lvl, index) => {
+                const btn = document.createElement('button');
+                btn.className = `relative p-3 rounded-2xl flex flex-col items-center justify-between border-2 transition shadow-sm h-24 ${
+                    lvl.unlocked 
+                        ? 'bg-gradient-to-b from-indigo-50 to-white border-indigo-300 hover:border-indigo-500 hover:shadow-md cursor-pointer' 
+                        : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-75'
+                }`;
+
+                let statusHtml = '';
+                if (!lvl.unlocked) {
+                    statusHtml = `<span class="text-xl my-auto">🔒</span>`;
+                } else {
+                    let errText = lvl.lastErrors !== null ? `Salah: ${lvl.lastErrors}` : 'Belum coba';
+                    let successBadge = lvl.isSuccess 
+                        ? `<span class="bg-emerald-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm mt-1">SUKSES ✨</span>`
+                        : `<span class="text-[10px] text-slate-500 font-semibold mt-1">${errText}</span>`;
+
+                    let attemptBadge = '';
+                    if (lvl.id >= 21 && lvl.attempts21_25 > 0) {
+                        attemptBadge = `<span class="text-[9px] text-purple-600 font-bold">Coba: ${lvl.attempts21_25}x</span>`;
+                    }
+
+                    statusHtml = `
+                        <span class="text-xs font-bold text-slate-500">Level</span>
+                        <span class="text-xl font-extrabold text-indigo-700 leading-none">${lvl.id}</span>
+                        ${successBadge}
+                        ${attemptBadge}
+                    `;
+                }
+
+                btn.innerHTML = statusHtml;
+
+                if (lvl.unlocked) {
+                    btn.onclick = () => startLevel(index);
+                }
+
+                gridEl.appendChild(btn);
+            });
+        }
+
+        function startLevel(idx) {
+            currentLevelIdx = idx;
+            const lvlState = levelStates[idx];
+            const cfg = levelConfigs[idx];
+
+            currentStepIdx = 0;
+            errorsThisRun = 0;
+
+            if (lvlState.id >= 21) {
+                // Increment total attempt counter when starting/re-attempting level 21-25
+                lvlState.attempts21_25 += 1;
+                attemptsThisRun = lvlState.attempts21_25;
+            }
+
+            // Select path based on level index
+            currentPathCoords = PRESET_PATHS[idx % PRESET_PATHS.length];
+            generateGridData(cfg, currentPathCoords);
+
+            // Update UI elements
+            document.getElementById('game-level-title').innerText = cfg.title;
+            document.getElementById('hint-text').innerText = cfg.hint;
+            document.getElementById('current-errors').innerText = errorsThisRun;
+
+            const attemptTracker = document.getElementById('attempt-tracker');
+            if (cfg.id >= 21) {
+                attemptTracker.classList.remove('hidden');
+                document.getElementById('current-attempts').innerText = attemptsThisRun;
+            } else {
+                attemptTracker.classList.add('hidden');
+            }
+
+            // Switch views
+            document.getElementById('view-level-select').classList.add('hidden');
+            document.getElementById('view-game').classList.remove('hidden');
+
+            // Render Board
+            activePath = [currentPathCoords[0]]; // Start at (0,0)
+            renderBoard();
+        }
+
+        function generateGridData(cfg, pathCoords) {
+            currentGridData = Array.from({ length: 5 }, () => Array(5).fill(null));
+            
+            const shapeKeys = Object.keys(SHAPES);
+            const colorKeys = Object.keys(COLORS);
+
+            // Assign correct properties along path
+            pathCoords.forEach((coord, step) => {
+                const [r, c] = coord;
+                let tileObj = {};
+
+                // Determine shape
+                if (cfg.seq && cfg.seq[step % cfg.seq.length].s) {
+                    tileObj.shape = cfg.seq[step % cfg.seq.length].s;
+                } else {
+                    tileObj.shape = shapeKeys[step % shapeKeys.length];
+                }
+
+                // Determine color
+                if (cfg.seq && cfg.seq[step % cfg.seq.length].c) {
+                    tileObj.color = cfg.seq[step % cfg.seq.length].c;
+                } else {
+                    tileObj.color = colorKeys[step % colorKeys.length];
+                }
+
+                // Determine number
+                if (cfg.seqNum) {
+                    tileObj.number = cfg.seqNum[step % cfg.seqNum.length];
+                } else {
+                    tileObj.number = (step + 1);
+                }
+
+                currentGridData[r][c] = tileObj;
+            });
+
+            // Fill off-path distractors
+            for (let r = 0; r < 5; r++) {
+                for (let c = 0; c < 5; c++) {
+                    if (!currentGridData[r][c]) {
+                        // Create distractor element
+                        const randomShape = shapeKeys[Math.floor(Math.random() * shapeKeys.length)];
+                        const randomColor = colorKeys[Math.floor(Math.random() * colorKeys.length)];
+                        const randomNumber = Math.floor(Math.random() * 30) + 1;
+
+                        currentGridData[r][c] = {
+                            shape: randomShape,
+                            color: randomColor,
+                            number: randomNumber
+                        };
+                    }
+                }
+            }
+        }
+
+        function renderBoard() {
+            const boardEl = document.getElementById('game-board');
+            boardEl.innerHTML = '';
+
+            const currentPos = activePath[activePath.length - 1];
+
+            for (let r = 0; r < 5; r++) {
+                for (let c = 0; c < 5; c++) {
+                    const tileData = currentGridData[r][c];
+                    const tileBtn = document.createElement('button');
+
+                    // Check if visited in path
+                    const isVisited = activePath.some(p => p[0] === r && p[1] === c);
+                    const isCurrent = currentPos[0] === r && currentPos[1] === c;
+                    const isStart = r === 0 && c === 0;
+                    const isFinish = r === 4 && c === 4;
+
+                    // Check if tile is adjacent to current position
+                    const isAdjacent = (Math.abs(r - currentPos[0]) + Math.abs(c - currentPos[1])) === 1;
+
+                    let bgClass = 'bg-white border-slate-300';
+                    let textClass = COLORS[tileData.color].text;
+                    let opacityClass = 'opacity-90';
+
+                    if (isVisited) {
+                        bgClass = 'bg-indigo-100 border-indigo-500 shadow-inner ring-2 ring-indigo-400';
+                        opacityClass = 'opacity-100';
+                    } else if (isAdjacent) {
+                        bgClass = 'bg-white border-amber-400 hover:border-amber-500 ring-2 ring-amber-200';
+                        opacityClass = 'opacity-100 cursor-pointer';
+                    } else {
+                        opacityClass = 'opacity-60 cursor-not-allowed';
+                    }
+
+                    tileBtn.className = `grid-tile relative rounded-xl border-2 ${bgClass} ${opacityClass} flex flex-col items-center justify-center p-1 shadow-sm h-full w-full`;
+
+                    // Render start / finish flag badge
+                    let badge = '';
+                    if (isStart) badge = `<span class="absolute top-0.5 left-0.5 text-[10px] font-bold bg-emerald-500 text-white px-1 rounded-md shadow">Start</span>`;
+                    if (isFinish) badge = `<span class="absolute top-0.5 right-0.5 text-[10px] font-bold bg-amber-500 text-white px-1 rounded-md shadow">Finis</span>`;
+
+                    tileBtn.innerHTML = `
+                        ${badge}
+                        <span class="text-lg sm:text-2xl font-bold leading-none ${textClass}">
+                            ${SHAPES[tileData.shape].icon}
+                        </span>
+                        <span class="text-xs sm:text-sm font-extrabold text-slate-700 mt-0.5">
+                            ${tileData.number}
+                        </span>
+                    `;
+
+                    tileBtn.onclick = () => handleTileClick(r, c);
+
+                    boardEl.appendChild(tileBtn);
+                }
+            }
+        }
+
+        function handleTileClick(r, c) {
+            const currentPos = activePath[activePath.length - 1];
+            const isAdjacent = (Math.abs(r - currentPos[0]) + Math.abs(c - currentPos[1])) === 1;
+
+            if (!isAdjacent && !(r === 0 && c === 0 && activePath.length === 1)) {
+                showToast("Pilih kotak yang berdampingan (sebelah atas, bawah, kiri, atau kanan)!");
+                return;
+            }
+
+            const nextStepIdx = activePath.length;
+            const expectedCoord = currentPathCoords[nextStepIdx];
+
+            if (expectedCoord && expectedCoord[0] === r && expectedCoord[1] === c) {
+                // Correct step!
+                playSound('step');
+                activePath.push([r, c]);
+                renderBoard();
+
+                // Check win condition
+                if (r === 4 && c === 4) {
+                    handleLevelComplete();
+                }
+            } else {
+                // Wrong step!
+                playSound('error');
+                errorsThisRun += 1;
+                document.getElementById('current-errors').innerText = errorsThisRun;
+
+                const boardContainer = document.getElementById('game-board-container');
+                boardContainer.classList.add('shake');
+                setTimeout(() => boardContainer.classList.remove('shake'), 400);
+
+                showToast("Aduh, polanya kurang tepat! Kembali ke Start.");
+
+                // Reset position to Start
+                activePath = [currentPathCoords[0]];
+                renderBoard();
+            }
+        }
+
+        function handleLevelComplete() {
+            playSound('win');
+
+            const lvlState = levelStates[currentLevelIdx];
+            lvlState.completed = true;
+            lvlState.lastErrors = errorsThisRun;
+            
+            if (errorsThisRun === 0) {
+                lvlState.isSuccess = true;
+            }
+
+            // Unlock next level
+            if (currentLevelIdx + 1 < levelStates.length) {
+                levelStates[currentLevelIdx + 1].unlocked = true;
+            }
+
+            // Populate Success Modal
+            document.getElementById('modal-stat-errors').innerText = errorsThisRun;
+            
+            const attemptsContainer = document.getElementById('modal-stat-attempts-container');
+            if (lvlState.id >= 21) {
+                attemptsContainer.classList.remove('hidden');
+                document.getElementById('modal-stat-attempts').innerText = lvlState.attempts21_25;
+            } else {
+                attemptsContainer.classList.add('hidden');
+            }
+
+            const statusEl = document.getElementById('modal-stat-status');
+            if (errorsThisRun === 0) {
+                statusEl.innerText = "SUKSES ✨";
+                statusEl.className = "font-bold text-emerald-600";
+            } else {
+                statusEl.innerText = "Selesai (Ada Kesalahan)";
+                statusEl.className = "font-bold text-amber-600";
+            }
+
+            const nextBtn = document.getElementById('btn-next-level');
+            if (currentLevelIdx + 1 >= levelStates.length) {
+                nextBtn.innerText = "Tamat! 🎉";
+                nextBtn.onclick = () => { closeSuccessModal(); showLevelSelect(); };
+            } else {
+                nextBtn.innerText = "Lanjut ➔";
+                nextBtn.onclick = () => { closeSuccessModal(); startLevel(currentLevelIdx + 1); };
+            }
+
+            document.getElementById('success-modal').classList.remove('hidden');
+        }
+
+        function resetCurrentLevel() {
+            startLevel(currentLevelIdx);
+        }
+
+        function showLevelSelect() {
+            document.getElementById('view-game').classList.add('hidden');
+            document.getElementById('view-level-select').classList.remove('hidden');
+            renderLevelSelector();
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('success-modal').classList.add('hidden');
+        }
+
+        function openAdminModal() {
+            document.getElementById('admin-password').value = '';
+            document.getElementById('admin-modal').classList.remove('hidden');
+        }
+
+        function closeAdminModal() {
+            document.getElementById('admin-modal').classList.add('hidden');
+        }
+
+        function submitAdminPassword() {
+            const pwd = document.getElementById('admin-password').value;
+            if (pwd === 'kodingthb') {
+                // Unlock all levels forcefully
+                levelStates.forEach(lvl => lvl.unlocked = true);
+                closeAdminModal();
+                showToast("🔑 Admin: Semua 25 Level Berhasil Dibuka!");
+                renderLevelSelector();
+            } else {
+                showToast("❌ Kata sandi admin salah!");
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 2500);
+        }
+
+        window.onload = function() {
+            renderLevelSelector();
+        };
+    </script>
+</body>
+</html>
