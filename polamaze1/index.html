@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan Pola Labirin SD Kelas 1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fredoka', 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 50%, #fef3c7 100%);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .bounce-custom {
+            animation: bounce 0.6s infinite alternate;
+        }
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-8px); }
+        }
+        .shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+        .pop-in {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col items-center justify-between p-3 sm:p-6">
+
+    <!-- App Container -->
+    <div class="w-full max-w-xl flex flex-col items-center">
+        
+        <!-- Top Bar Header -->
+        <header class="w-full flex justify-between items-center bg-white/90 backdrop-blur-md p-3 sm:p-4 rounded-2xl shadow-lg border-2 border-sky-200 mb-4">
+            <div class="flex items-center gap-2">
+                <span class="text-3xl">🧩</span>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-bold text-sky-700 leading-tight">Pola Labirin</h1>
+                    <p class="text-xs text-sky-500 font-semibold">Matematika Kelas 1 SD</p>
+                </div>
+            </div>
+            <button id="btn-menu" onclick="showLevelSelect()" class="bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl shadow-md transition-all active:scale-95 text-xs sm:text-sm flex items-center gap-1.5 border-b-4 border-amber-600">
+                <span>📋</span>
+                <span>Pilih Level</span>
+            </button>
+        </header>
+
+        <!-- VIEW 1: LEVEL SELECTION SCREEN -->
+        <main id="view-level-select" class="w-full bg-white/95 backdrop-blur-md rounded-3xl p-4 sm:p-6 shadow-xl border-4 border-white text-center">
+            <div class="mb-4">
+                <h2 class="text-2xl font-bold text-slate-800">Pilih Level Labirin</h2>
+                <p class="text-xs sm:text-sm text-slate-500 mt-1">Selesaikan level satu per satu untuk membuka level berikutnya!</p>
+            </div>
+
+            <!-- Level Grid (20 Levels) -->
+            <div id="level-grid" class="grid grid-cols-4 sm:grid-cols-5 gap-2.5 sm:gap-3 my-4">
+                <!-- Dynamically generated levels -->
+            </div>
+
+            <div class="mt-4 p-3 bg-sky-50 rounded-2xl text-xs text-sky-700 flex items-center justify-center gap-2 border border-sky-200">
+                <span class="text-base">💡</span>
+                <span>Pola dapat berupa <b>Warna</b>, <b>Angka</b>, atau <b>Bentuk</b>.</span>
+            </div>
+        </main>
+
+        <!-- VIEW 2: GAMEPLAY SCREEN -->
+        <main id="view-game" class="w-full hidden flex-col items-center">
+            
+            <!-- Level Info Card -->
+            <div class="w-full bg-white/95 backdrop-blur-md rounded-3xl p-4 shadow-xl border-4 border-white mb-4 text-center relative">
+                <div class="flex justify-between items-center mb-2">
+                    <span id="game-level-title" class="bg-sky-100 text-sky-800 font-bold px-3 py-1 rounded-full text-xs sm:text-sm border border-sky-300">
+                        Level 1
+                    </span>
+                    <div id="mistake-counter" class="bg-rose-100 text-rose-700 font-bold px-3 py-1 rounded-full text-xs sm:text-sm border border-rose-300 flex items-center gap-1">
+                        <span>❌ Salah:</span>
+                        <span id="mistake-count">0</span>
+                    </div>
+                </div>
+
+                <!-- Pattern Instruction Banner -->
+                <div class="bg-gradient-to-r from-amber-100 via-orange-100 to-amber-100 p-3 rounded-2xl border-2 border-amber-300 my-2">
+                    <p id="pattern-desc-title" class="text-xs font-bold text-amber-800 uppercase tracking-wide">Petunjuk Pola</p>
+                    <p id="pattern-rule-text" class="text-sm sm:text-base font-extrabold text-amber-950 mt-0.5">Merah ➔ Biru ➔ Merah ➔ Biru</p>
+                </div>
+
+                <!-- Maze 4x4 Canvas Grid Container -->
+                <div class="relative mt-4 flex justify-center">
+                    <div id="maze-grid" class="grid grid-cols-4 gap-2 bg-slate-200 p-2.5 rounded-2xl shadow-inner border-2 border-slate-300 w-full max-w-[340px] aspect-square">
+                        <!-- 16 Cells will be rendered here -->
+                    </div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="flex justify-between items-center mt-4 pt-2 border-t border-slate-100">
+                    <button onclick="restartLevel()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-1.5 rounded-xl text-xs transition flex items-center gap-1">
+                        🔄 Ulangi Level
+                    </button>
+                    <p class="text-xs text-slate-400 font-medium">Sentuh kotak berikutnya</p>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <!-- WIN DIALOG MODAL -->
+    <div id="modal-win" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl border-4 border-amber-300 pop-in relative">
+            <div class="text-5xl mb-2 bounce-custom">🎉</div>
+            <h3 class="text-2xl font-black text-slate-800">HEBAT!</h3>
+            <p id="win-message" class="text-sm text-slate-600 mt-1">Kamu berhasil menyelesaikan labirin!</p>
+            
+            <!-- Result Stats Card -->
+            <div id="win-stats-card" class="my-4 p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-center">
+                <span id="win-badge" class="inline-block bg-emerald-500 text-white font-extrabold text-xs px-3 py-1 rounded-full mb-1">
+                    SUKSES TANPA SALAH! ✨
+                </span>
+                <p id="win-errors-text" class="text-xs text-emerald-800 font-semibold mt-1">Jumlah kesalahan: 0</p>
+            </div>
+
+            <div class="flex flex-col gap-2 mt-4">
+                <button id="btn-next-level" onclick="nextLevel()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-3 rounded-2xl shadow-lg border-b-4 border-emerald-700 text-base active:scale-95 transition">
+                    Level Berikutnya ➔
+                </button>
+                <button onclick="showLevelSelect()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-2xl text-sm transition">
+                    Kembali ke Menu Level
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* WEB AUDIO API FOR SOUND EFFECTS */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'step') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } else if (type === 'error') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.setValueAtTime(160, now + 0.1);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } else if (type === 'win') {
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    o.frequency.setValueAtTime(freq, now + idx * 0.1);
+                    g.gain.setValueAtTime(0.3, now + idx * 0.1);
+                    g.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.25);
+                    o.start(now + idx * 0.1);
+                    o.stop(now + idx * 0.1 + 0.25);
+                });
+            }
+        }
+
+        // SVG Shape Renderers
+        const SHAPES = {
+            circle: (color) => `<svg class="w-8 h-8 sm:w-10 sm:h-10" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="${color}" stroke="#1e293b" stroke-width="6"/></svg>`,
+            square: (color) => `<svg class="w-8 h-8 sm:w-10 sm:h-10" viewBox="0 0 100 100"><rect x="15" y="15" width="70" height="70" rx="12" fill="${color}" stroke="#1e293b" stroke-width="6"/></svg>`,
+            triangle: (color) => `<svg class="w-8 h-8 sm:w-10 sm:h-10" viewBox="0 0 100 100"><polygon points="50,12 90,82 10,82" fill="${color}" stroke="#1e293b" stroke-width="6" stroke-linejoin="round"/></svg>`,
+            star: (color) => `<svg class="w-8 h-8 sm:w-10 sm:h-10" viewBox="0 0 100 100"><polygon points="50,8 63,35 93,38 71,59 78,88 50,72 22,88 29,59 7,38 37,35" fill="${color}" stroke="#1e293b" stroke-width="5" stroke-linejoin="round"/></svg>`,
+            heart: (color) => `<svg class="w-8 h-8 sm:w-10 sm:h-10" viewBox="0 0 100 100"><path d="M50,85 C50,85 12,58 12,33 C12,18 24,10 36,10 C44,10 50,16 50,16 C50,16 56,10 64,10 C76,10 88,18 88,33 C88,58 50,85 50,85 Z" fill="${color}" stroke="#1e293b" stroke-width="6" stroke-linejoin="round"/></svg>`,
+            diamond: (color) => `<svg class="w-8 h-8 sm:w-10 sm:h-10" viewBox="0 0 100 100"><polygon points="50,10 88,50 50,90 12,50" fill="${color}" stroke="#1e293b" stroke-width="6" stroke-linejoin="round"/></svg>`
+        };
+
+        const COLOR_MAP = {
+            red: '#ef4444',
+            blue: '#3b82f6',
+            green: '#22c55e',
+            yellow: '#eab308',
+            purple: '#a855f7',
+            orange: '#f97316'
+        };
+
+        const COLOR_NAME_ID = {
+            red: 'Merah',
+            blue: 'Biru',
+            green: 'Hijau',
+            yellow: 'Kuning',
+            purple: 'Ungu',
+            orange: 'Oranye'
+        };
+
+        const SHAPE_NAME_ID = {
+            circle: 'Lingkaran',
+            square: 'Persegi',
+            triangle: 'Segitiga',
+            star: 'Bintang',
+            heart: 'Hati',
+            diamond: 'Belah Ketupat'
+        };
+
+        // DATA STRUCTURE: 20 PREDEFINED LEVELS
+        // Each level defines 4x4 grid cells and a valid pattern path from [0,0] to [3,3]
+        const LEVELS = [
+            // LEVEL 1: Pola Warna (Merah - Biru)
+            {
+                id: 1,
+                title: "Level 1: Pola Warna",
+                ruleText: "🔴 Merah ➔ 🔵 Biru ➔ 🔴 Merah ➔ 🔵 Biru",
+                path: [[0,0], [0,1], [1,1], [2,1], [2,2], [3,2], [3,3]],
+                pattern: [
+                    { color: 'red' }, { color: 'blue' }, { color: 'red' }, { color: 'blue' },
+                    { color: 'red' }, { color: 'blue' }, { color: 'red' }
+                ],
+                distractors: [{ color: 'green' }, { color: 'yellow' }, { color: 'purple' }]
+            },
+            // LEVEL 2: Pola Angka (+1)
+            {
+                id: 2,
+                title: "Level 2: Pola Angka (1-7)",
+                ruleText: "1 ➔ 2 ➔ 3 ➔ 4 ➔ 5 ➔ 6 ➔ 7",
+                path: [[0,0], [1,0], [1,1], [1,2], [2,2], [2,3], [3,3]],
+                pattern: [
+                    { number: 1 }, { number: 2 }, { number: 3 }, { number: 4 },
+                    { number: 5 }, { number: 6 }, { number: 7 }
+                ],
+                distractors: [{ number: 8 }, { number: 9 }, { number: 0 }, { number: 4 }]
+            },
+            // LEVEL 3: Pola Bentuk (Bintang - Hati)
+            {
+                id: 3,
+                title: "Level 3: Pola Bentuk",
+                ruleText: "⭐ Bintang ➔ ❤️ Hati ➔ ⭐ Bintang ➔ ❤️ Hati",
+                path: [[0,0], [0,1], [0,2], [1,2], [2,2], [2,3], [3,3]],
+                pattern: [
+                    { shape: 'star' }, { shape: 'heart' }, { shape: 'star' }, { shape: 'heart' },
+                    { shape: 'star' }, { shape: 'heart' }, { shape: 'star' }
+                ],
+                distractors: [{ shape: 'circle' }, { shape: 'square' }, { shape: 'triangle' }]
+            },
+            // LEVEL 4: Pola Warna 3 Variasi (Kuning - Hijau - Ungu)
+            {
+                id: 4,
+                title: "Level 4: Pola 3 Warna",
+                ruleText: "🟡 Kuning ➔ 🟢 Hijau ➔ 🟣 Ungu ➔ 🟡 Kuning",
+                path: [[0,0], [1,0], [2,0], [2,1], [2,2], [3,2], [3,3]],
+                pattern: [
+                    { color: 'yellow' }, { color: 'green' }, { color: 'purple' },
+                    { color: 'yellow' }, { color: 'green' }, { color: 'purple' }, { color: 'yellow' }
+                ],
+                distractors: [{ color: 'red' }, { color: 'blue' }, { color: 'orange' }]
+            },
+            // LEVEL 5: Pola Angka Loncat 2 (2, 4, 6, 8, 10, 12, 14)
+            {
+                id: 5,
+                title: "Level 5: Pola Loncat 2",
+                ruleText: "2 ➔ 4 ➔ 6 ➔ 8 ➔ 10 ➔ 12 ➔ 14",
+                path: [[0,0], [0,1], [1,1], [2,1], [2,2], [2,3], [3,3]],
+                pattern: [
+                    { number: 2 }, { number: 4 }, { number: 6 }, { number: 8 },
+                    { number: 10 }, { number: 12 }, { number: 14 }
+                ],
+                distractors: [{ number: 1 }, { number: 3 }, { number: 5 }, { number: 7 }]
+            },
+
+            // LEVEL 6: Pola Bentuk (Lingkaran - Persegi - Segitiga)
+            {
+                id: 6,
+                title: "Level 6: Pola 3 Bentuk",
+                ruleText: "⚪ Lingkaran ➔ 🟦 Persegi ➔ 🔺 Segitiga",
+                path: [[0,0], [1,0], [1,1], [1,2], [2,2], [3,2], [3,3]],
+                pattern: [
+                    { shape: 'circle' }, { shape: 'square' }, { shape: 'triangle' },
+                    { shape: 'circle' }, { shape: 'square' }, { shape: 'triangle' }, { shape: 'circle' }
+                ],
+                distractors: [{ shape: 'star' }, { shape: 'heart' }, { shape: 'diamond' }]
+            },
+            // LEVEL 7: Pola Warna A-A-B (Merah - Merah - Kuning)
+            {
+                id: 7,
+                title: "Level 7: Pola Warna (2-1)",
+                ruleText: "🔴 Merah ➔ 🔴 Merah ➔ 🟡 Kuning",
+                path: [[0,0], [0,1], [1,1], [1,2], [2,2], [3,2], [3,3]],
+                pattern: [
+                    { color: 'red' }, { color: 'red' }, { color: 'yellow' },
+                    { color: 'red' }, { color: 'red' }, { color: 'yellow' }, { color: 'red' }
+                ],
+                distractors: [{ color: 'blue' }, { color: 'green' }]
+            },
+            // LEVEL 8: Pola Angka Hitung Mundur (9 ➔ 3)
+            {
+                id: 8,
+                title: "Level 8: Hitung Mundur",
+                ruleText: "9 ➔ 8 ➔ 7 ➔ 6 ➔ 5 ➔ 4 ➔ 3",
+                path: [[0,0], [1,0], [2,0], [3,0], [3,1], [3,2], [3,3]],
+                pattern: [
+                    { number: 9 }, { number: 8 }, { number: 7 }, { number: 6 },
+                    { number: 5 }, { number: 4 }, { number: 3 }
+                ],
+                distractors: [{ number: 10 }, { number: 2 }, { number: 1 }]
+            },
+            // LEVEL 9: Pola Bentuk A-A-B (Segitiga - Segitiga - Bintang)
+            {
+                id: 9,
+                title: "Level 9: Pola Bentuk Ganda",
+                ruleText: "🔺 Segitiga ➔ 🔺 Segitiga ➔ ⭐ Bintang",
+                path: [[0,0], [0,1], [0,2], [1,2], [2,2], [2,3], [3,3]],
+                pattern: [
+                    { shape: 'triangle' }, { shape: 'triangle' }, { shape: 'star' },
+                    { shape: 'triangle' }, { shape: 'triangle' }, { shape: 'star' }, { shape: 'triangle' }
+                ],
+                distractors: [{ shape: 'square' }, { shape: 'circle' }]
+            },
+            // LEVEL 10: Pola Angka Loncat 5 (5, 10, 15, 20...)
+            {
+                id: 10,
+                title: "Level 10: Pola Kelipatan 5",
+                ruleText: "5 ➔ 10 ➔ 15 ➔ 20 ➔ 25 ➔ 30 ➔ 35",
+                path: [[0,0], [1,0], [1,1], [2,1], [2,2], [3,2], [3,3]],
+                pattern: [
+                    { number: 5 }, { number: 10 }, { number: 15 }, { number: 20 },
+                    { number: 25 }, { number: 30 }, { number: 35 }
+                ],
+                distractors: [{ number: 1 }, { number: 8 }, { number: 12 }]
+            },
+
+            /* DUAL PATTERNS (2 POLA SEKALIGUS) */
+            // LEVEL 11: 2 Pola (Warna & Bentuk) -> Merah Lingkaran & Biru Bintang
+            {
+                id: 11,
+                title: "Level 11: Warna & Bentuk",
+                ruleText: "🔴 Lingkaran Merah ➔ 🔵 Bintang Biru",
+                path: [[0,0], [0,1], [1,1], [2,1], [2,2], [3,2], [3,3]],
+                pattern: [
+                    { color: 'red', shape: 'circle' },
+                    { color: 'blue', shape: 'star' },
+                    { color: 'red', shape: 'circle' },
+                    { color: 'blue', shape: 'star' },
+                    { color: 'red', shape: 'circle' },
+                    { color: 'blue', shape: 'star' },
+                    { color: 'red', shape: 'circle' }
+                ],
+                distractors: [
+                    { color: 'red', shape: 'star' },
+                    { color: 'blue', shape: 'circle' },
+                    { color: 'green', shape: 'square' }
+                ]
+            },
+            // LEVEL 12: 2 Pola (Angka & Warna) -> 1 Merah, 2 Hijau, 3 Merah, 4 Hijau...
+            {
+                id: 12,
+                title: "Level 12: Angka & Warna",
+                ruleText: "1🔴 Merah ➔ 2🟢 Hijau ➔ 3🔴 Merah ➔ 4🟢 Hijau",
+                path: [[0,0], [1,0], [1,1], [1,2], [2,2], [2,3], [3,3]],
+                pattern: [
+                    { number: 1, color: 'red' },
+                    { number: 2, color: 'green' },
+                    { number: 3, color: 'red' },
+                    { number: 4, color: 'green' },
+                    { number: 5, color: 'red' },
+                    { number: 6, color: 'green' },
+                    { number: 7, color: 'red' }
+                ],
+                distractors: [
+                    { number: 1, color: 'green' },
+                    { number: 2, color: 'red' },
+                    { number: 4, color: 'blue' }
+                ]
+            },
+            // LEVEL 13: 2 Pola (Bentuk & Angka) -> 1 Persegi, 2 Hati, 3 Persegi...
+            {
+                id: 13,
+                title: "Level 13: Bentuk & Angka",
+                ruleText: "1 🟦 Persegi ➔ 2 ❤️ Hati ➔ 3 🟦 Persegi",
+                path: [[0,0], [0,1], [0,2], [1,2], [2,2], [3,2], [3,3]],
+                pattern: [
+                    { number: 1, shape: 'square' },
+                    { number: 2, shape: 'heart' },
+                    { number: 3, shape: 'square' },
+                    { number: 4, shape: 'heart' },
+                    { number: 5, shape: 'square' },
+                    { number: 6, shape: 'heart' },
+                    { number: 7, shape: 'square' }
+                ],
+                distractors: [
+                    { number: 1, shape: 'heart' },
+                    { number: 2, shape: 'square' },
+                    { number: 3, shape: 'circle' }
+                ]
+            },
+            // LEVEL 14: 2 Pola (Warna & Bentuk) -> Hijau Segitiga, Kuning Persegi
+            {
+                id: 14,
+                title: "Level 14: Segitiga & Persegi",
+                ruleText: "🟢🔺 Hijau Segitiga ➔ 🟡🟦 Kuning Persegi",
+                path: [[0,0], [1,0], [2,0], [2,1], [2,2], [2,3], [3,3]],
+                pattern: [
+                    { color: 'green', shape: 'triangle' },
+                    { color: 'yellow', shape: 'square' },
+                    { color: 'green', shape: 'triangle' },
+                    { color: 'yellow', shape: 'square' },
+                    { color: 'green', shape: 'triangle' },
+                    { color: 'yellow', shape: 'square' },
+                    { color: 'green', shape: 'triangle' }
+                ],
+                distractors: [
+                    { color: 'green', shape: 'square' },
+                    { color: 'yellow', shape: 'triangle' }
+                ]
+            },
+            // LEVEL 15: 2 Pola (Angka Loncat 2 & Warna) -> 2 Biru, 4 Ungu, 6 Biru, 8 Ungu...
+            {
+                id: 15,
+                title: "Level 15: Angka Genap & Warna",
+                ruleText: "2 🔵 Biru ➔ 4 🟣 Ungu ➔ 6 🔵 Biru ➔ 8 🟣 Ungu",
+                path: [[0,0], [0,1], [1,1], [1,2], [2,2], [3,2], [3,3]],
+                pattern: [
+                    { number: 2, color: 'blue' },
+                    { number: 4, color: 'purple' },
+                    { number: 6, color: 'blue' },
+                    { number: 8, color: 'purple' },
+                    { number: 10, color: 'blue' },
+                    { number: 12, color: 'purple' },
+                    { number: 14, color: 'blue' }
+                ],
+                distractors: [
+                    { number: 2, color: 'purple' },
+                    { number: 3, color: 'blue' },
+                    { number: 6, color: 'orange' }
+                ]
+            },
+
+            // LEVEL 16: 2 Pola 3 Variasi (Warna & Bentuk) -> Merah Bintang, Biru Lingkaran, Oranye Hati
+            {
+                id: 16,
+                title: "Level 16: Pola 3 Kombinasi",
+                ruleText: "🔴⭐ Merah Bintang ➔ 🔵⚪ Biru Lingkaran ➔ 🟠❤️ Oranye Hati",
+                path: [[0,0], [1,0], [1,1], [2,1], [2,2], [3,2], [3,3]],
+                pattern: [
+                    { color: 'red', shape: 'star' },
+                    { color: 'blue', shape: 'circle' },
+                    { color: 'orange', shape: 'heart' },
+                    { color: 'red', shape: 'star' },
+                    { color: 'blue', shape: 'circle' },
+                    { color: 'orange', shape: 'heart' },
+                    { color: 'red', shape: 'star' }
+                ],
+                distractors: [
+                    { color: 'red', shape: 'circle' },
+                    { color: 'blue', shape: 'star' },
+                    { color: 'green', shape: 'triangle' }
+                ]
+            },
+            // LEVEL 17: 2 Pola (Angka + Bentuk) -> 1 Bintang, 2 Belah Ketupat
+            {
+                id: 17,
+                title: "Level 17: Bintang & Ketupat",
+                ruleText: "1 ⭐ Bintang ➔ 2 🔹 Ketupat ➔ 3 ⭐ Bintang",
+                path: [[0,0], [0,1], [0,2], [0,3], [1,3], [2,3], [3,3]],
+                pattern: [
+                    { number: 1, shape: 'star' },
+                    { number: 2, shape: 'diamond' },
+                    { number: 3, shape: 'star' },
+                    { number: 4, shape: 'diamond' },
+                    { number: 5, shape: 'star' },
+                    { number: 6, shape: 'diamond' },
+                    { number: 7, shape: 'star' }
+                ],
+                distractors: [
+                    { number: 1, shape: 'diamond' },
+                    { number: 2, shape: 'star' },
+                    { number: 3, shape: 'square' }
+                ]
+            },
+            // LEVEL 18: 2 Pola (Angka Ganjil + Warna) -> 1 Kuning, 3 Merah, 5 Kuning, 7 Merah...
+            {
+                id: 18,
+                title: "Level 18: Angka Ganjil & Warna",
+                ruleText: "1 🟡 Kuning ➔ 3 🔴 Merah ➔ 5 🟡 Kuning",
+                path: [[0,0], [1,0], [2,0], [2,1], [2,2], [3,2], [3,3]],
+                pattern: [
+                    { number: 1, color: 'yellow' },
+                    { number: 3, color: 'red' },
+                    { number: 5, color: 'yellow' },
+                    { number: 7, color: 'red' },
+                    { number: 9, color: 'yellow' },
+                    { number: 11, color: 'red' },
+                    { number: 13, color: 'yellow' }
+                ],
+                distractors: [
+                    { number: 2, color: 'yellow' },
+                    { number: 3, color: 'yellow' },
+                    { number: 5, color: 'red' }
+                ]
+            },
+            // LEVEL 19: 2 Pola (Warna & Bentuk A-A-B) -> Ungu Hati - Ungu Hati - Hijau Lingkaran
+            {
+                id: 19,
+                title: "Level 19: Pola Ganda A-A-B",
+                ruleText: "🟣❤️ Ungu Hati ➔ 🟣❤️ Ungu Hati ➔ 🟢⚪ Hijau Lingkaran",
+                path: [[0,0], [0,1], [1,1], [1,2], [2,2], [2,3], [3,3]],
+                pattern: [
+                    { color: 'purple', shape: 'heart' },
+                    { color: 'purple', shape: 'heart' },
+                    { color: 'green', shape: 'circle' },
+                    { color: 'purple', shape: 'heart' },
+                    { color: 'purple', shape: 'heart' },
+                    { color: 'green', shape: 'circle' },
+                    { color: 'purple', shape: 'heart' }
+                ],
+                distractors: [
+                    { color: 'purple', shape: 'circle' },
+                    { color: 'green', shape: 'heart' }
+                ]
+            },
+            // LEVEL 20: MASTER LEVEL (Angka + Warna + Bentuk)
+            {
+                id: 20,
+                title: "Level 20: Pola Master Labirin",
+                ruleText: "1🔴⭐ Merah Bintang ➔ 2🔵🟦 Biru Persegi",
+                path: [[0,0], [1,0], [1,1], [2,1], [2,2], [3,2], [3,3]],
+                pattern: [
+                    { number: 1, color: 'red', shape: 'star' },
+                    { number: 2, color: 'blue', shape: 'square' },
+                    { number: 3, color: 'red', shape: 'star' },
+                    { number: 4, color: 'blue', shape: 'square' },
+                    { number: 5, color: 'red', shape: 'star' },
+                    { number: 6, color: 'blue', shape: 'square' },
+                    { number: 7, color: 'red', shape: 'star' }
+                ],
+                distractors: [
+                    { number: 1, color: 'blue', shape: 'star' },
+                    { number: 2, color: 'red', shape: 'square' },
+                    { number: 3, color: 'red', shape: 'square' }
+                ]
+            }
+        ];
+
+        // GAME STATE IN MEMORY (Resets on Refresh)
+        let currentLevelIdx = 0;
+        let maxUnlockedLevelIdx = 0; // Only Level 1 unlocked initially
+        let currentPathStep = 0;
+        let currentMistakes = 0;
+        
+        // Track stats for all 20 levels
+        // { attempted: false, completed: false, lastErrors: null, isSuccess: false }
+        const levelStats = Array.from({ length: 20 }, () => ({
+            attempted: false,
+            completed: false,
+            lastErrors: null,
+            isSuccess: false
+        }));
+
+        let activeGridData = []; // 4x4 matrix representation
+
+        function showLevelSelect() {
+            document.getElementById('view-game').classList.add('hidden');
+            document.getElementById('modal-win').classList.add('hidden');
+            document.getElementById('view-level-select').classList.remove('hidden');
+
+            const gridContainer = document.getElementById('level-grid');
+            gridContainer.innerHTML = '';
+
+            LEVELS.forEach((level, idx) => {
+                const isUnlocked = idx <= maxUnlockedLevelIdx;
+                const stats = levelStats[idx];
+
+                const btn = document.createElement('button');
+                btn.className = `p-2.5 sm:p-3 rounded-2xl flex flex-col items-center justify-center transition-all relative border-2 ${
+                    isUnlocked 
+                        ? 'bg-amber-100 hover:bg-amber-200 border-amber-300 text-amber-950 shadow-md active:scale-95 cursor-pointer' 
+                        : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-75'
+                }`;
+
+                if (isUnlocked) {
+                    btn.onclick = () => startLevel(idx);
+                }
+
+                // Level Number
+                let contentHTML = `<span class="text-base sm:text-lg font-black">${level.id}</span>`;
+
+                if (!isUnlocked) {
+                    contentHTML += `<span class="text-xs mt-1">🔒</span>`;
+                } else if (stats.completed) {
+                    if (stats.isSuccess) {
+                        contentHTML += `
+                            <span class="mt-1 bg-emerald-500 text-white font-extrabold text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full uppercase shadow">
+                                SUKSES
+                            </span>`;
+                    } else {
+                        contentHTML += `
+                            <span class="mt-1 text-[10px] text-rose-600 font-bold bg-rose-50 px-1 rounded border border-rose-200">
+                                ❌ ${stats.lastErrors}
+                            </span>`;
+                    }
+                } else if (stats.attempted) {
+                    contentHTML += `
+                        <span class="mt-1 text-[10px] text-rose-600 font-bold bg-rose-50 px-1 rounded border border-rose-200">
+                            ❌ ${stats.lastErrors}
+                        </span>`;
+                } else {
+                    contentHTML += `<span class="text-[10px] text-amber-700 font-bold mt-1">Main</span>`;
+                }
+
+                btn.innerHTML = contentHTML;
+                gridContainer.appendChild(btn);
+            });
+        }
+
+        function startLevel(idx) {
+            currentLevelIdx = idx;
+            currentPathStep = 0;
+            currentMistakes = 0;
+
+            const level = LEVELS[idx];
+
+            document.getElementById('game-level-title').innerText = level.title;
+            document.getElementById('pattern-rule-text').innerHTML = level.ruleText;
+            document.getElementById('mistake-count').innerText = '0';
+
+            // Generate 4x4 Grid Matrix filled with Path Pattern & Distractors
+            buildGridData(level);
+
+            // Render 4x4 HTML Grid
+            renderMazeGrid();
+
+            document.getElementById('view-level-select').classList.add('hidden');
+            document.getElementById('view-game').classList.remove('hidden');
+            document.getElementById('view-game').classList.add('flex');
+        }
+
+        function restartLevel() {
+            startLevel(currentLevelIdx);
+        }
+
+        function buildGridData(level) {
+            activeGridData = Array.from({ length: 4 }, () => Array(4).fill(null));
+
+            // 1. Fill Path Cells with exact sequence
+            level.path.forEach((coords, stepIdx) => {
+                const [r, c] = coords;
+                activeGridData[r][c] = {
+                    ...level.pattern[stepIdx],
+                    isPath: true,
+                    pathStep: stepIdx
+                };
+            });
+
+            // 2. Fill Remaining Non-Path Cells with Distractors
+            let distractorIdx = 0;
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    if (!activeGridData[r][c]) {
+                        const dist = level.distractors[distractorIdx % level.distractors.length];
+                        distractorIdx++;
+                        activeGridData[r][c] = {
+                            ...dist,
+                            isPath: false,
+                            pathStep: -1
+                        };
+                    }
+                }
+            }
+        }
+
+        function renderMazeGrid() {
+            const mazeContainer = document.getElementById('maze-grid');
+            mazeContainer.innerHTML = '';
+
+            const level = LEVELS[currentLevelIdx];
+            const currentPos = level.path[currentPathStep];
+
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    const cellData = activeGridData[r][c];
+                    const isStart = (r === 0 && c === 0);
+                    const isFinish = (r === 3 && c === 3);
+                    const isCurrentPlayer = (r === currentPos[0] && c === currentPos[1]);
+                    
+                    // Check if cell has been successfully stepped on
+                    let isVisited = false;
+                    for (let s = 0; s <= currentPathStep; s++) {
+                        if (level.path[s][0] === r && level.path[s][1] === c) {
+                            isVisited = true;
+                            break;
+                        }
+                    }
+
+                    const cellBtn = document.createElement('button');
+                    cellBtn.id = `cell-${r}-${c}`;
+                    
+                    let bgStyle = "bg-white border-slate-300 hover:bg-slate-50";
+                    if (isVisited) {
+                        bgStyle = "bg-emerald-100 border-emerald-400 shadow-md";
+                    }
+                    if (isCurrentPlayer) {
+                        bgStyle = "bg-amber-200 border-amber-500 ring-4 ring-amber-300 shadow-lg scale-105 z-10";
+                    }
+
+                    cellBtn.className = `relative rounded-xl border-2 flex flex-col items-center justify-center p-1 transition-all ${bgStyle}`;
+                    cellBtn.onclick = () => handleCellClick(r, c);
+
+                    // Render Icon / Shape / Color / Number inside cell
+                    let innerContent = '';
+
+                    // Shape or Color SVG
+                    if (cellData.shape) {
+                        const shapeColor = cellData.color ? COLOR_MAP[cellData.color] : '#3b82f6';
+                        innerContent += SHAPES[cellData.shape](shapeColor);
+                    } else if (cellData.color) {
+                        // Colored Circle
+                        innerContent += `<div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-slate-800 shadow" style="background-color: ${COLOR_MAP[cellData.color]}"></div>`;
+                    }
+
+                    // Number Overlay
+                    if (cellData.number !== undefined) {
+                        innerContent += `<span class="text-xl sm:text-2xl font-black text-slate-800 ${cellData.shape || cellData.color ? 'absolute drop-shadow-md text-white font-black' : ''}">${cellData.number}</span>`;
+                    }
+
+                    // Start / Finish Indicators
+                    if (isStart) {
+                        innerContent += `<span class="absolute top-0.5 left-1 text-[10px] font-bold text-emerald-700 bg-emerald-200/90 px-1 rounded">START</span>`;
+                    }
+                    if (isFinish) {
+                        innerContent += `<span class="absolute bottom-0.5 right-1 text-[10px] font-bold text-amber-800 bg-amber-200/90 px-1 rounded">FINISH 🏁</span>`;
+                    }
+
+                    // Avatar Player Badge
+                    if (isCurrentPlayer) {
+                        innerContent += `<div class="absolute -top-2 -right-2 text-xl bounce-custom bg-white rounded-full shadow p-0.5 border">🐰</div>`;
+                    }
+
+                    cellBtn.innerHTML = innerContent;
+                    mazeContainer.appendChild(cellBtn);
+                }
+            }
+        }
+
+        function handleCellClick(r, c) {
+            const level = LEVELS[currentLevelIdx];
+            const nextStepIdx = currentPathStep + 1;
+
+            // Check if player clicked the exact expected next step in the maze path
+            if (nextStepIdx < level.path.length) {
+                const targetCoords = level.path[nextStepIdx];
+                if (targetCoords[0] === r && targetCoords[1] === c) {
+                    // Correct step!
+                    playSound('step');
+                    currentPathStep = nextStepIdx;
+                    renderMazeGrid();
+
+                    // Check if reached Finish
+                    if (currentPathStep === level.path.length - 1) {
+                        handleLevelComplete();
+                    }
+                    return;
+                }
+            }
+
+            // If player clicks current cell, ignore
+            const currentPos = level.path[currentPathStep];
+            if (currentPos[0] === r && currentPos[1] === c) {
+                return;
+            }
+
+            // Wrong step! Register error mistake
+            playSound('error');
+            currentMistakes++;
+            document.getElementById('mistake-count').innerText = currentMistakes;
+
+            // Animate cell shake
+            const cellElem = document.getElementById(`cell-${r}-${c}`);
+            if (cellElem) {
+                cellElem.classList.add('shake', 'border-rose-500');
+                setTimeout(() => cellElem.classList.remove('shake', 'border-rose-500'), 400);
+            }
+        }
+
+        function handleLevelComplete() {
+            playSound('win');
+            confetti({
+                particleCount: 80,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+
+            // Update Level Stats
+            const isSuccess = (currentMistakes === 0);
+            levelStats[currentLevelIdx] = {
+                attempted: true,
+                completed: true,
+                lastErrors: currentMistakes,
+                isSuccess: isSuccess
+            };
+
+            // Unlock Next Level
+            if (currentLevelIdx === maxUnlockedLevelIdx && maxUnlockedLevelIdx < 19) {
+                maxUnlockedLevelIdx++;
+            }
+
+            // Show Win Modal
+            setTimeout(() => {
+                const modal = document.getElementById('modal-win');
+                const badge = document.getElementById('win-badge');
+                const errorsText = document.getElementById('win-errors-text');
+                const statsCard = document.getElementById('win-stats-card');
+
+                if (isSuccess) {
+                    badge.className = "inline-block bg-emerald-500 text-white font-extrabold text-xs px-3 py-1 rounded-full mb-1 shadow";
+                    badge.innerText = "SUKSES TANPA SALAH! ✨";
+                    errorsText.innerText = "Luar biasa! 0 kesalahan!";
+                    statsCard.className = "my-4 p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-center";
+                } else {
+                    badge.className = "inline-block bg-amber-500 text-white font-extrabold text-xs px-3 py-1 rounded-full mb-1 shadow";
+                    badge.innerText = "LEVEL SELESAI!";
+                    errorsText.innerText = `Jumlah kesalahan terakhir: ${currentMistakes}`;
+                    statsCard.className = "my-4 p-3 bg-amber-50 rounded-2xl border border-amber-200 text-center";
+                }
+
+                // If on final level (Level 20)
+                const btnNext = document.getElementById('btn-next-level');
+                if (currentLevelIdx >= 19) {
+                    btnNext.innerText = "Semua Level Selesai! 🎉";
+                    btnNext.onclick = showLevelSelect;
+                } else {
+                    btnNext.innerText = "Level Berikutnya ➔";
+                    btnNext.onclick = nextLevel;
+                }
+
+                modal.classList.remove('hidden');
+            }, 400);
+        }
+
+        function nextLevel() {
+            document.getElementById('modal-win').classList.add('hidden');
+            if (currentLevelIdx < 19) {
+                startLevel(currentLevelIdx + 1);
+            } else {
+                showLevelSelect();
+            }
+        }
+
+        window.onload = function() {
+            showLevelSelect();
+        };
+    </script>
+</body>
+</html>
