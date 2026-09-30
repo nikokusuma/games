@@ -62,18 +62,18 @@
         <!-- VIEW 1: LEVEL SELECTION SCREEN -->
         <main id="view-level-select" class="w-full bg-white/95 backdrop-blur-md rounded-3xl p-4 sm:p-6 shadow-xl border-4 border-white text-center">
             <div class="mb-4">
-                <h2 class="text-2xl font-bold text-slate-800">Pilih Level Labirin</h2>
+                <h2 class="text-2xl font-bold text-slate-800">Pilih Level Labirin (25 Level)</h2>
                 <p class="text-xs sm:text-sm text-slate-500 mt-1">Selesaikan level satu per satu untuk membuka level berikutnya!</p>
             </div>
 
-            <!-- Level Grid (20 Levels) -->
-            <div id="level-grid" class="grid grid-cols-4 sm:grid-cols-5 gap-2.5 sm:gap-3 my-4">
+            <!-- Level Grid (25 Levels) -->
+            <div id="level-grid" class="grid grid-cols-5 gap-2 sm:gap-2.5 my-4">
                 <!-- Dynamically generated levels -->
             </div>
 
             <div class="mt-4 p-3 bg-sky-50 rounded-2xl text-xs text-sky-700 flex items-center justify-center gap-2 border border-sky-200">
                 <span class="text-base">💡</span>
-                <span>Pola dapat berupa <b>Warna</b>, <b>Angka</b>, atau <b>Bentuk</b>.</span>
+                <span>Level 21–25 adalah <b>Pola Rahasia</b> (tanpa petunjuk)!</span>
             </div>
         </main>
 
@@ -561,6 +561,91 @@
                     { number: 2, color: 'red', shape: 'square' },
                     { number: 3, color: 'red', shape: 'square' }
                 ]
+            },
+
+            /* LEVEL 21 - 25: LEVEL RAHASIA (TANPA PETUNJUK POLA) */
+            // LEVEL 21: Secret 3 Colors (Merah -> Hijau -> Biru -> Merah...)
+            {
+                id: 21,
+                title: "Level 21: Pola Rahasia 1",
+                ruleText: "❓ POLA RAHASIA",
+                hideHint: true,
+                path: [[0,0], [0,1], [1,1], [2,1], [2,2], [3,2], [3,3]],
+                pattern: [
+                    { color: 'red' }, { color: 'green' }, { color: 'blue' },
+                    { color: 'red' }, { color: 'green' }, { color: 'blue' }, { color: 'red' }
+                ],
+                distractors: [{ color: 'yellow' }, { color: 'purple' }, { color: 'orange' }]
+            },
+            // LEVEL 22: Secret Number Skip 2 (1 -> 3 -> 5 -> 7 -> 9 -> 11 -> 13)
+            {
+                id: 22,
+                title: "Level 22: Pola Rahasia 2",
+                ruleText: "❓ POLA RAHASIA",
+                hideHint: true,
+                path: [[0,0], [1,0], [1,1], [1,2], [2,2], [2,3], [3,3]],
+                pattern: [
+                    { number: 1 }, { number: 3 }, { number: 5 }, { number: 7 },
+                    { number: 9 }, { number: 11 }, { number: 13 }
+                ],
+                distractors: [{ number: 2 }, { number: 4 }, { number: 6 }, { number: 8 }]
+            },
+            // LEVEL 23: Secret 3 Shapes (Bintang -> Lingkaran -> Segitiga)
+            {
+                id: 23,
+                title: "Level 23: Pola Rahasia 3",
+                ruleText: "❓ POLA RAHASIA",
+                hideHint: true,
+                path: [[0,0], [0,1], [0,2], [1,2], [2,2], [2,3], [3,3]],
+                pattern: [
+                    { shape: 'star' }, { shape: 'circle' }, { shape: 'triangle' },
+                    { shape: 'star' }, { shape: 'circle' }, { shape: 'triangle' }, { shape: 'star' }
+                ],
+                distractors: [{ shape: 'square' }, { shape: 'heart' }, { shape: 'diamond' }]
+            },
+            // LEVEL 24: Secret Dual Pattern (Angka & Warna) -> 1 Merah, 2 Biru, 3 Merah...
+            {
+                id: 24,
+                title: "Level 24: Pola Rahasia 4",
+                ruleText: "❓ POLA RAHASIA",
+                hideHint: true,
+                path: [[0,0], [1,0], [2,0], [2,1], [2,2], [3,2], [3,3]],
+                pattern: [
+                    { number: 1, color: 'red' },
+                    { number: 2, color: 'blue' },
+                    { number: 3, color: 'red' },
+                    { number: 4, color: 'blue' },
+                    { number: 5, color: 'red' },
+                    { number: 6, color: 'blue' },
+                    { number: 7, color: 'red' }
+                ],
+                distractors: [
+                    { number: 1, color: 'blue' },
+                    { number: 2, color: 'red' },
+                    { number: 3, color: 'green' }
+                ]
+            },
+            // LEVEL 25: Grandmaster Secret Pattern (Angka + Warna + Bentuk)
+            {
+                id: 25,
+                title: "Level 25: Pola Rahasia Master",
+                ruleText: "❓ POLA RAHASIA MASTER",
+                hideHint: true,
+                path: [[0,0], [0,1], [1,1], [2,1], [2,2], [3,2], [3,3]],
+                pattern: [
+                    { number: 1, color: 'yellow', shape: 'star' },
+                    { number: 2, color: 'purple', shape: 'heart' },
+                    { number: 3, color: 'yellow', shape: 'star' },
+                    { number: 4, color: 'purple', shape: 'heart' },
+                    { number: 5, color: 'yellow', shape: 'star' },
+                    { number: 6, color: 'purple', shape: 'heart' },
+                    { number: 7, color: 'yellow', shape: 'star' }
+                ],
+                distractors: [
+                    { number: 1, color: 'purple', shape: 'star' },
+                    { number: 2, color: 'yellow', shape: 'heart' },
+                    { number: 3, color: 'green', shape: 'square' }
+                ]
             }
         ];
 
@@ -570,9 +655,9 @@
         let currentPathStep = 0;
         let currentMistakes = 0;
         
-        // Track stats for all 20 levels
+        // Track stats for all 25 levels
         // { attempted: false, completed: false, lastErrors: null, isSuccess: false }
-        const levelStats = Array.from({ length: 20 }, () => ({
+        const levelStats = Array.from({ length: 25 }, () => ({
             attempted: false,
             completed: false,
             lastErrors: null,
@@ -643,7 +728,16 @@
             const level = LEVELS[idx];
 
             document.getElementById('game-level-title').innerText = level.title;
-            document.getElementById('pattern-rule-text').innerHTML = level.ruleText;
+            
+            // Check if level is a mystery/secret level with hidden hints
+            if (level.hideHint) {
+                document.getElementById('pattern-desc-title').innerText = "❓ PETUNJUK POLA: RAHASIA";
+                document.getElementById('pattern-rule-text').innerHTML = "🔎 Cari & temukan polanya sendiri di dalam labirin!";
+            } else {
+                document.getElementById('pattern-desc-title').innerText = "Petunjuk Pola";
+                document.getElementById('pattern-rule-text').innerHTML = level.ruleText;
+            }
+
             document.getElementById('mistake-count').innerText = '0';
 
             // Generate 4x4 Grid Matrix filled with Path Pattern & Distractors
@@ -822,7 +916,7 @@
             };
 
             // Unlock Next Level
-            if (currentLevelIdx === maxUnlockedLevelIdx && maxUnlockedLevelIdx < 19) {
+            if (currentLevelIdx === maxUnlockedLevelIdx && maxUnlockedLevelIdx < 24) {
                 maxUnlockedLevelIdx++;
             }
 
@@ -845,9 +939,9 @@
                     statsCard.className = "my-4 p-3 bg-amber-50 rounded-2xl border border-amber-200 text-center";
                 }
 
-                // If on final level (Level 20)
+                // If on final level (Level 25)
                 const btnNext = document.getElementById('btn-next-level');
-                if (currentLevelIdx >= 19) {
+                if (currentLevelIdx >= 24) {
                     btnNext.innerText = "Semua Level Selesai! 🎉";
                     btnNext.onclick = showLevelSelect;
                 } else {
@@ -861,7 +955,7 @@
 
         function nextLevel() {
             document.getElementById('modal-win').classList.add('hidden');
-            if (currentLevelIdx < 19) {
+            if (currentLevelIdx < 24) {
                 startLevel(currentLevelIdx + 1);
             } else {
                 showLevelSelect();
