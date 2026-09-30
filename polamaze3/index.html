@@ -47,7 +47,7 @@
         <div class="flex items-center gap-2">
             <span class="text-3xl">🧩</span>
             <div>
-                <h1 class="text-xl sm:text-2xl font-bold text-indigo-700 leading-tight">Pola Labirin</h1>
+                <h1 class="text-xl sm:text-2xl font-bold text-indigo-700 leading-tight">Pola Labirin 30 Level</h1>
                 <p class="text-xs text-indigo-500 font-semibold">Petualangan Logika Kelas 3 SD</p>
             </div>
         </div>
@@ -60,13 +60,13 @@
 
         <!-- VIEW 1: LEVEL SELECTOR -->
         <div id="view-level-select" class="w-full bg-white/90 backdrop-blur rounded-3xl p-4 sm:p-6 shadow-xl border-4 border-indigo-100 flex flex-col items-center">
-            <div class="text-center mb-5">
-                <h2 class="text-2xl font-bold text-slate-800">Pilih Level</h2>
-                <p class="text-xs sm:text-sm text-slate-500">Selesaikan level berurutan untuk membuka level berikutnya!</p>
+            <div class="text-center mb-4">
+                <h2 class="text-2xl font-bold text-slate-800">Pilih Level (1 - 30)</h2>
+                <p class="text-xs sm:text-sm text-slate-500">Selesaikan level berurutan! Level 26-30 pola akan diacak jika salah.</p>
             </div>
 
-            <!-- Level Grid (1 to 25) -->
-            <div id="level-grid" class="grid grid-cols-5 gap-2 sm:gap-3 w-full max-h-[60vh] overflow-y-auto p-1">
+            <!-- Level Grid (1 to 30) -->
+            <div id="level-grid" class="grid grid-cols-5 sm:grid-cols-6 gap-2 sm:gap-2.5 w-full max-h-[60vh] overflow-y-auto p-1">
                 <!-- Dynamically generated levels -->
             </div>
         </div>
@@ -87,7 +87,7 @@
             </div>
 
             <!-- Pattern Hint Box -->
-            <div id="hint-box" class="w-full bg-indigo-50 border-2 border-indigo-200 rounded-2xl p-3 mb-4 text-center shadow-inner">
+            <div id="hint-box" class="w-full bg-indigo-50 border-2 border-indigo-200 rounded-2xl p-3 mb-3 text-center shadow-inner">
                 <p id="hint-text" class="text-xs sm:text-sm font-semibold text-indigo-900">Petunjuk Pola: ...</p>
             </div>
 
@@ -109,7 +109,7 @@
             </div>
 
             <p class="text-xs text-slate-500 mt-3 text-center">
-                Klik kotak berdampingan (atas, bawah, kiri, kanan) yang sesuai dengan urutan pola dari <span class="font-bold text-emerald-600">Mulai (🚩)</span> hingga <span class="font-bold text-amber-600">Finis (🏁)</span>!
+                Klik kotak berdampingan (atas, bawah, kiri, kanan) dari <span class="font-bold text-emerald-600">Mulai (🚩)</span> hingga <span class="font-bold text-amber-600">Finis (🏁)</span>!
             </p>
         </div>
 
@@ -121,7 +121,7 @@
             <h3 class="text-xl font-bold text-amber-800 mb-2 flex items-center gap-2">
                 🔑 Mode Admin
             </h3>
-            <p class="text-xs text-slate-600 mb-4">Masukkan kata sandi admin untuk membuka semua level secara penuh.</p>
+            <p class="text-xs text-slate-600 mb-4">Masukkan kata sandi admin untuk membuka semua 30 level secara penuh.</p>
             
             <input type="password" id="admin-password" placeholder="Kata sandi admin..." class="w-full px-4 py-2 rounded-xl border-2 border-slate-300 focus:border-amber-500 focus:outline-none mb-4 text-center font-bold text-slate-700">
             
@@ -145,7 +145,7 @@
 
             <div class="bg-emerald-50 rounded-2xl p-3 mb-4 text-left text-xs sm:text-sm space-y-1 border border-emerald-200">
                 <div class="flex justify-between">
-                    <span class="text-slate-600">Kesalahan:</span>
+                    <span class="text-slate-600">Kesalahan Terakhir:</span>
                     <span id="modal-stat-errors" class="font-bold text-slate-800">0</span>
                 </div>
                 <div id="modal-stat-attempts-container" class="flex justify-between hidden">
@@ -170,7 +170,7 @@
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-800 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-2xl shadow-xl transition-all duration-300 opacity-0 pointer-events-none z-50">
+    <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-800 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-2xl shadow-xl transition-all duration-300 opacity-0 pointer-events-none z-50 text-center max-w-xs sm:max-w-md">
         Pesan Toast
     </div>
 
@@ -244,17 +244,16 @@
             purple: { bg: 'bg-purple-500', text: 'text-purple-500', hex: '#a855f7', name: 'Ungu' }
         };
 
-        let levelStates = Array.from({ length: 25 }, (_, i) => ({
+        let levelStates = Array.from({ length: 30 }, (_, i) => ({
             id: i + 1,
             unlocked: i === 0, // Level 1 starts unlocked
             completed: false,
             lastErrors: null,
             isSuccess: false, // True if last error === 0
-            attempts21_25: 0 // Track attempts for levels 21-25
+            attempts: 0 // Track attempts for levels 21-30
         }));
 
         let currentLevelIdx = 0;
-        let currentStepIdx = 0;
         let errorsThisRun = 0;
         let attemptsThisRun = 1;
         let activePath = [];
@@ -274,7 +273,7 @@
             { id: 9, title: 'Level 9: Warna + Bentuk 3-Step', hint: 'Pola: Merah Segitiga 🔺 ➔ Kuning Bintang ★ ➔ Hijau Hati ♥', ruleType: ['color', 'shape'], seq: [{c:'red', s:'triangle'}, {c:'yellow', s:'star'}, {c:'green', s:'heart'}] },
             { id: 10, title: 'Level 10: Angka + Bentuk (+5)', hint: 'Pola: 5 Bintang ★ ➔ 10 Lingkaran ● ➔ 15 Bintang ★', ruleType: ['number', 'shape'], seqNum: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65], seq: [{s:'star'}, {s:'circle'}] },
             { id: 11, title: 'Level 11: Warna + Angka (Genap)', hint: 'Pola: Biru (2) ➔ Ungu (4) ➔ Biru (6) ➔ Ungu (8)', ruleType: ['color', 'number'], seqNum: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26], seq: [{c:'blue'}, {c:'purple'}] },
-            { id: 12, title: 'Level 12: Bentuk + Warna', hint: 'Pola: Persegi Hijau 🟩 ➔ Hati Merah ❤️ ➔ Bintang Kuning ⭐️️', ruleType: ['shape', 'color'], seq: [{s:'square', c:'green'}, {s:'heart', c:'red'}, {s:'star', c:'yellow'}] },
+            { id: 12, title: 'Level 12: Bentuk + Warna', hint: 'Pola: Persegi Hijau 🟩 ➔ Hati Merah ❤️ ➔ Bintang Kuning ⭐', ruleType: ['shape', 'color'], seq: [{s:'square', c:'green'}, {s:'heart', c:'red'}, {s:'star', c:'yellow'}] },
 
             // LEVEL 13-20 (Maksimal 3 Kombinasi Pola: Angka, Warna, & Bentuk)
             { id: 13, title: 'Level 13: 3 Kombinasi Sederhana', hint: 'Pola: (1) Merah Bintang ★ ➔ (2) Biru Lingkaran ●', ruleType: ['number', 'color', 'shape'], seqNum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], seq: [{c:'red', s:'star'}, {c:'blue', s:'circle'}] },
@@ -291,7 +290,14 @@
             { id: 22, title: 'Level 22: Rahasia 2', hint: '❓ Petunjuk: Rahasia! Perhatikan baik-baik angka dan warnanya.', ruleType: ['number', 'color'], seqNum: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26], seq: [{c:'yellow'}, {c:'purple'}] },
             { id: 23, title: 'Level 23: Rahasia 3', hint: '❓ Petunjuk: Rahasia! Pola gabungan Bentuk dan Angka.', ruleType: ['shape', 'number'], seqNum: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130], seq: [{s:'heart'}, {s:'star'}] },
             { id: 24, title: 'Level 24: Rahasia 4', hint: '❓ Petunjuk: Rahasia! Ada 3 kombinasi tersembunyi.', ruleType: ['number', 'color', 'shape'], seqNum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], seq: [{c:'green', s:'star'}, {c:'red', s:'triangle'}] },
-            { id: 25, title: 'Level 25: Rahasia Puncak', hint: '❓ Petunjuk: Misi Terakhir! Cari tahu 3 kombinasi pola tersembunyi!', ruleType: ['number', 'color', 'shape'], seqNum: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65], seq: [{c:'purple', s:'square'}, {c:'yellow', s:'circle'}, {c:'blue', s:'heart'}] }
+            { id: 25, title: 'Level 25: Rahasia Puncak', hint: '❓ Petunjuk: Misi Terakhir Rahasia! Cari tahu 3 kombinasi pola tersembunyi!', ruleType: ['number', 'color', 'shape'], seqNum: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65], seq: [{c:'purple', s:'square'}, {c:'yellow', s:'circle'}, {c:'blue', s:'heart'}] },
+
+            // LEVEL 26-30 (DINAMIS / POLA BERUBAH SAAT SALAH)
+            { id: 26, title: 'Level 26: Pola Acak 1', hint: '⚠️ AWAS! Pola & Jalur akan DIACAK ulang jika kamu melakukan kesalahan!', ruleType: ['color', 'shape'], isDynamic: true },
+            { id: 27, title: 'Level 27: Pola Acak 2', hint: '⚠️ AWAS! Pola Angka + Warna selalu berubah setiap kali salah!', ruleType: ['number', 'color'], isDynamic: true },
+            { id: 28, title: 'Level 28: Pola Acak 3', hint: '⚠️ AWAS! Kombinasi 3 Pola Dinamis. Jangan asal klik!', ruleType: ['number', 'color', 'shape'], isDynamic: true },
+            { id: 29, title: 'Level 29: Pola Acak 4', hint: '⚠️ AWAS! Jalur labirin dan pola bergeser setiap terjadi kesalahan!', ruleType: ['number', 'color', 'shape'], isDynamic: true },
+            { id: 30, title: 'Level 30: Pola Acak Puncak', hint: '🔥 TANTANGAN TERAKHIR! Pola Super Acak Dinamis. Fokus dan temukan jalurnya!', ruleType: ['number', 'color', 'shape'], isDynamic: true }
         ];
 
         /* Fixed Valid Paths on 5x5 Grid from (0,0) to (4,4) */
@@ -303,7 +309,9 @@
             // Path 2 (Length 9)
             [[0,0],[0,1],[1,1],[2,1],[2,2],[2,3],[3,3],[4,3],[4,4]],
             // Path 3 (Length 11)
-            [[0,0],[1,0],[1,1],[1,2],[2,2],[3,2],[3,3],[3,4],[4,4]]
+            [[0,0],[1,0],[1,1],[1,2],[2,2],[3,2],[3,3],[3,4],[4,4]],
+            // Path 4 (Length 13)
+            [[0,0],[0,1],[1,1],[1,0],[2,0],[3,0],[3,1],[3,2],[2,2],[2,3],[2,4],[3,4],[4,4]]
         ];
 
         let currentGridData = [];
@@ -315,7 +323,7 @@
 
             levelStates.forEach((lvl, index) => {
                 const btn = document.createElement('button');
-                btn.className = `relative p-3 rounded-2xl flex flex-col items-center justify-between border-2 transition shadow-sm h-24 ${
+                btn.className = `relative p-2 rounded-2xl flex flex-col items-center justify-between border-2 transition shadow-sm h-22 sm:h-24 ${
                     lvl.unlocked 
                         ? 'bg-gradient-to-b from-indigo-50 to-white border-indigo-300 hover:border-indigo-500 hover:shadow-md cursor-pointer' 
                         : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-75'
@@ -327,17 +335,17 @@
                 } else {
                     let errText = lvl.lastErrors !== null ? `Salah: ${lvl.lastErrors}` : 'Belum coba';
                     let successBadge = lvl.isSuccess 
-                        ? `<span class="bg-emerald-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm mt-1">SUKSES ✨</span>`
-                        : `<span class="text-[10px] text-slate-500 font-semibold mt-1">${errText}</span>`;
+                        ? `<span class="bg-emerald-500 text-white text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm mt-0.5">SUKSES ✨</span>`
+                        : `<span class="text-[9px] sm:text-[10px] text-slate-500 font-semibold mt-0.5">${errText}</span>`;
 
                     let attemptBadge = '';
-                    if (lvl.id >= 21 && lvl.attempts21_25 > 0) {
-                        attemptBadge = `<span class="text-[9px] text-purple-600 font-bold">Coba: ${lvl.attempts21_25}x</span>`;
+                    if (lvl.id >= 21 && lvl.attempts > 0) {
+                        attemptBadge = `<span class="text-[8px] sm:text-[9px] text-purple-600 font-bold">Coba: ${lvl.attempts}x</span>`;
                     }
 
                     statusHtml = `
-                        <span class="text-xs font-bold text-slate-500">Level</span>
-                        <span class="text-xl font-extrabold text-indigo-700 leading-none">${lvl.id}</span>
+                        <span class="text-[10px] font-bold text-slate-500">Level</span>
+                        <span class="text-lg sm:text-xl font-extrabold text-indigo-700 leading-none">${lvl.id}</span>
                         ${successBadge}
                         ${attemptBadge}
                     `;
@@ -358,18 +366,16 @@
             const lvlState = levelStates[idx];
             const cfg = levelConfigs[idx];
 
-            currentStepIdx = 0;
             errorsThisRun = 0;
 
             if (lvlState.id >= 21) {
-                // Increment total attempt counter when starting/re-attempting level 21-25
-                lvlState.attempts21_25 += 1;
-                attemptsThisRun = lvlState.attempts21_25;
+                // Increment total attempt counter when starting or re-attempting level 21-30
+                lvlState.attempts += 1;
+                attemptsThisRun = lvlState.attempts;
             }
 
-            // Select path based on level index
-            currentPathCoords = PRESET_PATHS[idx % PRESET_PATHS.length];
-            generateGridData(cfg, currentPathCoords);
+            // Pick path and layout
+            setupGridForCurrentLevel(cfg);
 
             // Update UI elements
             document.getElementById('game-level-title').innerText = cfg.title;
@@ -391,6 +397,51 @@
             // Render Board
             activePath = [currentPathCoords[0]]; // Start at (0,0)
             renderBoard();
+        }
+
+        function setupGridForCurrentLevel(cfg) {
+            // Choose path dynamically or deterministically
+            const pathIdx = Math.floor(Math.random() * PRESET_PATHS.length);
+            currentPathCoords = PRESET_PATHS[pathIdx];
+
+            // If it's a dynamic level (26-30), generate random sequence combinations
+            if (cfg.isDynamic) {
+                cfg.seq = generateRandomSequence(cfg.ruleType);
+                cfg.seqNum = generateRandomNumbers();
+            }
+
+            generateGridData(cfg, currentPathCoords);
+        }
+
+        function generateRandomSequence(ruleTypes) {
+            const shapeKeys = Object.keys(SHAPES);
+            const colorKeys = Object.keys(COLORS);
+            
+            // Random sequence length (2 or 3 steps)
+            const seqLen = Math.random() > 0.5 ? 2 : 3;
+            const seq = [];
+
+            for (let i = 0; i < seqLen; i++) {
+                let item = {};
+                if (ruleTypes.includes('shape')) {
+                    item.s = shapeKeys[Math.floor(Math.random() * shapeKeys.length)];
+                }
+                if (ruleTypes.includes('color')) {
+                    item.c = colorKeys[Math.floor(Math.random() * colorKeys.length)];
+                }
+                seq.push(item);
+            }
+            return seq;
+        }
+
+        function generateRandomNumbers() {
+            const startNum = Math.floor(Math.random() * 5) + 1;
+            const step = Math.floor(Math.random() * 4) + 1;
+            const nums = [];
+            for (let i = 0; i < 15; i++) {
+                nums.push(startNum + (i * step));
+            }
+            return nums;
         }
 
         function generateGridData(cfg, pathCoords) {
@@ -460,7 +511,6 @@
 
                     // Check if visited in path
                     const isVisited = activePath.some(p => p[0] === r && p[1] === c);
-                    const isCurrent = currentPos[0] === r && currentPos[1] === c;
                     const isStart = r === 0 && c === 0;
                     const isFinish = r === 4 && c === 4;
 
@@ -485,8 +535,8 @@
 
                     // Render start / finish flag badge
                     let badge = '';
-                    if (isStart) badge = `<span class="absolute top-0.5 left-0.5 text-[10px] font-bold bg-emerald-500 text-white px-1 rounded-md shadow">Start</span>`;
-                    if (isFinish) badge = `<span class="absolute top-0.5 right-0.5 text-[10px] font-bold bg-amber-500 text-white px-1 rounded-md shadow">Finis</span>`;
+                    if (isStart) badge = `<span class="absolute top-0.5 left-0.5 text-[9px] font-bold bg-emerald-500 text-white px-1 rounded-md shadow">Start</span>`;
+                    if (isFinish) badge = `<span class="absolute top-0.5 right-0.5 text-[9px] font-bold bg-amber-500 text-white px-1 rounded-md shadow">Finis</span>`;
 
                     tileBtn.innerHTML = `
                         ${badge}
@@ -537,7 +587,14 @@
                 boardContainer.classList.add('shake');
                 setTimeout(() => boardContainer.classList.remove('shake'), 400);
 
-                showToast("Aduh, polanya kurang tepat! Kembali ke Start.");
+                const cfg = levelConfigs[currentLevelIdx];
+                if (cfg.isDynamic) {
+                    // Level 26-30 requirement: Regenerate pattern and path immediately on mistake!
+                    setupGridForCurrentLevel(cfg);
+                    showToast("🔀 Ups, langkah salah! Pola dan jalur telah DIACAK kembali!");
+                } else {
+                    showToast("Aduh, polanya kurang tepat! Kembali ke Start.");
+                }
 
                 // Reset position to Start
                 activePath = [currentPathCoords[0]];
@@ -567,7 +624,7 @@
             const attemptsContainer = document.getElementById('modal-stat-attempts-container');
             if (lvlState.id >= 21) {
                 attemptsContainer.classList.remove('hidden');
-                document.getElementById('modal-stat-attempts').innerText = lvlState.attempts21_25;
+                document.getElementById('modal-stat-attempts').innerText = lvlState.attempts;
             } else {
                 attemptsContainer.classList.add('hidden');
             }
@@ -619,10 +676,10 @@
         function submitAdminPassword() {
             const pwd = document.getElementById('admin-password').value;
             if (pwd === 'kodingthb') {
-                // Unlock all levels forcefully
+                // Unlock all 30 levels forcefully
                 levelStates.forEach(lvl => lvl.unlocked = true);
                 closeAdminModal();
-                showToast("🔑 Admin: Semua 25 Level Berhasil Dibuka!");
+                showToast("🔑 Admin: Semua 30 Level Berhasil Dibuka!");
                 renderLevelSelector();
             } else {
                 showToast("❌ Kata sandi admin salah!");
