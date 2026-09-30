@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pelatihan Mengetik 10 Jari - SD Kelas 3</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Fredoka & Nunito -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f0fdf4;
+            user-select: none;
+        }
+        h1, h2, h3, .font-fredoka {
+            font-family: 'Fredoka', cursive;
+        }
+        .key-btn {
+            transition: all 0.15s ease;
+            box-shadow: 0 4px 0 #cbd5e1;
+        }
+        .key-btn.active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #cbd5e1;
+        }
+        .key-highlight {
+            animation: pulse-border 1s infinite alternate;
+        }
+        @keyframes pulse-border {
+            0% { transform: scale(1); box-shadow: 0 0 0 0px rgba(59, 130, 246, 0.7); }
+            100% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); }
+        }
+        /* Custom Finger Color Palette */
+        .finger-pinky-left { background-color: #fecdd3; border-color: #f43f5e; color: #881337; }
+        .finger-ring-left { background-color: #fed7aa; border-color: #f97316; color: #7c2d12; }
+        .finger-middle-left { background-color: #fef08a; border-color: #eab308; color: #713f12; }
+        .finger-index-left { background-color: #bbf7d0; border-color: #22c55e; color: #14532d; }
+        .finger-thumb { background-color: #e9d5ff; border-color: #a855f7; color: #581c87; }
+        .finger-index-right { background-color: #bfdbfe; border-color: #3b82f6; color: #1e3a8a; }
+        .finger-middle-right { background-color: #c7d2fe; border-color: #6366f1; color: #312e81; }
+        .finger-ring-right { background-color: #ddd6fe; border-color: #8b5cf6; color: #4c1d95; }
+        .finger-pinky-right { background-color: #fbcfe8; border-color: #ec4899; color: #831843; }
+
+        .sea-bg {
+            background: linear-gradient(180deg, #0284c7 0%, #0369a1 50%, #075985 100%);
+        }
+        .jungle-bg {
+            background: linear-gradient(180deg, #15803d 0%, #166534 60%, #14532d 100%);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col text-slate-800">
+
+    <header class="bg-emerald-600 text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="app.showDashboard()">
+                <div class="bg-white text-emerald-600 p-2.5 rounded-2xl text-2xl font-bold shadow-inner flex items-center justify-center w-12 h-12">
+                    <i class="fa-solid fa-keyboard"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold leading-none">Mengetik 10 Jari</h1>
+                    <span class="text-xs text-emerald-200 font-medium">Khusus Siswa SD Kelas 3</span>
+                </div>
+            </div>
+
+            <!-- Header Controls -->
+            <div class="flex items-center gap-2 md:gap-4">
+                <button onclick="app.toggleSound()" id="sound-btn" class="bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition">
+                    <i class="fa-solid fa-volume-high" id="sound-icon"></i>
+                    <span class="hidden sm:inline" id="sound-text">Suara On</span>
+                </button>
+                <button onclick="app.showStatsModal()" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition shadow">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Catatan Nilai</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN APP CONTAINER -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 flex flex-col gap-6">
+
+        <section id="level-selector-section" class="bg-white rounded-3xl p-5 shadow-sm border border-emerald-100">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-slate-700 flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-emerald-500"></i> Pilih Level / Permainan:
+                </h2>
+                <span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-full">
+                    Bisa Skip Ke Level Manapun!
+                </span>
+            </div>
+
+            <!-- Level buttons wrapper -->
+            <div id="level-buttons-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 lg:grid-cols-9 gap-2">
+                <!-- Dynamically populated by JS -->
+            </div>
+        </section>
+
+        <section id="main-stage" class="flex-grow flex flex-col gap-6">
+            <!-- Top Dashboard Bar -->
+            <div class="bg-white rounded-3xl p-4 shadow-md border border-slate-100 flex flex-wrap justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <div id="level-badge" class="bg-indigo-600 text-white font-fredoka text-lg px-4 py-2 rounded-2xl shadow">
+                        Level 1
+                    </div>
+                    <div>
+                        <h3 id="level-title" class="font-bold text-slate-800 text-base md:text-lg">Mengetik Huruf f dan j</h3>
+                        <p id="level-desc" class="text-xs text-slate-500">Gunakan jari telunjuk kiri untuk 'f' dan jari telunjuk kanan untuk 'j'</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4 text-center">
+                    <div class="bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                        <span class="text-xs text-slate-400 block font-semibold">WAKTU</span>
+                        <span id="stat-time" class="text-lg font-bold text-slate-700">00:00</span>
+                    </div>
+                    <div class="bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                        <span class="text-xs text-slate-400 block font-semibold">KECEPATAN</span>
+                        <span id="stat-wpm" class="text-lg font-bold text-emerald-600">0 <small class="text-xs">WPM</small></span>
+                    </div>
+                    <div class="bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                        <span class="text-xs text-slate-400 block font-semibold">KESALAHAN</span>
+                        <span id="stat-errors" class="text-lg font-bold text-rose-500">0</span>
+                    </div>
+                    <button onclick="app.restartCurrentLevel()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 p-3 rounded-2xl transition" title="Ulangi Level">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="standard-typing-area" class="bg-white rounded-3xl p-6 md:p-8 shadow-lg border border-slate-100 flex flex-col items-center gap-6 relative overflow-hidden">
+                
+                <!-- Target Display Box -->
+                <div class="w-full max-w-3xl bg-slate-50 border-2 border-slate-200 rounded-3xl p-6 min-h-[120px] flex flex-wrap items-center justify-center gap-2 text-2xl md:text-3xl font-mono tracking-widest leading-relaxed shadow-inner" id="text-display-box">
+                    <!-- Target text characters will be generated here -->
+                </div>
+
+                <!-- Active Finger Visual Helper Banner -->
+                <div id="finger-instruction-banner" class="w-full max-w-2xl bg-indigo-50 border border-indigo-200 rounded-2xl p-3 flex items-center justify-center gap-3 shadow-sm">
+                    <div id="finger-icon-badge" class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white bg-indigo-500 shadow">
+                        <i class="fa-solid fa-hand-pointer"></i>
+                    </div>
+                    <div class="text-left">
+                        <span class="text-xs text-indigo-400 font-bold block uppercase tracking-wider">Petunjuk Jari Tangan</span>
+                        <span id="finger-instruction-text" class="text-sm md:text-base font-bold text-indigo-900">
+                            Tekan tombol <span class="underline decoration-2 text-indigo-600">F</span> menggunakan <span class="text-emerald-600">Jari Telunjuk Kiri</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Hidden Input Receiver for Mobile & Focus support -->
+                <input type="text" id="hidden-typing-input" class="opacity-0 absolute pointer-events-none" autofocus autocomplete="off" />
+            </div>
+
+            <div id="bonus-game-area" class="hidden rounded-3xl p-4 shadow-xl border border-slate-700 flex flex-col items-center gap-4 relative overflow-hidden min-h-[420px]">
+                <!-- Dynamic Header for Games -->
+                <div class="w-full flex justify-between items-center text-white z-10 bg-slate-900/60 p-3 rounded-2xl backdrop-blur-md">
+                    <div class="flex items-center gap-2">
+                        <i id="game-icon" class="fa-solid fa-gamepad text-yellow-400 text-xl"></i>
+                        <span id="game-title" class="font-bold font-fredoka text-lg">Bonus Game</span>
+                    </div>
+                    <div class="text-amber-300 font-bold font-mono text-lg" id="game-target-counter">
+                        Sisa: 20
+                    </div>
+                </div>
+
+                <!-- Game Canvas Canvas / Render Container -->
+                <div id="game-canvas-wrapper" class="w-full h-[360px] relative rounded-2xl overflow-hidden flex items-center justify-center">
+                    <!-- Rendered dynamically -->
+                </div>
+            </div>
+
+            <div id="virtual-keyboard-section" class="bg-slate-800 p-4 md:p-6 rounded-3xl shadow-xl border border-slate-700 flex flex-col items-center gap-4">
+                <!-- Color Legend for 10 Fingers -->
+                <div class="w-full flex flex-wrap justify-center gap-2 text-[10px] md:text-xs text-slate-300 pb-2 border-b border-slate-700 font-medium">
+                    <span class="px-2 py-0.5 rounded-full finger-pinky-left">Kelingking Kiri</span>
+                    <span class="px-2 py-0.5 rounded-full finger-ring-left">Manis Kiri</span>
+                    <span class="px-2 py-0.5 rounded-full finger-middle-left">Tengah Kiri</span>
+                    <span class="px-2 py-0.5 rounded-full finger-index-left">Telunjuk Kiri</span>
+                    <span class="px-2 py-0.5 rounded-full finger-thumb">Jempol</span>
+                    <span class="px-2 py-0.5 rounded-full finger-index-right">Telunjuk Kanan</span>
+                    <span class="px-2 py-0.5 rounded-full finger-middle-right">Tengah Kanan</span>
+                    <span class="px-2 py-0.5 rounded-full finger-ring-right">Manis Kanan</span>
+                    <span class="px-2 py-0.5 rounded-full finger-pinky-right">Kelingking Kanan</span>
+                </div>
+
+                <!-- On-Screen QWERTY Keyboard Rows -->
+                <div class="w-full max-w-4xl flex flex-col gap-1.5 md:gap-2 font-mono font-bold text-xs md:text-sm">
+                    <!-- Row 1 -->
+                    <div class="flex justify-center gap-1 md:gap-1.5">
+                        <div data-key="q" class="key-btn finger-pinky-left w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">Q</div>
+                        <div data-key="w" class="key-btn finger-ring-left w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">W</div>
+                        <div data-key="e" class="key-btn finger-middle-left w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">E</div>
+                        <div data-key="r" class="key-btn finger-index-left w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">R</div>
+                        <div data-key="t" class="key-btn finger-index-left w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">T</div>
+                        <div data-key="y" class="key-btn finger-index-right w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">Y</div>
+                        <div data-key="u" class="key-btn finger-index-right w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">U</div>
+                        <div data-key="i" class="key-btn finger-middle-right w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">I</div>
+                        <div data-key="o" class="key-btn finger-ring-right w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">O</div>
+                        <div data-key="p" class="key-btn finger-pinky-right w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">P</div>
+                    </div>
+                    <!-- Row 2 -->
+                    <div class="flex justify-center gap-1 md:gap-1.5">
+                        <div data-key="a" class="key-btn finger-pinky-left w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">A</div>
+                        <div data-key="s" class="key-btn finger-ring-left w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">S</div>
+                        <div data-key="d" class="key-btn finger-middle-left w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">D</div>
+                        <div data-key="f" class="key-btn finger-index-left w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2 relative">
+                            F <span class="absolute bottom-1 w-1.5 h-1.5 bg-slate-600 rounded-full"></span>
+                        </div>
+                        <div data-key="g" class="key-btn finger-index-left w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">G</div>
+                        <div data-key="h" class="key-btn finger-index-right w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">H</div>
+                        <div data-key="j" class="key-btn finger-index-right w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2 relative">
+                            J <span class="absolute bottom-1 w-1.5 h-1.5 bg-slate-600 rounded-full"></span>
+                        </div>
+                        <div data-key="k" class="key-btn finger-middle-right w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">K</div>
+                        <div data-key="l" class="key-btn finger-ring-right w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">L</div>
+                    </div>
+                    <!-- Row 3 -->
+                    <div class="flex justify-center gap-1 md:gap-1.5">
+                        <div data-key="z" class="key-btn finger-pinky-left w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">Z</div>
+                        <div data-key="x" class="key-btn finger-ring-left w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">X</div>
+                        <div data-key="c" class="key-btn finger-middle-left w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">C</div>
+                        <div data-key="v" class="key-btn finger-index-left w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">V</div>
+                        <div data-key="b" class="key-btn finger-index-left w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">B</div>
+                        <div data-key="n" class="key-btn finger-index-right w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">N</div>
+                        <div data-key="m" class="key-btn finger-index-right w-8 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center border-b-2">M</div>
+                    </div>
+                    <!-- Row 4 (Space) -->
+                    <div class="flex justify-center gap-1 md:gap-1.5 mt-1">
+                        <div data-key=" " class="key-btn finger-thumb w-48 md:w-64 h-9 rounded-lg flex items-center justify-center border-b-2 text-xs text-purple-900 tracking-wider">
+                            SPASI (JEMPOL)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="modal-success" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full text-center shadow-2xl border border-emerald-100 flex flex-col items-center gap-4 animate-bounce-short">
+            <div class="w-20 h-20 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center text-4xl shadow-inner">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <h2 class="text-2xl font-bold font-fredoka text-slate-800">Hebat! Level Selesai!</h2>
+            <p class="text-sm text-slate-500" id="modal-success-desc">Kamu telah menyelesaikan pelatihan ini dengan sangat baik!</p>
+
+            <!-- Stats breakdown box -->
+            <div class="w-full bg-slate-50 p-4 rounded-2xl border border-slate-200 grid grid-cols-3 gap-2 text-center my-2">
+                <div>
+                    <span class="text-xs text-slate-400 block font-semibold">Waktu</span>
+                    <span id="modal-time" class="text-base font-bold text-slate-700">00:00</span>
+                </div>
+                <div>
+                    <span class="text-xs text-slate-400 block font-semibold">Kecepatan</span>
+                    <span id="modal-wpm" class="text-base font-bold text-emerald-600">0 WPM</span>
+                </div>
+                <div>
+                    <span class="text-xs text-slate-400 block font-semibold">Kesalahan</span>
+                    <span id="modal-errors" class="text-base font-bold text-rose-500">0</span>
+                </div>
+            </div>
+
+            <div class="flex gap-3 w-full">
+                <button onclick="app.closeModal(); app.restartCurrentLevel();" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 rounded-xl transition">
+                    Ulangi
+                </button>
+                <button onclick="app.nextLevel()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg transition">
+                    Lanjut <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-stats" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-3xl p-6 md:p-8 max-w-2xl w-full shadow-2xl border border-slate-100 flex flex-col gap-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h2 class="text-xl font-bold font-fredoka text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-bar text-amber-500"></i> Catatan Nilai Pelatihan
+                </h2>
+                <button onclick="app.hideStatsModal()" class="text-slate-400 hover:text-slate-600 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-slate-500">Catatan waktu, kecepatan, dan kesalahan di setiap level. <span class="text-rose-500 font-semibold">*Catatan terhapus jika browser di-refresh.</span></p>
+
+            <!-- Table of stats -->
+            <div class="max-h-72 overflow-y-auto rounded-xl border border-slate-200">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-600 text-xs uppercase sticky top-0">
+                            <th class="p-3">Level</th>
+                            <th class="p-3">Waktu</th>
+                            <th class="p-3">Kecepatan (WPM)</th>
+                            <th class="p-3">Kesalahan</th>
+                            <th class="p-3">Akurasi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stats-table-body" class="divide-y divide-slate-100">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-end pt-2">
+                <button onclick="app.hideStatsModal()" class="bg-emerald-600 text-white font-bold px-5 py-2.5 rounded-xl">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const FINGER_MAP = {
+            'q': { finger: 'Jari Kelingking Kiri', hand: 'kiri', class: 'finger-pinky-left', key: 'q' },
+            'a': { finger: 'Jari Kelingking Kiri', hand: 'kiri', class: 'finger-pinky-left', key: 'a' },
+            'z': { finger: 'Jari Kelingking Kiri', hand: 'kiri', class: 'finger-pinky-left', key: 'z' },
+            
+            'w': { finger: 'Jari Manis Kiri', hand: 'kiri', class: 'finger-ring-left', key: 'w' },
+            's': { finger: 'Jari Manis Kiri', hand: 'kiri', class: 'finger-ring-left', key: 's' },
+            'x': { finger: 'Jari Manis Kiri', hand: 'kiri', class: 'finger-ring-left', key: 'x' },
+            
+            'e': { finger: 'Jari Tengah Kiri', hand: 'kiri', class: 'finger-middle-left', key: 'e' },
+            'd': { finger: 'Jari Tengah Kiri', hand: 'kiri', class: 'finger-middle-left', key: 'd' },
+            'c': { finger: 'Jari Tengah Kiri', hand: 'kiri', class: 'finger-middle-left', key: 'c' },
+            
+            'r': { finger: 'Jari Telunjuk Kiri', hand: 'kiri', class: 'finger-index-left', key: 'r' },
+            'f': { finger: 'Jari Telunjuk Kiri', hand: 'kiri', class: 'finger-index-left', key: 'f' },
+            'v': { finger: 'Jari Telunjuk Kiri', hand: 'kiri', class: 'finger-index-left', key: 'v' },
+            't': { finger: 'Jari Telunjuk Kiri', hand: 'kiri', class: 'finger-index-left', key: 't' },
+            'g': { finger: 'Jari Telunjuk Kiri', hand: 'kiri', class: 'finger-index-left', key: 'g' },
+            'b': { finger: 'Jari Telunjuk Kiri', hand: 'kiri', class: 'finger-index-left', key: 'b' },
+            
+            ' ': { finger: 'Ibu Jari (Jempol)', hand: 'bebas', class: 'finger-thumb', key: ' ' },
+            
+            'y': { finger: 'Jari Telunjuk Kanan', hand: 'kanan', class: 'finger-index-right', key: 'y' },
+            'h': { finger: 'Jari Telunjuk Kanan', hand: 'kanan', class: 'finger-index-right', key: 'h' },
+            'n': { finger: 'Jari Telunjuk Kanan', hand: 'kanan', class: 'finger-index-right', key: 'n' },
+            'u': { finger: 'Jari Telunjuk Kanan', hand: 'kanan', class: 'finger-index-right', key: 'u' },
+            'j': { finger: 'Jari Telunjuk Kanan', hand: 'kanan', class: 'finger-index-right', key: 'j' },
+            'm': { finger: 'Jari Telunjuk Kanan', hand: 'kanan', class: 'finger-index-right', key: 'm' },
+            
+            'i': { finger: 'Jari Tengah Kanan', hand: 'kanan', class: 'finger-middle-right', key: 'i' },
+            'k': { finger: 'Jari Tengah Kanan', hand: 'kanan', class: 'finger-middle-right', key: 'k' },
+            
+            'o': { finger: 'Jari Manis Kanan', hand: 'kanan', class: 'finger-ring-right', key: 'o' },
+            'l': { finger: 'Jari Manis Kanan', hand: 'kanan', class: 'finger-ring-right', key: 'l' },
+            
+            'p': { finger: 'Jari Kelingking Kanan', hand: 'kanan', class: 'finger-pinky-right', key: 'p' }
+        };
+
+        const LEVELS = [
+            {
+                id: 1,
+                title: "Mengetik Huruf f dan j",
+                desc: "Kuasai posisi dasar tombol F (telunjuk kiri) dan J (telunjuk kanan).",
+                type: "standard",
+                text: "f j ff jj fjf jfj f j ff jj fjf jfj"
+            },
+            {
+                id: 2,
+                title: "Mengetik Huruf g dan h",
+                desc: "Geser telunjuk kiri ke G dan telunjuk kanan ke H.",
+                type: "standard",
+                text: "g h gg hh ghg hgh g h gh hh gg gh g h"
+            },
+            {
+                id: 3,
+                title: "Mengetik Huruf d dan k",
+                desc: "Gunakan jari tengah kiri untuk D dan jari tengah kanan untuk K.",
+                type: "standard",
+                text: "d k dd kk dkd kdk d k dk kk dd d k dk"
+            },
+            {
+                id: 4,
+                title: "Mengetik Huruf s dan l",
+                desc: "Gunakan jari manis kiri untuk S dan jari manis kanan untuk L.",
+                type: "standard",
+                text: "s l ss ll sls lsl s l sl ll ss s l sl"
+            },
+            {
+                id: 5,
+                title: "Mengetik Huruf g, h, dan a",
+                desc: "Kombinasi huruf G, H, dan A (kelingking kiri).",
+                type: "standard",
+                text: "g h a aga hag aha gag ah ha ga ah gag"
+            },
+            {
+                id: "bonus1",
+                title: "Bonus Game 1: Home Row Champion",
+                desc: "Ketik 20 kata pilihan dari kombinasi baris utama (a, s, d, f, g, h, j, k, l).",
+                type: "bonus_homerow",
+                targetCount: 20,
+                words: ["ada", "gajah", "kalah", "salah", "hal", "hak", "dada", "kaka", "fajar", "asah", "laga", "luka", "jaga", "asah", "kasa", "daha", "sala", "sasa", "jaha", "alfa"]
+            },
+            {
+                id: 6,
+                title: "Mengetik Huruf t, y, b, dan n",
+                desc: "Latihan menjangkau baris atas dan bawah dengan jari telunjuk.",
+                type: "standard",
+                text: "t y b n tan ban tub nab bat tab yan ntb"
+            },
+            {
+                id: 7,
+                title: "Mengetik Huruf e, u, c, m",
+                desc: "Gunakan jari tengah dan telunjuk untuk tombol E, U, C, dan M.",
+                type: "standard",
+                text: "e u c m cum muc ecu mue cem ume me u ec"
+            },
+            {
+                id: 8,
+                title: "Mengetik Huruf w, x, i",
+                desc: "Latihan jari manis (W, X) dan jari tengah kanan (I).",
+                type: "standard",
+                text: "w x i wxi ixw xwi ixi wx xwi iw xix"
+            },
+            {
+                id: 9,
+                title: "Mengetik Huruf q, z, o, p",
+                desc: "Latihan jari kelingking (Q, Z, P) dan jari manis kanan (O).",
+                type: "standard",
+                text: "q z o p zoq poq qoz poz op zo qp po"
+            },
+            {
+                id: 10,
+                title: "Tantangan Kata 3-4 Huruf (3 Menit)",
+                desc: "Ketik kata-kata pendek Bahasa Indonesia selama 3 menit nonstop!",
+                type: "timed_words",
+                duration: 180, // 3 minutes in seconds
+                words: ["buku", "bola", "nasi", "meja", "kaki", "topi", "susu", "sapu", "roda", "mata", "sapi", "kuda", "roti", "daun", "baju", "paku", "tas", "jam", "cat", "bus", "es", "air", "api", "pipa", "peta", "soto", "guru", "batu"]
+            },
+            {
+                id: "bonus2",
+                title: "Bonus Game 2: Shark Slayer (Pembasmi Hiu)",
+                desc: "Basmi 20 hiu ganas dengan mengetik kata yang ada di tubuh hiu!",
+                type: "bonus_shark",
+                targetCount: 20,
+                words: ["ikan", "hiu", "laut", "air", "ombak", "karang", "penyu", "paus", "gurita", "udang", "cumi", "kapal", "selam", "batu", "pasir", "pulau", "pantai", "jangkar", "sirip", "ekor"]
+            },
+            {
+                id: 11,
+                title: "Kata Vokal 'A'",
+                desc: "Ketik kombinasi kata Bahasa Indonesia sehari-hari dengan vokal A.",
+                type: "standard",
+                text: "bata kaca nasi mata rasa saya tangan makan jalan taman satu kuda"
+            },
+            {
+                id: 12,
+                title: "Kata Vokal 'E'",
+                desc: "Ketik kombinasi kata Bahasa Indonesia sehari-hari dengan vokal E.",
+                type: "standard",
+                text: "meja sepeda kera pena sore bebek leher merah tempe sehat peta"
+            },
+            {
+                id: 13,
+                title: "Kata Vokal 'I'",
+                desc: "Ketik kombinasi kata Bahasa Indonesia sehari-hari dengan vokal I.",
+                type: "standard",
+                text: "ikan pipi gigi piring itik siram minum lima tiga pisang singa"
+            },
+            {
+                id: 14,
+                title: "Kata Vokal 'O'",
+                desc: "Ketik kombinasi kata Bahasa Indonesia sehari-hari dengan vokal O.",
+                type: "standard",
+                text: "topi toko roda soto pohon kodok obor bakso botol mangkuk otak"
+            },
+            {
+                id: 15,
+                title: "Kata Vokal 'U'",
+                desc: "Ketik kombinasi kata Bahasa Indonesia sehari-hari dengan vokal U.",
+                type: "standard",
+                text: "buku susu sapu kuda rusa batu guru bunga udang daun hujan"
+            },
+            {
+                id: "bonus3",
+                title: "Bonus Game 3: Monkey Jump (Monyet Melompat)",
+                desc: "Bantu monyet melompat ke puncak pohon dengan mengetik 50 kata Bahasa Indonesia!",
+                type: "bonus_monkey",
+                targetCount: 50,
+                words: [
+                    "buku", "meja", "pensil", "sapi", "kuda", "ayam", "bebek", "ikan", "singa", "gajah",
+                    "rumah", "taman", "sekolah", "guru", "murid", "pintu", "jendela", "topi", "baju", "celana",
+                    "makan", "minum", "tidur", "lari", "lompat", "baca", "tulis", "gambar", "nyanyi", "main",
+                    "apel", "jeruk", "pisang", "mangga", "melon", "nanas", "angkur", "jambu", "kelapa", "durian",
+                    "merah", "kuning", "hijau", "biru", "putih", "hitam", "cokelat", "ungu", "jingga", "merah"
+                ]
+            }
+        ];
+
+        class TypingApp {
+            constructor() {
+                this.currentLevelIndex = 0;
+                this.soundEnabled = true;
+                this.timerInterval = null;
+                this.secondsElapsed = 0;
+                this.timerCountdown = false;
+                
+                // Typing State
+                this.textSequence = "";
+                this.charIndex = 0;
+                this.errorsCount = 0;
+                this.totalTypedChars = 0;
+                this.isCompleted = false;
+
+                // Game Animation Loop State
+                this.gameLoopId = null;
+                this.sharks = [];
+                this.gameCount = 0;
+                this.monkeyPos = 0;
+
+                // Statistics Log (In Memory)
+                this.statsLog = {};
+
+                // Audio Synth (Web Audio API)
+                this.audioCtx = null;
+
+                this.initUI();
+                this.bindEvents();
+            }
+
+            initUI() {
+                this.renderLevelButtons();
+                this.loadLevel(0);
+            }
+
+            initAudio() {
+                if (!this.audioCtx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) {
+                        this.audioCtx = new AudioContext();
+                    }
+                }
+            }
+
+            playSound(type) {
+                if (!this.soundEnabled) return;
+                this.initAudio();
+                if (!this.audioCtx) return;
+
+                const osc = this.audioCtx.createOscillator();
+                const gain = this.audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(this.audioCtx.destination);
+
+                const now = this.audioCtx.currentTime;
+
+                if (type === 'key') {
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.05);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                } else if (type === 'error') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.setValueAtTime(100, now + 0.08);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } else if (type === 'success') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                    osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                }
+            }
+
+            toggleSound() {
+                this.soundEnabled = !this.soundEnabled;
+                const icon = document.getElementById('sound-icon');
+                const text = document.getElementById('sound-text');
+                if (this.soundEnabled) {
+                    icon.className = 'fa-solid fa-volume-high';
+                    text.textContent = 'Suara On';
+                } else {
+                    icon.className = 'fa-solid fa-volume-xmark';
+                    text.textContent = 'Suara Off';
+                }
+            }
+
+            renderLevelButtons() {
+                const grid = document.getElementById('level-buttons-grid');
+                grid.innerHTML = '';
+
+                LEVELS.forEach((lvl, idx) => {
+                    const btn = document.createElement('button');
+                    let label = "";
+                    let isBonus = typeof lvl.id === 'string' && lvl.id.startsWith('bonus');
+
+                    if (isBonus) {
+                        label = `<i class="fa-solid fa-star text-amber-300"></i> ${lvl.title.split(':')[0]}`;
+                        btn.className = `p-2.5 rounded-2xl text-xs font-bold text-white transition flex items-center justify-center gap-1 shadow ${
+                            idx === this.currentLevelIndex ? 'bg-amber-600 ring-2 ring-amber-300' : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600'
+                        }`;
+                    } else {
+                        label = `Lvl ${lvl.id}`;
+                        btn.className = `p-2.5 rounded-2xl text-xs font-bold transition flex flex-col items-center justify-center border ${
+                            idx === this.currentLevelIndex 
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-md' 
+                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-emerald-50 hover:border-emerald-300'
+                        }`;
+                    }
+
+                    btn.innerHTML = label;
+                    btn.onclick = () => this.loadLevel(idx);
+                    grid.appendChild(btn);
+                });
+            }
+
+            loadLevel(index) {
+                this.stopTimer();
+                this.clearGameLoop();
+
+                this.currentLevelIndex = index;
+                const level = LEVELS[index];
+
+                // Update UI Badges & Buttons
+                this.renderLevelButtons();
+                
+                const levelBadge = document.getElementById('level-badge');
+                if (typeof level.id === 'string') {
+                    levelBadge.textContent = "BONUS";
+                    levelBadge.className = "bg-amber-500 text-white font-fredoka text-lg px-4 py-2 rounded-2xl shadow";
+                } else {
+                    levelBadge.textContent = `Level ${level.id}`;
+                    levelBadge.className = "bg-indigo-600 text-white font-fredoka text-lg px-4 py-2 rounded-2xl shadow";
+                }
+
+                document.getElementById('level-title').textContent = level.title;
+                document.getElementById('level-desc').textContent = level.desc;
+
+                // Reset Counters
+                this.secondsElapsed = level.type === 'timed_words' ? level.duration : 0;
+                this.timerCountdown = level.type === 'timed_words';
+                this.errorsCount = 0;
+                this.charIndex = 0;
+                this.totalTypedChars = 0;
+                this.isCompleted = false;
+
+                this.updateStatsUI();
+
+                // Toggle View Modes (Standard vs Bonus Games)
+                const stdArea = document.getElementById('standard-typing-area');
+                const bonusArea = document.getElementById('bonus-game-area');
+
+                if (level.type === 'standard' || level.type === 'timed_words') {
+                    stdArea.classList.remove('hidden');
+                    bonusArea.classList.add('hidden');
+                    this.setupStandardLevel(level);
+                } else {
+                    stdArea.classList.add('hidden');
+                    bonusArea.classList.remove('hidden');
+                    this.setupBonusGame(level);
+                }
+
+                this.startTimer();
+                this.focusInput();
+            }
+
+            focusInput() {
+                const hiddenInput = document.getElementById('hidden-typing-input');
+                if (hiddenInput) hiddenInput.focus();
+            }
+
+            setupStandardLevel(level) {
+                if (level.type === 'timed_words') {
+                    // Generate random text sequence from word array
+                    const wordList = [];
+                    for (let i = 0; i < 40; i++) {
+                        wordList.push(level.words[Math.floor(Math.random() * level.words.length)]);
+                    }
+                    this.textSequence = wordList.join(' ');
+                } else {
+                    this.textSequence = level.text;
+                }
+
+                this.renderDisplayBox();
+                this.updateFingerGuide();
+            }
+
+            renderDisplayBox() {
+                const box = document.getElementById('text-display-box');
+                box.innerHTML = '';
+
+                for (let i = 0; i < this.textSequence.length; i++) {
+                    const charSpan = document.createElement('span');
+                    const char = this.textSequence[i];
+                    charSpan.textContent = char === ' ' ? '␣' : char;
+                    charSpan.className = 'px-1 rounded transition-all duration-100';
+
+                    if (i < this.charIndex) {
+                        charSpan.classList.add('text-emerald-600', 'font-bold', 'bg-emerald-50');
+                    } else if (i === this.charIndex) {
+                        charSpan.classList.add('bg-indigo-500', 'text-white', 'font-bold', 'scale-110', 'shadow-md', 'animate-pulse');
+                    } else {
+                        charSpan.classList.add('text-slate-400');
+                    }
+
+                    box.appendChild(charSpan);
+                }
+            }
+
+            updateFingerGuide() {
+                // Clear active key styles
+                document.querySelectorAll('.key-btn').forEach(btn => {
+                    btn.classList.remove('ring-4', 'ring-indigo-400', 'scale-105', 'key-highlight');
+                });
+
+                if (this.charIndex >= this.textSequence.length) return;
+
+                const currentChar = this.textSequence[this.charIndex].toLowerCase();
+                const keyInfo = FINGER_MAP[currentChar] || FINGER_MAP[' '];
+
+                if (keyInfo) {
+                    const keyEl = document.querySelector(`[data-key="${keyInfo.key}"]`);
+                    if (keyEl) {
+                        keyEl.classList.add('ring-4', 'ring-indigo-400', 'scale-105', 'key-highlight');
+                    }
+
+                    // Update Text Banner
+                    const textDisplay = currentChar === ' ' ? 'SPASI' : currentChar.toUpperCase();
+                    document.getElementById('finger-instruction-text').innerHTML = 
+                        `Tekan tombol <span class="underline decoration-2 font-black text-indigo-600">${textDisplay}</span> menggunakan <span class="font-bold text-emerald-600">${keyInfo.finger}</span>`;
+                }
+            }
+
+            bindEvents() {
+                window.addEventListener('keydown', (e) => {
+                    // Ignore non-printable modifier keys
+                    if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta' || e.key === 'Tab') return;
+
+                    const level = LEVELS[this.currentLevelIndex];
+                    if (this.isCompleted) return;
+
+                    const keyStr = e.key.toLowerCase();
+
+                    // Key visual pressed feedback on keyboard
+                    const targetKeyBtn = document.querySelector(`[data-key="${keyStr}"]`);
+                    if (targetKeyBtn) {
+                        targetKeyBtn.classList.add('active');
+                        setTimeout(() => targetKeyBtn.classList.remove('active'), 150);
+                    }
+
+                    if (level.type === 'standard' || level.type === 'timed_words') {
+                        this.handleStandardKeyPress(keyStr);
+                    } else if (level.type === 'bonus_homerow' || level.type === 'bonus_shark' || level.type === 'bonus_monkey') {
+                        this.handleBonusKeyPress(keyStr);
+                    }
+                });
+
+                // Re-focus hidden input on click on typing stage
+                document.getElementById('main-stage').addEventListener('click', () => this.focusInput());
+            }
+
+            handleStandardKeyPress(key) {
+                const expectedChar = this.textSequence[this.charIndex].toLowerCase();
+
+                if (key === expectedChar) {
+                    this.playSound('key');
+                    this.charIndex++;
+                    this.totalTypedChars++;
+
+                    if (this.charIndex >= this.textSequence.length) {
+                        if (LEVELS[this.currentLevelIndex].type === 'timed_words') {
+                            // Append more random words if time remaining
+                            const level = LEVELS[this.currentLevelIndex];
+                            const wordList = [];
+                            for (let i = 0; i < 20; i++) {
+                                wordList.push(level.words[Math.floor(Math.random() * level.words.length)]);
+                            }
+                            this.textSequence += ' ' + wordList.join(' ');
+                        } else {
+                            this.finishLevel();
+                            return;
+                        }
+                    }
+
+                    this.renderDisplayBox();
+                    this.updateFingerGuide();
+                } else {
+                    this.playSound('error');
+                    this.errorsCount++;
+                    this.updateStatsUI();
+
+                    // Visual shake effect on display box
+                    const box = document.getElementById('text-display-box');
+                    box.classList.add('border-rose-400');
+                    setTimeout(() => box.classList.remove('border-rose-400'), 200);
+                }
+            }
+
+            setupBonusGame(level) {
+                const wrapper = document.getElementById('game-canvas-wrapper');
+                wrapper.innerHTML = '';
+
+                this.gameCount = 0;
+                this.targetWords = [...level.words];
+
+                if (level.type === 'bonus_homerow') {
+                    wrapper.className = "w-full h-[360px] relative rounded-2xl bg-gradient-to-br from-indigo-900 to-purple-900 flex flex-col items-center justify-center p-6";
+                    this.activeWordIndex = 0;
+                    this.activeWordCharIdx = 0;
+                    this.renderHomeRowGame();
+                } else if (level.type === 'bonus_shark') {
+                    wrapper.className = "w-full h-[360px] relative rounded-2xl sea-bg overflow-hidden";
+                    this.sharks = [];
+                    this.currentInput = "";
+                    this.startSharkGame();
+                } else if (level.type === 'bonus_monkey') {
+                    wrapper.className = "w-full h-[360px] relative rounded-2xl jungle-bg overflow-hidden flex flex-col justify-between p-4";
+                    this.monkeyPos = 0;
+                    this.currentInput = "";
+                    this.startMonkeyGame();
+                }
+            }
+
+            /* --- GAME 1: HOME ROW CHAMPION --- */
+            renderHomeRowGame() {
+                const wrapper = document.getElementById('game-canvas-wrapper');
+                const level = LEVELS[this.currentLevelIndex];
+                const currentWord = level.words[this.activeWordIndex];
+
+                document.getElementById('game-icon').className = "fa-solid fa-crown text-yellow-400 text-xl";
+                document.getElementById('game-title').textContent = "Home Row Champion";
+                document.getElementById('game-target-counter').textContent = `Kata: ${this.activeWordIndex + 1} / ${level.targetCount}`;
+
+                wrapper.innerHTML = `
+                    <div class="text-center flex flex-col items-center gap-6">
+                        <div class="bg-white/10 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 text-white text-sm font-semibold">
+                            Kemajuan: ${Math.round((this.activeWordIndex / level.targetCount) * 100)}%
+                        </div>
+                        
+                        <div class="bg-white rounded-3xl p-8 shadow-2xl border-4 border-amber-400 flex justify-center gap-2 text-4xl md:text-5xl font-mono tracking-wider">
+                            ${currentWord.split('').map((c, i) => {
+                                if (i < this.activeWordCharIdx) {
+                                    return `<span class="text-emerald-500 font-bold">${c}</span>`;
+                                } else if (i === this.activeWordCharIdx) {
+                                    return `<span class="text-amber-500 font-bold underline animate-pulse">${c}</span>`;
+                                } else {
+                                    return `<span class="text-slate-400">${c}</span>`;
+                                }
+                            }).join('')}
+                        </div>
+
+                        <p class="text-indigo-200 text-sm">Gunakan baris utama (A, S, D, F, G, H, J, K, L)</p>
+                    </div>
+                `;
+
+                // Set finger guide for active char
+                const activeChar = currentWord[this.activeWordCharIdx];
+                this.textSequence = activeChar;
+                this.charIndex = 0;
+                this.updateFingerGuide();
+            }
+
+            /* --- GAME 2: SHARK SLAYER --- */
+            startSharkGame() {
+                document.getElementById('game-icon').className = "fa-solid fa-fish text-sky-300 text-xl";
+                document.getElementById('game-title').textContent = "Pembasmi Hiu";
+                document.getElementById('game-target-counter').textContent = `Hiu Terbasmi: ${this.gameCount} / 20`;
+
+                this.spawnShark();
+                this.gameLoopId = setInterval(() => this.updateSharkGame(), 50);
+            }
+
+            spawnShark() {
+                if (this.sharks.length >= 3 || this.gameCount + this.sharks.length >= 20) return;
+
+                const wrapper = document.getElementById('game-canvas-wrapper');
+                const word = this.targetWords[Math.floor(Math.random() * this.targetWords.length)];
+                
+                const shark = {
+                    id: Date.now() + Math.random(),
+                    word: word,
+                    x: -120,
+                    y: 40 + Math.random() * (wrapper.clientHeight - 120),
+                    speed: 1.5 + Math.random() * 1.2
+                };
+
+                this.sharks.push(shark);
+            }
+
+            updateSharkGame() {
+                const wrapper = document.getElementById('game-canvas-wrapper');
+                wrapper.innerHTML = '';
+
+                // Spawn check
+                if (Math.random() < 0.03) this.spawnShark();
+
+                this.sharks.forEach((s) => {
+                    s.x += s.speed;
+
+                    // If shark swims off screen, reset x
+                    if (s.x > wrapper.clientWidth + 50) {
+                        s.x = -120;
+                    }
+
+                    const sharkDiv = document.createElement('div');
+                    sharkDiv.className = "absolute flex items-center gap-2 bg-slate-900/80 text-white px-4 py-2 rounded-full border-2 border-cyan-400 shadow-xl font-mono text-lg font-bold transition-transform";
+                    sharkDiv.style.left = `${s.x}px`;
+                    sharkDiv.style.top = `${s.y}px`;
+
+                    sharkDiv.innerHTML = `
+                        <i class="fa-solid fa-fish-fins text-cyan-300 text-2xl"></i>
+                        <span>${s.word}</span>
+                    `;
+
+                    wrapper.appendChild(sharkDiv);
+                });
+
+                // Render current typing input box at bottom
+                const inputHud = document.createElement('div');
+                inputHud.className = "absolute bottom-3 left-1/2 -translate-x-1/2 bg-slate-900/90 text-yellow-300 px-6 py-2 rounded-2xl border border-yellow-400 font-mono text-xl font-bold tracking-widest shadow-lg";
+                inputHud.textContent = this.currentInput || "Ketik kata...";
+                wrapper.appendChild(inputHud);
+
+                // Set finger guide for first character needed or next key
+                if (this.sharks.length > 0) {
+                    const firstChar = this.sharks[0].word[this.currentInput.length] || 'a';
+                    this.textSequence = firstChar;
+                    this.charIndex = 0;
+                    this.updateFingerGuide();
+                }
+            }
+
+            /* --- GAME 3: MONKEY JUMP --- */
+            startMonkeyGame() {
+                document.getElementById('game-icon').className = "fa-solid fa-drumstick-bite text-amber-400 text-xl";
+                document.getElementById('game-title').textContent = "Monkey Jump";
+                document.getElementById('game-target-counter').textContent = `Sisa Kata: ${50 - this.gameCount}`;
+
+                this.renderMonkeyGame();
+            }
+
+            renderMonkeyGame() {
+                const wrapper = document.getElementById('game-canvas-wrapper');
+                wrapper.innerHTML = '';
+
+                const level = LEVELS[this.currentLevelIndex];
+                const targetWord = level.words[this.gameCount % level.words.length];
+
+                wrapper.innerHTML = `
+                    <div class="flex justify-between items-center text-white text-xs px-4">
+                        <span class="bg-black/40 px-3 py-1 rounded-full">Puncak Pohon 🌴</span>
+                        <span class="bg-black/40 px-3 py-1 rounded-full">Langkah: ${this.gameCount} / 50</span>
+                    </div>
+
+                    <!-- Tree Trunk and Steps -->
+                    <div class="flex-grow flex flex-col items-center justify-center relative my-2">
+                        <!-- Tree background graphic -->
+                        <div class="w-12 h-full bg-amber-800 rounded-lg absolute border-2 border-amber-950"></div>
+
+                        <!-- Target Branch Word -->
+                        <div class="z-10 bg-emerald-800 text-white px-6 py-3 rounded-2xl border-2 border-emerald-300 shadow-2xl font-mono text-2xl font-bold tracking-widest flex items-center gap-3">
+                            <i class="fa-solid fa-leaf text-emerald-400"></i>
+                            <span>
+                                ${targetWord.split('').map((c, i) => {
+                                    if (i < this.currentInput.length) {
+                                        return `<span class="text-yellow-300">${c}</span>`;
+                                    } else {
+                                        return `<span class="text-white">${c}</span>`;
+                                    }
+                                }).join('')}
+                            </span>
+                        </div>
+
+                        <!-- Monkey Mascot -->
+                        <div class="z-10 text-4xl mt-4 animate-bounce">
+                            🐵
+                        </div>
+                    </div>
+
+                    <!-- Bottom Input Indicator -->
+                    <div class="bg-slate-900/90 text-yellow-300 text-center py-2 px-4 rounded-xl border border-yellow-400 font-mono text-lg font-bold">
+                        ${this.currentInput || "Ketik kata di cabang pohon!"}
+                    </div>
+                `;
+
+                // Update Finger Guide
+                const neededChar = targetWord[this.currentInput.length];
+                if (neededChar) {
+                    this.textSequence = neededChar;
+                    this.charIndex = 0;
+                    this.updateFingerGuide();
+                }
+            }
+
+            /* --- BONUS GAMES KEYPRESS LOGIC --- */
+            handleBonusKeyPress(key) {
+                const level = LEVELS[this.currentLevelIndex];
+
+                if (level.type === 'bonus_homerow') {
+                    const currentWord = level.words[this.activeWordIndex];
+                    const expectedChar = currentWord[this.activeWordCharIdx].toLowerCase();
+
+                    if (key === expectedChar) {
+                        this.playSound('key');
+                        this.activeWordCharIdx++;
+                        this.totalTypedChars++;
+
+                        if (this.activeWordCharIdx >= currentWord.length) {
+                            this.activeWordIndex++;
+                            this.activeWordCharIdx = 0;
+
+                            if (this.activeWordIndex >= level.targetCount) {
+                                this.finishLevel();
+                                return;
+                            }
+                        }
+                        this.renderHomeRowGame();
+                    } else {
+                        this.playSound('error');
+                        this.errorsCount++;
+                        this.updateStatsUI();
+                    }
+                } else if (level.type === 'bonus_shark') {
+                    if (key === 'backspace') {
+                        this.currentInput = "";
+                        return;
+                    }
+
+                    // Check if key matches any shark's next expected character
+                    let matched = false;
+                    this.currentInput += key;
+
+                    for (let i = this.sharks.length - 1; i >= 0; i--) {
+                        const shark = this.sharks[i];
+                        if (shark.word.toLowerCase() === this.currentInput.toLowerCase()) {
+                            // Shark killed!
+                            this.playSound('success');
+                            this.sharks.splice(i, 1);
+                            this.gameCount++;
+                            this.currentInput = "";
+                            matched = true;
+
+                            document.getElementById('game-target-counter').textContent = `Hiu Terbasmi: ${this.gameCount} / 20`;
+
+                            if (this.gameCount >= level.targetCount) {
+                                this.finishLevel();
+                                return;
+                            }
+                            break;
+                        } else if (shark.word.toLowerCase().startsWith(this.currentInput.toLowerCase())) {
+                            matched = true;
+                        }
+                    }
+
+                    if (matched) {
+                        this.playSound('key');
+                        this.totalTypedChars++;
+                    } else {
+                        this.playSound('error');
+                        this.errorsCount++;
+                        this.currentInput = ""; // reset wrong typed string
+                        this.updateStatsUI();
+                    }
+                } else if (level.type === 'bonus_monkey') {
+                    const targetWord = level.words[this.gameCount % level.words.length];
+                    const expectedChar = targetWord[this.currentInput.length].toLowerCase();
+
+                    if (key === expectedChar) {
+                        this.playSound('key');
+                        this.currentInput += key;
+                        this.totalTypedChars++;
+
+                        if (this.currentInput.toLowerCase() === targetWord.toLowerCase()) {
+                            this.playSound('success');
+                            this.gameCount++;
+                            this.currentInput = "";
+
+                            if (this.gameCount >= 50) {
+                                this.finishLevel();
+                                return;
+                            }
+                        }
+                        this.renderMonkeyGame();
+                    } else {
+                        this.playSound('error');
+                        this.errorsCount++;
+                        this.currentInput = "";
+                        this.updateStatsUI();
+                        this.renderMonkeyGame();
+                    }
+                }
+            }
+
+            startTimer() {
+                this.stopTimer();
+                this.timerInterval = setInterval(() => {
+                    if (this.timerCountdown) {
+                        this.secondsElapsed--;
+                        if (this.secondsElapsed <= 0) {
+                            this.finishLevel();
+                            return;
+                        }
+                    } else {
+                        this.secondsElapsed++;
+                    }
+                    this.updateStatsUI();
+                }, 1000);
+            }
+
+            stopTimer() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
+            }
+
+            clearGameLoop() {
+                if (this.gameLoopId) {
+                    clearInterval(this.gameLoopId);
+                    this.gameLoopId = null;
+                }
+            }
+
+            calculateWPM() {
+                const level = LEVELS[this.currentLevelIndex];
+                let timeInMinutes = 0;
+
+                if (level.type === 'timed_words') {
+                    timeInMinutes = (level.duration - this.secondsElapsed) / 60;
+                } else {
+                    timeInMinutes = this.secondsElapsed / 60;
+                }
+
+                if (timeInMinutes <= 0) return 0;
+                const wordsTyped = this.totalTypedChars / 5;
+                return Math.round(wordsTyped / timeInMinutes) || 0;
+            }
+
+            updateStatsUI() {
+                const displaySeconds = this.secondsElapsed;
+                const mins = Math.floor(displaySeconds / 60).toString().padStart(2, '0');
+                const secs = (displaySeconds % 60).toString().padStart(2, '0');
+                
+                document.getElementById('stat-time').textContent = `${mins}:${secs}`;
+                document.getElementById('stat-wpm').innerHTML = `${this.calculateWPM()} <small class="text-xs">WPM</small>`;
+                document.getElementById('stat-errors').textContent = this.errorsCount;
+            }
+
+            finishLevel() {
+                this.stopTimer();
+                this.clearGameLoop();
+                this.isCompleted = true;
+                this.playSound('success');
+
+                const level = LEVELS[this.currentLevelIndex];
+                const wpm = this.calculateWPM();
+                const levelName = typeof level.id === 'number' ? `Level ${level.id}` : level.title.split(':')[0];
+
+                // Calculate Accuracy
+                const accuracy = this.totalTypedChars > 0 
+                    ? Math.max(0, Math.round(((this.totalTypedChars - this.errorsCount) / this.totalTypedChars) * 100))
+                    : 100;
+
+                // Format Time String
+                let timeSpent = 0;
+                if (level.type === 'timed_words') {
+                    timeSpent = level.duration - this.secondsElapsed;
+                } else {
+                    timeSpent = this.secondsElapsed;
+                }
+                const mins = Math.floor(timeSpent / 60).toString().padStart(2, '0');
+                const secs = (timeSpent % 60).toString().padStart(2, '0');
+                const timeStr = `${mins}:${secs}`;
+
+                // Save stats in memory
+                this.statsLog[levelName] = {
+                    time: timeStr,
+                    wpm: wpm,
+                    errors: this.errorsCount,
+                    accuracy: accuracy
+                };
+
+                // Show Success Modal
+                document.getElementById('modal-success-desc').textContent = `Kamu telah menyelesaikan ${level.title}!`;
+                document.getElementById('modal-time').textContent = timeStr;
+                document.getElementById('modal-wpm').textContent = `${wpm} WPM`;
+                document.getElementById('modal-errors').textContent = this.errorsCount;
+
+                document.getElementById('modal-success').classList.remove('hidden');
+            }
+
+            restartCurrentLevel() {
+                this.loadLevel(this.currentLevelIndex);
+            }
+
+            nextLevel() {
+                this.closeModal();
+                if (this.currentLevelIndex < LEVELS.length - 1) {
+                    this.loadLevel(this.currentLevelIndex + 1);
+                } else {
+                    this.loadLevel(0); // Loop back to start
+                }
+            }
+
+            closeModal() {
+                document.getElementById('modal-success').classList.add('hidden');
+            }
+
+            showStatsModal() {
+                const tbody = document.getElementById('stats-table-body');
+                tbody.innerHTML = '';
+
+                const entries = Object.entries(this.statsLog);
+                if (entries.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">Belum ada catatan nilai. Selesaikan minimal 1 level!</td></tr>`;
+                } else {
+                    entries.forEach(([lvl, data]) => {
+                        const tr = document.createElement('tr');
+                        tr.className = "hover:bg-slate-50";
+                        tr.innerHTML = `
+                            <td class="p-3 font-bold text-indigo-600">${lvl}</td>
+                            <td class="p-3">${data.time}</td>
+                            <td class="p-3 font-semibold text-emerald-600">${data.wpm} WPM</td>
+                            <td class="p-3 text-rose-500 font-semibold">${data.errors}</td>
+                            <td class="p-3"><span class="bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded-full font-bold">${data.accuracy}%</span></td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+
+                document.getElementById('modal-stats').classList.remove('hidden');
+            }
+
+            hideStatsModal() {
+                document.getElementById('modal-stats').classList.add('hidden');
+            }
+
+            showDashboard() {
+                this.loadLevel(0);
+            }
+        }
+
+        let app;
+        window.onload = function() {
+            app = new TypingApp();
+        };
+    </script>
+</body>
+</html>
