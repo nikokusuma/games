@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kriptogram Cerpen Indonesia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+            min-height: 100vh;
+            color: #f8fafc;
+            user-select: none;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .letter-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .letter-card.selected {
+            transform: translateY(-4px) scale(1.05);
+            border-color: #f59e0b;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+        }
+
+        .letter-card.highlighted {
+            background-color: rgba(245, 158, 11, 0.2);
+            border-color: #fbbf24;
+        }
+
+        .keyboard-key {
+            transition: all 0.15s ease;
+            touch-action: manipulation;
+        }
+
+        .keyboard-key:active {
+            transform: scale(0.92);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(245, 158, 11, 0.5);
+            border-radius: 4px;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.7); }
+        }
+
+        .win-pulse {
+            animation: pulse-glow 2s infinite;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen justify-between p-3 sm:p-6 overflow-x-hidden">
+
+    <header class="max-w-4xl mx-auto w-full mb-4">
+        <div class="glass-panel rounded-2xl p-4 flex flex-wrap justify-between items-center gap-3 shadow-xl">
+            <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-tr from-amber-500 to-amber-300 p-2.5 rounded-xl text-slate-900 shadow-lg shadow-amber-500/20">
+                    <i class="fa-solid fa-book-open-reader text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-lg sm:text-xl tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-amber-200 via-amber-400 to-orange-400">
+                        KRIPTOGRAM CERPEN
+                    </h1>
+                    <p class="text-xs text-slate-400 font-medium">Cerpen & Dongeng Anak SD Populer</p>
+                </div>
+            </div>
+
+            <!-- Header Stats & Actions -->
+            <div class="flex items-center gap-2 sm:gap-4 ml-auto">
+                <button id="levelSelectBtn" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all">
+                    <i class="fa-solid fa-layer-group"></i>
+                    <span>Level <span id="currentLevelDisplay">1</span>/20</span>
+                </button>
+
+                <div class="flex items-center gap-1.5 bg-slate-800/80 px-3 py-2 rounded-xl text-slate-300 text-xs sm:text-sm font-semibold border border-slate-700">
+                    <i class="fa-solid fa-clock text-amber-400"></i>
+                    <span id="timerDisplay">00:00</span>
+                </div>
+
+                <button id="soundToggleBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-xl text-sm border border-slate-700 transition-all">
+                    <i class="fa-solid fa-volume-high" id="soundIcon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto w-full flex-1 flex flex-col justify-center my-2">
+        
+        <!-- Clue Card -->
+        <div class="glass-panel rounded-2xl p-4 sm:p-5 mb-5 shadow-lg border-l-4 border-l-amber-500 relative overflow-hidden">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
+                <div class="flex items-center gap-2">
+                    <span class="bg-amber-500/20 text-amber-300 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider border border-amber-500/30 flex items-center gap-1.5">
+                        <i class="fa-solid fa-key text-amber-400"></i> Kata Kunci Petunjuk (Huruf & Kode Angka)
+                    </span>
+                </div>
+
+                <!-- Game Helper Actions -->
+                <div class="flex items-center gap-2 self-end sm:self-auto">
+                    <button id="hintBtn" class="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold px-3 py-1.5 rounded-xl text-xs sm:text-sm shadow-md transition-all active:scale-95">
+                        <i class="fa-solid fa-lightbulb"></i>
+                        <span>Bantuan (<span id="hintsCount">3</span>)</span>
+                    </button>
+                    <button id="resetBtn" class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all">
+                        <i class="fa-solid fa-rotate-left"></i>
+                        <span>Reset</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Clue Display: Every letter in the clue has its cipher number -->
+            <div id="clueWordsContainer" class="flex flex-wrap gap-x-4 gap-y-2.5 bg-slate-900/60 p-3 sm:p-4 rounded-xl border border-slate-800/80 items-center">
+                <!-- Dynamic clue letter-number cards rendered here -->
+            </div>
+        </div>
+
+        <!-- Encrypted Words Container -->
+        <div class="glass-panel rounded-2xl p-4 sm:p-8 mb-5 min-h-[200px] flex flex-col justify-center items-center shadow-2xl">
+            <div id="cryptogramContainer" class="flex flex-wrap justify-center gap-x-6 gap-y-4 max-w-full">
+                <!-- Letter cards rendered dynamically by JS -->
+            </div>
+        </div>
+
+        <!-- On-Screen Virtual Keyboard -->
+        <div class="glass-panel rounded-2xl p-3 sm:p-4 shadow-xl">
+            <div class="flex flex-col gap-2 max-w-2xl mx-auto">
+                <!-- Keyboard Row 1 -->
+                <div class="flex justify-center gap-1 sm:gap-1.5" id="kbRow1"></div>
+                <!-- Keyboard Row 2 -->
+                <div class="flex justify-center gap-1 sm:gap-1.5" id="kbRow2"></div>
+                <!-- Keyboard Row 3 -->
+                <div class="flex justify-center gap-1 sm:gap-1.5" id="kbRow3"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Level Select Modal -->
+    <div id="levelModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4 z-50 transition-opacity">
+        <div class="glass-panel rounded-3xl p-6 max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-700">
+            <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-700/60">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-map text-amber-400 text-xl"></i>
+                    <h3 class="text-xl font-bold text-amber-200">Pilih Level Cerpen</h3>
+                </div>
+                <button id="closeLevelModal" class="text-slate-400 hover:text-white p-2 rounded-xl text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="overflow-y-auto pr-1 flex-1">
+                <div id="levelsGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <!-- Levels injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Victory Modal -->
+    <div id="victoryModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md hidden items-center justify-center p-4 z-50">
+        <div class="glass-panel rounded-3xl p-6 sm:p-8 max-w-lg w-full text-center shadow-2xl border-2 border-amber-500/40 relative overflow-hidden win-pulse">
+            <div class="w-16 h-16 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-500/40 text-2xl">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            
+            <span class="text-xs font-bold text-amber-400 uppercase tracking-widest bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+                Level Selesai!
+            </span>
+            
+            <h2 id="victoryTitle" class="text-2xl sm:text-3xl font-black text-slate-100 mt-3 mb-1">
+                -
+            </h2>
+            <p id="victoryAuthor" class="text-amber-300 font-semibold text-sm mb-4">
+                Karya: -
+            </p>
+
+            <div class="bg-slate-900/60 rounded-2xl p-4 mb-6 border border-slate-800 text-left">
+                <p class="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">Catatan Karya / Sinopsis:</p>
+                <p id="victoryDesc" class="text-sm text-slate-300 leading-relaxed italic">
+                    -
+                </p>
+            </div>
+
+            <div class="flex justify-around bg-slate-900/40 p-3 rounded-xl mb-6 text-xs text-slate-300 border border-slate-800">
+                <div>
+                    <span class="block text-slate-400">Waktu</span>
+                    <span id="victoryTime" class="font-bold text-amber-400 text-sm">00:00</span>
+                </div>
+                <div>
+                    <span class="block text-slate-400">Level</span>
+                    <span id="victoryLevelNum" class="font-bold text-amber-400 text-sm">1/20</span>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button id="nextLevelBtn" class="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold py-3.5 px-4 rounded-xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <span>Level Selanjutnya</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Canvas for Confetti -->
+    <canvas id="confettiCanvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
+
+    <!-- Footer -->
+    <footer class="max-w-4xl mx-auto w-full text-center py-2 text-xs text-slate-500">
+        Kriptogram cerpen & dongeng anak SD &bull; Tebak judul cerita populer
+    </footer>
+
+    <script>
+        let soundEnabled = true;
+
+        // Web Audio API Synthesizer for Audio Feedback
+        const sound = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) this.ctx = new AudioContext();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            },
+            playTone(freq, type, duration) {
+                if (!soundEnabled) return;
+                try {
+                    this.init();
+                    if (!this.ctx) return;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type || 'sine';
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch (e) {
+                    console.error("Audio error:", e);
+                }
+            },
+            playClick() { this.playTone(600, 'sine', 0.08); },
+            playCorrect() { 
+                this.playTone(523.25, 'triangle', 0.1); 
+                setTimeout(() => this.playTone(659.25, 'triangle', 0.15), 100);
+            },
+            playError() { this.playTone(180, 'sawtooth', 0.2); },
+            playWin() {
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    setTimeout(() => this.playTone(freq, 'sine', 0.25), idx * 120);
+                });
+            }
+        };
+
+        // 20 Level Data: Famous Indonesian Children's Short Stories / Fables
+        const CERPEN_LEVELS = [
+            {
+                id: 1,
+                phrase: "SI KANCIL DAN BUAYA",
+                clue: "Kancil Cerdik Menghitung Buah di Sungai",
+                helperLetters: ["K", "A", "I"],
+                author: "Dongeng Fabel Indonesia",
+                desc: "Cerpen fabel favorit anak SD tentang Kancil yang cerdik mengelabuhi kawanan buaya untuk menyeberangi sungai."
+            },
+            {
+                id: 2,
+                phrase: "BAWANG MERAH BAWANG PUTIH",
+                clue: "Dua Saudara Tiri Dan Labu Ajaib",
+                helperLetters: ["B", "A", "W"],
+                author: "Cerita Rakyat Riau",
+                desc: "Kisah klasik tentang kebaikan hati Bawang Putih dan ketamakan Bawang Merah beserta ibunya."
+            },
+            {
+                id: 3,
+                phrase: "TIMUN MAS DAN RAKSASA",
+                clue: "Gadis Cilik Dan Empat Kantong Ajaib",
+                helperLetters: ["T", "M", "S"],
+                author: "Cerita Rakyat Jawa Tengah",
+                desc: "Perjuangan Timun Mas melarikan diri dari Raksasa dengan bantuan biji timun, jarum, garam, dan terasi."
+            },
+            {
+                id: 4,
+                phrase: "MALIN KUNDANG",
+                clue: "Anak Durhaka Dikutuk Menjadi Batu",
+                helperLetters: ["M", "L", "N"],
+                author: "Cerita Rakyat Sumatera Barat",
+                desc: "Pelajaran moral bagi anak-anak untuk selalu menghormati dan menyayangi ibu kandung."
+            },
+            {
+                id: 5,
+                phrase: "KEONG MAS",
+                clue: "Putri Candra Kirana Dan Siput Emas",
+                helperLetters: ["K", "O", "G"],
+                author: "Cerita Rakyat Jawa Timur",
+                desc: "Kisah putri raja yang disihir menjadi keong mas oleh nenek sihir karena iri hati."
+            },
+            {
+                id: 6,
+                phrase: "SI KANCIL MENCURI TIMUN",
+                clue: "Kancil Terjebak Orang Orang Sawah",
+                helperLetters: ["K", "C", "T"],
+                author: "Dongeng Anak SD",
+                desc: "Kisah jenaka Kancil yang ketagihan makan timun Pak Tani hingga tertangkap oleh orang-orangan sawah berpelekat."
+            },
+            {
+                id: 7,
+                phrase: "GAJAH DAN SEMUT",
+                clue: "Gajah Besar Sombong Dan Semut Cerdik",
+                helperLetters: ["G", "J", "S"],
+                author: "Fabel Anak",
+                desc: "Pelajaran agar tidak meremehkan makhluk yang lebih kecil karena setiap ciptaan memiliki kelebihan."
+            },
+            {
+                id: 8,
+                phrase: "SEMUT DAN BELALANG",
+                clue: "Kerja Keras Musim Panas Demi Musim Dingin",
+                helperLetters: ["S", "M", "T"],
+                author: "Fabel Teladan Anak",
+                desc: "Kisah persahabatan Semut yang rajin mengumpulkan makanan dan Belalang yang hanya suka bernyanyi."
+            },
+            {
+                id: 9,
+                phrase: "DANAU TOBA DAN IKAN MAS",
+                clue: "Pemuda Toba Dan Janji Putri Ikan",
+                helperLetters: ["D", "T", "B"],
+                author: "Cerita Rakyat Sumatera Utara",
+                desc: "Legenda terciptanya Danau Toba akibat pelanggaran janji seorang suami kepada istrinya yang berasal dari ikan mas."
+            },
+            {
+                id: 10,
+                phrase: "KANCIL DAN SIPUT",
+                clue: "Lomba Lari Kancil Dan Siput Lambat",
+                helperLetters: ["K", "S", "P"],
+                author: "Fabel Anak SD",
+                desc: "Kisah Kancil yang sombong kalah lomba lari dari Siput yang kompak bekerja sama bersama teman-temannya."
+            },
+            {
+                id: 11,
+                phrase: "SANGKURIANG DAN TANGKUBAN PERAHU",
+                clue: "Pemuda Sakti Dan Perahu Terbalik",
+                helperLetters: ["S", "G", "P"],
+                author: "Cerita Rakyat Jawa Barat",
+                desc: "Kisah legenda Gunung Tangkuban Perahu yang tercipta dari tendangan perahu raksasa Sangkuriang."
+            },
+            {
+                id: 12,
+                phrase: "LUTUNG KASARUNG",
+                clue: "Purbasari Dan Monyet Hitam Ajaib",
+                helperLetters: ["L", "T", "G"],
+                author: "Cerita Rakyat Sunda",
+                desc: "Kisah kebaikan hati Putri Purbasari yang dibantu oleh seekor lutung ajaib penjelmaan pangeran."
+            },
+            {
+                id: 13,
+                phrase: "ANAK GEMBALA DAN SERIGALA",
+                clue: "Anak Suka Berbohong Terkena Batunya",
+                helperLetters: ["A", "G", "M"],
+                author: "Fabel Moral Anak",
+                desc: "Kisah anak gembala yang suka berteriak bohong ada serigala hingga akhirnya tidak ada yang percaya lagi padanya."
+            },
+            {
+                id: 14,
+                phrase: "SEMUT DAN BURUNG MERPATI",
+                clue: "Saling Tolong Menolong Di Tepi Sungai",
+                helperLetters: ["S", "M", "P"],
+                author: "Fabel Anak SD",
+                desc: "Burung Merpati menyelamatkan Semut yang tenggelam, lalu Semut menyelamatkan Merpati dari pemburu."
+            },
+            {
+                id: 15,
+                phrase: "ASAL USUL KOTA SURABAYA",
+                clue: "Pertarungan Ikan Hiu Sura Dan Buaya Baya",
+                helperLetters: ["S", "R", "B"],
+                author: "Cerita Rakyat Jawa Timur",
+                desc: "Legenda perkelahian hebat antara Hiu Sura dan Buaya Baya yang menjadi asal-usul nama Kota Surabaya."
+            },
+            {
+                id: 16,
+                phrase: "RORO JONGGRANG DAN SERIBU CANDI",
+                clue: "Syarat Seribu Candi Dalam Semalam",
+                helperLetters: ["R", "J", "C"],
+                author: "Cerita Rakyat Yogyakarta",
+                desc: "Kisah Putri Roro Jonggrang dan Bandung Bondowoso dalam pembuatan candi megah Sewu."
+            },
+            {
+                id: 17,
+                phrase: "KANCIL DAN HARIMAU",
+                clue: "Gong Raja Dan Sabuk Raja Ajaib",
+                helperLetters: ["K", "H", "R"],
+                author: "Fabel Kancil Anak SD",
+                desc: "Kancil cerdik mengelabuhi Harimau yang hendak memakannya dengan berpura-pura menjaga gong dan sabuk milik raja."
+            },
+            {
+                id: 18,
+                phrase: "POHON APEL YANG TULUS",
+                clue: "Kasih Sayang Pohon Kepada Anak Laki Laki",
+                helperLetters: ["P", "H", "N"],
+                author: "Cerpen Inspirasi Anak",
+                desc: "Cerita menyentuh tentang sebuah pohon apel yang rela memberikan segalanya demi kebahagiaan seorang anak."
+            },
+            {
+                id: 19,
+                phrase: "DUA EKOR BURUNG DARA",
+                clue: "Persahabatan Dan Kesetiaan Dua Burung",
+                helperLetters: ["D", "E", "R"],
+                author: "Cerpen Dongeng Anak",
+                desc: "Kisah dua burung dara yang saling membantu saat salah satu terjerat jaring pemburu."
+            },
+            {
+                id: 20,
+                phrase: "PERSAHABATAN KANCIL DAN MONYET",
+                clue: "Suka Duka Memetik Buah Pisang Bersama",
+                helperLetters: ["P", "R", "M"],
+                author: "Fabel Cerita Anak SD",
+                desc: "Pelajaran tentang arti kejujuran dan persahabatan saat Kancil dan Monyet bekerja sama mencari makanan."
+            }
+        ];
+
+        let currentLevelIdx = 0;
+        let currentCipherMap = {}; 
+        let currentReverseCipher = {}; 
+        let userGuesses = {}; 
+        let revealedNumbers = new Set(); 
+        let selectedCipherNum = null;
+        let hintsLeft = 3;
+        let timerSeconds = 0;
+        let timerInterval = null;
+
+        let maxUnlockedLevel = parseInt(localStorage.getItem('kriptogram_unlocked') || '1');
+
+        function generateCipherMap(levelIdx) {
+            const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+            let numbers = Array.from({length: 26}, (_, i) => (i + 1).toString().padStart(2, '0'));
+
+            let seed = (levelIdx + 1) * 9973;
+            function pseudoRandom() {
+                seed = (seed * 9301 + 49297) % 233280;
+                return seed / 233280;
+            }
+
+            for (let i = numbers.length - 1; i > 0; i--) {
+                const j = Math.floor(pseudoRandom() * (i + 1));
+                [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+            }
+
+            const map = {};
+            const revMap = {};
+            alphabet.forEach((char, i) => {
+                map[char] = numbers[i];
+                revMap[numbers[i]] = char;
+            });
+
+            return { map, revMap };
+        }
+
+        function initVirtualKeyboard() {
+            const rows = [
+                "QWERTYUIOP".split(""),
+                "ASDFGHJKL".split(""),
+                "ZXCVBNM".split("")
+            ];
+
+            rows.forEach((rowLetters, rowIdx) => {
+                const rowElem = document.getElementById(`kbRow${rowIdx + 1}`);
+                rowElem.innerHTML = "";
+
+                rowLetters.forEach(letter => {
+                    const keyBtn = document.createElement("button");
+                    keyBtn.className = "keyboard-key bg-slate-800 hover:bg-slate-700 active:bg-amber-500 active:text-slate-950 text-slate-100 font-bold py-2.5 sm:py-3 px-2 sm:px-3.5 rounded-lg text-sm sm:text-base border border-slate-700/80 shadow-md min-w-[32px] sm:min-w-[42px]";
+                    keyBtn.dataset.key = letter;
+                    keyBtn.innerText = letter;
+
+                    keyBtn.addEventListener("click", () => handleVirtualKeyPress(letter));
+                    rowElem.appendChild(keyBtn);
+                });
+
+                if (rowIdx === 2) {
+                    const delBtn = document.createElement("button");
+                    delBtn.className = "keyboard-key bg-rose-900/60 hover:bg-rose-800/80 text-rose-200 font-bold py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg text-xs sm:text-sm border border-rose-700/50 shadow-md flex items-center gap-1";
+                    delBtn.innerHTML = '<i class="fa-solid fa-backspace"></i>';
+                    delBtn.title = "Hapus Tebakan";
+                    delBtn.addEventListener("click", () => handleVirtualKeyPress("BACKSPACE"));
+                    rowElem.appendChild(delBtn);
+                }
+            });
+        }
+
+        function loadLevel(levelIdx) {
+            currentLevelIdx = levelIdx;
+            const levelData = CERPEN_LEVELS[currentLevelIdx];
+
+            const { map, revMap } = generateCipherMap(levelIdx);
+            currentCipherMap = map;
+            currentReverseCipher = revMap;
+
+            userGuesses = {};
+            revealedNumbers = new Set();
+            selectedCipherNum = null;
+            hintsLeft = 3;
+            document.getElementById("hintsCount").innerText = hintsLeft;
+
+            document.getElementById("currentLevelDisplay").innerText = levelData.id;
+
+            resetTimer();
+            renderClueWithNumbers();
+            renderCryptogram();
+            updateKeyboardKeyStates();
+        }
+
+        function renderClueWithNumbers() {
+            const container = document.getElementById("clueWordsContainer");
+            container.innerHTML = "";
+
+            const levelData = CERPEN_LEVELS[currentLevelIdx];
+            const clueText = levelData.clue.toUpperCase();
+            const words = clueText.split(" ");
+
+            words.forEach((word) => {
+                const wordDiv = document.createElement("div");
+                wordDiv.className = "flex gap-1 items-center my-0.5";
+
+                for (let i = 0; i < word.length; i++) {
+                    const char = word[i];
+
+                    if (/[A-Z]/.test(char)) {
+                        const cipherNum = currentCipherMap[char];
+                        const isSelected = selectedCipherNum === cipherNum;
+
+                        const chip = document.createElement("div");
+                        chip.className = `flex flex-col items-center justify-center bg-slate-800/90 hover:bg-slate-700 border px-1.5 py-1 rounded-lg cursor-pointer transition-all select-none ${
+                            isSelected ? 'border-amber-400 bg-amber-500/20 text-amber-300 ring-2 ring-amber-400/40' : 'border-slate-700/70 text-slate-200'
+                        }`;
+
+                        chip.innerHTML = `
+                            <span class="font-extrabold text-xs sm:text-sm text-amber-300">${char}</span>
+                            <span class="text-[9px] sm:text-[10px] font-bold text-slate-400 border-t border-slate-700/60 w-full text-center pt-0.5 mt-0.5">#${cipherNum}</span>
+                        `;
+
+                        chip.addEventListener("click", () => {
+                            sound.playClick();
+                            selectedCipherNum = cipherNum;
+                            renderClueWithNumbers();
+                            renderCryptogram();
+                        });
+
+                        wordDiv.appendChild(chip);
+                    } else {
+                        const symbolSpan = document.createElement("span");
+                        symbolSpan.className = "text-slate-400 font-bold px-0.5";
+                        symbolSpan.innerText = char;
+                        wordDiv.appendChild(symbolSpan);
+                    }
+                }
+
+                container.appendChild(wordDiv);
+            });
+        }
+
+        function renderCryptogram() {
+            const container = document.getElementById("cryptogramContainer");
+            container.innerHTML = "";
+
+            const levelData = CERPEN_LEVELS[currentLevelIdx];
+            const words = levelData.phrase.split(" ");
+
+            words.forEach((word) => {
+                const wordDiv = document.createElement("div");
+                wordDiv.className = "flex gap-1 sm:gap-1.5 my-1";
+
+                for (let i = 0; i < word.length; i++) {
+                    const realChar = word[i];
+
+                    if (/[A-Z]/.test(realChar)) {
+                        const cipherNum = currentCipherMap[realChar];
+                        const guessedChar = userGuesses[cipherNum] || "";
+                        const isRevealed = revealedNumbers.has(cipherNum);
+                        const isSelected = selectedCipherNum === cipherNum;
+
+                        const card = document.createElement("div");
+                        let classList = "letter-card flex flex-col items-center justify-between w-8 h-12 sm:w-10 sm:h-16 rounded-xl border p-1 cursor-pointer select-none shadow-md ";
+
+                        if (isSelected) {
+                            classList += "selected bg-amber-500/20 border-amber-400 text-amber-300 ";
+                        } else if (selectedCipherNum && cipherNum === selectedCipherNum) {
+                            classList += "highlighted border-amber-500/50 bg-amber-500/10 ";
+                        } else {
+                            classList += "bg-slate-800/90 hover:bg-slate-700/80 border-slate-700 text-slate-200 ";
+                        }
+
+                        if (isRevealed) {
+                            classList += "ring-1 ring-emerald-500/50 ";
+                        }
+
+                        card.className = classList;
+                        card.dataset.cipherNum = cipherNum;
+
+                        const guessSpan = document.createElement("span");
+                        guessSpan.className = `font-black text-sm sm:text-lg ${isRevealed ? 'text-emerald-400' : 'text-amber-300'}`;
+                        guessSpan.innerText = guessedChar || " ";
+
+                        const cipherSpan = document.createElement("span");
+                        cipherSpan.className = "text-[10px] sm:text-xs font-bold text-amber-400/90 border-t border-slate-700/60 w-full text-center pt-0.5 tracking-tighter";
+                        cipherSpan.innerText = `#${cipherNum}`;
+
+                        card.appendChild(guessSpan);
+                        card.appendChild(cipherSpan);
+
+                        card.addEventListener("click", () => {
+                            sound.playClick();
+                            selectedCipherNum = cipherNum;
+                            renderClueWithNumbers();
+                            renderCryptogram();
+                        });
+
+                        wordDiv.appendChild(card);
+                    }
+                }
+
+                container.appendChild(wordDiv);
+            });
+
+            if (!selectedCipherNum) {
+                const firstCard = container.querySelector(".letter-card");
+                if (firstCard) {
+                    selectedCipherNum = firstCard.dataset.cipherNum;
+                }
+            }
+        }
+
+        function handleVirtualKeyPress(key) {
+            if (!selectedCipherNum) return;
+
+            if (revealedNumbers.has(selectedCipherNum)) {
+                sound.playError();
+                return;
+            }
+
+            if (key === "BACKSPACE") {
+                sound.playClick();
+                delete userGuesses[selectedCipherNum];
+            } else if (/[A-Z]/.test(key)) {
+                sound.playClick();
+                userGuesses[selectedCipherNum] = key;
+                moveToNextCard();
+            }
+
+            renderClueWithNumbers();
+            renderCryptogram();
+            updateKeyboardKeyStates();
+            checkWinCondition();
+        }
+
+        function moveToNextCard() {
+            const cards = Array.from(document.querySelectorAll(".letter-card"));
+            const currentIdx = cards.findIndex(c => c.dataset.cipherNum === selectedCipherNum);
+
+            for (let i = currentIdx + 1; i < cards.length; i++) {
+                const cNum = cards[i].dataset.cipherNum;
+                if (!userGuesses[cNum]) {
+                    selectedCipherNum = cNum;
+                    return;
+                }
+            }
+
+            for (let i = 0; i <= currentIdx; i++) {
+                const cNum = cards[i].dataset.cipherNum;
+                if (!userGuesses[cNum]) {
+                    selectedCipherNum = cNum;
+                    return;
+                }
+            }
+        }
+
+        function updateKeyboardKeyStates() {
+            const usedLetters = new Set(Object.values(userGuesses));
+
+            document.querySelectorAll(".keyboard-key[data-key]").forEach(keyBtn => {
+                const letter = keyBtn.dataset.key;
+                if (usedLetters.has(letter)) {
+                    keyBtn.classList.add("bg-amber-500/30", "text-amber-300", "border-amber-500/50");
+                } else {
+                    keyBtn.classList.remove("bg-amber-500/30", "text-amber-300", "border-amber-500/50");
+                }
+            });
+        }
+
+        function giveHint() {
+            if (hintsLeft <= 0) {
+                sound.playError();
+                return;
+            }
+
+            const levelData = CERPEN_LEVELS[currentLevelIdx];
+            const phraseLetters = levelData.phrase.replace(/[^A-Z]/g, "").split("");
+            const unrevealed = phraseLetters.filter(realChar => {
+                const cipherNum = currentCipherMap[realChar];
+                return !revealedNumbers.has(cipherNum);
+            });
+
+            if (unrevealed.length === 0) return;
+
+            const targetRealChar = unrevealed[Math.floor(Math.random() * unrevealed.length)];
+            const targetCipherNum = currentCipherMap[targetRealChar];
+
+            userGuesses[targetCipherNum] = targetRealChar;
+            revealedNumbers.add(targetCipherNum);
+
+            hintsLeft--;
+            document.getElementById("hintsCount").innerText = hintsLeft;
+            sound.playCorrect();
+
+            renderClueWithNumbers();
+            renderCryptogram();
+            updateKeyboardKeyStates();
+            checkWinCondition();
+        }
+
+        function checkWinCondition() {
+            const levelData = CERPEN_LEVELS[currentLevelIdx];
+            const phrase = levelData.phrase;
+
+            for (let i = 0; i < phrase.length; i++) {
+                const realChar = phrase[i];
+                if (/[A-Z]/.test(realChar)) {
+                    const cipherNum = currentCipherMap[realChar];
+                    if (userGuesses[cipherNum] !== realChar) {
+                        return false; 
+                    }
+                }
+            }
+
+            stopTimer();
+            sound.playWin();
+            launchConfetti();
+
+            if (currentLevelIdx + 2 > maxUnlockedLevel) {
+                maxUnlockedLevel = Math.min(20, currentLevelIdx + 2);
+                localStorage.setItem('kriptogram_unlocked', maxUnlockedLevel);
+            }
+
+            setTimeout(() => {
+                document.getElementById("victoryTitle").innerText = levelData.phrase;
+                document.getElementById("victoryAuthor").innerText = `Karya: ${levelData.author}`;
+                document.getElementById("victoryDesc").innerText = levelData.desc;
+                document.getElementById("victoryTime").innerText = formatTime(timerSeconds);
+                document.getElementById("victoryLevelNum").innerText = `${levelData.id}/20`;
+                
+                document.getElementById("victoryModal").classList.remove("hidden");
+                document.getElementById("victoryModal").classList.add("flex");
+            }, 500);
+
+            return true;
+        }
+
+        function startTimer() {
+            stopTimer();
+            timerSeconds = 0;
+            document.getElementById("timerDisplay").innerText = "00:00";
+            timerInterval = setInterval(() => {
+                timerSeconds++;
+                document.getElementById("timerDisplay").innerText = formatTime(timerSeconds);
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+        }
+
+        function resetTimer() {
+            startTimer();
+        }
+
+        function formatTime(totalSeconds) {
+            const mins = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            const secs = (totalSeconds % 60).toString().padStart(2, '0');
+            return `${mins}:${secs}`;
+        }
+
+        function openLevelModal() {
+            sound.playClick();
+            const grid = document.getElementById("levelsGrid");
+            grid.innerHTML = "";
+
+            CERPEN_LEVELS.forEach((level, idx) => {
+                const isUnlocked = level.id <= maxUnlockedLevel;
+                const isCurrent = idx === currentLevelIdx;
+
+                const btn = document.createElement("button");
+                btn.className = `p-4 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all border ${
+                    isCurrent 
+                        ? 'bg-amber-500/20 border-amber-400 text-amber-300 ring-2 ring-amber-400/50' 
+                        : isUnlocked 
+                            ? 'bg-slate-800/80 hover:bg-slate-700 border-slate-700 text-slate-200' 
+                            : 'bg-slate-900/50 border-slate-800/60 text-slate-600 cursor-not-allowed'
+                }`;
+
+                btn.innerHTML = `
+                    <div class="text-xs font-bold text-slate-400 uppercase">Level ${level.id}</div>
+                    <div class="font-extrabold text-sm sm:text-base text-center line-clamp-1">
+                        ${isUnlocked ? level.phrase : '<i class="fa-solid fa-lock text-slate-600"></i>'}
+                    </div>
+                `;
+
+                if (isUnlocked) {
+                    btn.addEventListener("click", () => {
+                        document.getElementById("levelModal").classList.add("hidden");
+                        document.getElementById("levelModal").classList.remove("flex");
+                        loadLevel(idx);
+                    });
+                }
+
+                grid.appendChild(btn);
+            });
+
+            document.getElementById("levelModal").classList.remove("hidden");
+            document.getElementById("levelModal").classList.add("flex");
+        }
+
+        function launchConfetti() {
+            const canvas = document.getElementById("confettiCanvas");
+            const ctx = canvas.getContext("2d");
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            const colors = ['#f59e0b', '#fbbf24', '#38bdf8', '#a855f7', '#ec4899', '#10b981'];
+
+            for (let i = 0; i < 120; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    vx: (Math.random() - 0.5) * 16,
+                    vy: (Math.random() - 0.7) * 16,
+                    size: Math.random() * 8 + 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    alpha: 1,
+                    decay: Math.random() * 0.015 + 0.008
+                });
+            }
+
+            function animateConfetti() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let alive = false;
+
+                particles.forEach(p => {
+                    if (p.alpha > 0) {
+                        alive = true;
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        p.vy += 0.25; 
+                        p.alpha -= p.decay;
+
+                        ctx.globalAlpha = Math.max(0, p.alpha);
+                        ctx.fillStyle = p.color;
+                        ctx.fillRect(p.x, p.y, p.size, p.size);
+                    }
+                });
+
+                if (alive) {
+                    requestAnimationFrame(animateConfetti);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+
+            animateConfetti();
+        }
+
+        document.addEventListener("keydown", (e) => {
+            const key = e.key.toUpperCase();
+            if (key === "BACKSPACE" || key === "DELETE") {
+                handleVirtualKeyPress("BACKSPACE");
+            } else if (/^[A-Z]$/.test(key)) {
+                handleVirtualKeyPress(key);
+            }
+        });
+
+        document.getElementById("levelSelectBtn").addEventListener("click", openLevelModal);
+        document.getElementById("closeLevelModal").addEventListener("click", () => {
+            document.getElementById("levelModal").classList.add("hidden");
+            document.getElementById("levelModal").classList.remove("flex");
+        });
+
+        document.getElementById("hintBtn").addEventListener("click", giveHint);
+
+        document.getElementById("resetBtn").addEventListener("click", () => {
+            sound.playClick();
+            userGuesses = {};
+
+            revealedNumbers.forEach(num => {
+                userGuesses[num] = currentReverseCipher[num];
+            });
+
+            renderClueWithNumbers();
+            renderCryptogram();
+            updateKeyboardKeyStates();
+        });
+
+        document.getElementById("soundToggleBtn").addEventListener("click", () => {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById("soundIcon");
+            icon.className = soundEnabled ? "fa-solid fa-volume-high" : "fa-solid fa-volume-xmark text-slate-500";
+        });
+
+        document.getElementById("nextLevelBtn").addEventListener("click", () => {
+            sound.playClick();
+            document.getElementById("victoryModal").classList.add("hidden");
+            document.getElementById("victoryModal").classList.remove("flex");
+
+            if (currentLevelIdx + 1 < CERPEN_LEVELS.length) {
+                loadLevel(currentLevelIdx + 1);
+            } else {
+                loadLevel(0);
+            }
+        });
+
+        window.addEventListener("load", () => {
+            initVirtualKeyboard();
+            loadLevel(0);
+        });
+
+        window.addEventListener("resize", () => {
+            const canvas = document.getElementById("confettiCanvas");
+            if (canvas) {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+        });
+    </script>
+</body>
+</html>
