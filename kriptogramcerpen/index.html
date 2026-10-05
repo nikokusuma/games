@@ -452,6 +452,7 @@
         let timerInterval = null;
 
         let maxUnlockedLevel = parseInt(localStorage.getItem('kriptogram_unlocked') || '1');
+        let savedCurrentLevel = parseInt(localStorage.getItem('kriptogram_current_level') || '0');
 
         function generateCipherMap(levelIdx) {
             const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
@@ -512,6 +513,7 @@
 
         function loadLevel(levelIdx) {
             currentLevelIdx = levelIdx;
+            localStorage.setItem('kriptogram_current_level', currentLevelIdx);
             const levelData = CERPEN_LEVELS[currentLevelIdx];
 
             const { map, revMap } = generateCipherMap(levelIdx);
@@ -941,7 +943,9 @@
 
         window.addEventListener("load", () => {
             initVirtualKeyboard();
-            loadLevel(0);
+            // Muat level terakhir yang disimpan jika valid dan sudah terbuka
+            const initialLevel = (savedCurrentLevel >= 0 && savedCurrentLevel < CERPEN_LEVELS.length && savedCurrentLevel < maxUnlockedLevel) ? savedCurrentLevel : 0;
+            loadLevel(initialLevel);
         });
 
         window.addEventListener("resize", () => {
