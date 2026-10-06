@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan Kode: Lintas Garis Finish</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            blue: '#3B82F6',
+                            purple: '#8B5CF6',
+                            green: '#10B981',
+                            amber: '#F59E0B',
+                            rose: '#F43F5E',
+                            dark: '#1E293B'
+                        }
+                    },
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                        nunito: ['Nunito', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        h1, h2, h3, .font-heading {
+            font-family: 'Fredoka', sans-serif;
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        /* Grid tile styles */
+        .grid-tile {
+            transition: all 0.2s ease;
+        }
+        /* Block drag animation feedback */
+        .block-item {
+            touch-action: manipulation;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .block-item:active {
+            transform: scale(0.96);
+        }
+        .executing-block {
+            ring: 4px solid #F59E0B;
+            animation: pulse-ring 1s infinite;
+        }
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- TOP NAVIGATION BAR -->
+    <header class="bg-white shadow-md border-b border-slate-200 sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <!-- Game Logo & Title -->
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-xl shadow-md">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-800 leading-tight">Petualangan Kode</h1>
+                    <p class="text-xs text-slate-500 font-semibold">Lintas Garis Finish (SD Kelas 5-6)</p>
+                </div>
+            </div>
+
+            <!-- Level Selector & Controls -->
+            <div class="flex items-center space-x-3">
+                <button id="btnOpenLevelModal" class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl flex items-center space-x-2 border border-indigo-200 transition">
+                    <i class="fa-solid fa-map"></i>
+                    <span>Level <span id="currentLevelDisplay" class="text-indigo-900 font-extrabold text-lg">1</span> / 50</span>
+                </button>
+                <button id="btnHelp" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl flex items-center justify-center font-bold transition" title="Petunjuk Bermain">
+                    <i class="fa-solid fa-circle-question text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT WRAPPER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- LEFT PANEL: GRID MAP CANVAS & STATUS (5 cols) -->
+        <section class="lg:col-span-5 flex flex-col space-y-4">
+            <!-- Level Information Banner -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-center">
+                <div>
+                    <span id="levelBadge" class="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">
+                        Level 1: Dasar
+                    </span>
+                    <h2 id="levelTitle" class="text-lg font-bold text-slate-800 mt-1">Langkah Lurus</h2>
+                </div>
+                <div id="distractorWarning" class="hidden flex items-center space-x-1 text-xs text-amber-700 bg-amber-50 px-2.5 py-1.5 rounded-lg border border-amber-200 font-semibold">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>Ada Blok Sisa!</span>
+                </div>
+            </div>
+
+            <!-- Game Map Board -->
+            <div class="bg-white p-4 rounded-2xl shadow-md border border-slate-200 flex flex-col items-center justify-center flex-1 min-h-[360px] relative overflow-hidden">
+                <div id="gridContainer" class="grid gap-1.5 bg-slate-200 p-2.5 rounded-xl border-2 border-slate-300 shadow-inner">
+                    <!-- Dynamic Grid Tiles populated via JS -->
+                </div>
+
+                <!-- Floating Feedback Overlay Message -->
+                <div id="statusOverlay" class="hidden absolute inset-0 bg-slate-900/60 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center z-20">
+                    <div id="statusIcon" class="w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-3"></div>
+                    <h3 id="statusTitle" class="text-2xl font-bold text-white mb-1"></h3>
+                    <p id="statusDesc" class="text-slate-200 text-sm mb-4 max-w-xs"></p>
+                    <button id="btnStatusAction" class="px-6 py-2.5 rounded-xl font-bold text-white shadow-lg transition transform hover:scale-105">
+                        Lanjutkan
+                    </button>
+                </div>
+            </div>
+
+            <!-- Legend & Instructions -->
+            <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 text-xs text-slate-600 flex justify-around items-center">
+                <div class="flex items-center space-x-1.5">
+                    <span class="w-4 h-4 rounded bg-emerald-500 flex items-center justify-center text-white text-[10px]"><i class="fa-solid fa-robot"></i></span>
+                    <span>Robot</span>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                    <span class="w-4 h-4 rounded bg-amber-400 flex items-center justify-center text-white text-[10px]"><i class="fa-solid fa-flag-checkered"></i></span>
+                    <span>Finish</span>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                    <span class="w-4 h-4 rounded bg-slate-700 flex items-center justify-center text-white text-[10px]"><i class="fa-solid fa-cube"></i></span>
+                    <span>Tembok</span>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                    <span class="w-4 h-4 rounded bg-cyan-400 flex items-center justify-center text-white text-[10px]"><i class="fa-solid fa-water"></i></span>
+                    <span>Air</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT PANEL: BLOCK TOOLBOX & PROGRAM WORKSPACE (7 cols) -->
+        <section class="lg:col-span-7 flex flex-col space-y-4">
+            <div class="bg-white rounded-2xl shadow-md border border-slate-200 flex flex-col flex-1 overflow-hidden">
+
+                <!-- Header Action Bar -->
+                <div class="p-4 bg-slate-50 border-b border-slate-200 flex flex-wrap gap-2 items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-code text-blue-600"></i>
+                        <h3 class="font-bold text-slate-800">Area Program</h3>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button id="btnClearWorkspace" class="px-3 py-1.5 text-xs font-bold text-slate-600 bg-slate-200 hover:bg-slate-300 rounded-lg transition flex items-center space-x-1">
+                            <i class="fa-solid fa-trash-can"></i>
+                            <span>Kosongkan</span>
+                        </button>
+                        <button id="btnResetRobot" class="px-3 py-1.5 text-xs font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition flex items-center space-x-1">
+                            <i class="fa-solid fa-rotate-left"></i>
+                            <span>Reset Posisi</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Main Interactive Coding Area -->
+                <div class="p-4 flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
+                    <!-- TOOLBOX (Kotak Blok Tersedia) -->
+                    <div class="flex flex-col bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Blok Tersedia</span>
+                            <span id="toolboxCount" class="text-xs font-extrabold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">0 blok</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mb-2">Klik blok di bawah untuk memasukkan ke susunan program:</p>
+                        <div id="toolboxContainer" class="flex-1 space-y-2 overflow-y-auto max-h-[320px] p-1">
+                            <!-- Available blocks will be rendered here -->
+                        </div>
+                    </div>
+
+                    <!-- WORKSPACE (Susunan Langkah) -->
+                    <div class="flex flex-col bg-slate-900/5 p-3 rounded-xl border-2 border-dashed border-slate-300">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Urutan Langkah Siswa</span>
+                            <span id="workspaceCount" class="text-xs font-extrabold bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full">0/0</span>
+                        </div>
+                        <div id="workspaceContainer" class="flex-1 space-y-2 overflow-y-auto max-h-[320px] min-h-[180px] p-1">
+                            <!-- Student's selected steps will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONTROLS & EXECUTION BUTTON -->
+                <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                    <div class="text-xs text-slate-500">
+                        <span id="hintText" class="italic">Susun blok dengan benar lalu tekan "Jalankan"!</span>
+                    </div>
+                    <button id="btnRunProgram" class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-extrabold rounded-xl shadow-lg transition transform hover:scale-105 active:scale-95 flex items-center space-x-2 text-base">
+                        <i class="fa-solid fa-play"></i>
+                        <span>JALANKAN PROGRAM</span>
+                    </button>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL: LEVEL SELECTOR -->
+    <div id="levelModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-6 flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-4 mb-4">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-800">Pilih Level Game</h3>
+                    <p class="text-xs text-slate-500">Selesaikan level untuk membuka tantangan berikutnya!</p>
+                </div>
+                <button id="btnCloseLevelModal" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Tab Info -->
+            <div class="flex space-x-2 mb-4 text-xs font-bold">
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-lg">Level 1 - 30: Pas Tanpa Blok Sisa</span>
+                <span class="px-3 py-1 bg-amber-100 text-amber-800 rounded-lg">Level 31 - 50: Dengan Blok Pengecoh</span>
+            </div>
+
+            <!-- Level Grid (1 to 50) -->
+            <div id="levelGrid" class="grid grid-cols-5 sm:grid-cols-10 gap-2 overflow-y-auto p-1 flex-1">
+                <!-- Level buttons generated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: HELP & INSTRUCTIONS -->
+    <div id="helpModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
+                <h3 class="text-xl font-bold text-slate-800">Cara Bermain</h3>
+                <button id="btnCloseHelpModal" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="space-y-3 text-sm text-slate-600 leading-relaxed">
+                <div class="flex items-start space-x-3">
+                    <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 font-bold">1</div>
+                    <p><b>Tujuan:</b> Bantu Robot <i class="fa-solid fa-robot text-blue-600"></i> berjalan mencapai Garis Finish <i class="fa-solid fa-flag-checkered text-amber-500"></i>.</p>
+                </div>
+                <div class="flex items-start space-x-3">
+                    <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 font-bold">2</div>
+                    <p><b>Susun Blok:</b> Klik blok langkah dari <i>Kotak Blok Tersedia</i> untuk memasukkannya ke <i>Urutan Langkah Siswa</i>.</p>
+                </div>
+                <div class="flex items-start space-x-3">
+                    <div class="w-7 h-7 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 font-bold">3</div>
+                    <p><b>Hati-hati Blok Sisa (Level 31-50):</b> Di level tinggi, ada blok pengecoh! Pilih hanya blok yang kamu butuhkan.</p>
+                </div>
+                <div class="flex items-start space-x-3">
+                    <div class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 font-bold">4</div>
+                    <p><b>Hindari Rintangan:</b> Jangan menabrak Tembok <i class="fa-solid fa-cube text-slate-700"></i> atau jatuh ke Air <i class="fa-solid fa-water text-cyan-500"></i> (gunakan blok <i>Lompat</i> jika ada air).</p>
+                </div>
+            </div>
+            <button id="btnGotIt" class="mt-6 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition">
+                Saya Mengerti!
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Direction vectors: 0=UP (North), 1=RIGHT (East), 2=DOWN (South), 3=LEFT (West)
+        const DIRS = [
+            { id: 0, name: 'Atas', dx: 0, dy: -1, icon: 'fa-arrow-up' },
+            { id: 1, name: 'Kanan', dx: 1, dy: 0, icon: 'fa-arrow-right' },
+            { id: 2, name: 'Bawah', dx: 0, dy: 1, icon: 'fa-arrow-down' },
+            { id: 3, name: 'Kiri', dx: -1, dy: 0, icon: 'fa-arrow-left' }
+        ];
+
+        // Global state (Resets on refresh as requested)
+        let currentLevel = 1;
+        let maxUnlockedLevel = 1;
+        let robotState = { x: 0, y: 0, dir: 1 }; // current position & facing direction
+        let isExecuting = false;
+
+        // Student's solution state
+        let availableBlocks = [];
+        let workspaceBlocks = [];
+
+        // GENERATE 50 100% UNIQUE LEVELS PROCEDURALLY & WITH SPECIFIC PATH DESIGNS
+        function generateLevels() {
+            // Preset configurations for all 50 unique levels
+            const levelConfigs = [
+                // LEVEL 1-5: Straight moves (varying length, start position & direction)
+                { id: 1, size: 5, start: { x: 0, y: 2, dir: 1 }, path: ['maju'] },
+                { id: 2, size: 5, start: { x: 1, y: 1, dir: 1 }, path: ['maju', 'maju'] },
+                { id: 3, size: 5, start: { x: 0, y: 0, dir: 2 }, path: ['maju', 'maju', 'maju'] },
+                { id: 4, size: 5, start: { x: 0, y: 4, dir: 0 }, path: ['maju', 'maju', 'maju', 'maju'] },
+                { id: 5, size: 6, start: { x: 0, y: 1, dir: 1 }, path: ['maju', 'maju', 'maju', 'maju', 'maju'] },
+
+                // LEVEL 6-12: Single & Double Turns (L-shapes & U-shapes)
+                { id: 6, size: 5, start: { x: 0, y: 0, dir: 1 }, path: ['maju', 'kanan', 'maju', 'maju'] },
+                { id: 7, size: 5, start: { x: 0, y: 3, dir: 1 }, path: ['maju', 'maju', 'kiri', 'maju', 'maju'] },
+                { id: 8, size: 5, start: { x: 1, y: 0, dir: 1 }, path: ['maju', 'maju', 'kanan', 'maju', 'kanan', 'maju'] },
+                { id: 9, size: 5, start: { x: 0, y: 2, dir: 1 }, path: ['maju', 'kiri', 'maju', 'maju', 'kiri', 'maju'] },
+                { id: 10, size: 6, start: { x: 0, y: 0, dir: 1 }, path: ['maju', 'maju', 'maju', 'kanan', 'maju', 'maju'] },
+                { id: 11, size: 6, start: { x: 0, y: 2, dir: 1 }, path: ['maju', 'kiri', 'maju', 'kanan', 'maju', 'maju'] },
+                { id: 12, size: 6, start: { x: 1, y: 1, dir: 1 }, path: ['maju', 'maju', 'kanan', 'maju', 'kiri', 'maju', 'maju'] },
+
+                // LEVEL 13-20: Zigzag & Multi-turns
+                { id: 13, size: 6, start: { x: 0, y: 1, dir: 1 }, path: ['maju', 'kanan', 'maju', 'kiri', 'maju', 'kanan', 'maju'] },
+                { id: 14, size: 6, start: { x: 0, y: 4, dir: 1 }, path: ['maju', 'maju', 'kiri', 'maju', 'kiri', 'maju', 'maju'] },
+                { id: 15, size: 6, start: { x: 1, y: 0, dir: 1 }, path: ['maju', 'kanan', 'maju', 'kanan', 'maju', 'kanan', 'maju', 'maju'] },
+                { id: 16, size: 6, start: { x: 0, y: 2, dir: 1 }, path: ['maju', 'maju', 'kanan', 'maju', 'kiri', 'maju', 'kiri', 'maju'] },
+                { id: 17, size: 6, start: { x: 0, y: 3, dir: 1 }, path: ['maju', 'kiri', 'maju', 'maju', 'kanan', 'maju', 'kanan', 'maju'] },
+                { id: 18, size: 7, start: { x: 0, y: 1, dir: 1 }, path: ['maju', 'maju', 'kanan', 'maju', 'kanan', 'maju', 'kiri', 'maju', 'maju'] },
+                { id: 19, size: 7, start: { x: 0, y: 4, dir: 1 }, path: ['maju', 'kiri', 'maju', 'kiri', 'maju', 'kanan', 'maju', 'kanan', 'maju'] },
+                { id: 20, size: 7, start: { x: 0, y: 2, dir: 1 }, path: ['maju', 'maju', 'maju', 'kanan', 'maju', 'kiri', 'maju', 'kanan', 'maju'] },
+
+                // LEVEL 21-30: Water Obstacles & Jump Blocks
+                { id: 21, size: 6, start: { x: 0, y: 1, dir: 1 }, path: ['maju', 'lompat', 'maju', 'kanan', 'maju'] },
+                { id: 22, size: 6, start: { x: 0, y: 4, dir: 1 }, path: ['maju', 'maju', 'kiri', 'lompat', 'maju', 'kanan', 'maju'] },
+                { id: 23, size: 6, start: { x: 0, y: 1, dir: 1 }, path: ['maju', 'kanan', 'lompat', 'maju', 'kiri', 'maju', 'maju'] },
+                { id: 24, size: 6, start: { x: 0, y: 2, dir: 1 }, path: ['maju', 'maju', 'lompat', 'kanan', 'maju', 'lompat', 'maju'] },
+                { id: 25, size: 7, start: { x: 0, y: 3, dir: 1 }, path: ['maju', 'kiri', 'maju', 'lompat', 'kanan', 'maju', 'maju'] },
+                { id: 26, size: 7, start: { x: 0, y: 1, dir: 1 }, path: ['maju', 'lompat', 'kanan', 'maju', 'lompat', 'kiri', 'maju'] },
+                { id: 27, size: 7, start: { x: 0, y: 2, dir: 1 }, path: ['maju', 'maju', 'kanan', 'lompat', 'maju', 'kanan', 'maju', 'maju'] },
+                { id: 28, size: 7, start: { x: 0, y: 4, dir: 1 }, path: ['maju', 'kiri', 'lompat', 'kiri', 'maju', 'lompat', 'maju'] },
+                { id: 29, size: 7, start: { x: 0, y: 1, dir: 1 }, path: ['maju', 'maju', 'lompat', 'kanan', 'maju', 'kiri', 'lompat', 'maju'] },
+                { id: 30, size: 7, start: { x: 0, y: 2, dir: 1 }, path: ['maju', 'kanan', 'maju', 'lompat', 'kanan', 'maju', 'lompat', 'maju', 'maju'] },
+
+                // LEVEL 31-40: DISTRACTORS (Medium - 2 Extra Blocks)
+                { id: 31, size: 7, start: { x: 0, y: 1, dir: 1 }, path: ['maju', 'maju', 'kanan', 'maju', 'kiri', 'maju'], distractors: ['kanan', 'kiri'] },
+                { id: 32, size: 7, start: { x: 0, y: 3, dir: 1 }, path: ['maju', 'kiri', 'maju', 'kanan', 'maju', 'maju'], distractors: ['maju', 'lompat'] },
+                { id: 33, size: 7, start: { x: 0, y: 1, dir: 1 }, path: ['maju', 'lompat', 'kanan', 'maju', 'kiri', 'maju'], distractors: ['lompat', 'kanan'] },
+                { id: 34, size: 7, start: { x: 0, y: 4, dir: 1 }, path: ['maju', 'maju', 'kiri', 'maju', 'kiri', 'maju', 'maju'], distractors: ['maju', 'kanan'] },
+                { id: 35, size: 7, start: { x: 0, y: 2, dir: 1 }, path: ['maju', 'kanan', 'maju', 'lompat', 'kiri', 'maju', 'maju'], distractors: ['kiri', 'lompat'] },
+                { id: 36, size: 7, start: { x: 0, y: 1, dir: 1 }, path: ['maju', 'maju', 'kanan', 'lompat', 'maju', 'kanan', 'maju'], distractors: ['maju', 'kiri'] },
+                { id: 37, size: 8, start: { x: 0, y: 3, dir: 1 }, path: ['maju', 'kiri', 'lompat', 'kanan', 'maju', 'kiri', 'maju'], distractors: ['lompat', 'kanan'] },
+                { id: 38, size: 8, start: { x: 0, y: 2, dir: 1 }, path: ['maju', 'maju', 'maju', 'kanan', 'lompat', 'maju', 'kiri', 'maju'], distractors: ['maju', 'kiri'] },
+                { id: 39, size: 8, start: { x: 0, y: 1, dir: 1 }, path: ['maju', 'kanan', 'maju', 'kanan', 'lompat', 'kiri', 'maju', 'maju'], distractors: ['lompat', 'kanan'] },
+                { id: 40, size: 8, start: { x: 0, y: 4, dir: 1 }, path: ['maju', 'kiri', 'maju', 'lompat', 'kanan', 'lompat', 'maju'], distractors: ['kiri', 'maju'] },
+
+                // LEVEL 41-50: ADVANCED DISTRACTORS (Hard - 3 to 4 Extra Blocks)
+                { id: 41, size: 8, start: { x: 0, y: 2, dir: 1 }, path: ['maju', 'lompat', 'kanan', 'maju', 'kiri', 'lompat', 'maju'], distractors: ['maju', 'kanan', 'kiri'] },
+                { id: 42, size: 8, start: { x: 0, y: 4, dir: 1 }, path: ['maju', 'maju', 'kiri', 'lompat', 'kanan', 'maju', 'lompat', 'maju'], distractors: ['lompat', 'kanan', 'maju'] },
+                { id: 43, size: 8, start: { x: 0, y: 1, dir: 1 }, path: ['maju', 'kanan', 'maju', 'kiri', 'lompat', 'kanan', 'maju', 'kiri', 'maju'], distractors: ['kiri', 'lompat', 'maju'] },
+                { id: 44, size: 8, start: { x: 0, y: 2, dir: 1 }, path: ['maju', 'lompat', 'maju', 'kanan', 'lompat', 'kiri', 'maju', 'kanan', 'maju'], distractors: ['kanan', 'lompat', 'kiri', 'maju'] },
+                { id: 45, size: 8, start: { x: 0, y: 3, dir: 1 }, path: ['maju', 'maju', 'kanan', 'lompat', 'kanan', 'maju', 'lompat', 'kiri', 'maju'], distractors: ['maju', 'kiri', 'lompat', 'kanan'] },
+                { id: 46, size: 8, start: { x: 0, y: 4, dir: 1 }, path: ['maju', 'kiri', 'lompat', 'maju', 'kanan', 'lompat', 'kanan', 'maju', 'maju'], distractors: ['lompat', 'kanan', 'kiri', 'maju'] },
+                { id: 47, size: 8, start: { x: 0, y: 1, dir: 1 }, path: ['maju', 'maju', 'lompat', 'kanan', 'maju', 'kiri', 'lompat', 'kiri', 'maju', 'maju'], distractors: ['kiri', 'maju', 'lompat', 'kanan'] },
+                { id: 48, size: 8, start: { x: 0, y: 2, dir: 1 }, path: ['maju', 'kanan', 'lompat', 'kiri', 'maju', 'lompat', 'kanan', 'maju', 'kiri', 'maju'], distractors: ['lompat', 'kanan', 'kiri', 'maju'] },
+                { id: 49, size: 8, start: { x: 0, y: 3, dir: 1 }, path: ['maju', 'maju', 'kiri', 'maju', 'lompat', 'kanan', 'lompat', 'kiri', 'maju', 'kanan', 'maju'], distractors: ['maju', 'lompat', 'kanan', 'kiri'] },
+                { id: 50, size: 8, start: { x: 0, y: 2, dir: 1 }, path: ['maju', 'lompat', 'kanan', 'maju', 'lompat', 'kiri', 'maju', 'kanan', 'lompat', 'maju', 'maju'], distractors: ['lompat', 'kiri', 'kanan', 'maju'] }
+            ];
+
+            const levels = [];
+
+            levelConfigs.forEach((cfg) => {
+                const isDistractorLevel = cfg.id >= 31;
+                let cx = cfg.start.x;
+                let cy = cfg.start.y;
+                let cdir = cfg.start.dir;
+                const waters = [];
+
+                // Calculate path step by step to determine exact finish location and water tiles
+                cfg.path.forEach((step) => {
+                    if (step === 'maju') {
+                        cx += DIRS[cdir].dx;
+                        cy += DIRS[cdir].dy;
+                    } else if (step === 'kanan') {
+                        cdir = (cdir + 1) % 4;
+                    } else if (step === 'kiri') {
+                        cdir = (cdir + 3) % 4;
+                    } else if (step === 'lompat') {
+                        // Water tile is directly in front before jumping
+                        const wx = cx + DIRS[cdir].dx;
+                        const wy = cy + DIRS[cdir].dy;
+                        waters.push({ x: wx, y: wy });
+                        cx += DIRS[cdir].dx * 2;
+                        cy += DIRS[cdir].dy * 2;
+                    }
+                });
+
+                // Ensure finish position stays strictly within grid bounds
+                const targetX = Math.max(0, Math.min(cfg.size - 1, cx));
+                const targetY = Math.max(0, Math.min(cfg.size - 1, cy));
+
+                // Create block objects with unique IDs
+                const requiredBlocks = cfg.path.map((type, idx) => ({
+                    id: `req_${cfg.id}_${idx}_${type}`,
+                    type: type,
+                    label: getBlockLabel(type),
+                    color: getBlockColor(type),
+                    icon: getBlockIcon(type)
+                }));
+
+                let distractorBlocks = [];
+                if (cfg.distractors && cfg.distractors.length > 0) {
+                    distractorBlocks = cfg.distractors.map((type, idx) => ({
+                        id: `dist_${cfg.id}_${idx}_${type}`,
+                        type: type,
+                        label: getBlockLabel(type),
+                        color: getBlockColor(type),
+                        icon: getBlockIcon(type)
+                    }));
+                }
+
+                // Deterministic pseudo-shuffle for toolbox blocks
+                let allToolboxBlocks = [...requiredBlocks, ...distractorBlocks];
+                allToolboxBlocks.sort((a, b) => ((a.id.length * cfg.id * 11) % 17) - ((b.id.length * cfg.id * 11) % 17));
+
+                levels.push({
+                    id: cfg.id,
+                    title: getLevelTitle(cfg.id),
+                    size: cfg.size,
+                    start: { x: cfg.start.x, y: cfg.start.y, dir: cfg.start.dir },
+                    finish: { x: targetX, y: targetY },
+                    requiredBlocksCount: requiredBlocks.length,
+                    hasDistractors: isDistractorLevel,
+                    toolbox: allToolboxBlocks,
+                    walls: [],
+                    waters: waters
+                });
+            });
+
+            return levels;
+        }
+
+        // Helper label functions
+        function getBlockLabel(type) {
+            switch(type) {
+                case 'maju': return 'Maju 1 Langkah';
+                case 'kanan': return 'Belok Kanan ↻';
+                case 'kiri': return 'Belok Kiri ↺';
+                case 'lompat': return 'Lompat Air 🦘';
+                default: return type;
+            }
+        }
+
+        function getBlockIcon(type) {
+            switch(type) {
+                case 'maju': return 'fa-arrow-up';
+                case 'kanan': return 'fa-rotate-right';
+                case 'kiri': return 'fa-rotate-left';
+                case 'lompat': return 'fa-person-running';
+                default: return 'fa-cube';
+            }
+        }
+
+        function getBlockColor(type) {
+            switch(type) {
+                case 'maju': return 'bg-blue-600 hover:bg-blue-700 text-white';
+                case 'kanan': return 'bg-amber-500 hover:bg-amber-600 text-white';
+                case 'kiri': return 'bg-purple-600 hover:bg-purple-700 text-white';
+                case 'lompat': return 'bg-teal-600 hover:bg-teal-700 text-white';
+                default: return 'bg-slate-600 text-white';
+            }
+        }
+
+        function getLevelTitle(id) {
+            if (id <= 5) return `Langkah Lurus ${id}`;
+            if (id <= 12) return `Belokan Pertama ${id - 5}`;
+            if (id <= 20) return `Jalur Zig-Zag ${id - 12}`;
+            if (id <= 30) return `Rintangan Air ${id - 20}`;
+            if (id <= 40) return `Pikirkan Blok Sisa ${id - 30}`;
+            return `Tantangan Master Kode ${id - 40}`;
+        }
+
+        const GAME_LEVELS = generateLevels();
+
+        // RENDER GRID MAP
+        function renderGridMap() {
+            const level = GAME_LEVELS[currentLevel - 1];
+            const container = document.getElementById('gridContainer');
+            container.innerHTML = '';
+
+            // Set dynamic CSS Grid columns
+            container.style.gridTemplateColumns = `repeat(${level.size}, minmax(0, 1fr))`;
+
+            for (let r = 0; r < level.size; r++) {
+                for (let c = 0; c < level.size; c++) {
+                    const tile = document.createElement('div');
+                    tile.className = 'w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center relative shadow-sm text-lg font-bold transition-all duration-300';
+
+                    // Check content of cell
+                    const isRobot = (robotState.x === c && robotState.y === r);
+                    const isFinish = (level.finish.x === c && level.finish.y === r);
+                    const isWater = level.waters.some(w => w.x === c && w.y === r);
+
+                    if (isRobot) {
+                        tile.classList.add('bg-blue-500', 'text-white', 'ring-4', 'ring-blue-300', 'z-10', 'scale-105');
+                        // Rotation transform for Robot
+                        let rot = 0;
+                        if (robotState.dir === 1) rot = 90;
+                        if (robotState.dir === 2) rot = 180;
+                        if (robotState.dir === 3) rot = 270;
+
+                        tile.innerHTML = `<i class="fa-solid fa-robot text-2xl transition-transform duration-300" style="transform: rotate(${rot}deg)"></i>`;
+                    } else if (isFinish) {
+                        tile.classList.add('bg-amber-400', 'text-amber-950', 'animate-pulse');
+                        tile.innerHTML = `<i class="fa-solid fa-flag-checkered text-2xl"></i>`;
+                    } else if (isWater) {
+                        tile.classList.add('bg-cyan-400', 'text-cyan-900');
+                        tile.innerHTML = `<i class="fa-solid fa-water text-xl"></i>`;
+                    } else {
+                        tile.classList.add('bg-white', 'text-slate-300', 'border', 'border-slate-200');
+                        tile.innerHTML = `<span class="text-[10px] opacity-20">${c},${r}</span>`;
+                    }
+
+                    container.appendChild(tile);
+                }
+            }
+        }
+
+        // RENDER TOOLBOX & WORKSPACE
+        function renderUI() {
+            const level = GAME_LEVELS[currentLevel - 1];
+
+            // Header info
+            document.getElementById('currentLevelDisplay').innerText = currentLevel;
+            document.getElementById('levelTitle').innerText = level.title;
+            
+            const badge = document.getElementById('levelBadge');
+            if (currentLevel <= 30) {
+                badge.innerText = `Level ${currentLevel}: Pas (Tanpa Sisa)`;
+                badge.className = "text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-100 text-blue-800";
+                document.getElementById('distractorWarning').classList.add('hidden');
+            } else {
+                badge.innerText = `Level ${currentLevel}: Dengan Pengecoh`;
+                badge.className = "text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-100 text-amber-800";
+                document.getElementById('distractorWarning').classList.remove('hidden');
+            }
+
+            // Toolbox
+            const toolboxBox = document.getElementById('toolboxContainer');
+            toolboxBox.innerHTML = '';
+            document.getElementById('toolboxCount').innerText = `${availableBlocks.length} blok`;
+
+            if (availableBlocks.length === 0) {
+                toolboxBox.innerHTML = `<div class="p-4 text-center text-xs text-slate-400 italic">Semua blok sudah dipindahkan ke susunan program!</div>`;
+            } else {
+                availableBlocks.forEach((block) => {
+                    const btn = document.createElement('button');
+                    btn.className = `block-item w-full p-2.5 rounded-xl font-bold flex items-center justify-between shadow-sm cursor-pointer ${block.color}`;
+                    btn.onclick = () => moveToWorkspace(block);
+                    btn.innerHTML = `
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid ${block.icon}"></i>
+                            <span class="text-xs sm:text-sm">${block.label}</span>
+                        </div>
+                        <i class="fa-solid fa-plus text-xs opacity-75"></i>
+                    `;
+                    toolboxBox.appendChild(btn);
+                });
+            }
+
+            // Workspace
+            const workspaceBox = document.getElementById('workspaceContainer');
+            workspaceBox.innerHTML = '';
+            document.getElementById('workspaceCount').innerText = `${workspaceBlocks.length} blok`;
+
+            if (workspaceBlocks.length === 0) {
+                workspaceBox.innerHTML = `<div class="p-8 text-center text-xs text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">Klik blok di sebelah kiri untuk menyusun langkah di sini</div>`;
+            } else {
+                workspaceBlocks.forEach((block, index) => {
+                    const item = document.createElement('div');
+                    item.id = `ws_block_${index}`;
+                    item.className = `block-item w-full p-2.5 rounded-xl font-bold flex items-center justify-between shadow-sm ${block.color}`;
+                    item.innerHTML = `
+                        <div class="flex items-center space-x-2">
+                            <span class="w-5 h-5 rounded-full bg-black/20 flex items-center justify-center text-[10px]">${index + 1}</span>
+                            <i class="fa-solid ${block.icon}"></i>
+                            <span class="text-xs sm:text-sm">${block.label}</span>
+                        </div>
+                        <button class="hover:bg-black/20 w-6 h-6 rounded-full flex items-center justify-center transition" onclick="moveToToolbox(${index})">
+                            <i class="fa-solid fa-xmark text-xs"></i>
+                        </button>
+                    `;
+                    workspaceBox.appendChild(item);
+                });
+            }
+        }
+
+        function moveToWorkspace(block) {
+            if (isExecuting) return;
+            availableBlocks = availableBlocks.filter(b => b.id !== block.id);
+            workspaceBlocks.push(block);
+            renderUI();
+        }
+
+        function moveToToolbox(index) {
+            if (isExecuting) return;
+            const block = workspaceBlocks[index];
+            workspaceBlocks.splice(index, 1);
+            availableBlocks.push(block);
+            renderUI();
+        }
+
+        function clearWorkspace() {
+            if (isExecuting) return;
+            const level = GAME_LEVELS[currentLevel - 1];
+            availableBlocks = [...level.toolbox];
+            workspaceBlocks = [];
+            resetRobotPosition();
+            renderUI();
+        }
+
+        function resetRobotPosition() {
+            const level = GAME_LEVELS[currentLevel - 1];
+            robotState = { ...level.start };
+            renderGridMap();
+        }
+
+        function loadLevel(lvlNumber) {
+            if (lvlNumber < 1 || lvlNumber > 50) return;
+            if (lvlNumber > maxUnlockedLevel) return;
+
+            currentLevel = lvlNumber;
+            const level = GAME_LEVELS[currentLevel - 1];
+            
+            // Clone toolbox blocks so we don't mutate master configuration
+            availableBlocks = JSON.parse(JSON.stringify(level.toolbox));
+            workspaceBlocks = [];
+            robotState = { ...level.start };
+
+            hideStatusOverlay();
+            renderGridMap();
+            renderUI();
+            closeLevelModal();
+        }
+
+        function renderLevelModalGrid() {
+            const grid = document.getElementById('levelGrid');
+            grid.innerHTML = '';
+
+            for (let i = 1; i <= 50; i++) {
+                const btn = document.createElement('button');
+                const isUnlocked = i <= maxUnlockedLevel;
+                const isCurrent = i === currentLevel;
+
+                let bgClass = "bg-slate-100 text-slate-400 cursor-not-allowed";
+                if (isUnlocked) {
+                    bgClass = isCurrent 
+                        ? "bg-blue-600 text-white font-extrabold ring-2 ring-blue-400" 
+                        : "bg-emerald-500 hover:bg-emerald-600 text-white font-bold";
+                }
+
+                btn.className = `h-10 rounded-xl flex items-center justify-center text-xs transition ${bgClass}`;
+                btn.disabled = !isUnlocked;
+                btn.onclick = () => loadLevel(i);
+                btn.innerHTML = isUnlocked ? `${i}` : `<i class="fa-solid fa-lock text-[10px]"></i>`;
+                
+                grid.appendChild(btn);
+            }
+        }
+
+        // PROGRAM EXECUTION ENGINE
+        async function runProgram() {
+            if (isExecuting) return;
+            if (workspaceBlocks.length === 0) {
+                showStatusOverlay(false, "Urutan Kosong", "Masukkan setidaknya satu langkah ke area program sebelum menjalankan!", "Coba Lagi");
+                return;
+            }
+
+            isExecuting = true;
+            document.getElementById('btnRunProgram').disabled = true;
+            resetRobotPosition();
+
+            const level = GAME_LEVELS[currentLevel - 1];
+
+            // Execute each block sequentially with delay
+            for (let i = 0; i < workspaceBlocks.length; i++) {
+                const block = workspaceBlocks[i];
+
+                // Highlight executing block in workspace
+                const blockEl = document.getElementById(`ws_block_${i}`);
+                if (blockEl) blockEl.classList.add('executing-block');
+
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Process block logic
+                let failed = false;
+                let failReason = "";
+
+                if (block.type === 'maju') {
+                    const nextX = robotState.x + DIRS[robotState.dir].dx;
+                    const nextY = robotState.y + DIRS[robotState.dir].dy;
+
+                    // Out of bounds check
+                    if (nextX < 0 || nextX >= level.size || nextY < 0 || nextY >= level.size) {
+                        failed = true;
+                        failReason = "Robot menabrak batas luar arena!";
+                    } 
+                    // Water check without jump
+                    else if (level.waters.some(w => w.x === nextX && w.y === nextY)) {
+                        failed = true;
+                        failReason = "Ups! Robot jatuh ke dalam air!";
+                    } else {
+                        robotState.x = nextX;
+                        robotState.y = nextY;
+                    }
+                } else if (block.type === 'kanan') {
+                    robotState.dir = (robotState.dir + 1) % 4;
+                } else if (block.type === 'kiri') {
+                    robotState.dir = (robotState.dir + 3) % 4;
+                } else if (block.type === 'lompat') {
+                    // Jump forward 2 tiles
+                    const jumpX = robotState.x + DIRS[robotState.dir].dx * 2;
+                    const jumpY = robotState.y + DIRS[robotState.dir].dy * 2;
+
+                    if (jumpX < 0 || jumpX >= level.size || jumpY < 0 || jumpY >= level.size) {
+                        failed = true;
+                        failReason = "Robot melompat keluar dari arena!";
+                    } else {
+                        robotState.x = jumpX;
+                        robotState.y = jumpY;
+                    }
+                }
+
+                renderGridMap();
+
+                if (blockEl) blockEl.classList.remove('executing-block');
+
+                if (failed) {
+                    isExecuting = false;
+                    document.getElementById('btnRunProgram').disabled = false;
+                    showStatusOverlay(false, "Gagal Mencapai Finish", failReason, "Coba Lagi");
+                    return;
+                }
+            }
+
+            // After executing all blocks, check if robot reached finish line
+            await new Promise(resolve => setTimeout(resolve, 300));
+            isExecuting = false;
+            document.getElementById('btnRunProgram').disabled = false;
+
+            if (robotState.x === level.finish.x && robotState.y === level.finish.y) {
+                // Success!
+                if (currentLevel === maxUnlockedLevel && maxUnlockedLevel < 50) {
+                    maxUnlockedLevel++;
+                }
+
+                if (currentLevel < 50) {
+                    showStatusOverlay(true, "Luar Biasa! 🎉", "Kamu berhasil menyusun algoritma yang tepat dan mencapai Finish!", "Lanjut Level Berikutnya", () => {
+                        loadLevel(currentLevel + 1);
+                    });
+                } else {
+                    showStatusOverlay(true, "SELAMAT! TAMAT! 🏆", "Kamu berhasil menyelesaikan seluruh 50 Level Petualangan Kode!", "Mainkan Lagi Level 1", () => {
+                        loadLevel(1);
+                    });
+                }
+            } else {
+                showStatusOverlay(false, "Belum Sampai Finish", "Robot berhenti sebelum mencapai garis finish. Periksa kembali urutan langkahmu!", "Ulangi");
+            }
+        }
+
+        function showStatusOverlay(isSuccess, title, desc, actionText, actionCallback) {
+            const overlay = document.getElementById('statusOverlay');
+            const icon = document.getElementById('statusIcon');
+            const titleEl = document.getElementById('statusTitle');
+            const descEl = document.getElementById('statusDesc');
+            const btnAction = document.getElementById('btnStatusAction');
+
+            titleEl.innerText = title;
+            descEl.innerText = desc;
+            btnAction.innerText = actionText;
+
+            if (isSuccess) {
+                icon.className = "w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-3 bg-emerald-500 text-white shadow-lg";
+                icon.innerHTML = `<i class="fa-solid fa-trophy"></i>`;
+                btnAction.className = "px-6 py-2.5 rounded-xl font-bold text-white shadow-lg transition transform hover:scale-105 bg-emerald-600 hover:bg-emerald-700";
+            } else {
+                icon.className = "w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-3 bg-rose-500 text-white shadow-lg";
+                icon.innerHTML = `<i class="fa-solid fa-xmark"></i>`;
+                btnAction.className = "px-6 py-2.5 rounded-xl font-bold text-white shadow-lg transition transform hover:scale-105 bg-slate-700 hover:bg-slate-800";
+            }
+
+            btnAction.onclick = () => {
+                hideStatusOverlay();
+                if (actionCallback) actionCallback();
+                else resetRobotPosition();
+            };
+
+            overlay.classList.remove('hidden');
+        }
+
+        function hideStatusOverlay() {
+            document.getElementById('statusOverlay').classList.add('hidden');
+        }
+
+        // Modal handlers
+        function openLevelModal() {
+            renderLevelModalGrid();
+            document.getElementById('levelModal').classList.remove('hidden');
+        }
+
+        function closeLevelModal() {
+            document.getElementById('levelModal').classList.add('hidden');
+        }
+
+        function openHelpModal() {
+            document.getElementById('helpModal').classList.remove('hidden');
+        }
+
+        function closeHelpModal() {
+            document.getElementById('helpModal').classList.add('hidden');
+        }
+
+        // DOM Event Listeners initialization
+        window.onload = function() {
+            document.getElementById('btnOpenLevelModal').onclick = openLevelModal;
+            document.getElementById('btnCloseLevelModal').onclick = closeLevelModal;
+            document.getElementById('btnHelp').onclick = openHelpModal;
+            document.getElementById('btnCloseHelpModal').onclick = closeHelpModal;
+            document.getElementById('btnGotIt').onclick = closeHelpModal;
+
+            document.getElementById('btnClearWorkspace').onclick = clearWorkspace;
+            document.getElementById('btnResetRobot').onclick = resetRobotPosition;
+            document.getElementById('btnRunProgram').onclick = runProgram;
+
+            // Start level 1
+            loadLevel(1);
+        };
+    </script>
+</body>
+</html>
