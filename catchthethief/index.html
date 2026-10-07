@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jaringan Detektif - Petualangan Algoritma Jalur Terpendek</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            user-select: none;
+        }
+        .font-heading {
+            font-family: 'Fredoka', cursive;
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .btn-bounce {
+            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.2s, border-color 0.2s;
+        }
+        .btn-bounce:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+        .btn-bounce:active:not(:disabled) {
+            transform: scale(0.93);
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between bg-slate-900 text-slate-100 overflow-x-hidden">
+
+    <!-- Header Navbar -->
+    <header class="w-full glass-card sticky top-0 z-30 px-4 py-3 shadow-lg border-b border-slate-700">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="showLevelSelect()">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center text-slate-900 text-2xl font-black shadow-md shadow-amber-500/30">
+                    🕵️‍♂️
+                </div>
+                <div>
+                    <h1 class="font-heading text-xl md:text-2xl font-bold bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-400 bg-clip-text text-transparent">
+                        Jaringan Detektif
+                    </h1>
+                    <p class="text-xs text-slate-400 font-semibold hidden sm:block">Misi Rute Tercepat & Algoritma Dijkstra (SD Kelas 2-3)</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-4">
+                <!-- Total Stars Badge -->
+                <div class="flex items-center gap-1.5 bg-slate-800/90 border border-amber-500/30 px-3 py-1.5 rounded-xl text-amber-400 font-bold text-sm sm:text-base">
+                    <span>⭐</span>
+                    <span id="total-stars-count">0</span>
+                    <span class="text-xs text-slate-400">/ 150</span>
+                </div>
+
+                <!-- Sound Toggle -->
+                <button id="sound-btn" onclick="toggleSound()" class="btn-bounce bg-slate-800 hover:bg-slate-700 p-2.5 rounded-xl border border-slate-700 text-slate-300 text-lg" title="Suara">
+                    🔊
+                </button>
+
+                <!-- Level Select Button -->
+                <button onclick="showLevelSelect()" class="btn-bounce bg-amber-500 hover:bg-amber-400 text-slate-950 font-heading font-bold px-3.5 py-1.5 rounded-xl text-sm shadow-md shadow-amber-500/20">
+                    🗺️ Peta Level
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-6xl w-full mx-auto p-3 sm:p-5 flex flex-col justify-center">
+
+        <!-- SCREEN 1: LEVEL SELECTION SCREEN (50 Levels) -->
+        <section id="level-select-screen" class="w-full space-y-6 my-auto py-4">
+            <div class="text-center space-y-2">
+                <span class="inline-block px-3 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full text-xs font-bold uppercase tracking-wider">
+                    Peta Misi Penyelidikan - 50 Level
+                </span>
+                <h2 class="font-heading text-2xl sm:text-4xl font-bold text-white">Tangkap Penjahat dengan Rute Tercepat!</h2>
+                <p class="text-slate-400 text-sm max-w-xl mx-auto">
+                    Selesaikan level satu per satu. Kamu tidak bisa melompati level yang terkunci, tetapi dapat memainkannya kembali kapan saja!
+                </p>
+            </div>
+
+            <!-- Algorithm Category Indicator Tabs -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs font-bold text-center">
+                <div class="bg-blue-900/40 border border-blue-500/30 p-2.5 rounded-xl text-blue-300">
+                    🚶 Level 1 - 10<br/><span class="text-[10px] text-slate-400 font-normal">Langkah Terpendek (BFS)</span>
+                </div>
+                <div class="bg-emerald-900/40 border border-emerald-500/30 p-2.5 rounded-xl text-emerald-300">
+                    ⛽ Level 11 - 25<br/><span class="text-[10px] text-slate-400 font-normal">Hemat Bensin (Jalur Berbobot)</span>
+                </div>
+                <div class="bg-purple-900/40 border border-purple-500/30 p-2.5 rounded-xl text-purple-300">
+                    ⚡ Level 26 - 40<br/><span class="text-[10px] text-slate-400 font-normal">Peta Kota Kompleks (Dijkstra)</span>
+                </div>
+                <div class="bg-orange-900/40 border border-orange-500/30 p-2.5 rounded-xl text-orange-300">
+                    🏆 Level 41 - 50<br/><span class="text-[10px] text-slate-400 font-normal">Misi Super Detektif Master</span>
+                </div>
+            </div>
+
+            <!-- 50 Level Grid -->
+            <div id="level-grid" class="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-10 gap-2.5 p-1 max-h-[500px] overflow-y-auto pr-2">
+                <!-- Dynamically populated 50 level buttons -->
+            </div>
+
+            <div class="flex justify-center pt-2">
+                <button onclick="resetGameProgress()" class="text-xs text-slate-500 hover:text-red-400 underline transition-colors">
+                    Reset Kemajuan Permainan (Mulai dari Level 1)
+                </button>
+            </div>
+        </section>
+
+        <!-- SCREEN 2: GAMEPLAY BOARD SCREEN -->
+        <section id="game-screen" class="hidden flex-col gap-3 my-auto py-1">
+            <!-- Level Info Bar -->
+            <div class="glass-card p-3 sm:p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-md">
+                <div class="flex items-center gap-3">
+                    <button onclick="showLevelSelect()" class="btn-bounce bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 rounded-xl border border-slate-700">
+                        ⬅️
+                    </button>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span id="game-level-badge" class="bg-amber-500 text-slate-950 font-bold text-xs px-2.5 py-0.5 rounded-full font-heading">
+                                Level 1
+                            </span>
+                            <span id="game-algo-type" class="text-xs font-semibold text-amber-400">
+                                Rute Terpendek
+                            </span>
+                        </div>
+                        <h3 id="game-level-title" class="font-heading text-base sm:text-xl font-bold text-white">
+                            Pengejar Rute Tercepat
+                        </h3>
+                    </div>
+                </div>
+
+                <!-- Stats Counters -->
+                <div class="flex items-center gap-3 sm:gap-5 text-xs sm:text-sm bg-slate-900/90 px-4 py-2 rounded-xl border border-slate-700/80 ml-auto sm:ml-0">
+                    <div class="text-center">
+                        <div class="text-slate-400 text-[10px] uppercase font-bold">Biaya / Bensin Kamu</div>
+                        <div id="stat-moves" class="font-bold text-amber-400 text-base sm:text-lg">0</div>
+                    </div>
+                    <div class="w-px h-7 bg-slate-700"></div>
+                    <div class="text-center">
+                        <div class="text-slate-400 text-[10px] uppercase font-bold">Target Paling Hemat</div>
+                        <div id="stat-target-moves" class="font-bold text-emerald-400 text-base sm:text-lg">≤ 0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detective Hint Header -->
+            <div id="hint-box" class="bg-amber-950/40 border border-amber-500/30 p-3 rounded-2xl flex items-start gap-3">
+                <span class="text-xl sm:text-2xl">💡</span>
+                <div class="text-xs sm:text-sm">
+                    <span class="font-bold text-amber-300 font-heading">Petunjuk Detektif:</span>
+                    <p id="hint-text" class="text-slate-300 mt-0.5 leading-relaxed">
+                        Pilih kota yang terhubung untuk mengarahkan mobil detektif menuju lokasi sarang penjahat!
+                    </p>
+                </div>
+            </div>
+
+            <!-- Canvas Game Board -->
+            <div class="glass-card rounded-2xl p-2 sm:p-4 relative min-h-[380px] sm:min-h-[440px] flex flex-col justify-between overflow-hidden shadow-inner border border-slate-700">
+                <div id="board-container" class="w-full flex-1 relative flex items-center justify-center min-h-[320px]">
+                    <canvas id="game-canvas" class="w-full h-full rounded-xl cursor-pointer touch-none block"></canvas>
+                </div>
+
+                <!-- Bottom Interactive Toolbar -->
+                <div id="bottom-controls" class="mt-2 flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800">
+                    <div id="status-message" class="text-xs sm:text-sm text-slate-300 font-medium flex items-center gap-2">
+                        <span>🔍</span> <span id="status-text">Klik/Sentuh kota pertama untuk melangkah.</span>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 ml-auto">
+                        <button id="undo-btn" onclick="undoMove()" class="btn-bounce bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold border border-slate-700 flex items-center gap-1.5">
+                            ↩️ Mundur
+                        </button>
+                        <button id="reset-level-btn" onclick="restartCurrentLevel()" class="btn-bounce bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold border border-slate-700 flex items-center gap-1.5">
+                            🔄 Ulangi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- VICTORY / LEVEL COMPLETE MODAL -->
+    <div id="victory-modal" class="fixed inset-0 bg-slate-950/85 backdrop-filter backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-md w-full rounded-3xl p-6 border border-amber-500/40 shadow-2xl text-center space-y-4 animate-in fade-in zoom-in duration-200">
+            
+            <div class="w-20 h-20 bg-gradient-to-tr from-amber-400 to-yellow-300 rounded-full flex items-center justify-center text-4xl mx-auto shadow-lg shadow-amber-500/30">
+                🕵️‍♂️
+            </div>
+
+            <div class="space-y-1">
+                <span class="text-xs font-bold text-amber-400 uppercase tracking-widest">Misi Selesai!</span>
+                <h3 class="font-heading text-2xl font-bold text-white">Penjahat Berhasil Ditangkap!</h3>
+            </div>
+
+            <!-- Stars Earned -->
+            <div class="flex justify-center gap-2 text-4xl py-1">
+                <span id="star-1" class="transition-all transform duration-300">⭐</span>
+                <span id="star-2" class="transition-all transform duration-300">⭐</span>
+                <span id="star-3" class="transition-all transform duration-300">⭐</span>
+            </div>
+
+            <!-- Stats Breakdown -->
+            <div class="bg-slate-900/90 rounded-2xl p-3 text-xs sm:text-sm space-y-1.5 border border-slate-800">
+                <div class="flex justify-between text-slate-400">
+                    <span>Total Bensin/Biaya Kamu:</span>
+                    <span id="modal-moves-taken" class="font-bold text-amber-400">0</span>
+                </div>
+                <div class="flex justify-between text-slate-400">
+                    <span>Rute Paling Hemat (Dijkstra):</span>
+                    <span id="modal-moves-target" class="font-bold text-emerald-400">0</span>
+                </div>
+            </div>
+
+            <!-- Algorithmic Concept Note -->
+            <div class="bg-gradient-to-r from-blue-950/70 to-indigo-950/70 border border-blue-500/30 p-3.5 rounded-2xl text-left space-y-1">
+                <div class="flex items-center gap-1.5 text-blue-300 font-heading font-bold text-xs sm:text-sm">
+                    <span>🧠</span> <span id="modal-concept-title">Rahasia Algoritma</span>
+                </div>
+                <p id="modal-concept-desc" class="text-xs text-slate-300 leading-relaxed">
+                    Penjelasan sederhana algoritma jalur terpendek untuk kelas 2 & 3 SD.
+                </p>
+            </div>
+
+            <!-- Actions -->
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button onclick="restartCurrentLevel()" class="btn-bounce bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded-xl text-sm font-bold border border-slate-700">
+                    🔄 Main Lagi
+                </button>
+                <button id="next-level-btn" onclick="goToNextLevel()" class="btn-bounce bg-amber-500 hover:bg-amber-400 text-slate-950 py-2.5 rounded-xl text-sm font-heading font-bold shadow-lg shadow-amber-500/20">
+                    Misi Berikutnya ➡️
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="w-full text-center py-3 text-xs text-slate-500 border-t border-slate-800/80">
+        Jaringan Detektif &copy; Game Berpikir Komputasional & Algoritma SD (50 Level Jalur Terpendek)
+    </footer>
+
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let soundEnabled = true;
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('sound-btn').innerText = soundEnabled ? '🔊' : '🔇';
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(450, now);
+                    osc.frequency.exponentialRampToValueAtTime(850, now + 0.05);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                } else if (type === 'step') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.linearRampToValueAtTime(450, now + 0.08);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'win') {
+                    const notes = [523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, idx) => {
+                        const noteOsc = audioCtx.createOscillator();
+                        const noteGain = audioCtx.createGain();
+                        noteOsc.type = 'sine';
+                        noteOsc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                        noteGain.connect(audioCtx.destination);
+                        noteGain.gain.setValueAtTime(0.18, now + idx * 0.08);
+                        noteGain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.25);
+                        noteOsc.connect(noteGain);
+                        noteOsc.start(now + idx * 0.08);
+                        noteOsc.stop(now + idx * 0.08 + 0.25);
+                    });
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.linearRampToValueAtTime(130, now + 0.2);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                }
+            } catch (e) {
+                console.log("Audio play error:", e);
+            }
+        }
+
+        const totalLevels = 50;
+        let gameProgress = {
+            unlockedLevel: 1,
+            stars: {}
+        };
+
+        function loadProgress() {
+            try {
+                const saved = localStorage.getItem('jaringan_detektif_50_progress');
+                if (saved) {
+                    gameProgress = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.log("LocalStorage read error");
+            }
+            updateTotalStarsUI();
+        }
+
+        function saveProgress() {
+            try {
+                localStorage.setItem('jaringan_detektif_50_progress', JSON.stringify(gameProgress));
+            } catch (e) {}
+            updateTotalStarsUI();
+        }
+
+        function updateTotalStarsUI() {
+            let total = 0;
+            for (let lvl in gameProgress.stars) {
+                total += gameProgress.stars[lvl] || 0;
+            }
+            document.getElementById('total-stars-count').innerText = total;
+        }
+
+        function resetGameProgress() {
+            if (confirm("Apakah kamu yakin ingin mengulang permainan dari Level 1? Semua bintang akan direset.")) {
+                gameProgress = { unlockedLevel: 1, stars: {} };
+                saveProgress();
+                showLevelSelect();
+            }
+        }
+
+        // Expanded city names generator pool
+        const cityNamesPool = ["Ambarawa", "Bandung", "Cirebon", "Denpasar", "Ende", "Flores", "Garut", "Jepara", "Kudus", "Lampung", "Malang", "Padang", "Riau", "Solo", "Tuban", "Ubud", "Wonosobo", "Yogya", "Aceh", "Bogor", "Ciamis", "Deli", "Gresik", "Jambi", "Kediri", "Medan", "Palu", "Semarang", "Tarakan"];
+
+        // 50 Levels Configuration Array
+        const levelsData = [];
+
+        for (let i = 1; i <= 50; i++) {
+            let isWeighted = i > 10;
+            let categoryTitle = '';
+            let hint = '';
+            let conceptTitle = '';
+            let conceptDesc = '';
+
+            if (i <= 10) {
+                categoryTitle = `Langkah Terpendek (BFS) - Level ${i}`;
+                hint = "Pilih jalan antar kota dengan jumlah persimpangan PALING SEDIKIT untuk menangkap penjahat!";
+                conceptTitle = "Algoritma Jalur Terpendek (Breadth-First Search)";
+                conceptDesc = "Komputer menghitung jumlah persimpangan. Jalur dengan lompatan terbawah adalah pilihan tercepat!";
+            } else if (i <= 25) {
+                categoryTitle = `Rute Hemat Bensin - Level ${i}`;
+                hint = "Setiap jalan punya biaya bensin (angka). Cari rute dengan TOTAL BENSIN PALING SEDIKIT!";
+                conceptTitle = "Pencarian Berbobot (Weighted Shortest Path)";
+                conceptDesc = "Jalan yang terlihat lebih panjang kadang justru lebih hemat bensin! Selalu jumlahkan angka di sepanjang jalan.";
+            } else if (i <= 30) {
+                categoryTitle = `Peta Kota Kompleks - Level ${i}`;
+                hint = "Perhatikan persimpangan cabang! Gunakan Algoritma Dijkstra untuk membandingkan total bensin ke setiap kota.";
+                conceptTitle = "Algoritma Dijkstra (Peta Digital)";
+                conceptDesc = "Algoritma Dijkstra dipergunakan oleh GPS modern untuk menghitung rute paling hemat waktu dan bahan bakar!";
+            } else if (i <= 40) {
+                categoryTitle = `Master Network Dijkstra - Level ${i}`;
+                hint = "Gunakan strategi pengujian cabang! Bandingkan jalur melingkar vs jalur cepat langsung.";
+                conceptTitle = "Evaluasi Jalur Komputasional";
+                conceptDesc = "Superkomputer membandingkan ratusan ribu kombinasi rute dalam hitungan milidetik dengan metode ini!";
+            } else {
+                categoryTitle = `Misi Super Detektif Master - Level ${i}`;
+                hint = "Peta tingkat tinggi! Analisis setiap persimpangan dengan cermat untuk mendapatkan 3 Bintang sempurna.";
+                conceptTitle = "Optimasi Graf Komputasional Master";
+                conceptDesc = "Hebat sekali! Kamu berhasil memecahkan tantangan jaringan graf rumit layaknya programmer profesional!";
+            }
+
+            levelsData.push({
+                level: i,
+                isWeighted: isWeighted,
+                title: categoryTitle,
+                hint: hint,
+                conceptTitle: conceptTitle,
+                conceptDesc: conceptDesc
+            });
+        }
+
+        let currentLevel = 1;
+        let movesTaken = 0;
+        let optimalCost = 0;
+        let currentLevelConfig = null;
+        let currentPath = [];
+        let graphNodes = [];
+        let graphEdges = [];
+        let startNodeId = 0;
+        let targetNodeId = 0;
+        let isLevelCompleted = false;
+
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            const container = document.getElementById('board-container');
+            const rect = container.getBoundingClientRect();
+            canvas.width = rect.width || 600;
+            canvas.height = Math.max(rect.height || 360, 340);
+            renderGraphNetwork();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        function showLevelSelect() {
+            playSound('click');
+            document.getElementById('level-select-screen').classList.remove('hidden');
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('victory-modal').classList.add('hidden');
+            renderLevelGrid();
+        }
+
+        function renderLevelGrid() {
+            const grid = document.getElementById('level-grid');
+            grid.innerHTML = '';
+
+            for (let i = 1; i <= totalLevels; i++) {
+                const isUnlocked = i <= gameProgress.unlockedLevel;
+                const stars = gameProgress.stars[i] || 0;
+
+                const btn = document.createElement('button');
+                btn.className = `btn-bounce flex flex-col items-center justify-between p-2 sm:p-2.5 rounded-2xl border font-bold relative transition-all ${
+                    isUnlocked
+                        ? 'bg-slate-800 hover:bg-slate-700 border-amber-500/40 text-white shadow-md'
+                        : 'bg-slate-900/60 border-slate-800/80 text-slate-600 cursor-not-allowed opacity-65'
+                }`;
+
+                if (isUnlocked) {
+                    btn.onclick = () => startLevel(i);
+                }
+
+                let starsHTML = '';
+                if (isUnlocked) {
+                    starsHTML = `<div class="text-[10px] sm:text-xs text-amber-400 mt-0.5">${'⭐'.repeat(stars)}${'☆'.repeat(3 - stars)}</div>`;
+                } else {
+                    starsHTML = `<div class="text-[10px] text-slate-500 mt-0.5">🔒 Lock</div>`;
+                }
+
+                btn.innerHTML = `
+                    <span class="text-[10px] font-semibold ${isUnlocked ? 'text-amber-400' : 'text-slate-500'}">L-${i}</span>
+                    <span class="font-heading text-base sm:text-lg ${isUnlocked ? 'text-white' : 'text-slate-600'}">${i}</span>
+                    ${starsHTML}
+                `;
+
+                grid.appendChild(btn);
+            }
+        }
+
+        function startLevel(lvlNum) {
+            playSound('click');
+            currentLevel = lvlNum;
+            currentLevelConfig = levelsData[lvlNum - 1];
+            movesTaken = 0;
+            isLevelCompleted = false;
+
+            document.getElementById('game-level-badge').innerText = `Level ${currentLevel}`;
+            document.getElementById('game-algo-type').innerText = currentLevelConfig.isWeighted ? 'Jalur Berbobot (Bensin)' : 'Langkah Terpendek';
+            document.getElementById('game-level-title').innerText = currentLevelConfig.title;
+            document.getElementById('hint-text').innerText = currentLevelConfig.hint;
+            document.getElementById('stat-moves').innerText = '0';
+
+            document.getElementById('level-select-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('victory-modal').classList.add('hidden');
+
+            setupGraphLevel(currentLevel);
+            setTimeout(resizeCanvas, 50);
+        }
+
+        function setupGraphLevel(lvl) {
+            let seed = lvl * 997 + 104729; // Unique seed per level
+            function rand() {
+                let x = Math.sin(seed++) * 10000;
+                return x - Math.floor(x);
+            }
+
+            const width = Math.max(canvas.width || 600, 500);
+            const height = Math.max(canvas.height || 360, 340);
+            const padX = 65;
+            const padY = 50;
+            const W = width - padX * 2;
+            const H = height - padY * 2;
+
+            graphNodes = [];
+            graphEdges = [];
+
+            // Array of 50 completely unique layout topologys
+            const layoutTypes = [
+                'triangle_simple', 'line_fork', 'diamond_single', 'y_branch', 'square_grid',
+                'star_hub', 'zigzag_trail', 'tree_3layer', 'hexagon_ring', 'dual_path_bridge',
+                'grid_2x3', 'hourglass_choke', 'concentric_circles', 'parallel_highways', 'ladder_network',
+                'bowtie_pinch', 'spiral_coil', 'bipartite_columns', 'diamond_lattice', 'dual_hub_spokes',
+                'tree_branched_multi', 'web_mesh', 'chokepoint_canyon', 'cross_clusters', 'grid_diagonals',
+                'triangular_mesh', 'wave_asymmetric', 'grid_3x3', 'star_ring_bridges', 'double_bottleneck',
+                'highway_bypass', 'serpent_path', 'matrix_network', 'hex_lattice', 'cluster_galaxy',
+                'split_merge_triple', 'quad_columns', 'bowtie_large', 'triple_corridors', 'nested_loops',
+                'complex_web', 'mega_grid_3x4', 'hourglass_lattice', 'multi_tree_forest', 'double_star_hubs',
+                'metropolis_core', 'grand_canyon_pass', 'spider_web_lattice', 'infinity_loop_net', 'master_network'
+            ];
+
+            let pattern = layoutTypes[lvl - 1] || 'web_mesh';
+            let isWeighted = currentLevelConfig.isWeighted;
+
+            // Helper to add edge safely
+            function addEdge(u, v, fixedW = null) {
+                if (u === v) return;
+                if (!graphEdges.some(e => (e.u === u && e.v === v) || (e.u === v && e.v === u))) {
+                    let w = fixedW;
+                    if (w === null) {
+                        w = isWeighted ? Math.floor(rand() * 6) + 1 : 1;
+                    }
+                    graphEdges.push({ u, v, w });
+                }
+            }
+
+            // Shuffle city names for variety
+            let poolCopy = [...cityNamesPool];
+            let levelCityNames = [];
+            for (let i = 0; i < 15; i++) {
+                let idx = Math.floor(rand() * poolCopy.length);
+                levelCityNames.push(poolCopy.splice(idx, 1)[0]);
+            }
+
+            // Topology Generator Logic based on exact level pattern
+            let posList = [];
+
+            if (pattern === 'triangle_simple') {
+                posList = [{x: 0, y: 0.5}, {x: 0.5, y: 0.1}, {x: 0.5, y: 0.9}, {x: 1, y: 0.5}];
+                posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
+                addEdge(0, 1); addEdge(0, 2); addEdge(1, 3); addEdge(2, 3); addEdge(1, 2);
+            }
+            else if (pattern === 'line_fork') {
+                posList = [{x: 0, y: 0.5}, {x: 0.35, y: 0.2}, {x: 0.35, y: 0.8}, {x: 0.7, y: 0.5}, {x: 1, y: 0.5}];
+                posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
+                addEdge(0, 1); addEdge(0, 2); addEdge(1, 3); addEdge(2, 3); addEdge(3, 4);
+            }
+            else if (pattern === 'diamond_single') {
+                posList = [{x: 0, y: 0.5}, {x: 0.5, y: 0.1}, {x: 0.5, y: 0.9}, {x: 1, y: 0.5}];
+                posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
+                addEdge(0, 1); addEdge(0, 2); addEdge(1, 3); addEdge(2, 3);
+            }
+            else if (pattern === 'y_branch') {
+                posList = [{x: 0, y: 0.5}, {x: 0.3, y: 0.5}, {x: 0.65, y: 0.15}, {x: 0.65, y: 0.85}, {x: 1, y: 0.5}];
+                posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
+                addEdge(0, 1); addEdge(1, 2); addEdge(1, 3); addEdge(2, 4); addEdge(3, 4);
+            }
+            else if (pattern === 'square_grid') {
+                posList = [{x: 0, y: 0.2}, {x: 0.5, y: 0.2}, {x: 1, y: 0.2}, {x: 0, y: 0.8}, {x: 0.5, y: 0.8}, {x: 1, y: 0.8}];
+                posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
+                addEdge(0, 1); addEdge(1, 2); addEdge(3, 4); addEdge(4, 5); addEdge(0, 3); addEdge(1, 4); addEdge(2, 5);
+            }
+            else if (pattern === 'star_hub') {
+                posList = [{x: 0, y: 0.5}, {x: 0.5, y: 0.5}, {x: 0.5, y: 0.1}, {x: 0.5, y: 0.9}, {x: 0.8, y: 0.2}, {x: 1, y: 0.5}];
+                posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
+                addEdge(0, 1); addEdge(0, 2); addEdge(0, 3); addEdge(1, 2); addEdge(1, 3); addEdge(1, 4); addEdge(4, 5); addEdge(1, 5);
+            }
+            else if (pattern === 'zigzag_trail') {
+                posList = [{x: 0, y: 0.2}, {x: 0.25, y: 0.8}, {x: 0.5, y: 0.2}, {x: 0.75, y: 0.8}, {x: 1, y: 0.2}];
+                posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
+                addEdge(0, 1); addEdge(1, 2); addEdge(2, 3); addEdge(3, 4); addEdge(0, 2); addEdge(1, 3);
+            }
+            else if (pattern === 'tree_3layer') {
+                posList = [{x: 0, y: 0.5}, {x: 0.35, y: 0.2}, {x: 0.35, y: 0.8}, {x: 0.7, y: 0.2}, {x: 0.7, y: 0.5}, {x: 0.7, y: 0.8}, {x: 1, y: 0.5}];
+                posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
+                addEdge(0, 1); addEdge(0, 2); addEdge(1, 3); addEdge(1, 4); addEdge(2, 5); addEdge(3, 6); addEdge(4, 6); addEdge(5, 6);
+            }
+            else if (pattern === 'hexagon_ring') {
+                posList = [{x: 0, y: 0.5}, {x: 0.3, y: 0.1}, {x: 0.7, y: 0.1}, {x: 1, y: 0.5}, {x: 0.7, y: 0.9}, {x: 0.3, y: 0.9}];
+                posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
+                for (let i = 0; i < 6; i++) addEdge(i, (i + 1) % 6);
+                addEdge(1, 4); addEdge(0, 3);
+            }
+            else if (pattern === 'dual_path_bridge') {
+                posList = [{x: 0, y: 0.5}, {x: 0.3, y: 0.2}, {x: 0.7, y: 0.2}, {x: 0.3, y: 0.8}, {x: 0.7, y: 0.8}, {x: 1, y: 0.5}];
+                posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
+                addEdge(0, 1); addEdge(1, 2); addEdge(2, 5); addEdge(0, 3); addEdge(3, 4); addEdge(4, 5); addEdge(1, 3); addEdge(2, 4);
+            }
+            else if (pattern === 'grid_2x3') {
+                posList = [
+                    {x: 0, y: 0.2}, {x: 0.5, y: 0.2}, {x: 1, y: 0.2},
+                    {x: 0, y: 0.8}, {x: 0.5, y: 0.8}, {x: 1, y: 0.8}
+                ];
+                posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
+                addEdge(0, 1); addEdge(1, 2); addEdge(3, 4); addEdge(4, 5);
+                addEdge(0, 3); addEdge(1, 4); addEdge(2, 5); addEdge(1, 3); addEdge(1, 5);
+            }
+            else if (pattern === 'hourglass_choke') {
+                posList = [
+                    {x: 0, y: 0.15}, {x: 0, y: 0.85},
+                    {x: 0.3, y: 0.3}, {x: 0.3, y: 0.7},
+                    {x: 0.5, y: 0.5}, // Chokepoint
+                    {x: 0.7, y: 0.3}, {x: 0.7, y: 0.7},
+                    {x: 1, y: 0.5}
+                ];
+                posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
+                addEdge(0, 2); addEdge(1, 3); addEdge(0, 3); addEdge(1, 2);
+                addEdge(2, 4); addEdge(3, 4);
+                addEdge(4, 5); addEdge(4, 6);
+                addEdge(5, 7); addEdge(6, 7);
+            }
+            else if (pattern === 'concentric_circles') {
+                posList = [
+                    {x: 0, y: 0.5}, // Start
+                    {x: 0.35, y: 0.2}, {x: 0.35, y: 0.8}, {x: 0.5, y: 0.5}, // Inner
+                    {x: 0.65, y: 0.1}, {x: 0.65, y: 0.9}, // Outer
+                    {x: 1, y: 0.5} // Target
+                ];
+                posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
+                addEdge(0, 1); addEdge(0, 2); addEdge(1, 3); addEdge(2, 3);
+                addEdge(1, 4); addEdge(2, 5); addEdge(3, 6); addEdge(4, 6); addEdge(5, 6);
+            }
+            else if (pattern === 'parallel_highways') {
+                posList = [
+                    {x: 0, y: 0.5},
+                    {x: 0.25, y: 0.15}, {x: 0.5, y: 0.15}, {x: 0.75, y: 0.15}, // Top Highway
+                    {x: 0.25, y: 0.85}, {x: 0.5, y: 0.85}, {x: 0.75, y: 0.85}, // Bottom Highway
+                    {x: 1, y: 0.5}
+                ];
+                posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
+                addEdge(0, 1); addEdge(1, 2); addEdge(2, 3); addEdge(3, 7);
+                addEdge(0, 4); addEdge(4, 5); addEdge(5, 6); addEdge(6, 7);
+                addEdge(2, 5); addEdge(1, 4); addEdge(3, 6);
+            }
+            else if (pattern === 'ladder_network') {
+                posList = [
+                    {x: 0, y: 0.2}, {x: 0.33, y: 0.2}, {x: 0.66, y: 0.2}, {x: 1, y: 0.2},
+                    {x: 0, y: 0.8}, {x: 0.33, y: 0.8}, {x: 0.66, y: 0.8}, {x: 1, y: 0.8}
+                ];
+                posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
+                addEdge(0, 1); addEdge(1, 2); addEdge(2, 3);
+                addEdge(4, 5); addEdge(5, 6); addEdge(6, 7);
+                addEdge(0, 4); addEdge(1, 5); addEdge(2, 6); addEdge(3, 7);
+                addEdge(1, 4); addEdge(2, 5);
+            }
+            else if (pattern === 'bowtie_pinch') {
+                posList = [
+                    {x: 0, y: 0.1}, {x: 0, y: 0.9},
+                    {x: 0.25, y: 0.3}, {x: 0.25, y: 0.7},
+                    {x: 0.5, y: 0.5},
+                    {x: 0.75, y: 0.3}, {x: 0.75, y: 0.7},
+                    {x: 1, y: 0.1}, {x: 1, y: 0.9}
+                ];
+                posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
+                addEdge(0, 2); addEdge(1, 3); addEdge(2, 4); addEdge(3, 4); addEdge(0, 1);
+                addEdge(4, 5); addEdge(4, 6); addEdge(5, 7); addEdge(6, 8); addEdge(7, 8);
+            }
+            else if (pattern === 'spiral_coil') {
+                posList = [
+                    {x: 0, y: 0.5}, {x: 0.2, y: 0.1}, {x: 0.8, y: 0.1},
+                    {x: 0.8, y: 0.9}, {x: 0.3, y: 0.9}, {x: 0.3, y: 0.5},
+                    {x: 0.6, y: 0.5}, {x: 1, y: 0.5}
+                ];
+                posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
+                for(let i = 0; i < posList.length - 1; i++) addEdge(i, i + 1);
+                addEdge(0, 4); addEdge(1, 5); addEdge(2, 6); addEdge(6, 7);
+            }
+            else if (pattern === 'bipartite_columns') {
+                posList = [
+                    {x: 0, y: 0.5},
+                    {x: 0.33, y: 0.15}, {x: 0.33, y: 0.5}, {x: 0.33, y: 0.85},
+                    {x: 0.66, y: 0.15}, {x: 0.66, y: 0.5}, {x: 0.66, y: 0.85},
+                    {x: 1, y: 0.5}
+                ];
+                posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
+                [1,2,3].forEach(u => addEdge(0, u));
+                [1,2,3].forEach(u => [4,5,6].forEach(v => addEdge(u, v)));
+                [4,5,6].forEach(v => addEdge(v, 7));
+            }
+            else if (pattern === 'diamond_lattice') {
+                posList = [
+                    {x: 0, y: 0.5},
+                    {x: 0.25, y: 0.2}, {x: 0.25, y: 0.8},
+                    {x: 0.5, y: 0.5},
+                    {x: 0.75, y: 0.2}, {x: 0.75, y: 0.8},
+                    {x: 1, y: 0.5}
+                ];
+                posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
+                addEdge(0, 1); addEdge(0, 2); addEdge(1, 3); addEdge(2, 3);
+                addEdge(3, 4); addEdge(3, 5); addEdge(4, 6); addEdge(5, 6);
+                addEdge(1, 4); addEdge(2, 5);
+            }
+            else if (pattern === 'dual_hub_spokes') {
+                posList = [
+                    {x: 0, y: 0.5},
+                    {x: 0.3, y: 0.5}, // Hub 1
+                    {x: 0.2, y: 0.15}, {x: 0.4, y: 0.15}, {x: 0.3, y: 0.85},
+                    {x: 0.7, y: 0.5}, // Hub 2
+                    {x: 0.6, y: 0.15}, {x: 0.8, y: 0.15}, {x: 0.7, y: 0.85},
+                    {x: 1, y: 0.5}
+                ];
+                posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
+                addEdge(0, 1); [2,3,4].forEach(n => { addEdge(1, n); addEdge(0, n); });
+                addEdge(1, 5);
+                [6,7,8].forEach(n => { addEdge(5, n); addEdge(9, n); });
+                addEdge(5, 9);
+            }
+            else {
+                // Generative layout with distinct cluster shapes for levels 21-50
+                let nodeCount = 7 + (lvl % 4); // 7 to 10 nodes
+                let cols = 3 + Math.floor(rand() * 2);
+                
+                posList.push({x: 0, y: 0.5}); // Start
+                
+                for (let i = 1; i < nodeCount - 1; i++) {
+                    let colIdx = Math.floor((i - 1) / 3) + 1;
+                    let rowIdx = (i - 1) % 3;
+                    let cx = (colIdx / (cols + 1));
+                    let cy = 0.2 + rowIdx * 0.3 + (rand() - 0.5) * 0.15;
+                    posList.push({x: cx, y: cy});
+                }
+                
+                posList.push({x: 1, y: 0.5}); // Goal
+
+                posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
+
+                // Ensure path from start to end
+                for (let i = 0; i < posList.length - 1; i++) {
+                    addEdge(i, i + 1);
+                }
+                // Add cross links
+                for (let i = 0; i < posList.length; i++) {
+                    for (let j = i + 2; j < posList.length; j++) {
+                        let dx = posList[i].x - posList[j].x;
+                        let dy = posList[i].y - posList[j].y;
+                        let dist = Math.hypot(dx, dy);
+                        if (dist < 0.45 && rand() > 0.4) {
+                            addEdge(i, j);
+                        }
+                    }
+                }
+            }
+
+            // Assign node metadata and city names
+            graphNodes.forEach((node, idx) => {
+                node.id = idx;
+                node.name = levelCityNames[idx % levelCityNames.length];
+                node.icon = idx === 0 ? '🕵️‍♂️' : (idx === graphNodes.length - 1 ? '🦹' : '🏙️');
+            });
+
+            startNodeId = 0;
+            targetNodeId = graphNodes.length - 1;
+            currentPath = [startNodeId];
+
+            // Compute true shortest path via Dijkstra
+            optimalCost = calculateDijkstraShortestPath(startNodeId, targetNodeId, graphNodes.length, graphEdges);
+
+            document.getElementById('stat-target-moves').innerText = isWeighted ? `bensin ≤ ${optimalCost}` : `≤ ${optimalCost} rute`;
+            document.getElementById('status-text').innerText = `Mulai di ${graphNodes[startNodeId].name}. Pilih kota terhubung berikutnya!`;
+        }
+
+        function calculateDijkstraShortestPath(start, target, n, edges) {
+            let dist = new Array(n).fill(Infinity);
+            dist[start] = 0;
+            let visited = new Array(n).fill(false);
+
+            for (let i = 0; i < n; i++) {
+                let u = -1;
+                for (let j = 0; j < n; j++) {
+                    if (!visited[j] && (u === -1 || dist[j] < dist[u])) {
+                        u = j;
+                    }
+                }
+                if (u === -1 || dist[u] === Infinity) break;
+                visited[u] = true;
+
+                edges.forEach(e => {
+                    if (e.u === u || e.v === u) {
+                        let neighbor = e.u === u ? e.v : e.u;
+                        if (dist[u] + e.w < dist[neighbor]) {
+                            dist[neighbor] = dist[u] + e.w;
+                        }
+                    }
+                });
+            }
+            return dist[target];
+        }
+
+        function renderGraphNetwork() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Edges
+            graphEdges.forEach(edge => {
+                let nodeA = graphNodes[edge.u];
+                let nodeB = graphNodes[edge.v];
+
+                let isInPath = false;
+                for (let i = 0; i < currentPath.length - 1; i++) {
+                    if ((currentPath[i] === edge.u && currentPath[i+1] === edge.v) ||
+                        (currentPath[i] === edge.v && currentPath[i+1] === edge.u)) {
+                        isInPath = true;
+                        break;
+                    }
+                }
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(nodeA.x, nodeA.y);
+                ctx.lineTo(nodeB.x, nodeB.y);
+                ctx.lineWidth = isInPath ? 5 : 2.5;
+                ctx.strokeStyle = isInPath ? '#f59e0b' : '#334155';
+                ctx.stroke();
+
+                // Draw edge weight badge if weighted graph
+                if (currentLevelConfig.isWeighted) {
+                    let midX = (nodeA.x + nodeB.x) / 2;
+                    let midY = (nodeA.y + nodeB.y) / 2;
+
+                    ctx.fillStyle = isInPath ? '#78350f' : '#0f172a';
+                    ctx.beginPath();
+                    ctx.arc(midX, midY, 13, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = isInPath ? '#fbbf24' : '#475569';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+
+                    ctx.fillStyle = isInPath ? '#fef08a' : '#fbbf24';
+                    ctx.font = 'bold 11px Fredoka';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(`⛽${edge.w}`, midX, midY);
+                }
+                ctx.restore();
+            });
+
+            // Draw City Nodes
+            graphNodes.forEach(node => {
+                let isCurrent = currentPath[currentPath.length - 1] === node.id;
+                let isVisited = currentPath.includes(node.id);
+                let isTarget = node.id === targetNodeId;
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, 22, 0, Math.PI * 2);
+
+                if (isCurrent) {
+                    ctx.fillStyle = '#f59e0b';
+                } else if (isVisited) {
+                    ctx.fillStyle = '#0284c7';
+                } else if (isTarget) {
+                    ctx.fillStyle = '#dc2626';
+                } else {
+                    ctx.fillStyle = '#1e293b';
+                }
+
+                ctx.fill();
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = isCurrent ? '#fef08a' : (isVisited ? '#38bdf8' : '#475569');
+                ctx.stroke();
+
+                // Emoji Node Icon
+                ctx.font = '20px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(node.icon, node.x, node.y);
+
+                // Label
+                ctx.fillStyle = isCurrent ? '#fef08a' : '#f8fafc';
+                ctx.font = 'bold 12px Nunito';
+                ctx.fillText(node.name, node.x, node.y + 35);
+
+                ctx.restore();
+            });
+        }
+
+        canvas.addEventListener('click', (e) => {
+            if (isLevelCompleted) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+
+            handleGraphNodeClick(clickX, clickY);
+        });
+
+        function handleGraphNodeClick(x, y) {
+            const currentHead = currentPath[currentPath.length - 1];
+
+            for (let node of graphNodes) {
+                let dist = Math.hypot(node.x - x, node.y - y);
+                if (dist <= 26) {
+                    if (node.id === currentHead) return;
+
+                    // Verify edge connection to active head
+                    let edge = graphEdges.find(e =>
+                        (e.u === currentHead && e.v === node.id) ||
+                        (e.v === currentHead && e.u === node.id)
+                    );
+
+                    if (edge) {
+                        playSound('step');
+                        currentPath.push(node.id);
+
+                        if (currentLevelConfig.isWeighted) {
+                            movesTaken += edge.w;
+                        } else {
+                            movesTaken += 1;
+                        }
+
+                        document.getElementById('stat-moves').innerText = movesTaken;
+                        document.getElementById('status-text').innerText = `Detektif berpindah ke ${node.name}.`;
+
+                        renderGraphNetwork();
+
+                        // Check target reach
+                        if (node.id === targetNodeId) {
+                            playSound('win');
+                            finishLevel();
+                        }
+                    } else {
+                        playSound('wrong');
+                        document.getElementById('status-text').innerText = `Tidak ada jalur langsung ke ${node.name}! Pilih kota yang terhubung.`;
+                    }
+                    break;
+                }
+            }
+        }
+
+        function undoMove() {
+            if (currentPath.length <= 1 || isLevelCompleted) return;
+            playSound('click');
+
+            let lastNode = currentPath.pop();
+            let prevNode = currentPath[currentPath.length - 1];
+
+            let edge = graphEdges.find(e =>
+                (e.u === lastNode && e.v === prevNode) ||
+                (e.v === lastNode && e.u === prevNode)
+            );
+
+            if (edge) {
+                movesTaken -= currentLevelConfig.isWeighted ? edge.w : 1;
+                if (movesTaken < 0) movesTaken = 0;
+            }
+
+            document.getElementById('stat-moves').innerText = movesTaken;
+            document.getElementById('status-text').innerText = `Mundur ke ${graphNodes[prevNode].name}.`;
+            renderGraphNetwork();
+        }
+
+        function restartCurrentLevel() {
+            startLevel(currentLevel);
+        }
+
+        function finishLevel() {
+            isLevelCompleted = true;
+
+            // Evaluate 1-3 Stars based on Dijkstra efficiency
+            let starsEarned = 1;
+            if (movesTaken <= optimalCost) {
+                starsEarned = 3;
+            } else if (movesTaken <= Math.ceil(optimalCost * 1.4)) {
+                starsEarned = 2;
+            }
+
+            // Save high score progress
+            if (!gameProgress.stars[currentLevel] || gameProgress.stars[currentLevel] < starsEarned) {
+                gameProgress.stars[currentLevel] = starsEarned;
+            }
+
+            // Sequential unlock: Unlock next level only if current level cleared
+            if (currentLevel < totalLevels && gameProgress.unlockedLevel < currentLevel + 1) {
+                gameProgress.unlockedLevel = currentLevel + 1;
+            }
+
+            saveProgress();
+
+            // Confetti effect
+            try {
+                confetti({
+                    particleCount: 90,
+                    spread: 80,
+                    origin: { y: 0.6 }
+                });
+            } catch(e) {}
+
+            // Display Victory Modal
+            setTimeout(() => {
+                document.getElementById('modal-moves-taken').innerText = movesTaken;
+                document.getElementById('modal-moves-target').innerText = optimalCost;
+                document.getElementById('modal-concept-title').innerText = currentLevelConfig.conceptTitle;
+                document.getElementById('modal-concept-desc').innerText = currentLevelConfig.conceptDesc;
+
+                document.getElementById('star-1').innerText = starsEarned >= 1 ? '⭐' : '☆';
+                document.getElementById('star-2').innerText = starsEarned >= 2 ? '⭐' : '☆';
+                document.getElementById('star-3').innerText = starsEarned >= 3 ? '⭐' : '☆';
+
+                const nextBtn = document.getElementById('next-level-btn');
+                if (currentLevel >= totalLevels) {
+                    nextBtn.innerText = "🏆 Selesai Semua 50 Level!";
+                    nextBtn.onclick = showLevelSelect;
+                } else {
+                    nextBtn.innerText = "Misi Berikutnya ➡️";
+                    nextBtn.onclick = goToNextLevel;
+                }
+
+                document.getElementById('victory-modal').classList.remove('hidden');
+            }, 450);
+        }
+
+        function goToNextLevel() {
+            if (currentLevel < totalLevels) {
+                startLevel(currentLevel + 1);
+            } else {
+                showLevelSelect();
+            }
+        }
+
+        window.onload = function() {
+            loadProgress();
+            showLevelSelect();
+        };
+    </script>
+</body>
+</html>
