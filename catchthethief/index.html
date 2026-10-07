@@ -61,6 +61,13 @@
             </div>
 
             <div class="flex items-center gap-2 sm:gap-4">
+                <!-- Detective Name Badge / Change Profile Button -->
+                <button onclick="openDetectiveModal(false)" class="btn-bounce flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-amber-500/30 px-3 py-1.5 rounded-xl text-amber-300 font-semibold text-xs sm:text-sm" title="Ganti Detektif">
+                    <span>🕵️</span>
+                    <span id="header-detective-name">Detektif</span>
+                    <span class="text-[10px] text-slate-400">✏️</span>
+                </button>
+
                 <!-- Total Stars Badge -->
                 <div class="flex items-center gap-1.5 bg-slate-800/90 border border-amber-500/30 px-3 py-1.5 rounded-xl text-amber-400 font-bold text-sm sm:text-base">
                     <span>⭐</span>
@@ -89,9 +96,11 @@
                 <span class="inline-block px-3 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full text-xs font-bold uppercase tracking-wider">
                     Peta Misi Penyelidikan - 50 Level
                 </span>
-                <h2 class="font-heading text-2xl sm:text-4xl font-bold text-white">Tangkap Penjahat dengan Rute Tercepat!</h2>
+                <h2 class="font-heading text-2xl sm:text-4xl font-bold text-white">
+                    Halo, <span id="welcome-detective-name" class="text-amber-400">Detektif</span>! 🕵️‍♂️
+                </h2>
                 <p class="text-slate-400 text-sm max-w-xl mx-auto">
-                    Selesaikan level satu per satu. Kamu tidak bisa melompati level yang terkunci, tetapi dapat memainkannya kembali kapan saja!
+                    Tangkap penjahat dengan rute tercepat! Selesaikan level satu per satu. Kamu dapat memainkan kembali level yang telah diselesaikan kapan saja.
                 </p>
             </div>
 
@@ -167,6 +176,9 @@
                     <span class="font-bold text-amber-300 font-heading">Petunjuk Detektif:</span>
                     <p id="hint-text" class="text-slate-300 mt-0.5 leading-relaxed">
                         Pilih kota yang terhubung untuk mengarahkan mobil detektif menuju lokasi sarang penjahat!
+                    </p>
+                    <p id="guarantee-text" class="text-[11px] text-emerald-400 font-bold mt-1">
+                        ✓ Dijamin ada rute tepat yang mencapai target paling hemat ini!
                     </p>
                 </div>
             </div>
@@ -251,6 +263,34 @@
         </div>
     </div>
 
+    <!-- DETECTIVE NAME MODAL -->
+    <div id="detective-modal" class="fixed inset-0 bg-slate-950/85 backdrop-filter backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-md w-full rounded-3xl p-6 border border-amber-500/40 shadow-2xl text-center space-y-4 animate-in fade-in zoom-in duration-200">
+            <div class="w-16 h-16 bg-gradient-to-tr from-amber-400 to-yellow-300 rounded-2xl flex items-center justify-center text-3xl mx-auto text-slate-900 shadow-lg shadow-amber-500/30 font-black">
+                🕵️‍♂️
+            </div>
+            <div class="space-y-1">
+                <h3 class="font-heading text-2xl font-bold text-white">Profil Detektif Baru</h3>
+                <p class="text-xs text-slate-400">Masukkan nama detektif untuk memulai perjalanan penyelidikan.</p>
+            </div>
+            <div class="space-y-2 text-left">
+                <label class="text-xs text-amber-300 font-bold block">Nama Detektif Baru:</label>
+                <input type="text" id="detective-input-name" placeholder="Contoh: Detektif Kiki" maxlength="18" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 text-sm font-semibold">
+                <p class="text-[11px] text-amber-300/90 bg-amber-950/50 p-2.5 rounded-xl border border-amber-500/30 leading-relaxed">
+                    ⚠️ <strong>Penting:</strong> Memasukkan nama detektif baru akan **mereset semua progres game** (bintang & level terbuka) kembali ke Level 1.
+                </p>
+            </div>
+            <div class="flex gap-2 pt-1">
+                <button id="cancel-detective-btn" onclick="closeDetectiveModal()" class="btn-bounce w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl text-sm font-bold border border-slate-700 hidden">
+                    Batal
+                </button>
+                <button onclick="saveNewDetective()" class="btn-bounce flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 py-2.5 rounded-xl text-sm font-heading font-bold shadow-lg shadow-amber-500/20">
+                    Mulai Petualangan 🚀
+                </button>
+            </div>
+        </div>
+    </div>
+
     <footer class="w-full text-center py-3 text-xs text-slate-500 border-t border-slate-800/80">
         Jaringan Detektif &copy; Game Berpikir Komputasional & Algoritma SD (50 Level Jalur Terpendek)
     </footer>
@@ -323,6 +363,7 @@
 
         const totalLevels = 50;
         let gameProgress = {
+            detectiveName: 'Detektif Cilik',
             unlockedLevel: 1,
             stars: {}
         };
@@ -332,10 +373,14 @@
                 const saved = localStorage.getItem('jaringan_detektif_50_progress');
                 if (saved) {
                     gameProgress = JSON.parse(saved);
+                    if (!gameProgress.detectiveName) {
+                        gameProgress.detectiveName = 'Detektif Cilik';
+                    }
                 }
             } catch (e) {
                 console.log("LocalStorage read error");
             }
+            updateDetectiveNameUI();
             updateTotalStarsUI();
         }
 
@@ -344,6 +389,55 @@
                 localStorage.setItem('jaringan_detektif_50_progress', JSON.stringify(gameProgress));
             } catch (e) {}
             updateTotalStarsUI();
+            updateDetectiveNameUI();
+        }
+
+        function updateDetectiveNameUI() {
+            const name = gameProgress.detectiveName || 'Detektif Cilik';
+            const headerBtn = document.getElementById('header-detective-name');
+            if (headerBtn) headerBtn.innerText = name;
+            const welcomeText = document.getElementById('welcome-detective-name');
+            if (welcomeText) welcomeText.innerText = name;
+        }
+
+        function openDetectiveModal(isFirstTime = false) {
+            playSound('click');
+            const modal = document.getElementById('detective-modal');
+            const input = document.getElementById('detective-input-name');
+            const cancelBtn = document.getElementById('cancel-detective-btn');
+            
+            input.value = gameProgress.detectiveName || '';
+            if (isFirstTime) {
+                cancelBtn.classList.add('hidden');
+            } else {
+                cancelBtn.classList.remove('hidden');
+            }
+            modal.classList.remove('hidden');
+            setTimeout(() => input.focus(), 100);
+        }
+
+        function closeDetectiveModal() {
+            playSound('click');
+            document.getElementById('detective-modal').classList.add('hidden');
+        }
+
+        function saveNewDetective() {
+            const input = document.getElementById('detective-input-name');
+            let name = input.value.trim();
+            if (!name) name = 'Detektif Cilik';
+
+            playSound('click');
+
+            // Reset all progress completely for the new detective
+            gameProgress = {
+                detectiveName: name,
+                unlockedLevel: 1,
+                stars: {}
+            };
+
+            saveProgress();
+            closeDetectiveModal();
+            showLevelSelect();
         }
 
         function updateTotalStarsUI() {
@@ -355,8 +449,9 @@
         }
 
         function resetGameProgress() {
-            if (confirm("Apakah kamu yakin ingin mengulang permainan dari Level 1? Semua bintang akan direset.")) {
-                gameProgress = { unlockedLevel: 1, stars: {} };
+            if (confirm(`Apakah kamu yakin ingin mengulang permainan untuk ${gameProgress.detectiveName}? Semua level dan bintang akan direset dari awal.`)) {
+                gameProgress.unlockedLevel = 1;
+                gameProgress.stars = {};
                 saveProgress();
                 showLevelSelect();
             }
@@ -510,8 +605,8 @@
 
             const width = Math.max(canvas.width || 600, 500);
             const height = Math.max(canvas.height || 360, 340);
-            const padX = 65;
-            const padY = 50;
+            const padX = 75;
+            const padY = 55;
             const W = width - padX * 2;
             const H = height - padY * 2;
 
@@ -535,13 +630,13 @@
             let pattern = layoutTypes[lvl - 1] || 'web_mesh';
             let isWeighted = currentLevelConfig.isWeighted;
 
-            // Helper to add edge safely
+            // Helper to add edge safely without duplicate reverse edges
             function addEdge(u, v, fixedW = null) {
                 if (u === v) return;
                 if (!graphEdges.some(e => (e.u === u && e.v === v) || (e.u === v && e.v === u))) {
                     let w = fixedW;
                     if (w === null) {
-                        w = isWeighted ? Math.floor(rand() * 6) + 1 : 1;
+                        w = isWeighted ? Math.floor(rand() * 5) + 1 : 1;
                     }
                     graphEdges.push({ u, v, w });
                 }
@@ -601,8 +696,8 @@
             else if (pattern === 'hexagon_ring') {
                 posList = [{x: 0, y: 0.5}, {x: 0.3, y: 0.1}, {x: 0.7, y: 0.1}, {x: 1, y: 0.5}, {x: 0.7, y: 0.9}, {x: 0.3, y: 0.9}];
                 posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
-                for (let i = 0; i < 6; i++) addEdge(i, (i + 1) % 6);
-                addEdge(1, 4); addEdge(0, 3);
+                for (let i = 0; i < 5; i++) addEdge(i, i + 1);
+                addEdge(0, 5); addEdge(1, 4); addEdge(0, 3);
             }
             else if (pattern === 'dual_path_bridge') {
                 posList = [{x: 0, y: 0.5}, {x: 0.3, y: 0.2}, {x: 0.7, y: 0.2}, {x: 0.3, y: 0.8}, {x: 0.7, y: 0.8}, {x: 1, y: 0.5}];
@@ -622,7 +717,7 @@
                 posList = [
                     {x: 0, y: 0.15}, {x: 0, y: 0.85},
                     {x: 0.3, y: 0.3}, {x: 0.3, y: 0.7},
-                    {x: 0.5, y: 0.5}, // Chokepoint
+                    {x: 0.5, y: 0.5},
                     {x: 0.7, y: 0.3}, {x: 0.7, y: 0.7},
                     {x: 1, y: 0.5}
                 ];
@@ -634,10 +729,10 @@
             }
             else if (pattern === 'concentric_circles') {
                 posList = [
-                    {x: 0, y: 0.5}, // Start
-                    {x: 0.35, y: 0.2}, {x: 0.35, y: 0.8}, {x: 0.5, y: 0.5}, // Inner
-                    {x: 0.65, y: 0.1}, {x: 0.65, y: 0.9}, // Outer
-                    {x: 1, y: 0.5} // Target
+                    {x: 0, y: 0.5},
+                    {x: 0.35, y: 0.2}, {x: 0.35, y: 0.8}, {x: 0.5, y: 0.5},
+                    {x: 0.65, y: 0.1}, {x: 0.65, y: 0.9},
+                    {x: 1, y: 0.5}
                 ];
                 posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
                 addEdge(0, 1); addEdge(0, 2); addEdge(1, 3); addEdge(2, 3);
@@ -646,8 +741,8 @@
             else if (pattern === 'parallel_highways') {
                 posList = [
                     {x: 0, y: 0.5},
-                    {x: 0.25, y: 0.15}, {x: 0.5, y: 0.15}, {x: 0.75, y: 0.15}, // Top Highway
-                    {x: 0.25, y: 0.85}, {x: 0.5, y: 0.85}, {x: 0.75, y: 0.85}, // Bottom Highway
+                    {x: 0.25, y: 0.15}, {x: 0.5, y: 0.15}, {x: 0.75, y: 0.15},
+                    {x: 0.25, y: 0.85}, {x: 0.5, y: 0.85}, {x: 0.75, y: 0.85},
                     {x: 1, y: 0.5}
                 ];
                 posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
@@ -716,9 +811,9 @@
             else if (pattern === 'dual_hub_spokes') {
                 posList = [
                     {x: 0, y: 0.5},
-                    {x: 0.3, y: 0.5}, // Hub 1
+                    {x: 0.3, y: 0.5},
                     {x: 0.2, y: 0.15}, {x: 0.4, y: 0.15}, {x: 0.3, y: 0.85},
-                    {x: 0.7, y: 0.5}, // Hub 2
+                    {x: 0.7, y: 0.5},
                     {x: 0.6, y: 0.15}, {x: 0.8, y: 0.15}, {x: 0.7, y: 0.85},
                     {x: 1, y: 0.5}
                 ];
@@ -730,7 +825,7 @@
             }
             else {
                 // Generative layout with distinct cluster shapes for levels 21-50
-                let nodeCount = 7 + (lvl % 4); // 7 to 10 nodes
+                let nodeCount = 7 + (lvl % 4);
                 let cols = 3 + Math.floor(rand() * 2);
                 
                 posList.push({x: 0, y: 0.5}); // Start
@@ -747,11 +842,11 @@
 
                 posList.forEach(p => graphNodes.push({x: padX + p.x * W, y: padY + p.y * H}));
 
-                // Ensure path from start to end
+                // Ensure direct connected backbone from start to end
                 for (let i = 0; i < posList.length - 1; i++) {
                     addEdge(i, i + 1);
                 }
-                // Add cross links
+                // Add secondary cross links
                 for (let i = 0; i < posList.length; i++) {
                     for (let j = i + 2; j < posList.length; j++) {
                         let dx = posList[i].x - posList[j].x;
@@ -775,8 +870,13 @@
             targetNodeId = graphNodes.length - 1;
             currentPath = [startNodeId];
 
-            // Compute true shortest path via Dijkstra
+            // Compute true shortest path via Dijkstra (Strictly verified & guaranteed)
             optimalCost = calculateDijkstraShortestPath(startNodeId, targetNodeId, graphNodes.length, graphEdges);
+
+            const guaranteeEl = document.getElementById('guarantee-text');
+            if (guaranteeEl) {
+                guaranteeEl.innerText = `✓ Target paling hemat dijamin ${optimalCost} ${isWeighted ? 'bensin' : 'langkah'}!`;
+            }
 
             document.getElementById('stat-target-moves').innerText = isWeighted ? `bensin ≤ ${optimalCost}` : `≤ ${optimalCost} rute`;
             document.getElementById('status-text').innerText = `Mulai di ${graphNodes[startNodeId].name}. Pilih kota terhubung berikutnya!`;
@@ -1041,7 +1141,12 @@
 
         window.onload = function() {
             loadProgress();
-            showLevelSelect();
+            const hasSavedData = localStorage.getItem('jaringan_detektif_50_progress');
+            if (!hasSavedData) {
+                openDetectiveModal(true);
+            } else {
+                showLevelSelect();
+            }
         };
     </script>
 </body>
