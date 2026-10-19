@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kriptogram Peribahasa SD Kelas 4</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;600;700&display=swap');
+        
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            min-height: 100vh;
+        }
+
+        .font-game {
+            font-family: 'Fredoka One', cursive;
+        }
+
+        .symbol-card {
+            box-shadow: 0 4px 0 #cbd5e1;
+            transition: all 0.15s ease;
+        }
+
+        .symbol-card:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #cbd5e1;
+        }
+
+        .letter-input {
+            caret-color: #4f46e5;
+            text-transform: uppercase;
+        }
+
+        .letter-input:focus {
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Bounce Animation for completion */
+        @keyframes bounce-custom {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .animate-bounce-custom {
+            animation: bounce-custom 0.6s infinite;
+        }
+    </style>
+</head>
+<body class="p-3 sm:p-6 flex flex-col justify-between items-center min-h-screen select-none">
+
+    <!-- Header Controls & Status -->
+    <header class="w-full max-w-4xl flex flex-col sm:flex-row justify-between items-center bg-white/80 backdrop-blur-md rounded-2xl p-4 mb-4 shadow-md gap-3">
+        <div class="flex items-center space-x-3">
+            <div class="bg-indigo-500 text-white p-3 rounded-xl shadow">
+                <i class="fa-solid fa-key text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="font-game text-xl sm:text-2xl text-indigo-900 tracking-wide">KriptoPeribahasa</h1>
+                <p class="text-xs text-indigo-600 font-semibold">Teka-Teki Rahasia Kelas 4 SD</p>
+            </div>
+        </div>
+
+        <!-- Level Indicator & Score -->
+        <div class="flex items-center gap-4">
+            <div class="bg-amber-100 text-amber-800 px-4 py-1.5 rounded-full font-bold text-sm border border-amber-300 shadow-sm flex items-center gap-2">
+                <i class="fa-solid fa-trophy text-amber-500"></i>
+                <span id="score-display">Skor: 0</span>
+            </div>
+            <div class="bg-indigo-100 text-indigo-800 px-4 py-1.5 rounded-full font-bold text-sm border border-indigo-200 shadow-sm flex items-center gap-2">
+                <i class="fa-solid fa-layer-group text-indigo-500"></i>
+                <span id="level-display">Level 1/20</span>
+            </div>
+            <button id="sound-btn" onclick="toggleSound()" class="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full transition shadow-sm">
+                <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Game Board -->
+    <main class="w-full max-w-4xl bg-white rounded-3xl p-4 sm:p-8 shadow-xl border-4 border-white/60 flex-1 flex flex-col justify-between relative overflow-hidden">
+        
+        <!-- Level Progress Bar -->
+        <div class="w-full bg-slate-100 h-3 rounded-full mb-6 overflow-hidden">
+            <div id="progress-bar" class="bg-gradient-to-r from-indigo-500 to-pink-500 h-full w-0 transition-all duration-500 rounded-full"></div>
+        </div>
+
+        <!-- Clue / Keyword Box -->
+        <div class="bg-indigo-50/80 border-2 border-indigo-200 rounded-2xl p-4 mb-6 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+                <span class="bg-indigo-500 text-white font-bold text-xs uppercase px-3 py-1 rounded-lg tracking-wider self-start sm:self-auto">Kata Kunci</span>
+                <!-- CONTAINER KATA KUNCI DENGAN SIMBOL -->
+                <div id="keyword-display" class="flex flex-wrap gap-1.5 items-center">
+                    <!-- Dynamic Keyword Letters & Symbols will be inserted here -->
+                </div>
+            </div>
+            <div class="text-xs text-indigo-600 italic flex items-center gap-1">
+                <i class="fa-solid fa-lightbulb text-amber-400"></i>
+                <span id="clue-display">Petunjuk akan muncul di sini</span>
+            </div>
+        </div>
+
+        <!-- Cryptogram Puzzle Display Board -->
+        <div id="cryptogram-board" class="flex flex-wrap gap-y-6 gap-x-2 sm:gap-x-3 justify-center items-end my-auto py-6 min-h-[180px]">
+            <!-- Dynamic Words & Letters will be inserted here -->
+        </div>
+
+        <!-- Action Controls -->
+        <div class="flex flex-wrap justify-between items-center gap-3 mt-6 pt-4 border-t border-slate-100">
+            <button onclick="useHint()" id="hint-btn" class="bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold px-4 py-2.5 rounded-xl shadow-md transition flex items-center gap-2 active:scale-95 text-sm">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Bantuan Hapus/Buka Huruf (<span id="hint-count">3</span>)
+            </button>
+
+            <div class="flex gap-2">
+                <button onclick="resetCurrentLevel()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2.5 rounded-xl transition active:scale-95 text-sm">
+                    <i class="fa-solid fa-rotate-right mr-1"></i> Reset
+                </button>
+                <button onclick="checkAnswer()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-6 py-2.5 rounded-xl shadow-md transition active:scale-95 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-circle-check"></i> Periksa Jawaban
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Win Level Modal -->
+    <div id="win-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl border-4 border-indigo-100 animate-bounce-custom">
+            <div class="w-20 h-20 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl shadow-inner">
+                <i class="fa-solid fa-star"></i>
+            </div>
+            <h2 class="font-game text-2xl text-slate-800 mb-2">Hebat! Jawaban Benar!</h2>
+            <p id="meaning-display" class="text-slate-600 text-sm mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100 italic">
+                "Arti peribahasa..."
+            </p>
+            <button onclick="nextLevel()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-game text-lg py-3 rounded-xl shadow-lg transition active:scale-95">
+                Lanjut Level Berikutnya <i class="fa-solid fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Game Finish Modal -->
+    <div id="finish-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full text-center shadow-2xl border-4 border-amber-300">
+            <div class="w-24 h-24 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 text-5xl shadow-inner">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <h2 class="font-game text-3xl text-slate-800 mb-2">Selamat! Kamu Tamat!</h2>
+            <p class="text-slate-600 mb-6">Kamu telah berhasil memecahkan seluruh 20 Kriptogram Peribahasa Indonesia untuk Kelas 4 SD!</p>
+            <div class="bg-indigo-50 p-4 rounded-2xl mb-6">
+                <span class="text-xs uppercase font-bold text-indigo-400">Total Skor Kamu</span>
+                <div id="final-score" class="text-4xl font-game text-indigo-600">0</div>
+            </div>
+            <button onclick="restartGame()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-game text-lg py-3 rounded-xl shadow-lg transition active:scale-95">
+                Main Lagi Dari Awal <i class="fa-solid fa-rotate-right ml-2"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-4 text-center text-xs text-indigo-900/60 font-semibold">
+        Kriptogram Peribahasa Indonesia &copy; Media Pembelajaran Interaktif Kelas 4 SD
+    </footer>
+
+    <script>
+        // Data 20 Level Peribahasa Populer Anak Kelas 4 SD
+        const LEVELS = [
+            {
+                phrase: "ADA UDANG DI BALIK BATU",
+                keyword: "RAHASIA",
+                clue: "Ada maksud tersembunyi di balik suatu perbuatan.",
+                meaning: "Artinya: Ada maksud terselubung atau tersembunyi di balik tindakan seseorang."
+            },
+            {
+                phrase: "ADA GULA ADA SEMUT",
+                keyword: "KEMAKMURAN",
+                clue: "Di mana ada rezeki, di situ banyak orang berkumpul.",
+                meaning: "Artinya: Di mana ada banyak rezeki atau kesenangan, di situlah banyak orang berkumpul."
+            },
+            {
+                phrase: "BAGAI AIR DI DAUN TALAS",
+                keyword: "PENDIRIAN",
+                clue: "Orang yang tidak teguh pendiriannya dan selalu berubah.",
+                meaning: "Artinya: Orang yang tidak tetap pendiriannya, selalu berubah-ubah."
+            },
+            {
+                phrase: "SAMPING AIR MENIMBA ILMU",
+                keyword: "BELAJAR",
+                clue: "Mencari pengetahuan di mana saja kesempatan ada.",
+                meaning: "Artinya: Melakukan satu pekerjaan sambil mengerjakan hal bermanfaat lainnya."
+            },
+            {
+                phrase: "BESAR PASAK DARIPADA TIANG",
+                keyword: "HEMAT",
+                clue: "Pengeluaran lebih besar daripada pendapatan.",
+                meaning: "Artinya: Belanja atau pengeluaran lebih besar daripada penghasilan."
+            },
+            {
+                phrase: "TONG KOSONG NYARING BUNYINYA",
+                keyword: "BICARA",
+                clue: "Orang yang banyak bicara biasanya tidak ada isinya.",
+                meaning: "Artinya: Orang yang banyak cakap/bicara biasanya tak berilmu."
+            },
+            {
+                phrase: "AIR TENANG MENGANYUTKAN",
+                keyword: "PINTAR",
+                clue: "Orang pendiam yang ternyata banyak pengetahuan.",
+                meaning: "Artinya: Orang pendiam biasanya memiliki ilmu yang dalam atau membahayakan."
+            },
+            {
+                phrase: "BERAKAL DI LUAR BATANGA",
+                keyword: "CERDIK",
+                clue: "Mempunyai kecerdikan untuk menyelesaikan masalah.",
+                meaning: "Artinya: Memiliki ide-ide cerdik atau jalan keluar yang tidak terduga."
+            },
+            {
+                phrase: "SEDIA PAYUNG SEBELUM HUJAN",
+                keyword: "PERSIAPAN",
+                clue: "Berjaga-jaga sebelum bahaya atau kesulitan datang.",
+                meaning: "Artinya: Bersiap-siap sebelum datang bahaya atau kesulitan."
+            },
+            {
+                phrase: "HEMAT PANGKAL KAYA",
+                keyword: "TABUNGAN",
+                clue: "Suka menabung membuat hidup berkecukupan.",
+                meaning: "Artinya: Orang yang rajin berhemat akan menjadi kaya."
+            },
+            {
+                phrase: "RAJIN PANGKAL PANDAI",
+                keyword: "BELAJAR",
+                clue: "Suka belajar membuat kita menjadi pintar.",
+                meaning: "Artinya: Siapa yang giat dan rajin belajar pasti akan menjadi pintar."
+            },
+            {
+                phrase: "GURU KENCING BERDIRI",
+                keyword: "CONTOH",
+                clue: "Murid meniru perbuatan gurunya.",
+                meaning: "Artinya: Murid meniru tingkah laku atau perbuatan guru/orang tuanya."
+            },
+            {
+                phrase: "BAGAI PINANG DIBELAH DUA",
+                keyword: "MIRIP",
+                clue: "Dua hal atau orang yang sangat serupa.",
+                meaning: "Artinya: Dua orang atau hal yang sangat serupa atau serupa sekali."
+            },
+            {
+                phrase: "MALU BERTANYA SESAT DI JALAN",
+                keyword: "TANYA",
+                clue: "Jangan sungkan bertanya jika tidak tahu.",
+                meaning: "Artinya: Jika tak mau bertanya, kita sendiri yang akan rugi atau kesusahan."
+            },
+            {
+                phrase: "NILA SETITIK ROSAK SUSU SEBELANGA",
+                keyword: "KESALAHAN",
+                clue: "Kesalahan kecil merusak seluruh kebaikan.",
+                meaning: "Artinya: Karena kesalahan kecil, kebaikan yang banyak bisa terlupakan."
+            },
+            {
+                phrase: "MENANAM PADI DIPANDANG LALANG",
+                keyword: "USAHA",
+                clue: "Kerja keras pasti membawa hasil manis.",
+                meaning: "Artinya: Kebaikan atau usaha sungguh-sungguh akan membuahkan hasil."
+            },
+            {
+                phrase: "BERIKAN IKAN ATAU KAILNYA",
+                keyword: "MANDIRI",
+                clue: "Memberi ilmu lebih berguna dari sekadar bantuan.",
+                meaning: "Artinya: Mengajari keahlian jauh lebih baik daripada sekadar memberi bantuan."
+            },
+            {
+                phrase: "RINGAN SAMA DIJINJING",
+                keyword: "GOTONG ROYONG",
+                clue: "Bersama-sama melewati suka dan duka.",
+                meaning: "Artinya: Suka dan duka dihadapi bersama secara gotong royong."
+            },
+            {
+                phrase: "SEPARUH BUMI DIPIJAK",
+                keyword: "HORMAT",
+                clue: "Menghormati adat tempat kita berada.",
+                meaning: "Artinya: Kita harus mematuhi adat istiadat tempat kita tinggal."
+            },
+            {
+                phrase: "BERAKIT RAKIT KE HULU",
+                keyword: "PERJUANGAN",
+                clue: "Bersakit-sakit dahulu, bersenang-senang kemudian.",
+                meaning: "Artinya: Berjuang susah payah dahulu untuk meraih kebahagiaan nanti."
+            }
+        ];
+
+        // Symbol set containing numbers, math symbols, and unique characters
+        const SYMBOLS_POOL = [
+            '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
+            '@', '#', '$', '%', '&', '*', '+', '=', '?', '!',
+            '#', 'Δ', 'Ω', '§', '¢', '£', '¥', '★', '♦', '♠'
+        ];
+
+        // Game State Variables
+        let currentLevelIndex = 0;
+        let cipherMap = {}; // Maps Alphabet -> Symbol
+        let reverseCipherMap = {}; // Maps Symbol -> Alphabet
+        let userAnswers = {}; // Maps Symbol -> User Input Letter
+        let hintsRemaining = 3;
+        let score = 0;
+        let soundEnabled = true;
+
+        // Sound Effects with Tone.js
+        const synth = new Tone.Synth().toDestination();
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                if (type === 'click') {
+                    synth.triggerAttackRelease("C5", "8n");
+                } else if (type === 'correct') {
+                    const now = Tone.now();
+                    synth.triggerAttackRelease("C5", "8n", now);
+                    synth.triggerAttackRelease("E5", "8n", now + 0.1);
+                    synth.triggerAttackRelease("G5", "8n", now + 0.2);
+                } else if (type === 'wrong') {
+                    synth.triggerAttackRelease("A3", "8n");
+                } else if (type === 'hint') {
+                    synth.triggerAttackRelease("F5", "8n");
+                }
+            } catch (e) {
+                // Ignore audio context errors before user interaction
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('sound-icon');
+            if (soundEnabled) {
+                icon.className = 'fa-solid fa-volume-high';
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark';
+            }
+        }
+
+        function initLevel(index) {
+            const levelData = LEVELS[index];
+            
+            // Update UI Header
+            document.getElementById('level-display').innerText = `Level ${index + 1}/${LEVELS.length}`;
+            document.getElementById('clue-display').innerText = levelData.clue;
+            
+            // Update Progress Bar
+            const progressPercent = ((index) / LEVELS.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+
+            // Generate Cipher Mapping for this level
+            generateCipher(levelData.phrase);
+
+            // Render Keyword with matching Cipher Symbols
+            renderKeyword(levelData.keyword);
+
+            // Clear User Inputs
+            userAnswers = {};
+
+            // Render Board
+            renderBoard(levelData.phrase);
+        }
+
+        function renderKeyword(keyword) {
+            const keywordContainer = document.getElementById('keyword-display');
+            keywordContainer.innerHTML = '';
+
+            const cleanKeyword = keyword.toUpperCase();
+
+            for (let i = 0; i < cleanKeyword.length; i++) {
+                const char = cleanKeyword[i];
+                
+                // If character is space or symbol not in cipher, handle gracefully
+                if (char === ' ') {
+                    const spaceDiv = document.createElement('div');
+                    spaceDiv.className = 'w-2';
+                    keywordContainer.appendChild(spaceDiv);
+                    continue;
+                }
+
+                const symbol = cipherMap[char] || '?';
+
+                const charBox = document.createElement('div');
+                charBox.className = 'flex flex-col items-center bg-white border-2 border-indigo-200 rounded-lg p-1 min-w-[28px] shadow-xs';
+
+                const letterSpan = document.createElement('span');
+                letterSpan.className = 'font-game text-sm text-indigo-900 font-bold';
+                letterSpan.innerText = char;
+
+                const symbolSpan = document.createElement('span');
+                symbolSpan.className = 'text-xs text-amber-600 font-bold border-t border-indigo-100 pt-0.5 w-full text-center bg-amber-50 rounded-b mt-0.5';
+                symbolSpan.innerText = symbol;
+
+                charBox.appendChild(letterSpan);
+                charBox.appendChild(symbolSpan);
+                keywordContainer.appendChild(charBox);
+            }
+        }
+
+        function generateCipher(phrase) {
+            cipherMap = {};
+            reverseCipherMap = {};
+            
+            // Extract unique letters from phrase AND keyword to guarantee all letters get mapped
+            const currentLevel = LEVELS[currentLevelIndex];
+            const fullText = (phrase + (currentLevel ? currentLevel.keyword : '')).replace(/[^A-Z]/g, '');
+            const uniqueLetters = Array.from(new Set(fullText.split('')));
+            
+            // Shuffle Symbols
+            const shuffledSymbols = [...SYMBOLS_POOL].sort(() => 0.5 - Math.random());
+
+            // Assign Symbol to Letter
+            uniqueLetters.forEach((letter, i) => {
+                const sym = shuffledSymbols[i % shuffledSymbols.length];
+                cipherMap[letter] = sym;
+                reverseCipherMap[sym] = letter;
+            });
+        }
+
+        function renderBoard(phrase) {
+            const board = document.getElementById('cryptogram-board');
+            board.innerHTML = '';
+
+            const words = phrase.split(' ');
+
+            words.forEach(word => {
+                const wordDiv = document.createElement('div');
+                wordDiv.className = 'flex gap-1 sm:gap-2 mx-2 my-1';
+
+                for (let i = 0; i < word.length; i++) {
+                    const char = word[i];
+                    const symbol = cipherMap[char];
+
+                    const charContainer = document.createElement('div');
+                    charContainer.className = 'flex flex-col items-center w-8 sm:w-10';
+
+                    // Input Box for Player
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.maxLength = 1;
+                    input.dataset.symbol = symbol;
+                    input.dataset.letter = char;
+                    input.className = `letter-input w-8 sm:w-10 h-10 sm:h-12 border-2 border-indigo-300 rounded-xl text-center font-bold text-lg sm:text-xl text-indigo-900 bg-white shadow-sm focus:border-indigo-600 focus:outline-none transition-all`;
+                    
+                    // Sync inputs with same symbol
+                    input.value = userAnswers[symbol] || '';
+
+                    input.addEventListener('input', (e) => {
+                        playSound('click');
+                        const val = e.target.value.toUpperCase();
+                        userAnswers[symbol] = val;
+                        
+                        // Sync all inputs with same symbol
+                        document.querySelectorAll(`input[data-symbol="${symbol}"]`).forEach(inp => {
+                            inp.value = val;
+                        });
+
+                        // Auto-advance focus to next input
+                        if (val !== '') {
+                            focusNextInput(input);
+                        }
+                    });
+
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Backspace' && input.value === '') {
+                            focusPrevInput(input);
+                        }
+                    });
+
+                    // Symbol Box (Cipher Code)
+                    const symbolLabel = document.createElement('div');
+                    symbolLabel.className = 'symbol-card mt-1.5 w-full bg-indigo-100/90 border border-indigo-200 text-indigo-800 rounded-lg py-1 text-center font-bold text-xs sm:text-sm shadow-xs';
+                    symbolLabel.innerText = symbol;
+
+                    charContainer.appendChild(input);
+                    charContainer.appendChild(symbolLabel);
+                    wordDiv.appendChild(charContainer);
+                }
+
+                board.appendChild(wordDiv);
+            });
+        }
+
+        function focusNextInput(currentInput) {
+            const inputs = Array.from(document.querySelectorAll('.letter-input'));
+            const index = inputs.indexOf(currentInput);
+            if (index > -1 && index < inputs.length - 1) {
+                inputs[index + 1].focus();
+            }
+        }
+
+        function focusPrevInput(currentInput) {
+            const inputs = Array.from(document.querySelectorAll('.letter-input'));
+            const index = inputs.indexOf(currentInput);
+            if (index > 0) {
+                inputs[index - 1].focus();
+            }
+        }
+
+        function checkAnswer() {
+            const levelData = LEVELS[currentLevelIndex];
+            const cleanPhrase = levelData.phrase.replace(/\s+/g, '');
+            
+            let isCorrect = true;
+            const inputs = document.querySelectorAll('.letter-input');
+
+            inputs.forEach(inp => {
+                const expectedLetter = inp.dataset.letter;
+                const userVal = inp.value.toUpperCase();
+
+                if (userVal !== expectedLetter) {
+                    isCorrect = false;
+                }
+            });
+
+            if (isCorrect) {
+                playSound('correct');
+                score += 100;
+                document.getElementById('score-display').innerText = `Skor: ${score}`;
+                showWinModal(levelData.meaning);
+            } else {
+                playSound('wrong');
+                // Highlight incorrect ones briefly
+                inputs.forEach(inp => {
+                    if (inp.value.toUpperCase() !== inp.dataset.letter) {
+                        inp.classList.add('border-red-400', 'bg-red-50');
+                        setTimeout(() => {
+                            inp.classList.remove('border-red-400', 'bg-red-50');
+                        }, 1200);
+                    }
+                });
+            }
+        }
+
+        function useHint() {
+            if (hintsRemaining <= 0) {
+                alert("Kesempatan bantuan untuk game ini sudah habis!");
+                return;
+            }
+
+            const levelData = LEVELS[currentLevelIndex];
+            const inputs = Array.from(document.querySelectorAll('.letter-input'));
+            
+            // Find inputs that are empty or wrong
+            const unsolved = inputs.filter(inp => inp.value.toUpperCase() !== inp.dataset.letter);
+
+            if (unsolved.length === 0) return;
+
+            playSound('hint');
+
+            // Pick random unsolved letter
+            const randomInput = unsolved[Math.floor(Math.random() * unsolved.length)];
+            const correctLetter = randomInput.dataset.letter;
+            const symbol = randomInput.dataset.symbol;
+
+            userAnswers[symbol] = correctLetter;
+
+            // Fill all inputs with this symbol
+            document.querySelectorAll(`input[data-symbol="${symbol}"]`).forEach(inp => {
+                inp.value = correctLetter;
+                inp.classList.add('border-emerald-500', 'bg-emerald-50');
+                setTimeout(() => {
+                    inp.classList.remove('border-emerald-500', 'bg-emerald-50');
+                }, 1000);
+            });
+
+            hintsRemaining--;
+            document.getElementById('hint-count').innerText = hintsRemaining;
+        }
+
+        function resetCurrentLevel() {
+            playSound('click');
+            userAnswers = {};
+            document.querySelectorAll('.letter-input').forEach(inp => {
+                inp.value = '';
+            });
+        }
+
+        function showWinModal(meaningText) {
+            document.getElementById('meaning-display').innerText = meaningText;
+            document.getElementById('win-modal').classList.remove('hidden');
+        }
+
+        function nextLevel() {
+            document.getElementById('win-modal').classList.add('hidden');
+            currentLevelIndex++;
+
+            if (currentLevelIndex < LEVELS.length) {
+                initLevel(currentLevelIndex);
+            } else {
+                showFinishModal();
+            }
+        }
+
+        function showFinishModal() {
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('finish-modal').classList.remove('hidden');
+        }
+
+        function restartGame() {
+            currentLevelIndex = 0;
+            score = 0;
+            hintsRemaining = 3;
+            document.getElementById('score-display').innerText = `Skor: ${score}`;
+            document.getElementById('hint-count').innerText = hintsRemaining;
+            document.getElementById('finish-modal').classList.add('hidden');
+            initLevel(0);
+        }
+
+        // Start Game on Load
+        window.onload = function() {
+            initLevel(0);
+        };
+    </script>
+</body>
+</html>
