@@ -293,7 +293,8 @@
         const SYMBOLS_POOL = [
             '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
             '@', '#', '$', '%', '&', '*', '+', '=', '?', '!',
-            '#', 'Δ', 'Ω', '§', '¢', '£', '¥', '★', '♦', '♠'
+            'Δ', 'Ω', '§', '¢', '£', '¥', '★', '♦', '♠', '♥',
+            '▲', '■', '●', '★', '◆', '✦', '✪', '✿'
         ];
 
         // Game State Variables
@@ -407,12 +408,13 @@
             const fullText = (phrase + (currentLevel ? currentLevel.keyword : '')).replace(/[^A-Z]/g, '');
             const uniqueLetters = Array.from(new Set(fullText.split('')));
             
-            // Shuffle Symbols
-            const shuffledSymbols = [...SYMBOLS_POOL].sort(() => 0.5 - Math.random());
+            // Deduplicate and shuffle available symbols pool
+            const uniqueSymbolsPool = Array.from(new Set(SYMBOLS_POOL));
+            const shuffledSymbols = [...uniqueSymbolsPool].sort(() => 0.5 - Math.random());
 
-            // Assign Symbol to Letter
+            // Assign a UNIQUE symbol to each unique letter (Strict 1-to-1 Mapping)
             uniqueLetters.forEach((letter, i) => {
-                const sym = shuffledSymbols[i % shuffledSymbols.length];
+                const sym = shuffledSymbols[i];
                 cipherMap[letter] = sym;
                 reverseCipherMap[sym] = letter;
             });
