@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Pathfinder - Tebak Kata QWERTY</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Quicksand:wght@500;600;700&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            min-height: 100vh;
+            user-select: none;
+            color: #f8fafc;
+        }
+        .font-fredoka { font-family: 'Fredoka', sans-serif; }
+        .font-mono-code { font-family: 'JetBrains Mono', monospace; }
+        
+        /* QWERTY Key Styles */
+        .key-btn {
+            transition: all 0.15s ease-in-out;
+            box-shadow: 0 4px 0 #334155;
+        }
+        /* Offset layout for authentic QWERTY keyboard feel */
+        .keyboard-row-1 { padding-left: 0rem; }
+        .keyboard-row-2 { padding-left: 1.25rem; }
+        .keyboard-row-3 { padding-left: 2.75rem; }
+
+        .key-btn.active-start {
+            background-color: #2563eb !important;
+            color: #ffffff !important;
+            border-color: #60a5fa !important;
+            box-shadow: 0 4px 0 #1d4ed8 !important;
+            transform: translateY(-2px);
+        }
+        .key-btn.active-cursor {
+            background-color: #f59e0b !important;
+            color: #ffffff !important;
+            border-color: #fbbf24 !important;
+            box-shadow: 0 0 18px rgba(245, 158, 11, 0.9), 0 4px 0 #b45309 !important;
+            transform: scale(1.12) translateY(-2px);
+            z-index: 20;
+        }
+        .key-btn.active-pressed {
+            background-color: #10b981 !important;
+            color: #ffffff !important;
+            border-color: #34d399 !important;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.9), 0 2px 0 #065f46 !important;
+            transform: scale(1.18) translateY(1px);
+            z-index: 30;
+        }
+
+        /* Active step highlight pulse */
+        @keyframes stepPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.12); }
+        }
+        .step-active {
+            animation: stepPulse 0.4s infinite ease-in-out;
+            border-color: #f59e0b !important;
+            background-color: #78350f !important;
+            color: #fef3c7 !important;
+        }
+
+        /* Shake animation for wrong answer */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+    </style>
+</head>
+<body class="p-2 sm:p-4 flex flex-col items-center justify-between min-h-screen">
+
+    <!-- Top Header -->
+    <header class="w-full max-w-4xl bg-slate-900/90 backdrop-blur-md rounded-2xl p-3 sm:p-4 shadow-xl border border-indigo-500/30 flex justify-between items-center mb-3">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center text-white text-xl sm:text-2xl shadow-lg">
+                <i class="fa-solid fa-terminal"></i>
+            </div>
+            <div>
+                <h1 class="font-fredoka text-lg sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 leading-tight">Cyber Pathfinder</h1>
+                <p class="text-xs sm:text-sm text-cyan-300 font-semibold">Tebak Kata Keyboard QWERTY Presisi</p>
+            </div>
+        </div>
+
+        <!-- Level & Score Stats -->
+        <div class="flex items-center gap-2 sm:gap-4">
+            <div class="bg-slate-800/80 border border-amber-500/40 px-3 py-1.5 rounded-xl text-center">
+                <div class="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Level</div>
+                <div class="font-fredoka font-bold text-amber-300 text-sm sm:text-xl" id="level-indicator">1 / 50</div>
+            </div>
+            <div class="bg-slate-800/80 border border-emerald-500/40 px-3 py-1.5 rounded-xl text-center">
+                <div class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Skor</div>
+                <div class="font-fredoka font-bold text-emerald-300 text-sm sm:text-xl" id="score-display">0</div>
+            </div>
+            <button onclick="toggleAudio()" id="audio-btn" class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 flex items-center justify-center transition">
+                <i class="fa-solid fa-volume-high text-lg"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Game Container -->
+    <main class="w-full max-w-4xl flex-1 flex flex-col gap-3 items-center">
+
+        <!-- Card: Clues & Instructions -->
+        <div class="w-full bg-slate-900/95 rounded-2xl p-4 sm:p-5 shadow-2xl border border-indigo-500/20 flex flex-col gap-4">
+            
+            <!-- Category & Start Letter Header -->
+            <div class="flex flex-wrap justify-between items-center gap-2 border-b border-slate-800 pb-3">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="bg-cyan-950 text-cyan-300 border border-cyan-700/50 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1">
+                        <i class="fa-solid fa-microchip"></i> Tema: <span id="level-category">Hardware Utama</span>
+                    </span>
+                    <span class="bg-indigo-950 text-indigo-300 border border-indigo-700/50 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                        <i class="fa-solid fa-lightbulb"></i> Petunjuk: <span id="level-hint">Otak pemroses komputer (3 Huruf)</span>
+                    </span>
+                    <span id="simulator-badge" class="bg-emerald-950 text-emerald-300 border border-emerald-700/50 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                        <i class="fa-solid fa-circle-play"></i> Simulator Aktif
+                    </span>
+                </div>
+                <!-- Start Letter Marker -->
+                <div class="bg-blue-600 text-white font-fredoka px-4 py-1.5 rounded-xl shadow-md flex items-center gap-2">
+                    <span class="text-xs uppercase font-medium text-blue-200">Huruf Awal:</span>
+                    <span class="text-xl font-bold bg-white text-blue-700 w-8 h-8 rounded-lg flex items-center justify-center shadow-inner" id="start-letter-display">C</span>
+                </div>
+            </div>
+
+            <!-- Path Steps Instructions Sequence -->
+            <div>
+                <div class="text-xs font-bold text-slate-400 mb-2 flex flex-wrap items-center justify-between gap-1">
+                    <span><i class="fa-solid fa-route text-cyan-400 mr-1"></i> URUTAN PETUNJUK LANGKAH:</span>
+                    <span class="text-[11px] text-slate-400 font-normal">
+                        Aturan: Angka = Jumlah Langkah Panah (contoh: <span class="text-amber-300 font-bold">5➡️</span> = Geser Kanan 5x) | <span class="text-emerald-400 font-bold">[ X ]</span> = Tekan Huruf
+                    </span>
+                </div>
+                
+                <!-- Steps Array Visual -->
+                <div id="steps-container" class="flex flex-wrap gap-1.5 p-3 bg-slate-950 rounded-xl border border-slate-800 min-h-[60px] items-center justify-start">
+                    <!-- Dynamic Steps generated by JS -->
+                </div>
+            </div>
+
+            <!-- Controls: Play Simulation & Answer Input -->
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-1">
+                
+                <!-- Simulator Buttons -->
+                <div class="flex items-center gap-2 w-full sm:w-auto" id="simulator-controls">
+                    <button id="btn-sim-play" onclick="startPathSimulation()" class="flex-1 sm:flex-none bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-play"></i> Simulator Langkah
+                    </button>
+                    <button id="btn-sim-reset" onclick="resetSimulation()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs sm:text-sm px-3 py-2.5 rounded-xl border border-slate-700 transition">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                </div>
+
+                <!-- Answer Input & Submit -->
+                <div class="flex items-center gap-2 w-full sm:w-auto flex-1 max-w-md">
+                    <input type="text" id="answer-input" placeholder="Ketik kata tebakan..." uppercase maxlength="12" autocomplete="off" 
+                           class="w-full bg-slate-950 border-2 border-slate-700 focus:border-cyan-500 focus:bg-slate-900 rounded-xl px-4 py-2 font-mono-code text-lg sm:text-xl text-center uppercase tracking-widest text-cyan-300 outline-none transition shadow-inner">
+                    <button onclick="checkAnswer()" class="bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-fredoka font-bold text-sm sm:text-base px-6 py-2.5 rounded-xl shadow-lg transition flex items-center justify-center gap-1 shrink-0">
+                        Jawab <i class="fa-solid fa-paper-plane text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recorded letters output during simulation -->
+            <div id="sim-recorded-wrapper" class="flex items-center gap-2 bg-indigo-950/40 p-2.5 rounded-xl border border-indigo-900/50">
+                <span class="text-xs font-bold text-indigo-300 uppercase shrink-0">Huruf Ter-rekam [X]:</span>
+                <div id="sim-recorded-words" class="font-mono-code font-bold text-lg text-emerald-400 tracking-widest flex items-center gap-1 min-h-[28px] overflow-x-auto">
+                    <span class="text-xs font-normal text-slate-500 italic font-sans">Klik "Simulator Langkah" untuk melihat jalur</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Card: QWERTY Keyboard Layout Display -->
+        <div class="w-full bg-slate-900 rounded-2xl p-3 sm:p-5 shadow-2xl border-2 border-slate-800 flex flex-col gap-2 relative overflow-hidden">
+            <div class="flex justify-between items-center text-slate-400 text-xs px-1 mb-1">
+                <span><i class="fa-solid fa-keyboard mr-1"></i> TATA LETAK KEYBOARD QWERTY</span>
+                <span id="cursor-pos-status" class="text-amber-400 font-mono-code font-bold">Posisi Kursor: -</span>
+            </div>
+
+            <!-- QWERTY Keyboard Rows -->
+            <div id="qwerty-board" class="flex flex-col gap-1.5 sm:gap-2 justify-center items-start w-full max-w-2xl mx-auto overflow-x-auto py-2">
+                <!-- Rows injected dynamically by JS with staggered offset classes -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal Success / Game Over -->
+    <div id="modal-overlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl border-2 border-cyan-500/30 transform transition-all scale-100 text-slate-200">
+            <div id="modal-icon" class="w-20 h-20 bg-emerald-950 text-emerald-400 border border-emerald-500/40 rounded-full flex items-center justify-center text-4xl mx-auto mb-3 shadow-inner">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <h2 id="modal-title" class="font-fredoka text-2xl font-bold text-white mb-1">Tebakan Tepat!</h2>
+            <p id="modal-desc" class="text-slate-400 text-sm mb-4">Kata rahasia: <strong id="modal-word-answer" class="text-cyan-300 font-mono-code text-lg">CPU</strong></p>
+            
+            <div class="bg-slate-950 p-3 rounded-xl mb-5 flex justify-around text-center border border-slate-800">
+                <div>
+                    <div class="text-[10px] text-slate-400 font-bold uppercase">Skor Level</div>
+                    <div class="font-fredoka font-bold text-cyan-400 text-lg" id="modal-level-score">+100</div>
+                </div>
+                <div class="border-r border-slate-800"></div>
+                <div>
+                    <div class="text-[10px] text-slate-400 font-bold uppercase">Total Skor</div>
+                    <div class="font-fredoka font-bold text-emerald-400 text-lg" id="modal-total-score">100</div>
+                </div>
+            </div>
+
+            <button id="modal-action-btn" onclick="nextLevel()" class="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-fredoka font-bold py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                Lanjut Level Berikutnya <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Script Logic & Sound Synthesizer -->
+    <script>
+        // Web Audio Synthesizer for SFX
+        class SoundManager {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            playMove() {
+                if (this.muted) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(450, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(650, this.ctx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.05);
+            }
+
+            playPressX() {
+                if (this.muted) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, this.ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.08);
+            }
+
+            playSuccess() {
+                if (this.muted) return;
+                this.init();
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.15, this.ctx.currentTime + i * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + i * 0.08 + 0.25);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(this.ctx.currentTime + i * 0.08);
+                    osc.stop(this.ctx.currentTime + i * 0.08 + 0.25);
+                });
+            }
+
+            playWrong() {
+                if (this.muted) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, this.ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(130, this.ctx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.2);
+            }
+        }
+
+        const audio = new SoundManager();
+
+        function toggleAudio() {
+            audio.muted = !audio.muted;
+            const btn = document.getElementById('audio-btn');
+            btn.innerHTML = audio.muted ? 
+                '<i class="fa-solid fa-volume-xmark text-lg text-red-400"></i>' : 
+                '<i class="fa-solid fa-volume-high text-lg text-slate-300"></i>';
+        }
+
+        // Exact Physical QWERTY Keyboard Layout Array
+        const QWERTY_LAYOUT = [
+            ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'], // Row 0 (10 keys, col 0..9)
+            ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],      // Row 1 (9 keys, col 0..8, offset right)
+            ['Z', 'X', 'C', 'V', 'B', 'N', 'M']                 // Row 2 (7 keys, col 0..6, offset further right)
+        ];
+
+        // Exact coordinates lookup
+        function getCharCoords(char) {
+            for (let r = 0; r < QWERTY_LAYOUT.length; r++) {
+                for (let c = 0; c < QWERTY_LAYOUT[r].length; c++) {
+                    if (QWERTY_LAYOUT[r][c] === char) {
+                        return { r, c };
+                    }
+                }
+            }
+            return null;
+        }
+
+        /**
+         * STAGGERED GRID PATHFINDER
+         * Calculates physical step-by-step navigation between keys on a staggered QWERTY keyboard layout
+         */
+        function calculateStepsBetweenChars(startChar, targetChar) {
+            let curr = getCharCoords(startChar);
+            const target = getCharCoords(targetChar);
+            const path = [];
+
+            while (curr.r !== target.r || curr.c !== target.c) {
+                // Changing row down
+                if (curr.r < target.r) {
+                    curr.r++;
+                    // Moving down on staggered grid:
+                    // If target column is strictly less than current column, move down-left ↙️
+                    if (target.c < curr.c) {
+                        if (curr.c > 0) curr.c--;
+                        path.push("↙️");
+                    } else {
+                        // Otherwise move down-right ↘️
+                        path.push("↘️");
+                    }
+                    if (curr.c > QWERTY_LAYOUT[curr.r].length - 1) {
+                        curr.c = QWERTY_LAYOUT[curr.r].length - 1;
+                    }
+                } 
+                // Changing row up
+                else if (curr.r > target.r) {
+                    curr.r--;
+                    // Moving up on staggered grid:
+                    // Row 2 -> Row 1 or Row 1 -> Row 0
+                    if (target.c <= curr.c) {
+                        path.push("↖️");
+                    } else {
+                        curr.c++;
+                        path.push("↗️");
+                    }
+                    if (curr.c > QWERTY_LAYOUT[curr.r].length - 1) {
+                        curr.c = QWERTY_LAYOUT[curr.r].length - 1;
+                    }
+                } 
+                // Same row horizontal movement
+                else {
+                    if (curr.c < target.c) {
+                        curr.c++;
+                        path.push("➡️");
+                    } else if (curr.c > target.c) {
+                        curr.c--;
+                        path.push("⬅️");
+                    }
+                }
+            }
+
+            return path;
+        }
+
+        // Compress consecutive identical steps (e.g. ['➡️', '➡️', '➡️', '➡️', '➡️'] -> ['5➡️'])
+        function compressPathSteps(rawSteps) {
+            const compressed = [];
+            let i = 0;
+
+            while (i < rawSteps.length) {
+                if (rawSteps[i] === 'X') {
+                    compressed.push('X');
+                    i++;
+                } else {
+                    const arrow = rawSteps[i];
+                    let count = 0;
+                    while (i < rawSteps.length && rawSteps[i] === arrow) {
+                        count++;
+                        i++;
+                    }
+                    if (count > 1) {
+                        compressed.push(`${count}${arrow}`);
+                    } else {
+                        compressed.push(arrow);
+                    }
+                }
+            }
+            return compressed;
+        }
+
+        // Generate complete path sequence for word starting at word[0]
+        function generatePathForWord(word) {
+            const rawSteps = ["X"]; // Start letter is recorded first with [X]
+
+            for (let i = 1; i < word.length; i++) {
+                const prevChar = word[i - 1];
+                const nextChar = word[i];
+                const moveSteps = calculateStepsBetweenChars(prevChar, nextChar);
+
+                rawSteps.push(...moveSteps);
+                rawSteps.push("X"); // Press [X] to record letter
+            }
+
+            return compressPathSteps(rawSteps);
+        }
+
+        // List of 50 Computer & Keyboard Words
+        const COMPUTER_WORDS = [
+            { word: "CPU", category: "Hardware Utama", hint: "Otak pemroses komputer (3 Huruf)" },
+            { word: "RAM", category: "Memori Komputer", hint: "Memori penyimpanan sementara (3 Huruf)" },
+            { word: "WEB", category: "Jaringan Komputer", hint: "Halaman informasi di internet (3 Huruf)" },
+            { word: "ALT", category: "Tombol Keyboard", hint: "Tombol pengubah fungsi keyboard (3 Huruf)" },
+            { word: "TAB", category: "Tombol Keyboard", hint: "Tombol lompat kolom spasi (3 Huruf)" },
+            { word: "USB", category: "Port & Kabel", hint: "Port standar flashdisk & mouse (3 Huruf)" },
+            { word: "BUS", category: "Sistem Hardware", hint: "Jalur transmisi data motherboard (3 Huruf)" },
+            { word: "BIT", category: "Satuan Data", hint: "Unit satuan data terkecil (3 Huruf)" },
+            { word: "NET", category: "Jaringan Komputer", hint: "Singkatan jaringan internet (3 Huruf)" },
+            { word: "TAG", category: "Pemrograman", hint: "Elemen kode HTML dasar (3 Huruf)" },
+            
+            // Level 11 - 20
+            { word: "DATA", category: "Sistem Informasi", hint: "Kumpulan fakta & angka mentah (4 Huruf)" },
+            { word: "CODE", category: "Pemrograman", hint: "Instruksi baris program (4 Huruf)" },
+            { word: "SAVE", category: "Perintah File", hint: "Perintah menyimpan dokumen (4 Huruf)" },
+            { word: "COPY", category: "Perintah File", hint: "Perintah menggandakan berkas (4 Huruf)" },
+            { word: "LINK", category: "Jaringan Web", hint: "Tautan penghubung halaman web (4 Huruf)" },
+            { word: "CHIP", category: "Komponen Elektronik", hint: "Sirkuit terpadu mikrokontroler (4 Huruf)" },
+            { word: "FONT", category: "Desain Teks", hint: "Gaya dan bentuk huruf tulisan (4 Huruf)" },
+            { word: "FILE", category: "Penyimpanan", hint: "Berkas data tersimpan di disk (4 Huruf)" },
+            { word: "DISK", category: "Penyimpanan Data", hint: "Media piringan simpan data (4 Huruf)" },
+            { word: "USER", category: "Pengguna Sistem", hint: "Pengguna perangkat/aplikasi (4 Huruf)" },
+
+            // Level 21 - 30
+            { word: "MOUSE", category: "Perangkat Input", hint: "Alat penggerak kursor layar (5 Huruf)" },
+            { word: "SHIFT", category: "Tombol Keyboard", hint: "Tombol untuk huruf kapital (5 Huruf)" },
+            { word: "ENTER", category: "Tombol Keyboard", hint: "Tombol eksekusi / baris baru (5 Huruf)" },
+            { word: "PASTE", category: "Perintah File", hint: "Perintah menempelkan file/teks (5 Huruf)" },
+            { word: "PIXEL", category: "Tampilan Layar", hint: "Titik warna terkecil layar (5 Huruf)" },
+            { word: "CABLE", category: "Hardware Aksesori", hint: "Kawat penghubung arus & data (5 Huruf)" },
+            { word: "RESET", category: "Sistem Komputer", hint: "Mulai ulang sistem dari awal (5 Huruf)" },
+            { word: "CLICK", category: "Aksi Pengguna", hint: "Tekan tombol mouse memilih (5 Huruf)" },
+            { word: "PRINT", category: "Output Dokumen", hint: "Mencetak berkas ke kertas (5 Huruf)" },
+            { word: "SPEED", category: "Performa Komputer", hint: "Kecepatan pemrosesan data (5 Huruf)" },
+
+            // Level 31 - 40
+            { word: "SCREEN", category: "Perangkat Output", hint: "Layar penampil visual komputer (6 Huruf)" },
+            { word: "CURSOR", category: "Antarmuka Layar", hint: "Penunjuk posisi navigasi layar (6 Huruf)" },
+            { word: "MEMORY", category: "Komponen Komputer", hint: "Kapasitas ruang simpan data (6 Huruf)" },
+            { word: "DELETE", category: "Tombol Keyboard", hint: "Tombol menghapus karakter (6 Huruf)" },
+            { word: "ESCAPE", category: "Tombol Keyboard", hint: "Tombol ESC pembatal tindakan (6 Huruf)" },
+            { word: "SYSTEM", category: "Perangkat Lunak", hint: "Keseluruhan tatanan komputer (6 Huruf)" },
+            { word: "FOLDER", category: "Manajemen File", hint: "Wadah penampung berkas file (6 Huruf)" },
+            { word: "BUFFER", category: "Memori Sementara", hint: "Area penampung data sementara (6 Huruf)" },
+            { word: "WINDOW", category: "Antarmuka Grafis", hint: "Jendela layar tampilan aplikasi (6 Huruf)" },
+            { word: "SERVER", category: "Jaringan Pusat", hint: "Komputer penyedia layanan data (6 Huruf)" },
+
+            // Level 41 - 50
+            { word: "PRINTER", category: "Perangkat Output", hint: "Mesin pencetak cetak fisik (7 Huruf)" },
+            { word: "MONITOR", category: "Perangkat Output", hint: "Layar monitor penampil visual (7 Huruf)" },
+            { word: "CAPSLOCK", category: "Tombol Keyboard", hint: "Tombol pengunci huruf besar (8 Huruf)" },
+            { word: "SPACEBAR", category: "Tombol Keyboard", hint: "Tombol paling panjang keyboard (8 Huruf)" },
+            { word: "KEYBOARD", category: "Perangkat Input", hint: "Papan ketik utama komputer (8 Huruf)" },
+            { word: "INTERNET", category: "Jaringan Global", hint: "Jaringan komputer internasional (8 Huruf)" },
+            { word: "HARDDISK", category: "Penyimpanan Utama", hint: "Penyimpanan data internal besar (8 Huruf)" },
+            { word: "DATABASE", category: "Sistem Data", hint: "Pusat kumpulan data terstruktur (8 Huruf)" },
+            { word: "SOFTWARE", category: "Perangkat Lunak", hint: "Program aplikasi komputer (8 Huruf)" },
+            { word: "PROCESSOR", category: "Komponen Utama", hint: "Unit pusat pemrosesan komputer (9 Huruf)" }
+        ];
+
+        // Generate complete levels structure
+        const GAME_LEVELS = COMPUTER_WORDS.map((item, idx) => {
+            return {
+                level: idx + 1,
+                targetWord: item.word,
+                startLetter: item.word[0],
+                category: item.category,
+                hint: item.hint,
+                hasSimulator: idx < 10, // Level 1-10 have simulator, 11-50 do not
+                steps: generatePathForWord(item.word)
+            };
+        });
+
+        // Global State
+        let currentLevelIdx = 0;
+        let totalScore = 0;
+        let simulationTimer = null;
+        let isSimulating = false;
+
+        // Init App
+        window.onload = () => {
+            renderKeyboardUI();
+            loadLevel(currentLevelIdx);
+
+            document.getElementById('answer-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') checkAnswer();
+            });
+        };
+
+        // Render Keyboard UI Layout with staggered offsets
+        function renderKeyboardUI() {
+            const board = document.getElementById('qwerty-board');
+            board.innerHTML = '';
+
+            const rowOffsets = ['keyboard-row-1', 'keyboard-row-2', 'keyboard-row-3'];
+
+            QWERTY_LAYOUT.forEach((row, rIdx) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = `flex gap-1 sm:gap-1.5 justify-start w-full ${rowOffsets[rIdx]}`;
+
+                row.forEach((char) => {
+                    const keyBtn = document.createElement('button');
+                    keyBtn.id = `key-${char}`;
+                    keyBtn.className = "key-btn w-7 h-9 sm:w-11 sm:h-12 bg-slate-800 text-slate-100 border-2 border-slate-700 font-fredoka font-bold text-xs sm:text-lg rounded-lg sm:rounded-xl flex items-center justify-center pointer-events-none shrink-0";
+                    keyBtn.innerText = char;
+                    rowDiv.appendChild(keyBtn);
+                });
+
+                board.appendChild(rowDiv);
+            });
+        }
+
+        // Load specific level
+        function loadLevel(idx) {
+            stopSimulation();
+
+            const level = GAME_LEVELS[idx];
+            document.getElementById('level-indicator').innerText = `${level.level} / ${GAME_LEVELS.length}`;
+            document.getElementById('level-category').innerText = level.category;
+            document.getElementById('level-hint').innerText = level.hint;
+            document.getElementById('start-letter-display').innerText = level.startLetter;
+            document.getElementById('answer-input').value = '';
+            document.getElementById('sim-recorded-words').innerHTML = '<span class="text-xs font-normal text-slate-500 italic font-sans">Jalur tercatat</span>';
+
+            // Handle Simulator UI Visibility
+            const simControls = document.getElementById('simulator-controls');
+            const simWrapper = document.getElementById('sim-recorded-wrapper');
+            const simBadge = document.getElementById('simulator-badge');
+
+            if (level.hasSimulator) {
+                simControls.classList.remove('hidden');
+                simWrapper.classList.remove('hidden');
+                simBadge.innerHTML = '<i class="fa-solid fa-circle-play"></i> Simulator Aktif';
+                simBadge.className = "bg-emerald-950 text-emerald-300 border border-emerald-700/50 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1";
+            } else {
+                simControls.classList.add('hidden');
+                simWrapper.classList.add('hidden');
+                simBadge.innerHTML = '<i class="fa-solid fa-lock text-amber-400"></i> Simulator Nonaktif';
+                simBadge.className = "bg-amber-950 text-amber-300 border border-amber-700/50 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1";
+            }
+
+            // Render Steps Visual Tags
+            const stepsContainer = document.getElementById('steps-container');
+            stepsContainer.innerHTML = '';
+
+            level.steps.forEach((step, sIdx) => {
+                const stepEl = document.createElement('div');
+                stepEl.id = `step-tag-${sIdx}`;
+                
+                if (step === 'X') {
+                    stepEl.className = "px-2.5 py-1 bg-emerald-600 text-white rounded-lg font-bold text-xs shadow-sm flex items-center gap-1 font-mono-code";
+                    stepEl.innerHTML = '<i class="fa-solid fa-circle-dot text-[9px]"></i> X';
+                } else {
+                    stepEl.className = "px-2.5 py-1 bg-slate-800 border border-slate-700 text-amber-300 rounded-lg text-sm font-bold shadow-sm flex items-center justify-center font-mono-code";
+                    stepEl.innerText = step;
+                }
+                stepsContainer.appendChild(stepEl);
+            });
+
+            // Highlight Start Letter
+            highlightKeyboardStart(level.startLetter);
+        }
+
+        function highlightKeyboardStart(startChar) {
+            document.querySelectorAll('.key-btn').forEach(btn => {
+                btn.className = "key-btn w-7 h-9 sm:w-11 sm:h-12 bg-slate-800 text-slate-100 border-2 border-slate-700 font-fredoka font-bold text-xs sm:text-lg rounded-lg sm:rounded-xl flex items-center justify-center pointer-events-none shrink-0";
+            });
+
+            const startKey = document.getElementById(`key-${startChar}`);
+            if (startKey) {
+                startKey.classList.add('active-start');
+            }
+
+            document.getElementById('cursor-pos-status').innerText = `Posisi Kursor: ${startChar} (Awal)`;
+        }
+
+        // Helper: Parse compressed step like "5➡️" or "↙️" into repeat count and arrow action
+        function parseStepToken(stepToken) {
+            if (stepToken === 'X') return { count: 1, action: 'X' };
+            const match = stepToken.match(/^(\d+)(.+)$/);
+            if (match) {
+                return { count: parseInt(match[1], 10), action: match[2] };
+            }
+            return { count: 1, action: stepToken };
+        }
+
+        // Run Path Simulation (Visual Step-by-Step for Levels 1-10)
+        function startPathSimulation() {
+            if (isSimulating) return;
+            const level = GAME_LEVELS[currentLevelIdx];
+            if (!level.hasSimulator) return;
+
+            isSimulating = true;
+            let curr = getCharCoords(level.startLetter);
+            let currentStepIdx = 0;
+            let innerRepeatIdx = 0;
+            let recordedWord = "";
+
+            document.getElementById('sim-recorded-words').innerHTML = '';
+            document.getElementById('btn-sim-play').disabled = true;
+            document.getElementById('btn-sim-play').classList.add('opacity-50');
+
+            highlightKeyboardStart(level.startLetter);
+
+            simulationTimer = setInterval(() => {
+                if (currentStepIdx >= level.steps.length) {
+                    stopSimulation();
+                    document.getElementById('cursor-pos-status').innerText = `Simulasi Selesai! Hasil: "${recordedWord}"`;
+                    return;
+                }
+
+                // Highlight current tag in step container
+                document.querySelectorAll('[id^="step-tag-"]').forEach(el => el.classList.remove('step-active'));
+                const stepTag = document.getElementById(`step-tag-${currentStepIdx}`);
+                if (stepTag) stepTag.classList.add('step-active');
+
+                const parsed = parseStepToken(level.steps[currentStepIdx]);
+                const action = parsed.action;
+
+                if (action === 'X') {
+                    const currentChar = QWERTY_LAYOUT[curr.r][curr.c];
+                    recordedWord += currentChar;
+                    audio.playPressX();
+
+                    const activeKey = document.getElementById(`key-${currentChar}`);
+                    if (activeKey) {
+                        activeKey.classList.remove('active-cursor', 'active-start');
+                        activeKey.classList.add('active-pressed');
+                        setTimeout(() => {
+                            activeKey.classList.remove('active-pressed');
+                            activeKey.classList.add('active-cursor');
+                        }, 220);
+                    }
+
+                    const recordedBadge = document.createElement('span');
+                    recordedBadge.className = "bg-emerald-600 text-white px-2 py-0.5 rounded-md shadow-sm font-bold font-mono-code text-base";
+                    recordedBadge.innerText = currentChar;
+                    document.getElementById('sim-recorded-words').appendChild(recordedBadge);
+
+                    currentStepIdx++;
+                    innerRepeatIdx = 0;
+
+                } else {
+                    // Execute 1 movement step on staggered QWERTY grid
+                    if (action === '⬅️' && curr.c > 0) {
+                        curr.c--;
+                    } else if (action === '➡️' && curr.c < QWERTY_LAYOUT[curr.r].length - 1) {
+                        curr.c++;
+                    } else if (action === '↘️') {
+                        if (curr.r < QWERTY_LAYOUT.length - 1) {
+                            curr.r++;
+                            if (curr.c > QWERTY_LAYOUT[curr.r].length - 1) curr.c = QWERTY_LAYOUT[curr.r].length - 1;
+                        }
+                    } else if (action === '↙️') {
+                        if (curr.r < QWERTY_LAYOUT.length - 1) {
+                            curr.r++;
+                            if (curr.c > 0) curr.c--;
+                        }
+                    } else if (action === '↖️') {
+                        if (curr.r > 0) {
+                            curr.r--;
+                            if (curr.c > QWERTY_LAYOUT[curr.r].length - 1) curr.c = QWERTY_LAYOUT[curr.r].length - 1;
+                        }
+                    } else if (action === '↗️') {
+                        if (curr.r > 0) {
+                            curr.r--;
+                            curr.c++;
+                            if (curr.c > QWERTY_LAYOUT[curr.r].length - 1) curr.c = QWERTY_LAYOUT[curr.r].length - 1;
+                        }
+                    }
+
+                    const nextChar = QWERTY_LAYOUT[curr.r][curr.c];
+                    audio.playMove();
+
+                    document.querySelectorAll('.key-btn').forEach(btn => btn.classList.remove('active-cursor'));
+                    const keyEl = document.getElementById(`key-${nextChar}`);
+                    if (keyEl) {
+                        keyEl.classList.add('active-cursor');
+                    }
+
+                    document.getElementById('cursor-pos-status').innerText = `Posisi Kursor: ${nextChar}`;
+
+                    innerRepeatIdx++;
+                    if (innerRepeatIdx >= parsed.count) {
+                        currentStepIdx++;
+                        innerRepeatIdx = 0;
+                    }
+                }
+            }, 380);
+        }
+
+        function stopSimulation() {
+            clearInterval(simulationTimer);
+            isSimulating = false;
+            const simBtn = document.getElementById('btn-sim-play');
+            if (simBtn) {
+                simBtn.disabled = false;
+                simBtn.classList.remove('opacity-50');
+            }
+
+            document.querySelectorAll('[id^="step-tag-"]').forEach(el => el.classList.remove('step-active'));
+        }
+
+        function resetSimulation() {
+            stopSimulation();
+            loadLevel(currentLevelIdx);
+        }
+
+        // Check Answer Logic
+        function checkAnswer() {
+            const inputEl = document.getElementById('answer-input');
+            const userGuess = inputEl.value.trim().toUpperCase();
+            const level = GAME_LEVELS[currentLevelIdx];
+
+            if (!userGuess) return;
+
+            if (userGuess === level.targetWord) {
+                audio.playSuccess();
+                totalScore += 100;
+                document.getElementById('score-display').innerText = totalScore;
+
+                document.getElementById('modal-word-answer').innerText = level.targetWord;
+                document.getElementById('modal-level-score').innerText = "+100";
+                document.getElementById('modal-total-score').innerText = totalScore;
+
+                const modalBtn = document.getElementById('modal-action-btn');
+                if (currentLevelIdx >= GAME_LEVELS.length - 1) {
+                    modalBtn.innerHTML = 'Selamat! Selesai Semua 50 Level <i class="fa-solid fa-trophy"></i>';
+                    modalBtn.onclick = () => {
+                        currentLevelIdx = 0;
+                        totalScore = 0;
+                        document.getElementById('score-display').innerText = 0;
+                        closeModal();
+                        loadLevel(0);
+                    };
+                } else {
+                    modalBtn.innerHTML = 'Lanjut Level Berikutnya <i class="fa-solid fa-arrow-right"></i>';
+                    modalBtn.onclick = nextLevel;
+                }
+
+                document.getElementById('modal-overlay').classList.remove('hidden');
+
+            } else {
+                audio.playWrong();
+                inputEl.classList.add('animate-shake', 'border-red-500');
+                setTimeout(() => {
+                    inputEl.classList.remove('animate-shake', 'border-red-500');
+                }, 500);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.add('hidden');
+        }
+
+        function nextLevel() {
+            closeModal();
+            if (currentLevelIdx < GAME_LEVELS.length - 1) {
+                currentLevelIdx++;
+                loadLevel(currentLevelIdx);
+            }
+        }
+    </script>
+</body>
+</html>
