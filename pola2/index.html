@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan Pola Ajaib - Kelas 2 SD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            purple: '#8B5CF6',
+                            pink: '#EC4899',
+                            yellow: '#F59E0B',
+                            green: '#10B981',
+                            blue: '#3B82F6',
+                            orange: '#F97316'
+                        }
+                    },
+                    fontFamily: {
+                        heading: ['"Fredoka One"', 'cursive'],
+                        body: ['Quicksand', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+            min-height: 100vh;
+            user-select: none;
+        }
+
+        .font-heading {
+            font-family: 'Fredoka One', cursive;
+        }
+
+        /* Card Pulse & Hover Effects */
+        .pattern-card {
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .pattern-card:hover {
+            transform: translateY(-5px) scale(1.03);
+        }
+        .pattern-card:active {
+            transform: translateY(2px) scale(0.98);
+        }
+
+        .slot-target {
+            background-image: radial-gradient(#CBD5E1 2px, transparent 2px);
+            background-size: 10px 10px;
+        }
+
+        /* Bounce animation for success */
+        @keyframes successBounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2) rotate(5deg); }
+        }
+        .animate-success {
+            animation: successBounce 0.5s ease-in-out 2;
+        }
+
+        /* Shake animation for error */
+        @keyframes wrongShake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        .animate-wrong {
+            animation: wrongShake 0.4s ease-in-out;
+        }
+
+        /* Custom Scrollbar for level grid */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #8B5CF6;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-slate-800 antialiased selection:bg-pink-300">
+
+    <header class="bg-white/80 backdrop-blur-md border-b-4 border-purple-300 sticky top-0 z-30 px-4 py-3 shadow-md">
+        <div class="max-w-5xl mx-auto flex justify-between items-center">
+            <!-- Game Title & Logo -->
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="showScreen('home')">
+                <div class="w-10 h-10 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-md transform -rotate-6">
+                    <i class="fa-solid fa-shapes"></i>
+                </div>
+                <div>
+                    <h1 class="font-heading text-xl md:text-2xl text-purple-700 leading-none">Pola Ajaib</h1>
+                    <p class="text-xs text-slate-500 font-semibold">Matematika Kelas 2 SD</p>
+                </div>
+            </div>
+
+            <!-- Header Controls -->
+            <div class="flex items-center space-x-2 md:space-x-4">
+                <!-- Sound Toggle Button -->
+                <button id="soundToggleBtn" onclick="toggleSound()" class="w-10 h-10 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-xl flex items-center justify-center text-lg transition shadow-sm">
+                    <i class="fa-solid fa-volume-high" id="soundIcon"></i>
+                </button>
+
+                <!-- Level Select Modal Trigger -->
+                <button onclick="showScreen('levels')" class="px-3 py-2 md:px-4 md:py-2 bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white font-heading rounded-xl shadow-md transition transform active:scale-95 flex items-center space-x-2 text-sm md:text-base">
+                    <i class="fa-solid fa-grid-2"></i>
+                    <span>Pilih Level</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-5xl w-full mx-auto p-4 flex flex-col justify-center items-center">
+
+        <!-- SCREEN 1: HOME WELCOME SCREEN -->
+        <section id="homeScreen" class="w-full max-w-2xl bg-white/90 backdrop-blur-lg rounded-3xl p-6 md:p-10 text-center shadow-2xl border-4 border-white my-auto">
+            <div class="w-24 h-24 bg-gradient-to-tr from-purple-400 to-pink-400 rounded-full mx-auto flex items-center justify-center text-white text-5xl shadow-inner mb-4 animate-bounce">
+                🎨
+            </div>
+            <h2 class="font-heading text-3xl md:text-4xl text-purple-800 mb-3">Petualangan Pola Ajaib</h2>
+            <p class="text-slate-600 text-base md:text-lg mb-6 leading-relaxed">
+                Ayo belajar mengenali urutan pola **Bentuk**, **Warna**, dan **Ukuran**! Selesaikan 50 level seru dan kumpulkan bintang sebanyak-banyaknya! 🌟
+            </p>
+
+            <!-- Stats Overview -->
+            <div class="grid grid-cols-2 gap-4 mb-8 bg-purple-50 p-4 rounded-2xl border border-purple-100">
+                <div class="text-center">
+                    <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Level Selesai</span>
+                    <span id="homeCompletedCount" class="font-heading text-2xl text-purple-600">0 / 50</span>
+                </div>
+                <div class="text-center">
+                    <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Total Bintang</span>
+                    <span id="homeStarsCount" class="font-heading text-2xl text-amber-500">⭐ 0</span>
+                </div>
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-3 justify-center">
+                <button onclick="startPlay()" class="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 text-white font-heading text-xl rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 active:translate-y-0 transition">
+                    <i class="fa-solid fa-play mr-2"></i> Mulai Main!
+                </button>
+                <button onclick="showScreen('levels')" class="w-full md:w-auto px-6 py-4 bg-purple-100 hover:bg-purple-200 text-purple-700 font-heading text-lg rounded-2xl transition">
+                    <i class="fa-solid fa-list-check mr-2"></i> Lihat Semua Level
+                </button>
+            </div>
+        </section>
+
+        <!-- SCREEN 2: LEVEL SELECTOR SCREEN -->
+        <section id="levelScreen" class="w-full bg-white/90 backdrop-blur-lg rounded-3xl p-4 md:p-8 shadow-2xl border-4 border-white hidden my-auto">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-3">
+                <div>
+                    <h2 class="font-heading text-2xl md:text-3xl text-purple-800">Daftar Level (1 - 50)</h2>
+                    <p class="text-sm text-slate-500">Bebas lewati atau pilih level mana saja yang ingin kamu coba!</p>
+                </div>
+                <button onclick="showScreen('home')" class="text-slate-400 hover:text-slate-600 font-bold px-3 py-1 bg-slate-100 rounded-lg text-sm">
+                    <i class="fa-solid fa-xmark mr-1"></i> Tutup
+                </button>
+            </div>
+
+            <!-- Legend Status Level -->
+            <div class="flex flex-wrap gap-4 text-xs md:text-sm font-semibold mb-6 bg-slate-50 p-3 rounded-xl">
+                <div class="flex items-center space-x-2">
+                    <span class="w-4 h-4 bg-emerald-400 rounded-full border border-emerald-600"></span>
+                    <span>Sudah Selesai (⭐)</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="w-4 h-4 bg-amber-200 border-2 border-amber-400 rounded-full"></span>
+                    <span>Belum Selesai</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="w-4 h-4 bg-slate-200 border border-slate-300 rounded-full"></span>
+                    <span>Bisa Dimainkan</span>
+                </div>
+            </div>
+
+            <!-- Level Category Tabs -->
+            <div class="flex overflow-x-auto space-x-2 mb-4 pb-2 border-b border-slate-200 text-xs md:text-sm font-heading">
+                <button onclick="filterLevels('all')" class="tab-btn active px-3 py-1.5 rounded-lg bg-purple-600 text-white whitespace-nowrap">Semua (1-50)</button>
+                <button onclick="filterLevels('shape')" class="tab-btn px-3 py-1.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-purple-200 whitespace-nowrap">1-10: Shapes</button>
+                <button onclick="filterLevels('color')" class="tab-btn px-3 py-1.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-purple-200 whitespace-nowrap">11-20: Colors</button>
+                <button onclick="filterLevels('size')" class="tab-btn px-3 py-1.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-purple-200 whitespace-nowrap">21-30: Sizes</button>
+                <button onclick="filterLevels('combo2')" class="tab-btn px-3 py-1.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-purple-200 whitespace-nowrap">31-40: Combo 2</button>
+                <button onclick="filterLevels('combo3')" class="tab-btn px-3 py-1.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-purple-200 whitespace-nowrap">41-50: Combo 3</button>
+            </div>
+
+            <!-- Grid Levels -->
+            <div id="levelsGrid" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-10 gap-2.5 max-h-[60vh] overflow-y-auto p-2 custom-scrollbar">
+                <!-- Level Items Will Be Injected Here Dynamically -->
+            </div>
+        </section>
+
+        <!-- SCREEN 3: GAMEPLAY SCREEN -->
+        <section id="gameScreen" class="w-full max-w-4xl bg-white/95 backdrop-blur-lg rounded-3xl p-4 md:p-8 shadow-2xl border-4 border-white hidden flex-col">
+            
+            <div class="flex justify-between items-center mb-4 border-b border-slate-200 pb-3">
+                <div class="flex items-center space-x-3">
+                    <span id="levelBadge" class="px-3 py-1 bg-purple-600 text-white font-heading rounded-full text-sm md:text-base shadow-sm">
+                        Level 1
+                    </span>
+                    <span id="categoryBadge" class="text-xs md:text-sm font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                        Pola Bentuk
+                    </span>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                    <button onclick="skipLevel()" title="Skip Level Ini" class="text-xs md:text-sm bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-3 py-1.5 rounded-xl transition flex items-center space-x-1">
+                        <span>Skip</span>
+                        <i class="fa-solid fa-forward"></i>
+                    </button>
+                    <button onclick="showHint()" title="Petunjuk" class="text-xs md:text-sm bg-amber-100 hover:bg-amber-200 text-amber-700 font-bold px-3 py-1.5 rounded-xl transition flex items-center space-x-1">
+                        <i class="fa-solid fa-lightbulb"></i>
+                        <span class="hidden sm:inline">Bantuan</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Question Instruction Prompt -->
+            <div class="text-center mb-6">
+                <h3 id="instructionText" class="font-heading text-lg md:text-2xl text-slate-800">
+                    Lengkapi pola di bawah ini!
+                </h3>
+                <p id="subInstructionText" class="text-xs md:text-sm text-purple-600 font-semibold mt-1">
+                    Pilih objek yang tepat untuk mengisi tempat bersimbol (?)
+                </p>
+            </div>
+
+            <div class="bg-gradient-to-r from-purple-50 via-pink-50 to-blue-50 border-2 border-purple-200 rounded-2xl p-4 md:p-8 mb-8 shadow-inner flex flex-wrap justify-center items-center gap-2 md:gap-4 min-h-[160px]" id="patternContainer">
+                <!-- Dynamic Pattern Sequence Slots -->
+            </div>
+
+            <!-- Hint Message Banner -->
+            <div id="hintBox" class="hidden mb-6 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs md:text-sm text-center font-semibold animate-fade-in">
+                💡 <span id="hintText">Petunjuk akan muncul di sini...</span>
+            </div>
+
+            <!-- Answer Options Section -->
+            <div class="text-center">
+                <p class="text-xs md:text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Pilihan Jawaban:</p>
+                <div id="optionsContainer" class="flex flex-wrap justify-center items-center gap-3 md:gap-6 min-h-[90px]">
+                    <!-- Dynamic Answer Buttons -->
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <div id="completionModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 md:p-8 text-center shadow-2xl transform scale-95 transition-all">
+            <div class="text-6xl mb-3 animate-bounce">🎉</div>
+            <h3 class="font-heading text-2xl md:text-3xl text-purple-800 mb-2">Hebat Sekali!</h3>
+            <p class="text-slate-600 text-sm md:text-base mb-4">Kamu berhasil menyelesaikan <span id="modalLevelText" class="font-bold text-purple-600">Level 1</span>!</p>
+            
+            <div id="modalStars" class="text-4xl mb-6">
+                ⭐⭐⭐
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <button onclick="nextLevelFromModal()" class="w-full py-3.5 bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-white font-heading text-lg rounded-2xl shadow-md transition">
+                    Lanjut Level Berikutnya <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+                <button onclick="closeModalAndShowLevels()" class="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-heading rounded-2xl transition">
+                    Pilih Level Lain
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const TOTAL_LEVELS = 50;
+        let currentLevel = 1;
+        let soundEnabled = true;
+        let userProgress = {}; // Stores level completion data: { levelId: { completed: true, stars: 3 } }
+        let currentQuestion = null;
+
+        // Shape SVG Templates
+        const SHAPES = {
+            circle: (color, sizeClass) => `
+                <svg class="${sizeClass}" viewBox="0 0 100 100" fill="${color}">
+                    <circle cx="50" cy="50" r="45" />
+                </svg>`,
+            square: (color, sizeClass) => `
+                <svg class="${sizeClass}" viewBox="0 0 100 100" fill="${color}">
+                    <rect x="10" y="10" width="80" height="80" rx="12" />
+                </svg>`,
+            triangle: (color, sizeClass) => `
+                <svg class="${sizeClass}" viewBox="0 0 100 100" fill="${color}">
+                    <polygon points="50,10 90,85 10,85" />
+                </svg>`,
+            star: (color, sizeClass) => `
+                <svg class="${sizeClass}" viewBox="0 0 100 100" fill="${color}">
+                    <polygon points="50,5 64,36 98,38 71,61 80,95 50,75 20,95 29,61 2,38 36,36" />
+                </svg>`,
+            heart: (color, sizeClass) => `
+                <svg class="${sizeClass}" viewBox="0 0 100 100" fill="${color}">
+                    <path d="M10,30 A20,20 0 0,1 50,30 A20,20 0 0,1 90,30 Q90,60 50,90 Q10,60 10,30 Z" />
+                </svg>`
+        };
+
+        const COLOR_PALETTE = [
+            { name: 'Merah', hex: '#EF4444' },
+            { name: 'Biru', hex: '#3B82F6' },
+            { name: 'Kuning', hex: '#EAB308' },
+            { name: 'Hijau', hex: '#10B981' },
+            { name: 'Ungu', hex: '#8B5CF6' }
+        ];
+
+        const SIZES = [
+            { name: 'Kecil', class: 'w-8 h-8 md:w-10 md:h-10' },
+            { name: 'Sedang', class: 'w-12 h-12 md:w-16 md:h-16' },
+            { name: 'Besar', class: 'w-16 h-16 md:w-20 md:h-20' }
+        ];
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'correct') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                    osc.frequency.exponentialRampToValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+                    osc.frequency.exponentialRampToValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.35);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.25);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.25);
+                } else if (type === 'click') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.08);
+                }
+            } catch (e) {
+                console.log("Audio not allowed yet");
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('soundIcon');
+            if (soundEnabled) {
+                icon.className = 'fa-solid fa-volume-high';
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark';
+            }
+        }
+
+        function loadProgress() {
+            const saved = localStorage.getItem('pola_ajaib_progress');
+            if (saved) {
+                try {
+                    userProgress = JSON.parse(saved);
+                } catch(e) {
+                    userProgress = {};
+                }
+            }
+            updateHomeStats();
+        }
+
+        function saveProgress(level, stars) {
+            userProgress[level] = {
+                completed: true,
+                stars: stars || 3
+            };
+            localStorage.setItem('pola_ajaib_progress', JSON.stringify(userProgress));
+            updateHomeStats();
+        }
+
+        function updateHomeStats() {
+            const completedKeys = Object.keys(userProgress).filter(k => userProgress[k].completed);
+            const totalStars = Object.values(userProgress).reduce((acc, curr) => acc + (curr.stars || 0), 0);
+            
+            document.getElementById('homeCompletedCount').innerText = `${completedKeys.length} / ${TOTAL_LEVELS}`;
+            document.getElementById('homeStarsCount').innerText = `⭐ ${totalStars}`;
+        }
+
+        function showScreen(screenName) {
+            playSound('click');
+            document.getElementById('homeScreen').classList.add('hidden');
+            document.getElementById('levelScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.add('hidden');
+
+            if (screenName === 'home') {
+                document.getElementById('homeScreen').classList.remove('hidden');
+                updateHomeStats();
+            } else if (screenName === 'levels') {
+                renderLevelGrid();
+                document.getElementById('levelScreen').classList.remove('hidden');
+            } else if (screenName === 'game') {
+                document.getElementById('gameScreen').classList.remove('hidden');
+                document.getElementById('gameScreen').classList.add('flex');
+            }
+        }
+
+        function startPlay() {
+            // Find first uncompleted level or level 1
+            let startLvl = 1;
+            for (let i = 1; i <= TOTAL_LEVELS; i++) {
+                if (!userProgress[i] || !userProgress[i].completed) {
+                    startLvl = i;
+                    break;
+                }
+            }
+            loadLevel(startLvl);
+        }
+
+        function renderLevelGrid(filter = 'all') {
+            const grid = document.getElementById('levelsGrid');
+            grid.innerHTML = '';
+
+            for (let i = 1; i <= TOTAL_LEVELS; i++) {
+                // Category filtering check
+                if (filter === 'shape' && (i < 1 || i > 10)) continue;
+                if (filter === 'color' && (i < 11 || i > 20)) continue;
+                if (filter === 'size' && (i < 21 || i > 30)) continue;
+                if (filter === 'combo2' && (i < 31 || i > 40)) continue;
+                if (filter === 'combo3' && (i < 41 || i > 50)) continue;
+
+                const isDone = userProgress[i] && userProgress[i].completed;
+                const starCount = isDone ? userProgress[i].stars : 0;
+
+                const btn = document.createElement('button');
+                btn.onclick = () => { loadLevel(i); };
+
+                let bgClass = "bg-slate-100 border-2 border-slate-300 text-slate-700 hover:bg-purple-100 hover:border-purple-400";
+                if (isDone) {
+                    bgClass = "bg-emerald-100 border-2 border-emerald-400 text-emerald-800 shadow-sm";
+                }
+
+                btn.className = `p-2 md:p-3 rounded-2xl flex flex-col items-center justify-center transition transform hover:scale-105 active:scale-95 ${bgClass}`;
+
+                btn.innerHTML = `
+                    <span class="font-heading text-base md:text-lg">${i}</span>
+                    <span class="text-[10px] mt-0.5">${isDone ? '⭐'.repeat(starCount) : '⚪'}</span>
+                `;
+
+                grid.appendChild(btn);
+            }
+        }
+
+        function filterLevels(category) {
+            playSound('click');
+            const tabs = document.querySelectorAll('.tab-btn');
+            tabs.forEach(t => {
+                t.classList.remove('bg-purple-600', 'text-white');
+                t.classList.add('bg-slate-200', 'text-slate-700');
+            });
+            event.target.classList.remove('bg-slate-200', 'text-slate-700');
+            event.target.classList.add('bg-purple-600', 'text-white');
+
+            renderLevelGrid(category);
+        }
+
+        function generatePatternData(level) {
+            // Default palette items
+            const shapes = ['circle', 'square', 'triangle', 'star', 'heart'];
+            const colors = COLOR_PALETTE;
+            const sizes = SIZES;
+
+            let category = "";
+            let hint = "";
+            let seq = []; // Sequence of item configs
+            let missingIndex = 0;
+            let options = [];
+
+            // Seeded selection based on level
+            if (level <= 10) {
+                // LEVEL 1-10: POLA BENTUK
+                category = "Pola Bentuk";
+                const c = colors[level % colors.length];
+                const sz = sizes[1]; // Sedang
+                
+                // Select 2 or 3 shapes for repeating pattern (ABAB or ABCABC)
+                let selectedShapes = [];
+                if (level <= 5) {
+                    // Pattern ABABAB (2 Shapes)
+                    selectedShapes = [shapes[(level-1)%shapes.length], shapes[level%shapes.length]];
+                    seq = [0, 1, 0, 1, 0, 1].map(idx => ({
+                        shape: selectedShapes[idx], color: c.hex, colorName: c.name, sizeClass: sz.class, sizeName: sz.name
+                    }));
+                    hint = `Perhatikan urutan bentuknya: ${selectedShapes[0]} lalu ${selectedShapes[1]}...`;
+                } else {
+                    // Pattern ABCABC (3 Shapes)
+                    selectedShapes = [shapes[0], shapes[1], shapes[2]];
+                    seq = [0, 1, 2, 0, 1, 2].map(idx => ({
+                        shape: selectedShapes[idx], color: c.hex, colorName: c.name, sizeClass: sz.class, sizeName: sz.name
+                    }));
+                    hint = `Pola ini berulang tiap 3 bentuk berlainan!`;
+                }
+
+                missingIndex = (level % 2 === 0) ? 3 : 4; // Vary position of missing item
+
+            } else if (level <= 20) {
+                // LEVEL 11-20: POLA WARNA
+                category = "Pola Warna";
+                const sh = shapes[(level) % shapes.length];
+                const sz = sizes[1];
+
+                let selectedColors = [];
+                if (level <= 15) {
+                    // ABAB Color pattern
+                    selectedColors = [colors[(level-11)%colors.length], colors[(level-10)%colors.length]];
+                    seq = [0, 1, 0, 1, 0, 1].map(idx => ({
+                        shape: sh, color: selectedColors[idx].hex, colorName: selectedColors[idx].name, sizeClass: sz.class, sizeName: sz.name
+                    }));
+                    hint = `Perhatikan pergantian warnanya: ${selectedColors[0].name} lalu ${selectedColors[1].name}...`;
+                } else {
+                    // AABAAB Color pattern
+                    selectedColors = [colors[0], colors[1]];
+                    seq = [0, 0, 1, 0, 0, 1].map(idx => ({
+                        shape: sh, color: selectedColors[idx].hex, colorName: selectedColors[idx].name, sizeClass: sz.class, sizeName: sz.name
+                    }));
+                    hint = `Perhatikan pola warna berulang: dua ${selectedColors[0].name}, lalu satu ${selectedColors[1].name}...`;
+                }
+
+                missingIndex = 4;
+
+            } else if (level <= 30) {
+                // LEVEL 21-30: POLA UKURAN
+                category = "Pola Ukuran";
+                const sh = shapes[(level) % shapes.length];
+                const c = colors[(level) % colors.length];
+
+                if (level <= 25) {
+                    // Kecil - Besar - Kecil - Besar
+                    seq = [0, 2, 0, 2, 0, 2].map(idx => ({
+                        shape: sh, color: c.hex, colorName: c.name, sizeClass: sizes[idx].class, sizeName: sizes[idx].name
+                    }));
+                    hint = `Lihat perbandingan ukurannya: Kecil lalu Besar...`;
+                } else {
+                    // Kecil - Sedang - Besar
+                    seq = [0, 1, 2, 0, 1, 2].map(idx => ({
+                        shape: sh, color: c.hex, colorName: c.name, sizeClass: sizes[idx].class, sizeName: sizes[idx].name
+                    }));
+                    hint = `Ukuran makin membesar berurutan: Kecil ➔ Sedang ➔ Besar!`;
+                }
+
+                missingIndex = (level % 2 === 0) ? 2 : 5;
+
+            } else if (level <= 40) {
+                // LEVEL 31-40: KOMBINASI 2 POLA (Shape + Color, or Color + Size)
+                category = "Kombinasi 2 Pola";
+
+                if (level <= 35) {
+                    // Shape + Color Change (e.g. Red Circle, Blue Square, Red Circle, Blue Square)
+                    const pairA = { shape: shapes[0], color: colors[0] };
+                    const pairB = { shape: shapes[1], color: colors[1] };
+
+                    seq = [0, 1, 0, 1, 0, 1].map(idx => {
+                        const p = idx === 0 ? pairA : pairB;
+                        return { shape: p.shape, color: p.color.hex, colorName: p.color.name, sizeClass: sizes[1].class, sizeName: sizes[1].name };
+                    });
+                    hint = `Bentuk DAN warnanya berubah secara berpasangan!`;
+                } else {
+                    // Color + Size Change
+                    const sh = shapes[2];
+                    const pairA = { color: colors[2], size: sizes[0] }; // Yellow Small
+                    const pairB = { color: colors[3], size: sizes[2] }; // Green Big
+
+                    seq = [0, 1, 0, 1, 0, 1].map(idx => {
+                        const p = idx === 0 ? pairA : pairB;
+                        return { shape: sh, color: p.color.hex, colorName: p.color.name, sizeClass: p.size.class, sizeName: p.size.name };
+                    });
+                    hint = `Perhatikan perubahan warna sekaligus ukurannya!`;
+                }
+
+                missingIndex = 3;
+
+            } else {
+                // LEVEL 41-50: KOMBINASI 3 POLA (Shape + Color + Size)
+                category = "Kombinasi 3 Pola";
+
+                const comboA = { shape: shapes[0], color: colors[0], size: sizes[0] }; // Small Red Circle
+                const comboB = { shape: shapes[1], color: colors[1], size: sizes[1] }; // Medium Blue Square
+                const comboC = { shape: shapes[3], color: colors[2], size: sizes[2] }; // Big Yellow Star
+
+                if (level <= 45) {
+                    seq = [0, 1, 0, 1, 0, 1].map(idx => {
+                        const item = idx === 0 ? comboA : comboB;
+                        return { shape: item.shape, color: item.color.hex, colorName: item.color.name, sizeClass: item.size.class, sizeName: item.size.name };
+                    });
+                } else {
+                    seq = [0, 1, 2, 0, 1, 2].map(idx => {
+                        const item = [comboA, comboB, comboC][idx];
+                        return { shape: item.shape, color: item.color.hex, colorName: item.color.name, sizeClass: item.size.class, sizeName: item.size.name };
+                    });
+                }
+
+                hint = `Tingkat Tinggi! Bentuk, Warna, dan Ukuran semuanya bergantian!`;
+                missingIndex = 4;
+            }
+
+            // Target Answer Item
+            const targetAnswer = seq[missingIndex];
+
+            // Generate Distractor Options (3-4 choices total)
+            options = [targetAnswer];
+
+            // Helper to generate unique options
+            while (options.length < 4) {
+                const randomShape = shapes[Math.floor(Math.random() * shapes.length)];
+                const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                const randomSize = sizes[Math.floor(Math.random() * sizes.length)];
+
+                const distractor = {
+                    shape: randomShape,
+                    color: randomColor.hex,
+                    colorName: randomColor.name,
+                    sizeClass: randomSize.class,
+                    sizeName: randomSize.name
+                };
+
+                // Avoid exact duplicate options
+                if (!options.some(opt => opt.shape === distractor.shape && opt.color === distractor.color && opt.sizeClass === distractor.sizeClass)) {
+                    options.push(distractor);
+                }
+            }
+
+            // Shuffle Options Array
+            options.sort(() => Math.random() - 0.5);
+
+            return {
+                level: level,
+                category: category,
+                sequence: seq,
+                missingIndex: missingIndex,
+                targetAnswer: targetAnswer,
+                options: options,
+                hint: hint
+            };
+        }
+
+        function loadLevel(lvl) {
+            currentLevel = lvl;
+            currentQuestion = generatePatternData(lvl);
+
+            // Hide hint box
+            document.getElementById('hintBox').classList.add('hidden');
+
+            // Set Header Details
+            document.getElementById('levelBadge').innerText = `Level ${currentQuestion.level}`;
+            document.getElementById('categoryBadge').innerText = currentQuestion.category;
+            document.getElementById('hintText').innerText = currentQuestion.hint;
+
+            // Render Sequence Container
+            const patternContainer = document.getElementById('patternContainer');
+            patternContainer.innerHTML = '';
+
+            currentQuestion.sequence.forEach((item, index) => {
+                const slot = document.createElement('div');
+
+                if (index === currentQuestion.missingIndex) {
+                    // Blank Question Target Slot
+                    slot.className = "w-16 h-16 md:w-20 md:h-20 rounded-2xl border-4 border-dashed border-purple-400 bg-white flex items-center justify-center slot-target shadow-inner";
+                    slot.id = "targetSlot";
+                    slot.innerHTML = `<span class="font-heading text-2xl md:text-3xl text-purple-400 animate-pulse">?</span>`;
+                } else {
+                    // Revealed Sequence Element
+                    slot.className = "w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white border-2 border-slate-200 shadow-sm flex items-center justify-center p-1";
+                    slot.innerHTML = SHAPES[item.shape](item.color, item.sizeClass);
+                }
+
+                patternContainer.appendChild(slot);
+            });
+
+            // Render Answer Options
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+
+            currentQuestion.options.forEach((opt) => {
+                const optBtn = document.createElement('button');
+                optBtn.className = "pattern-card w-20 h-20 md:w-24 md:h-24 bg-white rounded-2xl border-3 border-purple-200 shadow-md hover:border-purple-500 hover:shadow-lg flex items-center justify-center p-2 transition";
+                optBtn.innerHTML = SHAPES[opt.shape](opt.color, opt.sizeClass);
+                
+                optBtn.onclick = () => checkAnswer(opt, optBtn);
+                optionsContainer.appendChild(optBtn);
+            });
+
+            showScreen('game');
+        }
+
+        function checkAnswer(selectedOption, buttonElem) {
+            const isCorrect = (
+                selectedOption.shape === currentQuestion.targetAnswer.shape &&
+                selectedOption.color === currentQuestion.targetAnswer.color &&
+                selectedOption.sizeClass === currentQuestion.targetAnswer.sizeClass
+            );
+
+            if (isCorrect) {
+                playSound('correct');
+
+                // Fill target slot with selected shape
+                const targetSlot = document.getElementById('targetSlot');
+                targetSlot.className = "w-16 h-16 md:w-20 md:h-20 rounded-2xl border-4 border-emerald-400 bg-emerald-50 flex items-center justify-center shadow-md animate-success";
+                targetSlot.innerHTML = SHAPES[selectedOption.shape](selectedOption.color, selectedOption.sizeClass);
+
+                // Save Progress
+                saveProgress(currentLevel, 3);
+
+                // Trigger Confetti
+                confetti({
+                    particleCount: 70,
+                    spread: 60,
+                    origin: { y: 0.6 }
+                });
+
+                // Show completion modal after short delay
+                setTimeout(() => {
+                    document.getElementById('modalLevelText').innerText = `Level ${currentLevel}`;
+                    document.getElementById('completionModal').classList.remove('hidden');
+                }, 700);
+
+            } else {
+                playSound('wrong');
+
+                // Shake button animation on wrong choice
+                buttonElem.classList.add('animate-wrong', 'border-red-400', 'bg-red-50');
+                setTimeout(() => {
+                    buttonElem.classList.remove('animate-wrong', 'border-red-400', 'bg-red-50');
+                }, 500);
+            }
+        }
+
+        function skipLevel() {
+            playSound('click');
+            if (currentLevel < TOTAL_LEVELS) {
+                loadLevel(currentLevel + 1);
+            } else {
+                showScreen('levels');
+            }
+        }
+
+        function showHint() {
+            playSound('click');
+            const hintBox = document.getElementById('hintBox');
+            hintBox.classList.remove('hidden');
+        }
+
+        function nextLevelFromModal() {
+            document.getElementById('completionModal').classList.add('hidden');
+            if (currentLevel < TOTAL_LEVELS) {
+                loadLevel(currentLevel + 1);
+            } else {
+                showScreen('levels');
+            }
+        }
+
+        function closeModalAndShowLevels() {
+            document.getElementById('completionModal').classList.add('hidden');
+            showScreen('levels');
+        }
+
+        window.onload = function() {
+            loadProgress();
+            // Start at Home Screen
+            showScreen('home');
+        };
+    </script>
+</body>
+</html>
