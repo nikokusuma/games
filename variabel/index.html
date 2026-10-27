@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Variabel: Petualangan Memori Data</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tone.js for Web Audio Effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .font-code {
+            font-family: 'Fira Code', monospace;
+        }
+        .code-bg {
+            background-color: #1e293b;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        .glow {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+        .glow-success {
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+        }
+        .glow-error {
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-2 md:p-6 bg-slate-950 text-slate-100">
+
+    <!-- Top Navigation Header -->
+    <header class="max-w-5xl mx-auto w-full flex justify-between items-center bg-slate-900/80 backdrop-blur border border-slate-800 p-4 rounded-2xl mb-4 shadow-xl">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                <i class="fa-solid font-code fa-code"></i>
+            </div>
+            <div>
+                <h1 class="text-lg md:text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-300">
+                    Master Variabel
+                </h1>
+                <p class="text-xs text-slate-400 hidden sm:block">Latih Logika Eksekusi & Lacak Memori Data</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <button id="btn-sound" onclick="toggleSound()" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition border border-slate-700">
+                <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+            </button>
+            <button onclick="openLevelSelect()" class="px-4 py-2 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/30 font-semibold rounded-xl transition flex items-center gap-2">
+                <i class="fa-solid fa-th-large"></i>
+                <span class="hidden sm:inline">Pilih Level</span>
+            </button>
+            <button onclick="resetProgress()" class="p-2.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 rounded-xl transition border border-rose-800/40" title="Reset Progres">
+                <i class="fa-solid fa-rotate-right"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Game Container -->
+    <main class="max-w-5xl mx-auto w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Left Panel: Problem Code & Info -->
+        <section class="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-3xl p-5 md:p-6 shadow-2xl flex flex-col justify-between min-h-[480px]">
+            <div>
+                <!-- Question Level & Category Bar -->
+                <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-800">
+                    <div class="flex items-center space-x-2">
+                        <span id="level-badge" class="px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-bold rounded-full uppercase tracking-wider">
+                            Level 1 / 50
+                        </span>
+                        <span id="category-badge" class="px-3 py-1 bg-purple-500/10 text-purple-400 border border-purple-500/20 text-xs font-semibold rounded-full">
+                            Dasar Assignment
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-1 text-amber-400 font-bold text-sm">
+                        <i class="fa-solid fa-fire"></i>
+                        <span id="streak-count">0</span> Streak
+                    </div>
+                </div>
+
+                <!-- Instructions -->
+                <div class="mb-4">
+                    <p id="question-text" class="text-sm md:text-base text-slate-300">
+                        Bacalah baris kode berikut dengan teliti dari atas ke bawah. Berapakah nilai akhir dari variabel yang ditanyakan?
+                    </p>
+                </div>
+
+                <!-- Code Editor Display Container -->
+                <div class="rounded-2xl border border-slate-700/80 overflow-hidden shadow-2xl bg-slate-950">
+                    <!-- Editor Header -->
+                    <div class="bg-slate-800/80 px-4 py-2.5 flex items-center justify-between border-b border-slate-700/60">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-3 h-3 rounded-full bg-rose-500 inline-block"></span>
+                            <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
+                            <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
+                            <span class="text-xs text-slate-400 font-code ml-2">script.js</span>
+                        </div>
+                        <span class="text-xs text-slate-500 font-code">JavaScript</span>
+                    </div>
+                    <!-- Code Snippet Area -->
+                    <div class="p-5 font-code text-sm md:text-base overflow-x-auto leading-relaxed text-slate-200" id="code-container">
+                        <!-- Code lines inserted dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Target Question Highlight -->
+            <div class="mt-6 p-4 rounded-2xl bg-blue-950/40 border border-blue-800/50 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-lg bg-blue-600/20 text-blue-400 flex items-center justify-center font-bold">
+                        ?
+                    </div>
+                    <div>
+                        <span class="text-xs text-blue-300/80 uppercase font-bold tracking-wider block">Pertanyaan</span>
+                        <span id="target-var-label" class="text-sm font-semibold text-white">
+                            Berapa nilai akhir dari <code class="text-amber-300 font-code font-bold bg-slate-800 px-1.5 py-0.5 rounded">x</code>?
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Panel: Answer Area & Memory Visualizer -->
+        <section class="lg:col-span-5 flex flex-col gap-6">
+            
+            <!-- Answer Input Card -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 md:p-6 shadow-2xl">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-keyboard text-blue-400"></i> Jawaban Anda
+                </h3>
+
+                <!-- Choices or Text Input based on question type -->
+                <div id="options-container" class="grid grid-cols-1 gap-3 mb-4">
+                    <!-- Dynamic choice buttons inserted here -->
+                </div>
+
+                <!-- Text Input Fallback if interactive mode -->
+                <div id="input-container" class="hidden flex-col gap-3 mb-4">
+                    <input type="text" id="custom-answer" placeholder="Ketik nilai akhir..." 
+                        class="w-full bg-slate-950 border border-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white font-code px-4 py-3 rounded-xl text-center text-lg transition">
+                    <button id="btn-submit-text" onclick="checkCustomAnswer()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-xl transition shadow-lg shadow-blue-600/30">
+                        Kirim Jawaban
+                    </button>
+                </div>
+
+                <!-- Feedback Alert Box -->
+                <div id="feedback-box" class="hidden p-4 rounded-2xl text-sm font-medium transition-all duration-300 mb-2">
+                    <div class="flex items-start gap-3">
+                        <i id="feedback-icon" class="fa-solid text-lg mt-0.5"></i>
+                        <div>
+                            <h4 id="feedback-title" class="font-bold"></h4>
+                            <p id="feedback-text" class="text-xs md:text-sm mt-1 leading-relaxed opacity-90"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Next Level Button -->
+                <button id="btn-next" onclick="nextLevel()" class="hidden w-full mt-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2">
+                    <span>Lanjut ke Level Berikutnya</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- Visual Memory Helper / Concept Box -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 md:p-6 shadow-2xl flex-grow">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-microchip text-indigo-400"></i> Ilustrasi Memori Komputer
+                    </h3>
+                    <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono">RAM Simulator</span>
+                </div>
+                
+                <p class="text-xs text-slate-400 mb-4">
+                    Variabel seperti "wadah" bertanda nama di memori. Mengubah nilai variabel akan mengganti isi wadah tersebut dengan data baru.
+                </p>
+
+                <!-- Memory Slots Container -->
+                <div id="memory-slots" class="grid grid-cols-2 gap-3">
+                    <!-- Memory boxes rendered here -->
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer Stats -->
+    <footer class="max-w-5xl mx-auto w-full mt-6 bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex justify-between items-center text-xs text-slate-400">
+        <div>
+            <span>Progres Total: </span>
+            <span id="progress-percent" class="font-bold text-blue-400">0%</span>
+        </div>
+        <div class="w-1/3 bg-slate-800 h-2 rounded-full overflow-hidden">
+            <div id="progress-bar" class="bg-gradient-to-r from-blue-500 to-indigo-500 h-full w-0 transition-all duration-500"></div>
+        </div>
+        <div>
+            <span>Terbuka: </span>
+            <span id="unlocked-text" class="font-bold text-emerald-400">Level 1</span>
+        </div>
+    </footer>
+
+    <!-- Level Selector Modal -->
+    <div id="level-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            <!-- Modal Header -->
+            <div class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+                <div>
+                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-map-location-dot text-indigo-400"></i> Pilih Level Game
+                    </h2>
+                    <p class="text-xs text-slate-400">Anda dapat mengulang level yang sudah terbuka kapan saja.</p>
+                </div>
+                <button onclick="closeLevelSelect()" class="p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800/60 hover:bg-slate-800">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Level Grid -->
+            <div class="p-6 overflow-y-auto grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2.5" id="level-grid">
+                <!-- Level buttons dynamically generated -->
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-slate-800 bg-slate-900/50 flex justify-between items-center text-xs text-slate-400">
+                <div class="flex items-center gap-3">
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-emerald-500/20 border border-emerald-500 inline-block"></span> Selesai</span>
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-blue-600 inline-block"></span> Aktif</span>
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-slate-800 inline-block"></span> Terkunci</span>
+                </div>
+                <button onclick="closeLevelSelect()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Game Logic & 50 Level Data -->
+    <script>
+        // -------------------------------------------------------------
+        // 50 LEVEL QUESTIONS DATA (Skenario Variabel Bertingkat)
+        // -------------------------------------------------------------
+        const questions = [
+            // Level 1-10: Deklarasi Dasar & Assignment Sederhana
+            {
+                id: 1,
+                category: "Deklarasi Dasar",
+                code: ["let x = 5;"],
+                targetVar: "x",
+                options: ["5", "0", "undefined", "10"],
+                answer: "5",
+                explanation: "Variabel `x` diberi nilai awal `5`. Jadi nilai `x` adalah `5`."
+            },
+            {
+                id: 2,
+                category: "Deklarasi Dasar",
+                code: ["let a = 10;", "let b = 20;"],
+                targetVar: "b",
+                options: ["10", "20", "30", "0"],
+                answer: "20",
+                explanation: "Variabel `b` diisi dengan angka `20`. Variabel `a` tidak mempengaruhi `b`."
+            },
+            {
+                id: 3,
+                category: "Re-assignment",
+                code: ["let x = 7;", "x = 12;"],
+                targetVar: "x",
+                options: ["7", "12", "19", "5"],
+                answer: "12",
+                explanation: "Nilai awal `x` adalah `7`, lalu ditimpa (di-assign ulang) dengan nilai `12`."
+            },
+            {
+                id: 4,
+                category: "Re-assignment",
+                code: ["let angka = 3;", "angka = 8;", "angka = 2;"],
+                targetVar: "angka",
+                options: ["3", "8", "2", "13"],
+                answer: "2",
+                explanation: "Setiap baris assignment menimpa nilai lama. Nilai paling akhir yang disimpan di `angka` adalah `2`."
+            },
+            {
+                id: 5,
+                category: "Operasi Penjumlahan",
+                code: ["let a = 4;", "let b = a + 3;"],
+                targetVar: "b",
+                options: ["4", "3", "7", "43"],
+                answer: "7",
+                explanation: "`b` bernilai `a + 3` yaitu `4 + 3 = 7`."
+            },
+            {
+                id: 6,
+                category: "Copy Nilai Variabel",
+                code: ["let x = 15;", "let y = x;"],
+                targetVar: "y",
+                options: ["15", "x", "0", "undefined"],
+                answer: "15",
+                explanation: "Nilai dari `x` (15) dicopy dan dimasukkan ke dalam variabel `y`."
+            },
+            {
+                id: 7,
+                category: "Copy Nilai & Ubah",
+                code: ["let x = 10;", "let y = x;", "x = 20;"],
+                targetVar: "y",
+                options: ["10", "20", "30", "0"],
+                answer: "10",
+                explanation: "Saat `y = x`, `y` mengambil nilai `x` saat itu (10). Mengubah `x` setelahnya tidak mengubah `y`."
+            },
+            {
+                id: 8,
+                category: "Pengurangan",
+                code: ["let hp = 100;", "hp = hp - 25;"],
+                targetVar: "hp",
+                options: ["100", "25", "75", "-25"],
+                answer: "75",
+                explanation: "Nilai `hp` berkurang 25, sehingga `100 - 25 = 75`."
+            },
+            {
+                id: 9,
+                category: "Perkalian Dasar",
+                code: ["let item = 5;", "let total = item * 4;"],
+                targetVar: "total",
+                options: ["5", "4", "9", "20"],
+                answer: "20",
+                explanation: "`total` diisi hasil dari `5 * 4`, yaitu `20`."
+            },
+            {
+                id: 10,
+                category: "String / Teks Dasar",
+                code: ["let nama = 'Budi';", "let salam = 'Halo ' + nama;"],
+                targetVar: "salam",
+                options: ["'Budi'", "'Halo '", "'Halo Budi'", "'Halo nama'"],
+                answer: "'Halo Budi'",
+                explanation: "Penggabungan teks (string concatenation) menyambungkan `'Halo '` dan `'Budi'`."
+            },
+
+            // Level 11-20: Increment, Self-Assignment & Multi-step
+            {
+                id: 11,
+                category: "Self-Assignment",
+                code: ["let skor = 10;", "skor = skor + 5;"],
+                targetVar: "skor",
+                options: ["10", "5", "15", "50"],
+                answer: "15",
+                explanation: "Nilai lama `skor` (10) ditambah `5`, lalu disimpan kembali ke `skor` (15)."
+            },
+            {
+                id: 12,
+                category: "Self-Assignment Ganda",
+                code: ["let count = 2;", "count = count + 3;", "count = count + 4;"],
+                targetVar: "count",
+                options: ["2", "5", "9", "24"],
+                answer: "9",
+                explanation: "Awalnya 2 -> ditambahi 3 menjadi 5 -> ditambahi 4 menjadi 9."
+            },
+            {
+                id: 13,
+                category: "Penjumlahan Dua Variabel",
+                code: ["let m = 6;", "let n = 4;", "let sum = m + n;"],
+                targetVar: "sum",
+                options: ["64", "10", "2", "24"],
+                answer: "10",
+                explanation: "`sum` menyimpan hasil penjumlahan `6 + 4 = 10`."
+            },
+            {
+                id: 14,
+                category: "Perubahan Berantai",
+                code: ["let a = 5;", "let b = a + 2;", "a = b + 1;"],
+                targetVar: "a",
+                options: ["5", "7", "8", "13"],
+                answer: "8",
+                explanation: "`b` menjadi `5 + 2 = 7`. Kemudian `a` menjadi `b + 1` yaitu `7 + 1 = 8`."
+            },
+            {
+                id: 15,
+                category: "Pengurangan Beruntut",
+                code: ["let koin = 50;", "koin = koin - 10;", "koin = koin - 15;"],
+                targetVar: "koin",
+                options: ["50", "40", "25", "15"],
+                answer: "25",
+                explanation: "`50 - 10 = 40`, kemudian `40 - 15 = 25`."
+            },
+            {
+                id: 16,
+                category: "Operator Short-hand += ",
+                code: ["let p = 8;", "p += 4;"],
+                targetVar: "p",
+                options: ["8", "4", "12", "32"],
+                answer: "12",
+                explanation: "`p += 4` adalah singkatan dari `p = p + 4`. Maka `8 + 4 = 12`."
+            },
+            {
+                id: 17,
+                category: "Operator Short-hand -= ",
+                code: ["let energi = 20;", "energi -= 6;"],
+                targetVar: "energi",
+                options: ["20", "6", "14", "26"],
+                answer: "14",
+                explanation: "`energi -= 6` sama dengan `energi = energi - 6`, hasil `14`."
+            },
+            {
+                id: 18,
+                category: "Operator Short-hand *= ",
+                code: ["let x = 3;", "x *= 5;"],
+                targetVar: "x",
+                options: ["3", "5", "8", "15"],
+                answer: "15",
+                explanation: "`x *= 5` sama dengan `x = x * 5`, yaitu `15`."
+            },
+            {
+                id: 19,
+                category: "Tipe Data Boolean",
+                code: ["let isReady = false;", "isReady = true;"],
+                targetVar: "isReady",
+                options: ["false", "true", "null", "undefined"],
+                answer: "true",
+                explanation: "Nilai boolean `isReady` diubah dari `false` menjadi `true`."
+            },
+            {
+                id: 20,
+                category: "String Concatenation",
+                code: ["let kata1 = 'Kode';", "let kata2 = 'Nesia';", "let gabung = kata1 + kata2;"],
+                targetVar: "gabung",
+                options: ["'Kode Nesia'", "'KodeNesia'", "'kata1kata2'", "'Kode'"],
+                answer: "'KodeNesia'",
+                explanation: "Penggabungan tanpa spasi menghasilkan `'KodeNesia'`."
+            },
+
+            // Level 21-30: Menukar Nilai (Swap), Variabel Sementara & Hirarki Operasi
+            {
+                id: 21,
+                category: "Penukar Nilai (Swap)",
+                code: ["let a = 1;", "let b = 2;", "let temp = a;", "a = b;", "b = temp;"],
+                targetVar: "a",
+                options: ["1", "2", "3", "0"],
+                answer: "2",
+                explanation: "Skenario swap nilai: `a` mendapat nilai `b` (2), dan `b` mendapat nilai lama `a` (1). Jadi `a = 2`."
+            },
+            {
+                id: 22,
+                category: "Penukar Nilai (Swap)",
+                code: ["let a = 1;", "let b = 2;", "let temp = a;", "a = b;", "b = temp;"],
+                targetVar: "b",
+                options: ["1", "2", "temp", "0"],
+                answer: "1",
+                explanation: "Setelah swapping selesai, variabel `b` menyimpan nilai dari `temp` (nilai awal `a`), yaitu `1`."
+            },
+            {
+                id: 23,
+                category: "Prioritas Operator (* dan +)",
+                code: ["let x = 2 + 3 * 4;"],
+                targetVar: "x",
+                options: ["20", "14", "24", "9"],
+                answer: "14",
+                explanation: "Perkalian dihitung lebih dahulu: `3 * 4 = 12`, lalu `2 + 12 = 14`."
+            },
+            {
+                id: 24,
+                category: "Kurung dalam Matematika",
+                code: ["let x = (2 + 3) * 4;"],
+                targetVar: "x",
+                options: ["20", "14", "24", "11"],
+                answer: "20",
+                explanation: "Operasi di dalam kurung dihitung dulu: `(2 + 3) = 5`, lalu `5 * 4 = 20`."
+            },
+            {
+                id: 25,
+                category: "Penggabungan Teks & Angka",
+                code: ["let a = '10';", "let b = 20;", "let res = a + b;"],
+                targetVar: "res",
+                options: ["30", "'1020'", "'30'", "2010"],
+                answer: "'1020'",
+                explanation: "Jika String dikombinasikan dengan Angka memakai `+`, angka diubah jadi teks dan digabung menjadi `'1020'`."
+            },
+            {
+                id: 26,
+                category: "Modulus (Sisa Bagi)",
+                code: ["let x = 10 % 3;"],
+                targetVar: "x",
+                options: ["3", "1", "0", "3.33"],
+                answer: "1",
+                explanation: "Operator `%` menghasilkan sisa pembagian. `10` dibagi `3` adalah `3` sisa `1`."
+            },
+            {
+                id: 27,
+                category: "Modulus Genap/Ganjil",
+                code: ["let num = 14;", "let sisa = num % 2;"],
+                targetVar: "sisa",
+                options: ["0", "1", "7", "2"],
+                answer: "0",
+                explanation: "14 habis dibagi 2 tanpa sisa, maka `14 % 2 = 0`."
+            },
+            {
+                id: 28,
+                category: "Increment (++ operator)",
+                code: ["let val = 5;", "val++;"],
+                targetVar: "val",
+                options: ["5", "6", "7", "10"],
+                answer: "6",
+                explanation: "`val++` menambah nilai variabel `val` sebanyak 1."
+            },
+            {
+                id: 29,
+                category: "Decrement (-- operator)",
+                code: ["let val = 10;", "val--;", "val--;"],
+                targetVar: "val",
+                options: ["10", "9", "8", "7"],
+                answer: "8",
+                explanation: "`val--` dikurangi 1 dua kali. `10 -> 9 -> 8`."
+            },
+            {
+                id: 30,
+                category: "Variabel Akumulator",
+                code: ["let sum = 0;", "sum += 10;", "sum += 20;", "sum += 5;"],
+                targetVar: "sum",
+                options: ["0", "30", "35", "25"],
+                answer: "35",
+                explanation: "`sum` menjumlahkan seluruh penambahan: `0 + 10 + 20 + 5 = 35`."
+            },
+
+            // Level 31-40: Logika Terstruktur & Kompleksitas Menengah
+            {
+                id: 31,
+                category: "Kondisional Sederhana",
+                code: ["let nilai = 80;", "let status = 'Gagal';", "if (nilai >= 70) {", "  status = 'Lulus';", "}"],
+                targetVar: "status",
+                options: ["'Gagal'", "'Lulus'", "true", "undefined"],
+                answer: "'Lulus'",
+                explanation: "Karena `nilai` (80) >= 70 bernilai benar (`true`), variabel `status` diubah menjadi `'Lulus'`."
+            },
+            {
+                id: 32,
+                category: "Kondisional Else",
+                code: ["let umur = 15;", "let tiket = 0;", "if (umur >= 17) {", "  tiket = 50000;", "} else {", "  tiket = 25000;", "}"],
+                targetVar: "tiket",
+                options: ["0", "50000", "25000", "75000"],
+                answer: "25000",
+                explanation: "Karena `umur` (15) kurang dari 17, blok `else` dieksekusi sehingga `tiket = 25000`."
+            },
+            {
+                id: 33,
+                category: "Manipulasi Bertingkat",
+                code: ["let a = 3;", "let b = a * 2;", "let c = a + b;", "b = c - a;"],
+                targetVar: "b",
+                options: ["6", "9", "6", "3"],
+                answer: "6",
+                explanation: "`a = 3`. `b = 6`. `c = 3 + 6 = 9`. Akhirnya `b = 9 - 3 = 6`."
+            },
+            {
+                id: 34,
+                category: "Ekspresi Matematika",
+                code: ["let x = 10;", "let y = 5;", "let z = (x - y) * (x / y);"],
+                targetVar: "z",
+                options: ["10", "25", "50", "5"],
+                answer: "10",
+                explanation: "`x - y = 5` dan `x / y = 2`. Maka `z = 5 * 2 = 10`."
+            },
+            {
+                id: 35,
+                category: "Override Variabel Lokal Sederhana",
+                code: ["let x = 100;", "x = x / 2;", "x = x + 10;"],
+                targetVar: "x",
+                options: ["100", "50", "60", "110"],
+                answer: "60",
+                explanation: "`100 / 2 = 50`, lalu `50 + 10 = 60`."
+            },
+            {
+                id: 36,
+                category: "String & Number Mixed",
+                code: ["let x = 5;", "let y = '5';", "let z = x + y;"],
+                targetVar: "z",
+                options: ["10", "'55'", "55", "Error"],
+                answer: "'55'",
+                explanation: "Angka 5 ditambah Teks '5' akan dikonversi menjadi gabungan teks `'55'`."
+            },
+            {
+                id: 37,
+                category: "Tipe Perbandingan (Boolean)",
+                code: ["let a = 10;", "let b = 15;", "let res = a > b;"],
+                targetVar: "res",
+                options: ["true", "false", "10", "15"],
+                answer: "false",
+                explanation: "Apakah 10 lebih besar dari 15? Tidak (`false`)."
+            },
+            {
+                id: 38,
+                category: "Operasi Logika AND (&&)",
+                code: ["let p = true;", "let q = false;", "let res = p && q;"],
+                targetVar: "res",
+                options: ["true", "false", "null", "undefined"],
+                answer: "false",
+                explanation: "Operator `&&` (AND) membutuhkan kedua nilai bernilai `true` agar hasilnya `true`."
+            },
+            {
+                id: 39,
+                category: "Operasi Logika OR (||)",
+                code: ["let p = true;", "let q = false;", "let res = p || q;"],
+                targetVar: "res",
+                options: ["true", "false", "null", "undefined"],
+                answer: "true",
+                explanation: "Operator `||` (OR) bernilai `true` jika salah satu opsinya `true`."
+            },
+            {
+                id: 40,
+                category: "Pengubahan Variabel Tergantung Kondisi",
+                code: ["let poin = 50;", "let bonus = 20;", "if (poin > 40) {", "  poin += bonus;", "}"],
+                targetVar: "poin",
+                options: ["50", "20", "70", "30"],
+                answer: "70",
+                explanation: "Karena `poin` (50) > 40, maka `poin` bertambah `20` menjadi `70`."
+            },
+
+            // Level 41-50: Tingkat Lanjut & Algoritma Mini
+            {
+                id: 41,
+                category: "Kondisional Beruntut",
+                code: ["let x = 5;", "if (x < 10) { x += 2; }", "if (x < 10) { x += 3; }"],
+                targetVar: "x",
+                options: ["5", "7", "10", "12"],
+                answer: "10",
+                explanation: "Syarat 1: 5 < 10 (Benar) -> x jadi 7. Syarat 2: 7 < 10 (Benar) -> x jadi 10."
+            },
+            {
+                id: 42,
+                category: "Tiga Variabel Swap Ringkas",
+                code: ["let a = 10;", "let b = 20;", "let c = 30;", "a = b;", "b = c;", "c = a;"],
+                targetVar: "c",
+                options: ["10", "20", "30", "0"],
+                answer: "20",
+                explanation: "`a` menjadi 20. `b` menjadi 30. Lalu `c = a` (dimana `a` sudah bernilai 20), jadi `c = 20`."
+            },
+            {
+                id: 43,
+                category: "Looping / Perulangan Sederhana",
+                code: ["let total = 0;", "for (let i = 1; i <= 3; i++) {", "  total += i;", "}"],
+                targetVar: "total",
+                options: ["3", "5", "6", "0"],
+                answer: "6",
+                explanation: "Perulangan menambah `i` (1, 2, 3) ke `total`: `0 + 1 + 2 + 3 = 6`."
+            },
+            {
+                id: 44,
+                category: "Perulangan Perkalian",
+                code: ["let prod = 1;", "for (let i = 1; i <= 4; i++) {", "  prod *= i;", "}"],
+                targetVar: "prod",
+                options: ["4", "10", "24", "12"],
+                answer: "24",
+                explanation: "Faktorial 4: `1 * 1 * 2 * 3 * 4 = 24`."
+            },
+            {
+                id: 45,
+                category: "Pembaruan Variabel Terpisah",
+                code: ["let x = 2;", "let y = 3;", "x = x * y;", "y = x * y;"],
+                targetVar: "y",
+                options: ["6", "9", "18", "36"],
+                answer: "18",
+                explanation: "Baris 3: `x = 2 * 3 = 6`. Baris 4: `y = 6 * 3 = 18`."
+            },
+            {
+                id: 46,
+                category: "Array Element Assignment",
+                code: ["let arr = [10, 20, 30];", "arr[1] = 50;"],
+                targetVar: "arr[1]",
+                options: ["10", "20", "30", "50"],
+                answer: "50",
+                explanation: "Elemen indeks ke-1 (posisi kedua) diubah dari `20` menjadi `50`."
+            },
+            {
+                id: 47,
+                category: "Negasi Boolean (!)",
+                code: ["let isSaklarOn = false;", "isSaklarOn = !isSaklarOn;"],
+                targetVar: "isSaklarOn",
+                options: ["true", "false", "undefined", "null"],
+                answer: "true",
+                explanation: "Operator `!` membalikkan nilai boolean. `!false` menjadi `true`."
+            },
+            {
+                id: 48,
+                category: "Ternary Operator",
+                code: ["let nilai = 75;", "let hasLulus = (nilai >= 70) ? 'Ya' : 'Tidak';"],
+                targetVar: "hasLulus",
+                options: ["'Ya'", "'Tidak'", "true", "false"],
+                answer: "'Ya'",
+                explanation: "Operator ternary `kondisi ? jika_true : jika_false`. Karena 75 >= 70, hasilnya `'Ya'`."
+            },
+            {
+                id: 49,
+                category: "Kompleksitas Variabel Ganda",
+                code: ["let x = 5;", "let y = 10;", "x = x + y;", "y = x - y;", "x = x - y;"],
+                targetVar: "x",
+                options: ["5", "10", "15", "0"],
+                answer: "10",
+                explanation: "Ini adalah trik swap tanpa variabel sementara! `x` awal (5) dan `y` awal (10) bertukar tempat. `x` menjadi `10`."
+            },
+            {
+                id: 50,
+                category: "Ujian Akhir Master Variabel",
+                code: ["let a = 2;", "let b = 3;", "let c = 4;", "a += b * c;", "b = a % 5;"],
+                targetVar: "b",
+                options: ["14", "4", "2", "0"],
+                answer: "4",
+                explanation: "`b * c = 12`. `a += 12` -> `a = 14`. Lalu `b = 14 % 5` -> Sisa bagi 14 oleh 5 adalah `4`."
+            }
+        ];
+
+        // -------------------------------------------------------------
+        // GAME STATE MANAGEMENT
+        // -------------------------------------------------------------
+        let currentLevel = 0; // 0-indexed internally (0 to 49)
+        let unlockedLevel = 0; // Highest level unlocked
+        let streak = 0;
+        let isSoundEnabled = true;
+        let answeredCurrent = false;
+
+        // Initialize Audio Synthesizer via Tone.js
+        let synth;
+        function initAudio() {
+            if (!synth && typeof Tone !== 'undefined') {
+                synth = new Tone.Synth().toDestination();
+            }
+        }
+
+        function playSound(type) {
+            if (!isSoundEnabled) return;
+            try {
+                initAudio();
+                if (type === 'correct') {
+                    const now = Tone.now();
+                    synth.triggerAttackRelease("C5", "8n", now);
+                    synth.triggerAttackRelease("E5", "8n", now + 0.1);
+                    synth.triggerAttackRelease("G5", "8n", now + 0.2);
+                } else if (type === 'wrong') {
+                    const now = Tone.now();
+                    synth.triggerAttackRelease("F3", "8n", now);
+                    synth.triggerAttackRelease("C3", "8n", now + 0.15);
+                } else if (type === 'click') {
+                    synth.triggerAttackRelease("G4", "16n");
+                }
+            } catch (e) {
+                // Audio context fallback safeguard
+            }
+        }
+
+        function toggleSound() {
+            isSoundEnabled = !isSoundEnabled;
+            const icon = document.getElementById('sound-icon');
+            if (isSoundEnabled) {
+                icon.className = "fa-solid fa-volume-high";
+            } else {
+                icon.className = "fa-solid fa-volume-xmark text-slate-500";
+            }
+        }
+
+        // Local Storage Helpers
+        function loadProgress() {
+            const savedUnlocked = localStorage.getItem('master_var_unlocked');
+            if (savedUnlocked !== null) {
+                unlockedLevel = parseInt(savedUnlocked, 10);
+                if (isNaN(unlockedLevel) || unlockedLevel < 0) unlockedLevel = 0;
+                if (unlockedLevel >= questions.length) unlockedLevel = questions.length - 1;
+            }
+            currentLevel = unlockedLevel;
+        }
+
+        function saveProgress() {
+            localStorage.setItem('master_var_unlocked', unlockedLevel);
+        }
+
+        function resetProgress() {
+            if (confirm("Apakah Anda yakin ingin mengulang seluruh progres dari Level 1?")) {
+                localStorage.removeItem('master_var_unlocked');
+                unlockedLevel = 0;
+                currentLevel = 0;
+                streak = 0;
+                loadQuestion(currentLevel);
+                updateUI();
+            }
+        }
+
+        // -------------------------------------------------------------
+        // RENDER & QUESTION LOGIC
+        // -------------------------------------------------------------
+        function loadQuestion(index) {
+            answeredCurrent = false;
+            const q = questions[index];
+
+            // Badges & Labels
+            document.getElementById('level-badge').innerText = `Level ${q.id} / ${questions.length}`;
+            document.getElementById('category-badge').innerText = q.category;
+            document.getElementById('streak-count').innerText = streak;
+
+            // Target Question Text
+            document.getElementById('target-var-label').innerHTML = 
+                `Berapa nilai akhir dari <code class="text-amber-300 font-code font-bold bg-slate-800 px-2 py-0.5 rounded text-base">${q.targetVar}</code>?`;
+
+            // Code Container Rendering
+            const codeContainer = document.getElementById('code-container');
+            codeContainer.innerHTML = '';
+            q.code.forEach((line, i) => {
+                const lineDiv = document.createElement('div');
+                lineDiv.className = "flex items-start space-x-3 py-0.5 hover:bg-slate-900/50 px-2 rounded transition";
+                
+                // Highlight keywords dynamically
+                let highlightedLine = line
+                    .replace(/\b(let|var|const|if|else|for)\b/g, '<span class="text-purple-400 font-bold">$1</span>')
+                    .replace(/(['"].*?['"])/g, '<span class="text-emerald-300">$1</span>')
+                    .replace(/\b(\d+)\b/g, '<span class="text-amber-400">$1</span>');
+
+                lineDiv.innerHTML = `
+                    <span class="text-slate-600 select-none text-xs w-5 text-right mt-0.5">${i + 1}</span>
+                    <span class="flex-1">${highlightedLine}</span>
+                `;
+                codeContainer.appendChild(lineDiv);
+            });
+
+            // Options Rendering
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            
+            // Shuffle options for variety while keeping correct answer intact
+            const shuffledOptions = [...q.options];
+            
+            shuffledOptions.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/80 hover:border-blue-500/50 text-slate-100 font-code py-3 px-4 rounded-xl transition flex items-center justify-between group active:scale-[0.99]";
+                btn.onclick = () => handleAnswer(opt, btn);
+                btn.innerHTML = `
+                    <span class="text-sm font-semibold">${opt}</span>
+                    <i class="fa-solid fa-chevron-right text-xs text-slate-500 group-hover:text-blue-400 transition-transform group-hover:translate-x-1"></i>
+                `;
+                optionsContainer.appendChild(btn);
+            });
+
+            // Reset Feedback UI
+            const feedbackBox = document.getElementById('feedback-box');
+            feedbackBox.className = "hidden p-4 rounded-2xl text-sm font-medium transition-all duration-300 mb-2";
+            document.getElementById('btn-next').classList.add('hidden');
+
+            // Render Memory Visualization Slots
+            renderMemoryVisualizer(q);
+            updateUI();
+        }
+
+        // Memory Slots Simulation Visualizer
+        function renderMemoryVisualizer(q) {
+            const memoryContainer = document.getElementById('memory-slots');
+            memoryContainer.innerHTML = '';
+
+            // Extract variable names from the code snippet
+            const varNames = new Set();
+            q.code.forEach(line => {
+                const match = line.match(/(?:let|var|const)\s+([a-zA-Z0-9_$]+)/);
+                if (match && match[1]) {
+                    varNames.add(match[1]);
+                }
+            });
+
+            if (varNames.size === 0) {
+                // Fallback default
+                varNames.add(q.targetVar);
+            }
+
+            varNames.forEach(varName => {
+                const isTarget = varName === q.targetVar;
+                const slot = document.createElement('div');
+                slot.className = `p-3 rounded-2xl border transition-all ${
+                    isTarget 
+                        ? 'bg-blue-950/40 border-blue-500/50 shadow-lg shadow-blue-500/10' 
+                        : 'bg-slate-950/60 border-slate-800'
+                }`;
+
+                slot.innerHTML = `
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[11px] font-bold font-code text-slate-400 uppercase">Var: <span class="text-amber-300">${varName}</span></span>
+                        ${isTarget ? '<span class="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded font-bold">DITANYAKAN</span>' : ''}
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-2 text-center font-code font-bold text-sm ${isTarget ? 'text-blue-400' : 'text-slate-300'}">
+                        ${answeredCurrent ? (isTarget ? q.answer : '???') : '???'}
+                    </div>
+                `;
+                memoryContainer.appendChild(slot);
+            });
+        }
+
+        // Handle User Option Selection
+        function handleAnswer(selectedOpt, btnElement) {
+            if (answeredCurrent) return;
+            answeredCurrent = true;
+
+            const q = questions[currentLevel];
+            const isCorrect = selectedOpt === q.answer;
+
+            const feedbackBox = document.getElementById('feedback-box');
+            const feedbackIcon = document.getElementById('feedback-icon');
+            const feedbackTitle = document.getElementById('feedback-title');
+            const feedbackText = document.getElementById('feedback-text');
+
+            feedbackBox.classList.remove('hidden');
+
+            if (isCorrect) {
+                playSound('correct');
+                streak++;
+                
+                feedbackBox.className = "p-4 rounded-2xl text-sm font-medium transition-all duration-300 mb-2 bg-emerald-950/60 border border-emerald-500/40 text-emerald-200 glow-success";
+                feedbackIcon.className = "fa-solid fa-circle-check text-emerald-400 text-lg mt-0.5";
+                feedbackTitle.innerText = "Tepat Sekali! 🎉";
+                feedbackText.innerText = q.explanation;
+
+                // Unlock next level if currently on highest unlocked
+                if (currentLevel === unlockedLevel && unlockedLevel < questions.length - 1) {
+                    unlockedLevel++;
+                    saveProgress();
+                }
+
+            } else {
+                playSound('wrong');
+                streak = 0;
+
+                feedbackBox.className = "p-4 rounded-2xl text-sm font-medium transition-all duration-300 mb-2 bg-rose-950/60 border border-rose-500/40 text-rose-200 glow-error";
+                feedbackIcon.className = "fa-solid fa-circle-xmark text-rose-400 text-lg mt-0.5";
+                feedbackTitle.innerText = "Kurang Tepat!";
+                feedbackText.innerText = `Jawaban yang benar adalah ${q.answer}. ${q.explanation}`;
+            }
+
+            document.getElementById('streak-count').innerText = streak;
+            document.getElementById('btn-next').classList.remove('hidden');
+
+            // Re-render memory slots to reveal answer value
+            renderMemoryVisualizer(q);
+            updateUI();
+        }
+
+        function nextLevel() {
+            playSound('click');
+            if (currentLevel < questions.length - 1) {
+                currentLevel++;
+                loadQuestion(currentLevel);
+            } else {
+                alert("Selamat! Anda telah menyelesaikan seluruh 50 Level Master Variabel! 🎉");
+                openLevelSelect();
+            }
+        }
+
+        // UI Progress Updates
+        function updateUI() {
+            // Update Footer Progress Bar
+            const total = questions.length;
+            const progressPercent = Math.round(((unlockedLevel + 1) / total) * 100);
+            document.getElementById('progress-percent').innerText = `${progressPercent}%`;
+            document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+            document.getElementById('unlocked-text').innerText = `Level ${unlockedLevel + 1}`;
+        }
+
+        // -------------------------------------------------------------
+        // LEVEL SELECTOR MODAL LOGIC
+        // -------------------------------------------------------------
+        function openLevelSelect() {
+            playSound('click');
+            const grid = document.getElementById('level-grid');
+            grid.innerHTML = '';
+
+            for (let i = 0; i < questions.length; i++) {
+                const btn = document.createElement('button');
+                const isUnlocked = i <= unlockedLevel;
+                const isCurrent = i === currentLevel;
+
+                let baseClasses = "h-11 rounded-xl text-xs font-bold transition flex items-center justify-center relative ";
+
+                if (isCurrent) {
+                    baseClasses += "bg-blue-600 text-white ring-2 ring-blue-400 ring-offset-2 ring-offset-slate-900 shadow-lg shadow-blue-600/40";
+                } else if (isUnlocked) {
+                    baseClasses += "bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/60";
+                } else {
+                    baseClasses += "bg-slate-800/40 border border-slate-800 text-slate-600 cursor-not-allowed opacity-60";
+                }
+
+                btn.className = baseClasses;
+                btn.innerHTML = `
+                    ${i + 1}
+                    ${!isUnlocked ? '<i class="fa-solid fa-lock text-[10px] absolute bottom-1 right-1 text-slate-600"></i>' : ''}
+                `;
+
+                if (isUnlocked) {
+                    btn.onclick = () => {
+                        currentLevel = i;
+                        loadQuestion(currentLevel);
+                        closeLevelSelect();
+                    };
+                } else {
+                    btn.onclick = () => {
+                        playSound('wrong');
+                        alert(`Level ${i + 1} masih terkunci! Selesaikan level ${i} terlebih dahulu.`);
+                    };
+                }
+
+                grid.appendChild(btn);
+            }
+
+            document.getElementById('level-modal').classList.remove('hidden');
+        }
+
+        function closeLevelSelect() {
+            playSound('click');
+            document.getElementById('level-modal').classList.add('hidden');
+        }
+
+        // Initialize Game on Load
+        window.onload = function() {
+            loadProgress();
+            loadQuestion(currentLevel);
+        };
+    </script>
+</body>
+</html>
