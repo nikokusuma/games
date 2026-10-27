@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Variabel: Petualangan Kode</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .font-mono {
+            font-family: 'Fira Code', monospace;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-900 text-slate-100 flex flex-col justify-between overflow-x-hidden">
+
+    <div id="root" class="flex-grow flex flex-col"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Visual Icon Component menggunakan SVG murni (Mencegah konflik React DOM removeChild)
+        const Icon = ({ name, class: className = "w-5 h-5", className: altClass = "w-5 h-5" }) => {
+            const cls = className || altClass;
+            const svgProps = {
+                xmlns: "http://www.w3.org/2000/svg",
+                className: cls,
+                viewBox: "0 0 24 24",
+                fill: "none",
+                stroke: "currentColor",
+                strokeWidth: "2",
+                strokeLinecap: "round",
+                strokeLinejoin: "round"
+            };
+
+            switch (name) {
+                case "box":
+                    return <svg {...svgProps}><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>;
+                case "grid":
+                    return <svg {...svgProps}><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>;
+                case "rotate-ccw":
+                    return <svg {...svgProps}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>;
+                case "map":
+                    return <svg {...svgProps}><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg>;
+                case "x":
+                    return <svg {...svgProps}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>;
+                case "lock":
+                    return <svg {...svgProps}><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
+                case "cpu":
+                    return <svg {...svgProps}><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></svg>;
+                case "help-circle":
+                    return <svg {...svgProps}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>;
+                case "check-circle-2":
+                    return <svg {...svgProps}><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>;
+                case "x-circle":
+                    return <svg {...svgProps}><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>;
+                case "alert-triangle":
+                    return <svg {...svgProps}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>;
+                case "sparkles":
+                    return <svg {...svgProps}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z"/></svg>;
+                case "arrow-right":
+                    return <svg {...svgProps}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>;
+                case "lightbulb":
+                    return <svg {...svgProps}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>;
+                case "chevron-left":
+                    return <svg {...svgProps}><path d="m15 18-6-6 6-6"/></svg>;
+                case "chevron-right":
+                    return <svg {...svgProps}><path d="m9 18 6-6-6-6"/></svg>;
+                default:
+                    return <svg {...svgProps}><circle cx="12" cy="12" r="10"/></svg>;
+            }
+        };
+
+        // Bank 50 Soal Latihan Variabel
+        const QUESTIONS = [
+            // Tier 1: Dasar Penetapan Variabel (1-10)
+            { id: 1, title: "Menyimpan Angka", code: "x = 5\nx = 10", targetVar: "x", answer: "10", options: ["5", "10", "15", "0"], hint: "Nilai variabel x ditimpa (overwritten) dengan nilai yang baru dimasukkan." },
+            { id: 2, title: "Penjumlahan Sederhana", code: "a = 3\nb = 4\nc = a + b", targetVar: "c", answer: "7", options: ["34", "7", "12", "1"], hint: "Variabel c menyimpan hasil dari 3 + 4." },
+            { id: 3, title: "Variabel Bertumpuk", code: "p = 2\np = p + 3", targetVar: "p", answer: "5", options: ["2", "3", "5", "6"], hint: "Nilai awal p adalah 2, lalu ditambah 3 menjadi 5." },
+            { id: 4, title: "Menyimpan Teks (String)", code: "nama = 'Budi'\nnama = 'Andi'", targetVar: "nama", answer: "Andi", options: ["Budi", "Andi", "BudiAndi", "undefined"], hint: "String disimpan dalam tanda kutip. Tulis hasilnya tanpa tanda kutip." },
+            { id: 5, title: "Pengurangan Data", code: "skor = 100\nskor = skor - 25", targetVar: "skor", answer: "75", options: ["100", "125", "75", "25"], hint: "100 dikurangi 25." },
+            { id: 6, title: "Mengopi Nilai", code: "x = 8\ny = x", targetVar: "y", answer: "8", options: ["x", "8", "0", "16"], hint: "Variabel y menyalin nilai yang dimiliki oleh variabel x saat itu." },
+            { id: 7, title: "Perkalian Dasar", code: "panjang = 5\nlebar = 4\nluas = panjang * lebar", targetVar: "luas", answer: "20", options: ["9", "20", "54", "1"], hint: "Simbol * berarti perkalian." },
+            { id: 8, title: "Nilai Terakhir Menyimpan", code: "koin = 10\nkoin = koin + 5\nkoin = 2", targetVar: "koin", answer: "2", options: ["15", "17", "2", "10"], hint: "Meskipun sempat bertambah, baris terakhir menetapkan nilai koin menjadi 2." },
+            { id: 9, title: "Penggabungan String", code: "depan = 'Budi'\nbelakang = 'Santoso'\nlengkap = depan + ' ' + belakang", targetVar: "lengkap", answer: "Budi Santoso", options: ["BudiSantoso", "Budi Santoso", "depanbelakang", "Budi + Santoso"], hint: "String digabungkan dengan menambahkan spasi di tengahnya." },
+            { id: 10, title: "Pembagian Sederhana", code: "total = 50\nbagi = 2\nhasil = total / bagi", targetVar: "hasil", answer: "25", options: ["100", "25", "48", "52"], hint: "50 dibagi dengan 2." },
+
+            // Tier 2: Operasi Berantai & Manipulasi (11-25)
+            { id: 11, title: "Dua Variabel Saling Berhubungan", code: "a = 5\nb = a\na = 10", targetVar: "b", answer: "5", options: ["10", "5", "15", "0"], hint: "b menyalin nilai a saat a masih bernilai 5. Perubahan a setelahnya tidak mempengaruhi b." },
+            { id: 12, title: "Penambahan Berulang", code: "count = 0\ncount = count + 1\ncount = count + 1\ncount = count + 1", targetVar: "count", answer: "3", options: ["0", "1", "2", "3"], hint: "Nilai count bertambah 1 sebanyak tiga kali." },
+            { id: 13, title: "Pengurangan dan Perkalian", code: "x = 10\ny = x - 2\nz = y * 2", targetVar: "z", answer: "16", options: ["16", "20", "12", "8"], hint: "y = 10 - 2 (8), lalu z = 8 * 2." },
+            { id: 14, title: "Penimpaan String", code: "buah = 'Apel'\nbuah = buah + ' Merah'", targetVar: "buah", answer: "Apel Merah", options: ["Apel", "Merah", "Apel Merah", "ApelMerah"], hint: "Teks ' Merah' ditempelkan di belakang kata 'Apel'." },
+            { id: 15, title: "Penukaran Sederhana", code: "a = 1\nb = 2\ntemp = a\na = b\nb = temp", targetVar: "b", answer: "1", options: ["2", "1", "3", "0"], hint: "Ini adalah teknik swap (menukar nilai dua variabel)." },
+            { id: 16, title: "Kombinasi Variabel", code: "x = 4\ny = 3\nz = x * y + 2", targetVar: "z", answer: "14", options: ["20", "14", "24", "10"], hint: "Dahulukan perkalian (4 * 3 = 12), lalu tambahkan 2." },
+            { id: 17, title: "Variabel dengan Minus", code: "saldo = 100\ntarik = 150\nsaldo = saldo - tarik", targetVar: "saldo", answer: "-50", options: ["50", "-50", "250", "0"], hint: "100 dikurangi 150 menghasilkan bilangan negatif." },
+            { id: 18, title: "Multiple Assign", code: "a = 2\nb = 3\nc = a + b\na = c * 2", targetVar: "a", answer: "10", options: ["5", "6", "10", "12"], hint: "c bernilai 5 (2 + 3), sehingga a baru adalah 5 * 2 = 10." },
+            { id: 19, title: "Mengganti Nilai Tengah", code: "x = 5\ny = x + 5\nx = 20\nz = x + y", targetVar: "z", answer: "30", options: ["25", "30", "40", "15"], hint: "y dihitung saat x=5 (y=10). Kemudian x diubah jadi 20. z = 20 + 10." },
+            { id: 20, title: "Karakter Berulang", code: "char = 'A'\nchar = char + 'B'\nchar = char + 'C'", targetVar: "char", answer: "ABC", options: ["A B C", "ABC", "CBA", "A"], hint: "String digabungkan secara berurutan tanpa spasi." },
+            { id: 21, title: "Operasi Dalam Operasi", code: "a = 10\nb = a / 2\nc = a - b\nd = c * b", targetVar: "d", answer: "25", options: ["50", "25", "10", "5"], hint: "b=5, c=5, d = 5 * 5." },
+            { id: 22, title: "Diskon Belanja", code: "harga = 100000\ndiskon = 20000\ntotal = harga - diskon", targetVar: "total", answer: "80000", options: ["120000", "80000", "20000", "100000"], hint: "100000 dikurangi 20000." },
+            { id: 23, title: "Variabel Kosong ke Nilai", code: "data = 0\ndata = data + 10\ndata = data * 0", targetVar: "data", answer: "0", options: ["10", "0", "100", "undefined"], hint: "Angka berapa pun dikalikan 0 akan menghasilkan 0." },
+            { id: 24, title: "Pengulangan Variabel Sama", code: "n = 5\nn = n + n", targetVar: "n", answer: "10", options: ["5", "10", "25", "0"], hint: "n + n sama dengan 5 + 5." },
+            { id: 25, title: "Perkalian Variabel Diri Sendiri", code: "x = 3\nx = x * x", targetVar: "x", answer: "9", options: ["3", "6", "9", "12"], hint: "3 dikalikan 3." },
+
+            // Tier 3: Logika Bertingkat & Pelacakan Kompleks (26-40)
+            { id: 26, title: "Tiga Langkah Swap", code: "x = 10\ny = 20\nx = x + y\ny = x - y\nx = x - y", targetVar: "x", answer: "20", options: ["10", "20", "30", "0"], hint: "Ini adalah trik menukar dua angka tanpa variabel sementara. x menjadi nilai awal y." },
+            { id: 27, title: "Pelacakan Variabel 3 Lapisan", code: "a = 2\nb = a * 3\nc = b - a\na = a + b + c", targetVar: "a", answer: "12", options: ["8", "10", "12", "14"], hint: "a=2, b=6, c=4. Nilai a baru = 2 + 6 + 4." },
+            { id: 28, title: "Format String dan Angka", code: "item = 'Kopi'\nharga = 5000\nlabel = item + ' Rp' + harga", targetVar: "label", answer: "Kopi Rp5000", options: ["KopiRp5000", "Kopi Rp5000", "Kopi 5000", "Kopi+Rp+5000"], hint: "Teks digabungkan secara langsung dengan angka yang diubah ke string." },
+            { id: 29, title: "Kuis Poin Bonus", code: "poin = 50\npoin = poin + 10\npoin = poin * 2\npoin = poin - 5", targetVar: "poin", answer: "115", options: ["115", "120", "110", "105"], hint: "(50 + 10 = 60) -> (60 * 2 = 120) -> (120 - 5 = 115)." },
+            { id: 30, title: "Update Bertahap", code: "val = 100\nval = val / 2\nval = val / 2\nval = val / 2", targetVar: "val", answer: "12.5", options: ["25", "12.5", "6.25", "50"], hint: "100 dibagi 2 tiga kali berurutan (50 -> 25 -> 12.5)." },
+            { id: 31, title: "Tiga Variabel Acak", code: "m = 4\nn = 5\np = 6\nm = n\nn = p\np = m", targetVar: "p", answer: "5", options: ["4", "5", "6", "0"], hint: "Perhatikan urutan: m menjadi 5 (nilai n). Saat p = m, m sudah bernilai 5." },
+            { id: 32, title: "Modulus (Sisa Bagi)", code: "angka = 17\nsisa = angka % 5", targetVar: "sisa", answer: "2", options: ["3", "2", "3.4", "1"], hint: "Simbol % adalah Modulus (sisa pembagian). 17 dibagi 5 sisa 2." },
+            { id: 33, title: "Modulus Lanjutan", code: "a = 25\nb = 4\nc = a % b\nd = c * 10", targetVar: "d", answer: "10", options: ["20", "10", "40", "0"], hint: "25 % 4 adalah 1. Lalu 1 * 10." },
+            { id: 34, title: "String Manipulasi Panjang", code: "s = '*'\ns = s + '*'\ns = s + s", targetVar: "s", answer: "****", options: ["**", "***", "****", "*****"], hint: "Awalnya '*', jadi '**', lalu '**' + '**' menjadi '****'." },
+            { id: 35, title: "Akumulasi Penjumlahan", code: "sum = 0\nsum = sum + 1\nsum = sum + 2\nsum = sum + 3\nsum = sum + 4", targetVar: "sum", answer: "10", options: ["8", "10", "12", "15"], hint: "0 + 1 + 2 + 3 + 4." },
+            { id: 36, title: "Prioritas Operator", code: "a = 2\nb = 3\nc = 4\nhasil = a + b * c", targetVar: "hasil", answer: "14", options: ["20", "14", "24", "18"], hint: "Perkalian (3 * 4 = 12) didahulukan daripada penjumlahan (+ 2)." },
+            { id: 37, title: "Prioritas Tanda Kurung", code: "a = 2\nb = 3\nc = 4\nhasil = (a + b) * c", targetVar: "hasil", answer: "20", options: ["14", "20", "24", "18"], hint: "Operasi di dalam kurung (2 + 3 = 5) didahulukan, baru dikali 4." },
+            { id: 38, title: "Pangkat Sederhana", code: "base = 3\npangkat = base ** 2", targetVar: "pangkat", answer: "9", options: ["6", "9", "8", "12"], hint: "Simbol ** melambangkan pangkat (3 berpangkat 2)." },
+            { id: 39, title: "Pangkat Bertingkat", code: "x = 2\ny = x ** 3\nz = y ** 2", targetVar: "z", answer: "64", options: ["36", "64", "16", "128"], hint: "2 pangkat 3 adalah 8. Lalu 8 pangkat 2 adalah 64." },
+            { id: 40, title: "Nilai Reset", code: "score = 500\nscore = score + 200\nscore = 0\nscore = score + 50", targetVar: "score", answer: "50", options: ["750", "700", "50", "0"], hint: "Variabel di-reset menjadi 0 pada baris ke-3 sebelum ditambah 50." },
+
+            // Tier 4: Tantangan Master (41-50)
+            { id: 41, title: "Matriks Nilai 2D Sederhana", code: "a = 1\nb = 2\nc = a + b\na = b + c\nb = a + c\nc = a + b", targetVar: "c", answer: "13", options: ["8", "11", "13", "15"], hint: "Lacak step-by-step: c=3 -> a=5 -> b=8 -> c=5+8=13." },
+            { id: 42, title: "Saling Silang Nilai", code: "x = 5\ny = 10\nz = 15\nx = y + z\ny = x - z\nz = x - y", targetVar: "z", answer: "15", options: ["10", "15", "25", "20"], hint: "x=25 -> y=25-15=10 -> z=25-10=15." },
+            { id: 43, title: "String Duplikasi", code: "word = 'Hi'\nword = word + word\nword = word + '!'", targetVar: "word", answer: "HiHi!", options: ["Hi!", "HiHi!", "HiHi", "Hi Hi!"], hint: "'Hi' + 'Hi' = 'HiHi', lalu ditambah '!'." },
+            { id: 44, title: "Deret Fibonnaci Dasar", code: "f1 = 1\nf2 = 1\nf3 = f1 + f2\nf1 = f2\nf2 = f3\nf3 = f1 + f2", targetVar: "f3", answer: "3", options: ["2", "3", "5", "4"], hint: "Lacak perubahan nilai f1 dan f2 pada setiap barisnya." },
+            { id: 45, title: "Manipulasi Pembagian Bulat", code: "num = 27\nnum = num // 5\nnum = num * 4", targetVar: "num", answer: "20", options: ["21.6", "20", "24", "16"], hint: "Simbol // adalah pembagian bulat (floor division). 27 // 5 = 5. Lalu 5 * 4." },
+            { id: 46, title: "Kombinasi String & Modulus", code: "n = 15\nrem = n % 4\nres = 'Sisa: ' + rem", targetVar: "res", answer: "Sisa: 3", options: ["Sisa: 3", "Sisa: 3.75", "Sisa: 4", "Sisa: 0"], hint: "15 % 4 = 3. Digabungkan dengan teks 'Sisa: '." },
+            { id: 47, title: "Perhitungan Bertingkat Sulit", code: "a = 2\na = a * a\na = a * a\na = a * a", targetVar: "a", answer: "256", options: ["16", "64", "256", "512"], hint: "2 -> 4 -> 16 -> 256 (2 dipangkatkan 8)." },
+            { id: 48, title: "Penyebaran Variabel Penampung", code: "box1 = 'Merah'\nbox2 = 'Biru'\nbox3 = box1\nbox1 = box2\nbox2 = box3", targetVar: "box1", answer: "Biru", options: ["Merah", "Biru", "box3", "undefined"], hint: "Menukar isi box1 dan box2 menggunakan box3 sebagai penampung." },
+            { id: 49, title: "Rantai Pengoperasian 4 Elemen", code: "w = 1\nx = w + 2\ny = x + 3\nz = y + 4\ntotal = w + x + y + z", targetVar: "total", answer: "20", options: ["10", "15", "20", "25"], hint: "w=1, x=3, y=6, z=10. 1 + 3 + 6 + 10 = 20." },
+            { id: 50, title: "Ujian Akhir Master Variabel", code: "v1 = 10\nv2 = 20\nv3 = 30\nv1 = v2 + v3\nv2 = v1 - v3\nv3 = v1 - v2\nfinal = v1 + v2 + v3", targetVar: "final", answer: "100", options: ["60", "90", "100", "120"], hint: "v1=50, v2=20, v3=30. final = 50 + 20 + 30 = 100." }
+        ];
+
+        function App() {
+            const [maxUnlocked, setMaxUnlocked] = useState(() => {
+                try {
+                    const saved = localStorage.getItem('var_game_unlocked');
+                    return saved ? parseInt(saved, 10) : 1;
+                } catch(e) {
+                    return 1;
+                }
+            });
+
+            const [currentLevelIdx, setCurrentLevelIdx] = useState(0);
+            const [selectedOption, setSelectedOption] = useState(null);
+            const [wrongOption, setWrongOption] = useState(null);
+            const [isSuccess, setIsSuccess] = useState(false);
+            const [showHint, setShowHint] = useState(false);
+            const [showLevelSelect, setShowLevelSelect] = useState(false);
+
+            const currentQuestion = QUESTIONS[currentLevelIdx] || QUESTIONS[0];
+
+            // Reset status saat level berganti
+            useEffect(() => {
+                setSelectedOption(null);
+                setWrongOption(null);
+                setIsSuccess(false);
+                setShowHint(false);
+            }, [currentLevelIdx]);
+
+            useEffect(() => {
+                try {
+                    localStorage.setItem('var_game_unlocked', maxUnlocked.toString());
+                } catch(e) {}
+            }, [maxUnlocked]);
+
+            // Handler memilih opsi jawaban (Pilihan Ganda)
+            const handleSelectOption = (opt) => {
+                if (isSuccess) return;
+
+                setSelectedOption(opt);
+
+                const cleanUserAns = String(opt).trim().toLowerCase();
+                const cleanTargetAns = String(currentQuestion.answer).trim().toLowerCase();
+
+                if (cleanUserAns === cleanTargetAns) {
+                    setIsSuccess(true);
+                    setWrongOption(null);
+
+                    if (currentLevelIdx + 1 >= maxUnlocked && maxUnlocked < QUESTIONS.length) {
+                        setMaxUnlocked(currentLevelIdx + 2);
+                    }
+                } else {
+                    // Tandai opsi yang salah dengan indikator merah
+                    setWrongOption(opt);
+                    setIsSuccess(false);
+                }
+            };
+
+            const handleNextLevel = () => {
+                if (currentLevelIdx < QUESTIONS.length - 1) {
+                    setCurrentLevelIdx(currentLevelIdx + 1);
+                }
+            };
+
+            const handleSelectLevel = (idx) => {
+                if (idx + 1 <= maxUnlocked) {
+                    setCurrentLevelIdx(idx);
+                    setShowLevelSelect(false);
+                }
+            };
+
+            const resetProgress = () => {
+                if (window.confirm("Apakah kamu yakin ingin mereset semua progres game ke Level 1?")) {
+                    setMaxUnlocked(1);
+                    setCurrentLevelIdx(0);
+                    try {
+                        localStorage.removeItem('var_game_unlocked');
+                    } catch(e) {}
+                }
+            };
+
+            const extractVariables = (codeText) => {
+                const lines = codeText.split('\n');
+                const vars = {};
+                lines.forEach(line => {
+                    const parts = line.split('=');
+                    if (parts.length >= 2) {
+                        const varName = parts[0].trim();
+                        vars[varName] = '?';
+                    }
+                });
+                return Object.keys(vars);
+        };
+
+        // Alphabet label untuk pilihan ganda (A, B, C, D)
+        const optionLabels = ["A", "B", "C", "D"];
+
+        return (
+            <div class="h-screen max-h-screen flex flex-col justify-between p-3 md:p-6 max-w-7xl mx-auto w-full box-border">
+                {/* Header Compact */}
+                <header class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800 flex-shrink-0">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-500/30">
+                            <Icon name="box" class="w-6 h-6" />
+                        </div>
+                        <div>
+                            <h1 class="text-lg md:text-xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+                                Master Variabel
+                            </h1>
+                            <p class="text-[11px] text-slate-400">Pilihan Ganda • Latih Logika Memori Data</p>
+                        </div>
+                    </div>
+
+                    {/* Control Bar Top */}
+                    <div class="flex items-center gap-2">
+                        <button 
+                            onClick={() => setShowLevelSelect(!showLevelSelect)}
+                            class="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold border border-slate-700 transition"
+                        >
+                            <Icon name="grid" class="w-3.5 h-3.5 text-indigo-400" />
+                            Pilih Level ({currentLevelIdx + 1}/{QUESTIONS.length})
+                        </button>
+                        <button 
+                            onClick={resetProgress}
+                            title="Reset Progres"
+                            class="p-1.5 bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-400 rounded-lg border border-slate-700 transition"
+                        >
+                            <Icon name="rotate-ccw" class="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+                </header>
+
+                {/* Level Grid Selector Modal */}
+                {showLevelSelect && (
+                    <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl">
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="text-base font-bold text-slate-100 flex items-center gap-2">
+                                    <Icon name="map" class="w-4 h-4 text-indigo-400" />
+                                    Peta Level (50 Soal)
+                                </h3>
+                                <button 
+                                    onClick={() => setShowLevelSelect(false)}
+                                    class="text-slate-400 hover:text-white p-1"
+                                >
+                                    <Icon name="x" class="w-5 h-5" />
+                                </button>
+                            </div>
+                            <p class="text-xs text-slate-400 mb-3">
+                                Kamu dapat mengulang level yang sudah terbuka (warna biru/indigo). Level terkunci tidak dapat dilewati.
+                            </p>
+                            
+                            <div class="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2 overflow-y-auto p-2 border border-slate-800 rounded-xl bg-slate-950/50 flex-grow">
+                                {QUESTIONS.map((q, idx) => {
+                                    const isUnlocked = idx + 1 <= maxUnlocked;
+                                    const isCurrent = idx === currentLevelIdx;
+                                    return (
+                                        <button
+                                            key={q.id}
+                                            disabled={!isUnlocked}
+                                            onClick={() => handleSelectLevel(idx)}
+                                            class={`h-10 rounded-lg text-xs font-bold flex flex-col items-center justify-center transition relative ${
+                                                isCurrent
+                                                    ? 'bg-indigo-600 text-white ring-2 ring-indigo-400'
+                                                    : isUnlocked
+                                                    ? 'bg-slate-800 hover:bg-indigo-900/50 text-slate-200 border border-slate-700'
+                                                    : 'bg-slate-900/50 text-slate-600 border border-slate-800/80 cursor-not-allowed'
+                                            }`}
+                                        >
+                                            {idx + 1}
+                                            {!isUnlocked && (
+                                                <Icon name="lock" class="w-2.5 h-2.5 text-slate-600 absolute bottom-1" />
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Main Workspace - 2 Equal Columns to Prevent Vertical Scrolling */}
+                <main class="my-3 grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch flex-grow overflow-hidden">
+                    
+                    {/* Editor Box / Kode (Kiri - 6 Columns) */}
+                    <div class="lg:col-span-6 bg-slate-800/60 border border-slate-700/70 rounded-xl overflow-hidden shadow-xl flex flex-col h-full">
+                        {/* Editor Window Header */}
+                        <div class="bg-slate-900 px-3 py-2 border-b border-slate-700/70 flex items-center justify-between flex-shrink-0">
+                            <div class="flex items-center space-x-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+                                <span class="ml-2 text-[11px] font-mono text-slate-400">script_level_{currentQuestion.id}.py</span>
+                            </div>
+                            <span class="text-[11px] px-2 py-0.5 bg-indigo-950 text-indigo-300 border border-indigo-800 rounded-full font-medium">
+                                Soal {currentQuestion.id} / 50
+                            </span>
+                        </div>
+
+                        {/* Code Area */}
+                        <div class="p-4 font-mono text-xs sm:text-sm leading-relaxed overflow-y-auto bg-slate-950/70 text-slate-200 flex-grow">
+                            {currentQuestion.code.split('\n').map((line, idx) => (
+                                <div key={idx} class="flex items-start hover:bg-slate-800/40 px-1.5 py-0.5 rounded">
+                                    <span class="w-6 text-slate-600 text-right pr-3 select-none font-mono text-xs mt-0.5">
+                                        {idx + 1}
+                                    </span>
+                                    <span class="flex-1 whitespace-pre">
+                                        {line.split('=').map((part, pIdx) => (
+                                            <span key={pIdx}>
+                                                {pIdx === 0 ? (
+                                                    <span class="text-cyan-400 font-semibold">{part}</span>
+                                                ) : (
+                                                    <span>= <span class="text-emerald-300">{part}</span></span>
+                                                )}
+                                            </span>
+                                        ))}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Visualisasi Memori Variabel */}
+                        <div class="p-3 bg-slate-900/50 border-t border-slate-800 flex-shrink-0">
+                            <p class="text-[11px] text-slate-400 mb-1.5 font-medium flex items-center gap-1.5">
+                                <Icon name="cpu" class="w-3 h-3 text-indigo-400" />
+                                Variabel Terlibat di Memori:
+                            </p>
+                            <div class="flex flex-wrap gap-1.5">
+                                {extractVariables(currentQuestion.code).map((vName) => (
+                                    <div 
+                                        key={vName} 
+                                        class={`px-2.5 py-1 rounded-md border text-xs font-mono flex items-center gap-1.5 ${
+                                            vName === currentQuestion.targetVar 
+                                                ? 'bg-indigo-950/80 border-indigo-500 text-indigo-200 ring-1 ring-indigo-500/50' 
+                                                : 'bg-slate-800 border-slate-700 text-slate-300'
+                                        }`}
+                                    >
+                                        <span class="text-slate-400 text-[10px]">box:</span>
+                                        <span class="font-bold text-cyan-300">{vName}</span>
+                                        {vName === currentQuestion.targetVar && (
+                                            <span class="text-[9px] bg-indigo-500 text-white px-1 py-0.2 rounded font-sans">Target</span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Panel Pertanyaan & Pilihan Ganda (Kanan - 6 Columns) */}
+                    <div class="lg:col-span-6 bg-slate-800/60 border border-slate-700/70 rounded-xl p-4 shadow-xl flex flex-col justify-between h-full overflow-y-auto">
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <h2 class="text-base font-bold text-white flex items-center gap-2">
+                                    <Icon name="help-circle" class="w-4 h-4 text-indigo-400" />
+                                    {currentQuestion.title}
+                                </h2>
+                            </div>
+
+                            <p class="text-xs text-slate-300 mb-3 leading-relaxed">
+                                Berapa nilai akhir dari variabel <code class="bg-indigo-950 text-indigo-300 px-1.5 py-0.5 rounded font-mono font-bold border border-indigo-800">{currentQuestion.targetVar}</code>?
+                            </p>
+
+                            {/* Opsi Pilihan Ganda (2x2 Grid / Slim Row agar pas tanpa scroll) */}
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+                                {(currentQuestion.options || []).map((opt, idx) => {
+                                    const isCorrect = isSuccess && String(opt).trim().toLowerCase() === String(currentQuestion.answer).trim().toLowerCase();
+                                    const isWrong = wrongOption === opt;
+                                    
+                                    return (
+                                        <button
+                                            key={idx}
+                                            disabled={isSuccess}
+                                            onClick={() => handleSelectOption(opt)}
+                                            class={`w-full p-2.5 rounded-lg font-mono text-left flex items-center justify-between transition border ${
+                                                isCorrect
+                                                    ? 'bg-emerald-950/80 border-emerald-500 text-emerald-200 ring-2 ring-emerald-500/50 shadow-md shadow-emerald-950/40'
+                                                    : isWrong
+                                                    ? 'bg-rose-950/70 border-rose-500 text-rose-200 animate-shake ring-2 ring-rose-500/50'
+                                                    : 'bg-slate-900 hover:bg-slate-800 border-slate-700 text-slate-200 hover:border-indigo-500/50'
+                                            }`}
+                                        >
+                                            <div class="flex items-center gap-2.5 overflow-hidden">
+                                                <span class={`w-6 h-6 rounded-md text-xs font-sans font-bold flex flex-shrink-0 items-center justify-center ${
+                                                    isCorrect 
+                                                        ? 'bg-emerald-600 text-white' 
+                                                        : isWrong 
+                                                        ? 'bg-rose-600 text-white' 
+                                                        : 'bg-slate-800 text-slate-400 border border-slate-700'
+                                                }`}>
+                                                    {optionLabels[idx]}
+                                                </span>
+                                                <span class="text-xs font-semibold truncate">{opt}</span>
+                                            </div>
+
+                                            {isCorrect && (
+                                                <Icon name="check-circle-2" class="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                                            )}
+                                            {isWrong && (
+                                                <Icon name="x-circle" class="w-4 h-4 text-rose-400 flex-shrink-0" />
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Umpan Balik Jawaban Salah */}
+                            {wrongOption && !isSuccess && (
+                                <div class="p-2.5 bg-rose-950/50 border border-rose-800/80 rounded-lg text-rose-300 text-xs flex items-center gap-2 mb-2 animate-shake">
+                                    <Icon name="alert-triangle" class="w-4 h-4 text-rose-400 flex-shrink-0" />
+                                    <div>
+                                        <span class="font-bold">Jawaban Belum Tepat!</span> Opsi <span class="font-bold font-mono text-rose-200">{wrongOption}</span> bernilai merah. Coba lagi!
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Umpan Balik Jawaban Benar */}
+                            {isSuccess && (
+                                <div class="p-3 bg-emerald-950/40 border border-emerald-800/70 rounded-lg text-emerald-300 text-xs flex flex-col gap-2">
+                                    <div class="flex items-center gap-1.5">
+                                        <Icon name="sparkles" class="w-4 h-4 text-emerald-400" />
+                                        <span class="font-bold text-xs">Tepat Sekali!</span>
+                                    </div>
+                                    <p class="text-slate-300 text-[11px]">
+                                        Variabel <code class="font-mono text-emerald-300 font-bold">{currentQuestion.targetVar}</code> bernilai <code class="font-mono text-emerald-300 font-bold">{currentQuestion.answer}</code>.
+                                    </p>
+                                    
+                                    {currentLevelIdx < QUESTIONS.length - 1 ? (
+                                        <button
+                                            type="button"
+                                            onClick={handleNextLevel}
+                                            class="w-full mt-0.5 py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition flex items-center justify-center gap-2 shadow-md shadow-emerald-600/30 text-xs"
+                                        >
+                                            Lanjut ke Level {currentLevelIdx + 2}
+                                            <Icon name="arrow-right" class="w-3.5 h-3.5" />
+                                        </button>
+                                    ) : (
+                                        <div class="p-2 bg-amber-500/20 border border-amber-500/40 text-amber-200 rounded text-center text-xs font-bold">
+                                            🎉 Selamat! Seluruh 50 Soal Berhasil Diselesaikan!
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Tombol Hint / Bantuan */}
+                        <div class="mt-2 pt-2 border-t border-slate-700/50 flex flex-col gap-1.5 flex-shrink-0">
+                            <button
+                                onClick={() => setShowHint(!showHint)}
+                                class="text-[11px] text-slate-400 hover:text-indigo-300 flex items-center gap-1 transition self-start"
+                            >
+                                <Icon name="lightbulb" class="w-3 h-3 text-amber-400" />
+                                {showHint ? "Sembunyikan Petunjuk" : "Butuh Petunjuk?"}
+                            </button>
+                            
+                            {showHint && (
+                                <div class="p-2 bg-slate-900 border border-slate-800 rounded-lg text-[11px] text-slate-300 leading-relaxed">
+                                    💡 <span class="font-semibold text-amber-300">Petunjuk:</span> {currentQuestion.hint}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                </main>
+
+                {/* Footer Navigasi Level Compact */}
+                <footer class="pt-2.5 border-t border-slate-800 flex flex-wrap items-center justify-between text-[11px] text-slate-500 gap-2 flex-shrink-0">
+                    <div class="flex items-center gap-2">
+                        <button
+                            disabled={currentLevelIdx === 0}
+                            onClick={() => setCurrentLevelIdx(currentLevelIdx - 1)}
+                            class={`flex items-center gap-1 px-2.5 py-1 rounded-md border border-slate-800 transition ${
+                                currentLevelIdx === 0 
+                                    ? 'opacity-40 cursor-not-allowed' 
+                                    : 'hover:bg-slate-800 text-slate-300'
+                            }`}
+                        >
+                            <Icon name="chevron-left" class="w-3.5 h-3.5" />
+                            Level Sebelumnya
+                        </button>
+                        <button
+                            disabled={currentLevelIdx + 1 >= maxUnlocked}
+                            onClick={() => setCurrentLevelIdx(currentLevelIdx + 1)}
+                            class={`flex items-center gap-1 px-2.5 py-1 rounded-md border border-slate-800 transition ${
+                                currentLevelIdx + 1 >= maxUnlocked 
+                                    ? 'opacity-40 cursor-not-allowed' 
+                                    : 'hover:bg-slate-800 text-slate-300'
+                            }`}
+                        >
+                            Level Berikutnya
+                            <Icon name="chevron-right" class="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+
+                    <div>
+                        Progres Terbuka: <span class="text-indigo-400 font-bold">{maxUnlocked}</span> dari {QUESTIONS.length} Level
+                    </div>
+                </footer>
+            </div>
+        );
+    }
+
+    window.onload = function() {
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    };
+</script>
+</body>
+</html>
