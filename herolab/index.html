@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hero Stats Lab - Learn Variables with RPG Combat</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Font: Press Start 2P & Plus Jakarta Sans -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+    }
+    .pixel-font {
+      font-family: 'Press Start 2P', monospace;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+    /* Floating Damage Animation */
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      50% { transform: translateY(-30px) scale(1.2); }
+      100% { opacity: 0; transform: translateY(-50px) scale(0.8); }
+    }
+    .damage-pop {
+      animation: floatUp 0.8s ease-out forwards;
+    }
+    /* Shake Animation for Hit */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+    .animate-shake {
+      animation: shake 0.4s ease-in-out;
+    }
+    /* Pulse glow effect */
+    .glow-cyan {
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+    }
+    .glow-amber {
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between bg-slate-950 text-slate-100 antialiased selection:bg-cyan-500 selection:text-slate-950">
+
+  <!-- Header / Navigation -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-lg text-slate-950 shadow-lg">
+          <i data-lucide="flask-conical" class="w-6 h-6 stroke-[2.5]"></i>
+        </div>
+        <div>
+          <h1 class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-300 bg-clip-text text-transparent">
+            Hero Stats Lab
+          </h1>
+          <p class="text-xs text-slate-400">RPG Coding & Variable Constraint Game</p>
+        </div>
+      </div>
+      
+      <!-- Live Status Badge -->
+      <div class="hidden sm:flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700 text-xs text-slate-300">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>Stage: <strong id="header-stage-badge" class="text-cyan-400">1 / 50</strong></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Game Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    
+    <!-- LEFT PANEL: Variable Controller (RPG Inspector) -->
+    <section class="lg:col-span-5 bg-slate-900/90 rounded-2xl p-5 border border-slate-800 shadow-xl space-y-5">
+      
+      <!-- MISSION CARD BRIEF -->
+      <div class="bg-gradient-to-r from-indigo-950/80 to-purple-950/80 border border-indigo-500/30 rounded-xl p-4 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-400 bg-indigo-950 px-2 py-0.5 rounded border border-indigo-700">
+            Tantangan Logika Level
+          </span>
+          <span id="mission-stage-text" class="text-xs font-mono font-bold text-cyan-300">Stage 1 / 50</span>
+        </div>
+        <h3 id="mission-title" class="text-sm font-bold text-white">Target: Kalahkan Monster dengan Batasan Variabel!</h3>
+        <p id="mission-hint" class="text-xs text-slate-300 leading-relaxed">
+          Atur variabel hero sesuai batasan level ini untuk mengalahkan musuh!
+        </p>
+
+        <!-- Attribute Points Budget Counter -->
+        <div id="budget-container" class="mt-2 pt-2 border-t border-indigo-900/50 flex items-center justify-between text-xs font-mono">
+          <span class="text-indigo-300 flex items-center gap-1.5">
+            <i data-lucide="coins" class="w-4 h-4 text-amber-400"></i> Sisa Poin Stat (Budget):
+          </span>
+          <span id="budget-points-val" class="font-bold text-amber-400 bg-slate-900 px-2.5 py-1 rounded-md border border-amber-500/40 text-sm">
+            0 / 0 Poin
+          </span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="sliders" class="w-5 h-5 text-cyan-400"></i>
+          <h2 class="font-bold text-slate-200 text-base">Panel Variabel Hero</h2>
+        </div>
+        <span class="text-[10px] font-mono bg-cyan-950 text-cyan-300 border border-cyan-800 px-2 py-0.5 rounded-md">
+          Editor Mode
+        </span>
+      </div>
+
+      <!-- Variable Form Control -->
+      <div class="space-y-4">
+        
+        <!-- STRING VARIABLE: Nama_Hero -->
+        <div class="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800/80 transition-all focus-within:border-cyan-500">
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+              <span class="text-pink-400 font-mono text-xs">&lt;String&gt;</span> Nama_Hero
+            </label>
+            <span class="text-[10px] text-slate-500 font-mono">Gratis (0 Poin)</span>
+          </div>
+          <div class="relative">
+            <input 
+              type="text" 
+              id="var-nama" 
+              value="Captain Byte" 
+              maxlength="16"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-cyan-300 font-semibold focus:outline-none focus:ring-1 focus:ring-cyan-500 transition"
+              placeholder="Masukkan nama hero..."
+            />
+            <i data-lucide="user" class="w-4 h-4 text-slate-500 absolute right-3 top-2.5"></i>
+          </div>
+        </div>
+
+        <!-- INTEGER VARIABLE: Level_Darah -->
+        <div id="container-var-darah" class="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800/80 transition-all">
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+              <span class="text-emerald-400 font-mono text-xs">&lt;Integer&gt;</span> Level_Darah (HP)
+            </label>
+            <span id="limit-darah-text" class="text-[10px] text-emerald-400 font-mono">Biaya: 1 Poin = 10 HP</span>
+          </div>
+          <div class="flex items-center space-x-3">
+            <input 
+              type="range" 
+              id="var-darah" 
+              min="20" 
+              max="1500" 
+              value="100" 
+              step="10"
+              class="w-full accent-emerald-500 bg-slate-800 h-2 rounded-lg cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+            />
+            <span id="var-darah-val" class="font-mono text-emerald-400 font-bold text-sm bg-slate-900 border border-emerald-900/50 px-2.5 py-1 rounded-md min-w-[60px] text-center">
+              100
+            </span>
+          </div>
+        </div>
+
+        <!-- INTEGER VARIABLE: Kekuatan_Serang -->
+        <div id="container-var-attack" class="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800/80 transition-all">
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+              <span class="text-amber-400 font-mono text-xs">&lt;Integer&gt;</span> Kekuatan_Serang
+            </label>
+            <span id="limit-attack-text" class="text-[10px] text-amber-400 font-mono">Biaya: 2 Poin = 5 Atk</span>
+          </div>
+          <div class="flex items-center space-x-3">
+            <input 
+              type="range" 
+              id="var-attack" 
+              min="5" 
+              max="1000" 
+              value="20" 
+              step="5"
+              class="w-full accent-amber-500 bg-slate-800 h-2 rounded-lg cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+            />
+            <span id="var-attack-val" class="font-mono text-amber-400 font-bold text-sm bg-slate-900 border border-amber-900/50 px-2.5 py-1 rounded-md min-w-[60px] text-center">
+              20
+            </span>
+          </div>
+        </div>
+
+        <!-- BOOLEAN VARIABLE: Bisa_Terbang -->
+        <div id="container-var-terbang" class="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800/80 flex items-center justify-between transition-all">
+          <div>
+            <div class="flex items-center space-x-1.5">
+              <span class="text-purple-400 font-mono text-xs">&lt;Boolean&gt;</span>
+              <label class="text-xs font-bold text-slate-300">Bisa_Terbang</label>
+              <span id="cost-terbang-badge" class="text-[10px] bg-purple-950 text-purple-300 border border-purple-800 px-1.5 py-0.5 rounded font-mono">20 Poin</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-0.5">Hindari serangan darat monster.</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="var-terbang" class="sr-only peer">
+            <div class="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600 peer-disabled:opacity-30 peer-disabled:cursor-not-allowed"></div>
+          </label>
+        </div>
+
+        <!-- BOOLEAN VARIABLE: Punya_Perisai -->
+        <div id="container-var-perisai" class="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800/80 flex items-center justify-between transition-all">
+          <div>
+            <div class="flex items-center space-x-1.5">
+              <span class="text-purple-400 font-mono text-xs">&lt;Boolean&gt;</span>
+              <label class="text-xs font-bold text-slate-300">Punya_Perisai</label>
+              <span id="cost-perisai-badge" class="text-[10px] bg-indigo-950 text-indigo-300 border border-indigo-800 px-1.5 py-0.5 rounded font-mono">15 Poin</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-0.5">Diskon 50% damage musuh.</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="var-perisai" class="sr-only peer">
+            <div class="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 peer-disabled:opacity-30 peer-disabled:cursor-not-allowed"></div>
+          </label>
+        </div>
+
+      </div>
+
+      <!-- Real-time Memory Inspector Code Box -->
+      <div class="bg-slate-950 rounded-xl p-3 border border-slate-800 font-mono text-xs text-slate-300 space-y-1">
+        <div class="text-[10px] text-slate-500 uppercase tracking-wider font-sans mb-1 font-semibold flex items-center justify-between">
+          <span>Nilai Variabel Terkunci (RAM):</span>
+          <i data-lucide="cpu" class="w-3.5 h-3.5 text-cyan-400"></i>
+        </div>
+        <div class="text-pink-400">let <span class="text-slate-200">Nama_Hero</span> = <span id="code-nama" class="text-amber-300">"Captain Byte"</span>;</div>
+        <div class="text-emerald-400">let <span class="text-slate-200">Level_Darah</span> = <span id="code-darah" class="text-emerald-300">100</span>;</div>
+        <div class="text-amber-400">let <span class="text-slate-200">Kekuatan_Serang</span> = <span id="code-attack" class="text-amber-300">20</span>;</div>
+        <div class="text-purple-400">let <span class="text-slate-200">Bisa_Terbang</span> = <span id="code-terbang" class="text-purple-300">false</span>;</div>
+        <div class="text-purple-400">let <span class="text-slate-200">Punya_Perisai</span> = <span id="code-perisai" class="text-purple-300">false</span>;</div>
+      </div>
+    </section>
+
+    <!-- RIGHT PANEL: Combat Arena & Live Simulation -->
+    <section class="lg:col-span-7 space-y-5">
+
+      <!-- Battle Stage / Canvas & Visuals -->
+      <div class="bg-slate-900/90 rounded-2xl border border-slate-800 shadow-xl overflow-hidden relative">
+        
+        <!-- Top Status Bar in Stage -->
+        <div class="bg-slate-950/80 px-4 py-3 border-b border-slate-800 flex items-center justify-between text-xs font-mono">
+          <div class="flex items-center space-x-2">
+            <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+            <span class="text-slate-300 font-bold uppercase tracking-wider">Battle Arena</span>
+          </div>
+          <div class="text-cyan-400 font-bold" id="battle-stage-indicator">Monster #1 dari 50</div>
+        </div>
+
+        <!-- Dynamic Game Stage Area -->
+        <div class="relative h-64 sm:h-72 w-full bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex items-end justify-between px-6 sm:px-12 pb-8 overflow-hidden">
+          
+          <div class="absolute inset-0 opacity-15 pointer-events-none bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:16px_16px]"></div>
+
+          <!-- HERO CONTAINER -->
+          <div id="hero-container" class="relative z-10 flex flex-col items-center transition-all duration-300">
+            
+            <div class="mb-2 w-28 bg-slate-950/90 border border-slate-700 p-1.5 rounded-lg text-center backdrop-blur-sm shadow-md">
+              <div class="flex justify-between items-center text-[10px] font-mono text-slate-300 mb-1">
+                <span id="display-hero-name" class="font-bold truncate max-w-[70px]">Hero</span>
+                <span id="display-hero-hp-text" class="text-emerald-400">100/100</span>
+              </div>
+              <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                <div id="display-hero-hp-bar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full w-full transition-all duration-300"></div>
+              </div>
+            </div>
+
+            <div id="badge-flying" class="text-[10px] bg-purple-950/90 border border-purple-500 text-purple-300 px-2 py-0.5 rounded-full mb-1 flex items-center gap-1 font-mono transition-opacity opacity-0">
+              <i data-lucide="feather" class="w-3 h-3"></i> FLYING
+            </div>
+
+            <div id="hero-avatar" class="relative w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-tr from-cyan-600 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg border-2 border-cyan-300 transition-all duration-500">
+              <i data-lucide="shield" id="hero-icon-shield" class="hidden absolute -left-2 -bottom-2 w-7 h-7 text-indigo-300 bg-slate-950 rounded-full p-1 border border-indigo-400"></i>
+              <i data-lucide="zap" class="w-10 h-10 sm:w-12 sm:h-12 text-white"></i>
+              
+              <div id="hero-dmg-pop" class="absolute -top-8 font-mono font-black text-red-400 text-lg hidden pointer-events-none"></div>
+            </div>
+
+            <div id="hero-shadow" class="w-16 h-3 bg-slate-950/80 rounded-full blur-xs mt-2 transition-all duration-300"></div>
+          </div>
+
+          <!-- VS Indicator -->
+          <div class="relative z-10 pb-12 hidden sm:block">
+            <span class="pixel-font text-slate-600 text-sm">VS</span>
+          </div>
+
+          <!-- MONSTER CONTAINER -->
+          <div id="monster-container" class="relative z-10 flex flex-col items-center transition-all duration-300">
+            
+            <div class="mb-2 w-28 bg-slate-950/90 border border-slate-700 p-1.5 rounded-lg text-center backdrop-blur-sm shadow-md">
+              <div class="flex justify-between items-center text-[10px] font-mono text-slate-300 mb-1">
+                <span id="monster-type-name" class="font-bold text-red-400 truncate">Green Slime</span>
+                <span id="display-monster-hp-text" class="text-red-400">30/30</span>
+              </div>
+              <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                <div id="display-monster-hp-bar" class="bg-gradient-to-r from-red-600 to-rose-400 h-full w-full transition-all duration-300"></div>
+              </div>
+            </div>
+
+            <div id="monster-attack-tag" class="text-[10px] bg-red-950/90 border border-red-700 text-red-300 px-2 py-0.5 rounded-full mb-1 flex items-center gap-1 font-mono">
+              <i data-lucide="footprints" class="w-3 h-3"></i> Serangan Darat
+            </div>
+
+            <!-- Dynamic SVG Monster Visual Container -->
+            <div id="monster-avatar" class="relative w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-tr from-red-950 via-red-900 to-rose-800 rounded-2xl flex items-center justify-center shadow-lg border-2 border-red-400 transition-all duration-300 overflow-hidden">
+              <div id="monster-svg-display" class="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center transition-all duration-300"></div>
+              
+              <div id="monster-dmg-pop" class="absolute -top-8 font-mono font-black text-amber-300 text-lg hidden pointer-events-none"></div>
+            </div>
+
+            <div class="w-16 h-3 bg-slate-950/80 rounded-full blur-xs mt-2"></div>
+          </div>
+
+        </div>
+
+        <!-- Action Control Buttons -->
+        <div class="bg-slate-900 p-4 border-t border-slate-800 flex flex-wrap gap-3 items-center justify-between">
+          
+          <!-- AUTOMATIC BATTLE BUTTON -->
+          <button 
+            id="btn-start-battle" 
+            class="flex-1 min-w-[200px] bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 text-slate-950 font-black py-3 px-4 rounded-xl shadow-lg transform active:scale-95 transition flex items-center justify-center space-x-2 text-sm sm:text-base"
+          >
+            <i data-lucide="play" class="w-5 h-5 fill-slate-950"></i>
+            <span>MULAI PERTARUNGAN</span>
+          </button>
+
+          <button 
+            id="btn-reset" 
+            class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-3 rounded-xl border border-slate-700 transition"
+            title="Reset Posisi Pertarungan"
+          >
+            <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Real-Time Combat Log & Logic Explanation -->
+      <div class="bg-slate-900/90 rounded-2xl p-5 border border-slate-800 shadow-xl space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="terminal" class="w-5 h-5 text-emerald-400"></i>
+            <h3 class="font-bold text-slate-200 text-sm">Log Eksekusi Pertarungan Otomatis</h3>
+          </div>
+          <span class="text-[10px] font-mono text-slate-500">Logika Variabel Real-Time</span>
+        </div>
+
+        <!-- Console Log Output Box -->
+        <div id="battle-log" class="bg-slate-950 rounded-xl p-3 border border-slate-800 h-36 overflow-y-auto font-mono text-xs space-y-1.5">
+          <div class="text-slate-500">/* Alokasikan poin stat sesuai budget stage, lalu tekan [MULAI PERTARUNGAN] */</div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- Game Over / Victory Modal -->
+  <div id="modal-result" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl">
+      <div id="modal-icon-bg" class="w-16 h-16 rounded-full mx-auto flex items-center justify-center">
+        <i id="modal-icon" class="w-8 h-8"></i>
+      </div>
+      <h3 id="modal-title" class="text-xl font-black pixel-font text-white">STAGE CLEAR!</h3>
+      <p id="modal-desc" class="text-sm text-slate-300 leading-relaxed">
+        Deskripsi hasil pertarungan...
+      </p>
+      <button 
+        id="btn-modal-next" 
+        class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg flex items-center justify-center gap-2"
+      >
+        <span>Monster Berikutnya</span>
+        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800 bg-slate-900/50 py-4 text-center text-xs text-slate-500">
+    <p>Hero Stats Lab &bull; Tantangan 50 Stage Pembelajaran Variabel & Sistem Poin Stat</p>
+  </footer>
+
+  <!-- Game Script Logic -->
+  <script>
+    lucide.createIcons();
+
+    // ==========================================
+    // COST SYSTEM DEFINITION (POINT RULES)
+    // ==========================================
+    const COST_RULES = {
+      hpPerPoint: 10,        // 1 Point = 10 HP
+      attackPointRatio: 2.5, // 2 Points = 5 Attack (1 Point = 2.5 Attack)
+      flyCost: 20,           // Flying Skill = 20 Points
+      shieldCost: 15         // Shield Skill = 15 Points
+    };
+
+    // ==========================================
+    // DYNAMIC SVG MONSTER ILLUSTRATIONS GENERATOR
+    // ==========================================
+    function getMonsterSVG(namaMonster) {
+      const name = namaMonster.toLowerCase();
+
+      // Slime
+      if (name.includes('slime')) {
+        return `<svg viewBox="0 0 64 64" class="w-full h-full fill-emerald-400 stroke-emerald-200 stroke-2 drop-shadow-md">
+          <path d="M32 8 C16 8 8 24 8 42 C8 54 18 58 32 58 C46 58 56 54 56 42 C56 24 48 8 32 8 Z" />
+          <circle cx="24" cy="34" r="4" fill="#0f172a" />
+          <circle cx="40" cy="34" r="4" fill="#0f172a" />
+          <circle cx="26" cy="32" r="1.5" fill="#ffffff" />
+          <circle cx="42" cy="32" r="1.5" fill="#ffffff" />
+          <path d="M26 44 Q32 48 38 44" fill="none" stroke="#0f172a" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>`;
+      }
+      
+      // Dragon / Naga / Wyvern / Wyrm
+      if (name.includes('naga') || name.includes('wyvern') || name.includes('wyrm') || name.includes('drakula')) {
+        return `<svg viewBox="0 0 64 64" class="w-full h-full fill-rose-500 stroke-rose-200 stroke-2 drop-shadow-md">
+          <path d="M12 24 L2 10 L22 18 Z" fill="#b91c1c"/>
+          <path d="M52 24 L62 10 L42 18 Z" fill="#b91c1c"/>
+          <path d="M32 10 C18 10 14 26 16 40 C18 52 24 58 32 58 C40 58 46 52 48 40 C50 26 46 10 32 10 Z"/>
+          <polygon points="20,12 26,4 28,14" fill="#f59e0b"/>
+          <polygon points="44,12 38,4 36,14" fill="#f59e0b"/>
+          <ellipse cx="24" cy="30" rx="3.5" ry="5" fill="#fef08a"/>
+          <ellipse cx="40" cy="30" rx="3.5" ry="5" fill="#fef08a"/>
+          <line x1="24" y1="26" x2="24" y2="34" stroke="#0f172a" stroke-width="2"/>
+          <line x1="40" y1="26" x2="40" y2="34" stroke="#0f172a" stroke-width="2"/>
+          <path d="M20 46 Q32 56 44 46" fill="none" stroke="#0f172a" stroke-width="3"/>
+          <polygon points="24,46 28,52 32,46" fill="#ffffff"/>
+          <polygon points="32,46 36,52 40,46" fill="#ffffff"/>
+        </svg>`;
+      }
+
+      // Goblin / Begal / Orc
+      if (name.includes('goblin') || name.includes('orc') || name.includes('begal')) {
+        return `<svg viewBox="0 0 64 64" class="w-full h-full fill-lime-500 stroke-lime-200 stroke-2 drop-shadow-md">
+          <polygon points="8,26 0,10 18,22" fill="#65a30d"/>
+          <polygon points="56,26 64,10 46,22" fill="#65a30d"/>
+          <rect x="16" y="16" width="32" height="38" rx="10" />
+          <circle cx="26" cy="30" r="4" fill="#ef4444" />
+          <circle cx="38" cy="30" r="4" fill="#ef4444" />
+          <circle cx="27" cy="29" r="1.5" fill="#ffffff" />
+          <circle cx="39" cy="29" r="1.5" fill="#ffffff" />
+          <path d="M22 44 H42" stroke="#0f172a" stroke-width="3" stroke-linecap="round"/>
+          <polygon points="24,44 27,38 30,44" fill="#ffffff"/>
+          <polygon points="34,44 37,38 40,44" fill="#ffffff"/>
+        </svg>`;
+      }
+
+      // Skeleton / Tengkorak
+      if (name.includes('skeleton') || name.includes('tengkorak') || name.includes('zombie') || name.includes('pharaoh')) {
+        return `<svg viewBox="0 0 64 64" class="w-full h-full fill-slate-200 stroke-slate-400 stroke-2 drop-shadow-md">
+          <rect x="16" y="12" width="32" height="32" rx="12"/>
+          <rect x="24" y="44" width="16" height="12" rx="3" />
+          <ellipse cx="24" cy="28" rx="5" ry="7" fill="#0f172a"/>
+          <ellipse cx="40" cy="28" rx="5" ry="7" fill="#0f172a"/>
+          <polygon points="32,34 29,40 35,40" fill="#0f172a"/>
+          <line x1="28" y1="44" x2="28" y2="54" stroke="#0f172a" stroke-width="2"/>
+          <line x1="32" y1="44" x2="32" y2="54" stroke="#0f172a" stroke-width="2"/>
+          <line x1="36" y1="44" x2="36" y2="54" stroke="#0f172a" stroke-width="2"/>
+        </svg>`;
+      }
+
+      // Harpy / Kelelawar / Burung / Elang / Griffon / Pterodactyl / Phantom / Wings
+      if (name.includes('kelelawar') || name.includes('harpy') || name.includes('burung') || name.includes('elang') || name.includes('pterodactyl') || name.includes('griffon') || name.includes('phantom')) {
+        return `<svg viewBox="0 0 64 64" class="w-full h-full fill-purple-400 stroke-purple-200 stroke-2 drop-shadow-md">
+          <path d="M32 20 Q10 4 2 30 Q14 34 24 30 Z" fill="#7e22ce"/>
+          <path d="M32 20 Q54 4 62 30 Q50 34 40 30 Z" fill="#7e22ce"/>
+          <circle cx="32" cy="34" r="14" />
+          <circle cx="26" cy="32" r="3" fill="#facc15"/>
+          <circle cx="38" cy="32" r="3" fill="#facc15"/>
+          <polygon points="32,36 28,44 36,44" fill="#f97316"/>
+        </svg>`;
+      }
+
+      // Golem / Batu / Titan / Gargoyle
+      if (name.includes('golem') || name.includes('batu') || name.includes('gargoyle') || name.includes('titan')) {
+        return `<svg viewBox="0 0 64 64" class="w-full h-full fill-stone-500 stroke-stone-300 stroke-2 drop-shadow-md">
+          <polygon points="12,12 52,12 58,48 6,48" />
+          <rect x="20" y="48" width="24" height="10" rx="2"/>
+          <rect x="20" y="24" width="8" height="6" fill="#38bdf8" />
+          <rect x="36" y="24" width="8" height="6" fill="#38bdf8" />
+          <line x1="16" y1="18" x2="28" y2="38" stroke="#292524" stroke-width="2"/>
+          <line x1="48" y1="18" x2="38" y2="34" stroke="#292524" stroke-width="2"/>
+        </svg>`;
+      }
+
+      // Demon / Iblis / Vampire / Manticore / Chimera / Behemoth
+      if (name.includes('demon') || name.includes('iblis') || name.includes('vampire') || name.includes('behemoth') || name.includes('manticore') || name.includes('chimera')) {
+        return `<svg viewBox="0 0 64 64" class="w-full h-full fill-red-700 stroke-red-300 stroke-2 drop-shadow-md">
+          <path d="M16 18 Q6 4 18 6 Q22 14 24 20 Z" fill="#450a0a"/>
+          <path d="M48 18 Q58 4 46 6 Q42 14 40 20 Z" fill="#450a0a"/>
+          <rect x="18" y="18" width="28" height="34" rx="8" />
+          <ellipse cx="26" cy="30" rx="4" ry="3" fill="#fbbf24"/>
+          <ellipse cx="38" cy="30" rx="4" ry="3" fill="#fbbf24"/>
+          <path d="M24 42 Q32 48 40 42" stroke="#ffffff" stroke-width="2" fill="none"/>
+          <polygon points="26,42 28,46 30,42" fill="#ffffff"/>
+          <polygon points="34,42 36,46 38,42" fill="#ffffff"/>
+        </svg>`;
+      }
+
+      // Spider / Insect / Virus / Cobra / Hydra / Serigala / Bear / Bebek
+      return `<svg viewBox="0 0 64 64" class="w-full h-full fill-amber-500 stroke-amber-200 stroke-2 drop-shadow-md">
+        <circle cx="32" cy="32" r="20" />
+        <circle cx="24" cy="28" r="4" fill="#0f172a" />
+        <circle cx="40" cy="28" r="4" fill="#0f172a" />
+        <circle cx="25" cy="27" r="1.5" fill="#ffffff" />
+        <circle cx="41" cy="27" r="1.5" fill="#ffffff" />
+        <path d="M24 38 Q32 46 40 38" fill="none" stroke="#0f172a" stroke-width="3" stroke-linecap="round" />
+      </svg>`;
+    }
+
+    // ==========================================
+    // GENERATE 50 MONSTERS DATABASE & LEVEL BUDGETS
+    // ==========================================
+    const monsterNames = [
+      "Slime Hijau", "Goblin Darat", "Kelelawar Udara", "Skeleton Prajurit", "Harpy Angin", 
+      "Gargoyle Batu", "Orc Pembabat", "Wyvern Merah", "Bebek Beracun", "Grizzly Raksasa",
+      "Serigala Bayangan", "Golem Kayu", "Hantu Penjaga", "Banteng Api", "Burung Elang Petir",
+      "Ksatria Kegelapan", "Manticore", "Hydra Rawa", "Demon Udara", "Titan Batu",
+      "Kalajengking Pasir", "Spreading Virus", "Ratu Lebah", "Magma Elemental", "Naga Es",
+      "Cobra Raksasa", "Spectre Bayangan", "Minotaur Besi", "Pterodactyl", "Basilisk",
+      "Vampire Lord", "Kraken Darat", "Chimera", "Bebek Mecha", "Griffon Emas",
+      "Begal Gua", "Pharaoh Zombie", "Lava Hound", "Phantom Terbang", "Behemoth",
+      "Ksatria Tengkorak", "Shadow Ninja", "Drakula Sayap", "Cyber Golem", "Arch Demon",
+      "Wyrm Purba", "Leviathan Kecil", "Naga Hitam", "Kaisar Iblis", "Raja Naga Raksasa"
+    ];
+
+    const monsterIcons = ["ghost", "skull", "footprints", "flame", "zap", "bot", "bug"];
+
+    const monsterDatabase = [];
+    for (let i = 0; i < 50; i++) {
+      const isGround = (i % 2 === 0);
+      const hp = 30 + (i * 18);
+      const attack = 10 + (i * 6);
+      const icon = monsterIcons[i % monsterIcons.length];
+
+      // PROGRESSIVE LEVEL POINT BUDGET (Batas Poin per Level)
+      // Level 1 starts with 25 points, increasing gradually
+      const pointBudget = 25 + (i * 8);
+
+      // Level-Specific Allowed Features
+      let allowFly = true;
+      let allowShield = true;
+
+      if (i === 0) {
+        allowFly = false;
+        allowShield = false;
+      } else if (i === 1) {
+        allowFly = false;
+      } else if (i === 2) {
+        allowShield = false;
+      }
+
+      monsterDatabase.push({
+        id: i + 1,
+        nama: monsterNames[i] || `Monster #${i+1}`,
+        darah: hp,
+        maxDarah: hp,
+        attack: attack,
+        tipeSerangan: isGround ? "Darat" : "Udara",
+        icon: icon,
+        constraints: {
+          budgetPoints: pointBudget,
+          allowFly: allowFly,
+          allowShield: allowShield
+        }
+      });
+    }
+
+    // ==========================================
+    // GAME STATE
+    // ==========================================
+    let currentStageIndex = 0;
+    let isBattling = false;
+
+    const heroState = {
+      nama: "Captain Byte",
+      darah: 100,
+      maxDarah: 100,
+      attack: 20,
+      bisaTerbang: false,
+      punyaPerisai: false,
+    };
+
+    let currentMonster = { ...monsterDatabase[0] };
+
+    // ==========================================
+    // DOM ELEMENTS
+    // ==========================================
+    const inputNama = document.getElementById('var-nama');
+    const inputDarah = document.getElementById('var-darah');
+    const inputDarahVal = document.getElementById('var-darah-val');
+    const inputAttack = document.getElementById('var-attack');
+    const inputAttackVal = document.getElementById('var-attack-val');
+    const inputTerbang = document.getElementById('var-terbang');
+    const inputPerisai = document.getElementById('var-perisai');
+
+    const containerVarDarah = document.getElementById('container-var-darah');
+    const containerVarAttack = document.getElementById('container-var-attack');
+    const containerVarTerbang = document.getElementById('container-var-terbang');
+    const containerVarPerisai = document.getElementById('container-var-perisai');
+    
+    const costTerbangBadge = document.getElementById('cost-terbang-badge');
+    const costPerisaiBadge = document.getElementById('cost-perisai-badge');
+    const budgetContainer = document.getElementById('budget-container');
+    const budgetPointsVal = document.getElementById('budget-points-val');
+
+    const codeNama = document.getElementById('code-nama');
+    const codeDarah = document.getElementById('code-darah');
+    const codeAttack = document.getElementById('code-attack');
+    const codeTerbang = document.getElementById('code-terbang');
+    const codePerisai = document.getElementById('code-perisai');
+
+    const displayHeroName = document.getElementById('display-hero-name');
+    const displayHeroHpText = document.getElementById('display-hero-hp-text');
+    const displayHeroHpBar = document.getElementById('display-hero-hp-bar');
+    const badgeFlying = document.getElementById('badge-flying');
+    const heroIconShield = document.getElementById('hero-icon-shield');
+    const heroContainer = document.getElementById('hero-container');
+    const heroAvatar = document.getElementById('hero-avatar');
+
+    const monsterTypeName = document.getElementById('monster-type-name');
+    const displayMonsterHpText = document.getElementById('display-monster-hp-text');
+    const displayMonsterHpBar = document.getElementById('display-monster-hp-bar');
+    const monsterAvatar = document.getElementById('monster-avatar');
+    const monsterSvgDisplay = document.getElementById('monster-svg-display');
+    const monsterAttackTag = document.getElementById('monster-attack-tag');
+
+    const battleLog = document.getElementById('battle-log');
+    const headerStageBadge = document.getElementById('header-stage-badge');
+    const battleStageIndicator = document.getElementById('battle-stage-indicator');
+    
+    const missionStageText = document.getElementById('mission-stage-text');
+    const missionTitle = document.getElementById('mission-title');
+    const missionHint = document.getElementById('mission-hint');
+
+    const btnStartBattle = document.getElementById('btn-start-battle');
+    const btnReset = document.getElementById('btn-reset');
+
+    const modalResult = document.getElementById('modal-result');
+    const modalTitle = document.getElementById('modal-title');
+    const modalDesc = document.getElementById('modal-desc');
+    const modalIconBg = document.getElementById('modal-icon-bg');
+    const modalIcon = document.getElementById('modal-icon');
+    const btnModalNext = document.getElementById('btn-modal-next');
+
+    const heroDmgPop = document.getElementById('hero-dmg-pop');
+    const monsterDmgPop = document.getElementById('monster-dmg-pop');
+
+    // ==========================================
+    // CALCULATE USED POINTS
+    // ==========================================
+    function calculatePointsUsed(hp, atk, fly, shield) {
+      let hpPoints = Math.round(hp / COST_RULES.hpPerPoint);
+      let atkPoints = Math.round(atk / COST_RULES.attackPointRatio);
+      let flyPoints = fly ? COST_RULES.flyCost : 0;
+      let shieldPoints = shield ? COST_RULES.shieldCost : 0;
+
+      return hpPoints + atkPoints + flyPoints + shieldPoints;
+    }
+
+    // ==========================================
+    // MISSION & STAGE SYSTEM
+    // ==========================================
+    function loadStage(index) {
+      currentStageIndex = index;
+      const data = monsterDatabase[currentStageIndex];
+      currentMonster = { ...data };
+
+      // Update Stage Badges
+      headerStageBadge.textContent = `${currentStageIndex + 1} / 50`;
+      battleStageIndicator.textContent = `Monster #${currentStageIndex + 1} dari 50`;
+      missionStageText.textContent = `Stage ${currentStageIndex + 1} / 50`;
+
+      const c = currentMonster.constraints;
+
+      // Enable / Disable Skills per Level Constraint
+      inputTerbang.disabled = !c.allowFly;
+      containerVarTerbang.style.opacity = c.allowFly ? "1" : "0.5";
+      costTerbangBadge.textContent = c.allowFly ? `${COST_RULES.flyCost} Poin` : `[TERKUNCI]`;
+      if (!c.allowFly) inputTerbang.checked = false;
+
+      inputPerisai.disabled = !c.allowShield;
+      containerVarPerisai.style.opacity = c.allowShield ? "1" : "0.5";
+      costPerisaiBadge.textContent = c.allowShield ? `${COST_RULES.shieldCost} Poin` : `[TERKUNCI]`;
+      if (!c.allowShield) inputPerisai.checked = false;
+
+      // Construct Mission Hints
+      missionTitle.textContent = `Tantangan Stage ${currentStageIndex + 1}: ${currentMonster.nama}`;
+      
+      let hint = `Musuh: <strong class="text-red-400">HP ${currentMonster.maxDarah}</strong> | <strong class="text-red-400">Atk ${currentMonster.attack}</strong> (${currentMonster.tipeSerangan}).<br/>`;
+      hint += `🎯 <span class="text-amber-300 font-bold">Batas Budget Level Ini: ${c.budgetPoints} Poin.</span><br/>`;
+
+      if (!c.allowFly || !c.allowShield) {
+        const lockedList = [];
+        if (!c.allowFly) lockedList.push("Bisa_Terbang");
+        if (!c.allowShield) lockedList.push("Punya_Perisai");
+        hint += `<span class="text-purple-300">⚠️ Skill Terkunci:</span> Skill <code class="text-pink-300 font-mono">${lockedList.join(', ')}</code> tidak tersedia di level ini.<br/>`;
+      }
+
+      hint += `💡 Alokasikan poin variabel secara efisien untuk menang!`;
+
+      missionHint.innerHTML = hint;
+
+      // Update Monster UI & Dynamic SVG Avatar
+      monsterTypeName.textContent = currentMonster.nama;
+      monsterSvgDisplay.innerHTML = getMonsterSVG(currentMonster.nama);
+      
+      monsterAttackTag.innerHTML = currentMonster.tipeSerangan === "Darat" 
+        ? `<i data-lucide="footprints" class="w-3 h-3"></i> Serangan Darat`
+        : `<i data-lucide="cloud-lightning" class="w-3 h-3"></i> Serangan Udara`;
+      
+      lucide.createIcons();
+      
+      // Reset inputs to fit budget
+      inputDarah.value = 100;
+      inputAttack.value = 20;
+      updateStateFromInputs();
+      
+      addLogMessage(`🎯 <strong>STAGE ${currentStageIndex + 1} DIMULAI:</strong> ${currentMonster.nama} muncul! Budget: ${c.budgetPoints} Poin.`, 'info');
+    }
+
+    // ==========================================
+    // UI UPDATER & BUDGET ENFORCER
+    // ==========================================
+    function updateStateFromInputs() {
+      if (isBattling) return;
+
+      const maxBudget = currentMonster.constraints.budgetPoints;
+
+      let wantedHp = parseInt(inputDarah.value, 10);
+      let wantedAtk = parseInt(inputAttack.value, 10);
+      let wantedFly = currentMonster.constraints.allowFly ? inputTerbang.checked : false;
+      let wantedShield = currentMonster.constraints.allowShield ? inputPerisai.checked : false;
+
+      let totalUsed = calculatePointsUsed(wantedHp, wantedAtk, wantedFly, wantedShield);
+
+      // Enforce Point Limit (Adjust slider values without unchecking active boolean skills)
+      if (totalUsed > maxBudget) {
+        // Reduce Attack & HP iteratively while keeping Fly/Shield toggles intact if user checked them
+        while (totalUsed > maxBudget && wantedAtk > 5) {
+          wantedAtk -= 5;
+          inputAttack.value = wantedAtk;
+          totalUsed = calculatePointsUsed(wantedHp, wantedAtk, wantedFly, wantedShield);
+        }
+
+        while (totalUsed > maxBudget && wantedHp > 20) {
+          wantedHp -= 10;
+          inputDarah.value = wantedHp;
+          totalUsed = calculatePointsUsed(wantedHp, wantedAtk, wantedFly, wantedShield);
+        }
+      }
+
+      // Update hero state
+      heroState.nama = inputNama.value.trim() || "Hero";
+      heroState.maxDarah = wantedHp;
+      heroState.darah = wantedHp;
+      heroState.attack = wantedAtk;
+      heroState.bisaTerbang = wantedFly;
+      heroState.punyaPerisai = wantedShield;
+
+      // Update Budget Display Counter
+      const currentUsedPoints = calculatePointsUsed(heroState.maxDarah, heroState.attack, heroState.bisaTerbang, heroState.punyaPerisai);
+      budgetPointsVal.textContent = `${currentUsedPoints} / ${maxBudget} Poin`;
+
+      if (currentUsedPoints === maxBudget) {
+        budgetPointsVal.className = "font-bold text-emerald-400 bg-slate-900 px-2.5 py-1 rounded-md border border-emerald-500/50 text-sm font-mono";
+      } else {
+        budgetPointsVal.className = "font-bold text-amber-400 bg-slate-900 px-2.5 py-1 rounded-md border border-amber-500/50 text-sm font-mono";
+      }
+
+      renderUI();
+    }
+
+    function renderUI() {
+      inputDarahVal.textContent = heroState.maxDarah;
+      inputAttackVal.textContent = heroState.attack;
+
+      codeNama.textContent = `"${heroState.nama}"`;
+      codeDarah.textContent = heroState.darah;
+      codeAttack.textContent = heroState.attack;
+      codeTerbang.textContent = heroState.bisaTerbang ? 'true' : 'false';
+      codePerisai.textContent = heroState.punyaPerisai ? 'true' : 'false';
+
+      displayHeroName.textContent = heroState.nama;
+      displayHeroHpText.textContent = `${heroState.darah}/${heroState.maxDarah}`;
+      
+      const heroHpPercent = Math.max(0, Math.min(100, (heroState.darah / heroState.maxDarah) * 100));
+      displayHeroHpBar.style.width = `${heroHpPercent}%`;
+      
+      if (heroHpPercent < 30) {
+        displayHeroHpBar.className = "bg-gradient-to-r from-red-500 to-rose-600 h-full transition-all duration-300";
+      } else if (heroHpPercent < 60) {
+        displayHeroHpBar.className = "bg-gradient-to-r from-amber-500 to-yellow-400 h-full transition-all duration-300";
+      } else {
+        displayHeroHpBar.className = "bg-gradient-to-r from-emerald-500 to-teal-400 h-full transition-all duration-300";
+      }
+
+      if (heroState.bisaTerbang) {
+        badgeFlying.classList.remove('opacity-0');
+        heroContainer.style.transform = "translateY(-24px)";
+      } else {
+        badgeFlying.classList.add('opacity-0');
+        heroContainer.style.transform = "translateY(0px)";
+      }
+
+      if (heroState.punyaPerisai) {
+        heroIconShield.classList.remove('hidden');
+      } else {
+        heroIconShield.classList.add('hidden');
+      }
+
+      displayMonsterHpText.textContent = `${currentMonster.darah}/${currentMonster.maxDarah}`;
+      const monsterHpPercent = Math.max(0, Math.min(100, (currentMonster.darah / currentMonster.maxDarah) * 100));
+      displayMonsterHpBar.style.width = `${monsterHpPercent}%`;
+    }
+
+    function addLogMessage(msg, type = 'info') {
+      const entry = document.createElement('div');
+      const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      
+      let colorClass = "text-slate-300";
+      if (type === 'hero') colorClass = "text-cyan-300 font-semibold";
+      if (type === 'monster') colorClass = "text-rose-400 font-semibold";
+      if (type === 'success') colorClass = "text-emerald-400 font-semibold";
+      if (type === 'warning') colorClass = "text-purple-300 font-semibold";
+
+      entry.className = `${colorClass} text-[11px] leading-tight flex items-start space-x-1.5`;
+      entry.innerHTML = `<span class="text-slate-600 font-mono">[${timestamp}]</span> <span>${msg}</span>`;
+      
+      battleLog.appendChild(entry);
+      battleLog.scrollTop = battleLog.scrollHeight;
+    }
+
+    function triggerDamagePop(element, text, isDmg = true) {
+      element.textContent = text;
+      element.className = `absolute -top-8 font-mono font-black text-lg damage-pop ${isDmg ? 'text-red-400' : 'text-purple-300'}`;
+      element.classList.remove('hidden');
+
+      setTimeout(() => {
+        element.classList.add('hidden');
+      }, 800);
+    }
+
+    // ==========================================
+    // MULTI-TURN AUTOMATIC BATTLE SIMULATION
+    // ==========================================
+    function startAutomaticBattle() {
+      if (isBattling) return;
+      isBattling = true;
+      btnStartBattle.disabled = true;
+      btnStartBattle.classList.add('opacity-50', 'cursor-not-allowed');
+
+      battleLog.innerHTML = '';
+      addLogMessage(`⚡ <strong>MEMULAI PERTARUNGAN OTOMATIS BERGILIR...</strong>`, 'info');
+
+      let turnCount = 1;
+
+      function executeTurn() {
+        addLogMessage(`--- ⚔️ PUTARAN #${turnCount} ---`, 'info');
+
+        // STEP 1: HERO ATTACKS
+        heroAvatar.classList.add('translate-x-8');
+        setTimeout(() => heroAvatar.classList.remove('translate-x-8'), 200);
+
+        const heroDmg = heroState.attack;
+        currentMonster.darah = Math.max(0, currentMonster.darah - heroDmg);
+
+        monsterAvatar.classList.add('animate-shake');
+        triggerDamagePop(monsterDmgPop, `-${heroDmg}`, true);
+        setTimeout(() => monsterAvatar.classList.remove('animate-shake'), 400);
+
+        addLogMessage(`<strong class="text-cyan-300">${heroState.nama}</strong> menyerang <strong class="text-red-400">${currentMonster.nama}</strong>! Damage = <span class="text-amber-300 font-bold">${heroDmg}</span>`, 'hero');
+
+        renderUI();
+
+        // Check Monster Defeated
+        if (currentMonster.darah <= 0) {
+          addLogMessage(`💥 <strong>VICTORY!</strong> ${currentMonster.nama} berhasil dikalahkan dalam ${turnCount} putaran!`, 'success');
+          finishBattle(true);
+          return;
+        }
+
+        // STEP 2: MONSTER COUNTER ATTACKS
+        setTimeout(() => {
+          monsterAvatar.classList.add('-translate-x-8');
+          setTimeout(() => monsterAvatar.classList.remove('-translate-x-8'), 200);
+
+          addLogMessage(`<strong class="text-red-400">${currentMonster.nama}</strong> menyerang balik (${currentMonster.tipeSerangan})!`, 'monster');
+
+          // Flight Avoidance Logic
+          if (currentMonster.tipeSerangan === "Darat" && heroState.bisaTerbang) {
+            addLogMessage(`🛡️ LOGIC: <code class="text-purple-300 font-mono">Bisa_Terbang === true</code> &rarr; Serangan darat terhindari!`, 'warning');
+            triggerDamagePop(heroDmgPop, "DODGED!", false);
+          } else {
+            let monsterDmg = currentMonster.attack;
+            if (heroState.punyaPerisai) {
+              monsterDmg = Math.floor(monsterDmg * 0.5);
+              addLogMessage(`🛡️ LOGIC: <code class="text-purple-300 font-mono">Punya_Perisai === true</code> &rarr; Damage terpotong 50% (${currentMonster.attack} &rarr; ${monsterDmg})`, 'warning');
+            }
+
+            heroState.darah = Math.max(0, heroState.darah - monsterDmg);
+            heroAvatar.classList.add('animate-shake');
+            triggerDamagePop(heroDmgPop, `-${monsterDmg}`, true);
+            setTimeout(() => heroAvatar.classList.remove('animate-shake'), 400);
+
+            renderUI();
+          }
+
+          // Check Hero Defeated
+          if (heroState.darah <= 0) {
+            addLogMessage(`💀 <strong>DEFEAT!</strong> Level_Darah Hero mencapai 0 pada putaran ${turnCount}.`, 'monster');
+            finishBattle(false, `Hero gugur pada putaran ke-${turnCount}! Alokasikan poin stat HP atau skill proteksi dengan lebih baik.`);
+            return;
+          }
+
+          // Proceed to next turn
+          turnCount++;
+          setTimeout(executeTurn, 900);
+
+        }, 700);
+      }
+
+      // Start initial turn loop
+      setTimeout(executeTurn, 500);
+    }
+
+    function finishBattle(isVictory, customFailMsg = "") {
+      setTimeout(() => {
+        isBattling = false;
+        btnStartBattle.disabled = false;
+        btnStartBattle.classList.remove('opacity-50', 'cursor-not-allowed');
+
+        if (isVictory) {
+          showModal(
+            true, 
+            "STAGE CLEAR!", 
+            `Luar biasa! Hero <strong>${heroState.nama}</strong> berhasil mengalahkan <strong>${currentMonster.nama}</strong> dengan efisiensi alokasi poin variabel yang tepat!`
+          );
+        } else {
+          showModal(
+            false, 
+            "MISSION FAILED", 
+            customFailMsg || `Gagal mengalahkan monster. Coba atur ulang distribusi poin stat sesuai kebutuhan stage ini!`
+          );
+        }
+      }, 800);
+    }
+
+    function showModal(isWin, title, desc) {
+      modalTitle.textContent = title;
+      modalDesc.innerHTML = desc;
+
+      if (isWin) {
+        modalTitle.className = "text-xl font-black pixel-font text-emerald-400";
+        modalIconBg.className = "w-16 h-16 rounded-full mx-auto flex items-center justify-center bg-emerald-950 border-2 border-emerald-500 text-emerald-400";
+        modalIcon.setAttribute('data-lucide', 'trophy');
+        btnModalNext.innerHTML = `<span>Monster Berikutnya</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>`;
+      } else {
+        modalTitle.className = "text-xl font-black pixel-font text-rose-500";
+        modalIconBg.className = "w-16 h-16 rounded-full mx-auto flex items-center justify-center bg-rose-950 border-2 border-rose-500 text-rose-400";
+        modalIcon.setAttribute('data-lucide', 'refresh-cw');
+        btnModalNext.innerHTML = `<span>Coba Lagi Stage Ini</span>`;
+      }
+      lucide.createIcons();
+      modalResult.classList.remove('hidden');
+    }
+
+    function nextStageOrRetry() {
+      modalResult.classList.add('hidden');
+      if (modalTitle.textContent.includes("CLEAR")) {
+        if (currentStageIndex < 49) {
+          loadStage(currentStageIndex + 1);
+        } else {
+          alert("SELAMAT! Kamu telah menyelesaikan seluruh 50 Stage Misi Hero Stats Lab!");
+          loadStage(0);
+        }
+      } else {
+        currentMonster.darah = currentMonster.maxDarah;
+        updateStateFromInputs();
+      }
+    }
+
+    function resetCurrentStage() {
+      isBattling = false;
+      btnStartBattle.disabled = false;
+      btnStartBattle.classList.remove('opacity-50', 'cursor-not-allowed');
+      currentMonster.darah = currentMonster.maxDarah;
+      battleLog.innerHTML = `<div class="text-slate-500">/* Game Direset. Alokasikan poin stat lalu jalankan pertarungan */</div>`;
+      modalResult.classList.add('hidden');
+      updateStateFromInputs();
+    }
+
+    // ==========================================
+    // EVENT LISTENERS
+    // ==========================================
+    inputNama.addEventListener('input', updateStateFromInputs);
+    inputDarah.addEventListener('input', updateStateFromInputs);
+    inputAttack.addEventListener('input', updateStateFromInputs);
+    inputTerbang.addEventListener('change', updateStateFromInputs);
+    inputPerisai.addEventListener('change', updateStateFromInputs);
+
+    btnStartBattle.addEventListener('click', startAutomaticBattle);
+    btnReset.addEventListener('click', resetCurrentStage);
+    btnModalNext.addEventListener('click', nextStageOrRetry);
+
+    window.onload = function() {
+      loadStage(0);
+    };
+  </script>
+</body>
+</html>
