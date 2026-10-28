@@ -36,6 +36,10 @@ h1 span{display:inline-block;animation:wob 2.4s ease-in-out infinite}
 .lv.lock{opacity:.55;filter:grayscale(.8);cursor:not-allowed}
 .lv.done{background:#fffbe0;outline:3px solid var(--sun)}
 .foot{text-align:center;margin-top:22px}
+.who{text-align:center;margin-bottom:10px;font-size:1.25rem}
+.who .btn{padding:3px 12px;font-size:.9rem;box-shadow:0 3px 0 #d9a900;margin-left:6px}
+.box p{margin:6px 0}.pl{margin:3px}
+.box input{font:inherit;font-size:1.3rem;font-weight:700;text-align:center;border:4px solid var(--ink);border-radius:16px;padding:6px 10px;width:100%;margin:8px 0;color:var(--ink);user-select:text;-webkit-user-select:text}
 .foot button{background:none;text-decoration:underline;font-size:.95rem;opacity:.7}
 /* game */
 .top{display:flex;align-items:center;gap:8px;justify-content:space-between}
@@ -81,13 +85,14 @@ background:radial-gradient(circle at 12% 30%,#7a5a3a 0 22px,transparent 24px),ra
 <div id="map" class="screen">
   <h1><span>🧹</span> Bersih-Bersih Rumah <span>✨</span></h1>
   <p class="sub">Seret barang ke tempat yang benar. Yuk bersihkan 20 ruangan!</p>
+  <div class="who">👤 <b id="un"></b><button class="btn" id="chg">Ganti pemain</button></div>
   <div class="total"><b id="tt"></b><div class="bar"><i id="tb"></i></div></div>
   <div class="map" id="grid"></div>
-  <div class="foot"><button id="reset">Hapus semua progres</button></div>
+  <div class="foot"><button id="reset">Hapus progres pemain ini</button></div>
 </div>
 
 <div id="game" class="screen hidden">
-  <div class="top"><button class="btn" id="back">🏠 Peta</button><div class="t" id="gt"></div><button class="btn" id="redo">🔄</button></div>
+  <div class="top"><button class="btn" id="back">🏠 Peta</button><div class="t" id="gt"></div><button class="btn" id="redo">🔄 Ulangi</button></div>
   <div id="prog"><span id="pt"></span><div class="bar"><i id="pb"></i></div></div>
   <div class="hint">👆 Baca namanya, lalu seret ke tempatnya! Yang segar masuk kulkas, yang bekas masuk tempat sampah.</div>
   <div class="zones" id="zones"></div>
@@ -124,9 +129,14 @@ const R=[
 ['Aula Sekolah','🎭','#ffd8a8','bola:⚽,🏐,🏀;tas:🎒,👜;sepatu:👟,🥾;sampah:🥤,🍬'],
 ['Rumah Besar','🏠','#ffe066','lemari:👕,👔;mainan:🧸,🚗;rak:📚,📖;piring:🍽️,🥄;sepatu:👟,👠;sampah:🍌,🥤,🧻']
 ];
-const $=s=>document.querySelector(s), KEY='bersihkan-progres-v1';
-let P={};try{P=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){}
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(P))}catch(e){}};
+const $=s=>document.querySelector(s), KEY='bersihkan-v2';
+let DB={cur:'',users:{}},P={};
+try{DB=JSON.parse(localStorage.getItem(KEY))||DB}catch(e){}
+if(DB.users[DB.cur])P=DB.users[DB.cur].p;
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(DB))}catch(e){}};
+const esc=t=>t.replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
+const nameNow=()=>(DB.users[DB.cur]||{}).name||'';
+function setUser(n){const k='p_'+n.toLowerCase();DB.users[k]=DB.users[k]||{name:n,p:{}};DB.cur=k;P=DB.users[k].p;save()}
 const rng=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
 const parse=i=>{const zk=[],items=[];R[i][3].split(';').forEach(p=>{const[k,v]=p.split(':');zk.push(k);v.split(',').forEach(e=>items.push({e,k}))});
  const r=rng(i+7);for(let j=items.length-1;j>0;j--){const m=Math.floor(r()*(j+1));[items[j],items[m]]=[items[m],items[j]]}
@@ -136,11 +146,11 @@ const stars=n=>'⭐'.repeat(n)+'☆'.repeat(3-n);
 let ac;const beep=(f,d=.12)=>{try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=f;o.type='triangle';g.gain.value=.12;g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+d);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}};
 
 function renderMap(){
- const g=$('#grid');g.innerHTML='';let tl=0,ti=0,td=0;
- R.forEach((r,i)=>{const n=i+1,p=P[n]||{},t=total(i),d=(p.placed||[]).length,open=n==1||(P[n-1]&&P[n-1].complete);
-  ti+=t;td+=p.complete?t:d;if(p.complete)tl++;
-  const c=document.createElement('button');c.className='lv'+(p.complete?' done':'')+(open?'':' lock');
-  c.innerHTML=`<span class="n">${n}</span><div class="e">${open?r[1]:'🔒'}</div><div class="nm">${r[0]}</div><div class="bar"><i style="width:${d/t*100}%"></i></div><div class="pc">${p.complete?'Bersih 100%':Math.round(d/t*100)+'% bersih'}</div><div class="st">${p.complete?stars(p.stars||1):''}</div>`;
+ $('#un').textContent=nameNow();const g=$('#grid');g.innerHTML='';let tl=0,ti=0,td=0;
+ R.forEach((r,i)=>{const n=i+1,p=P[n]||{},t=total(i),d=p.cleared?t:(p.placed||[]).length,open=n==1||(P[n-1]&&P[n-1].cleared);
+  ti+=t;td+=d;if(p.cleared)tl++;
+  const c=document.createElement('button');c.className='lv'+(p.cleared?' done':'')+(open?'':' lock');
+  c.innerHTML=`<span class="n">${n}</span><div class="e">${open?r[1]:'🔒'}</div><div class="nm">${r[0]}</div><div class="bar"><i style="width:${d/t*100}%"></i></div><div class="pc">${p.cleared?'Bersih 100%':Math.round(d/t*100)+'% bersih'}</div><div class="st">${p.cleared?stars(p.stars||1):''}</div>`;
   c.onclick=()=>{open?start(i):beep(180,.2)};g.appendChild(c)});
  $('#tt').textContent=`🏆 ${tl} dari 20 ruangan bersih · ${td}/${ti} barang rapi`;
  $('#tb').style.width=(td/ti*100)+'%';
@@ -149,7 +159,7 @@ function renderMap(){
 let S;
 function start(i,fresh){
  const n=i+1,{zk,items}=parse(i);
- if(fresh||!P[n]||P[n].complete)P[n]={placed:[],mistakes:0,stars:(P[n]||{}).stars||0,complete:false};
+ if(fresh||!P[n]||P[n].complete){P[n]={placed:[],mistakes:0,stars:(P[n]||{}).stars||0,cleared:!!(P[n]||{}).cleared,complete:false};save()}
  S={i,n,items,mistakes:P[n].mistakes||0,placed:new Set(P[n].placed)};
  $('#map').classList.add('hidden');$('#game').classList.remove('hidden');$('#modal').classList.add('hidden');
  $('#gt').textContent=`Level ${n}: ${R[i][1]} ${R[i][0]}`;
@@ -165,7 +175,7 @@ function start(i,fresh){
 }
 function upd(persist=true){
  const t=S.items.length,d=S.placed.size;
- $('#pt').textContent=`🧼 Kebersihan: ${d} dari ${t} barang sudah rapi (${Math.round(d/t*100)}%)`;
+ $('#pt').textContent=`🧼 ${nameNow()}: ${d} dari ${t} barang sudah rapi (${Math.round(d/t*100)}%)`;
  $('#pb').style.width=(d/t*100)+'%';$('#dirt').style.opacity=.45*(1-d/t);
  $('#floor').classList.toggle('clean',d==t);
  if(persist){P[S.n]=Object.assign(P[S.n]||{},{placed:[...S.placed],mistakes:S.mistakes,total:t});save()}
@@ -199,19 +209,34 @@ window.addEventListener('pointercancel',()=>{if(D){D.it.classList.remove('drag')
 
 function win(){
  const m=S.mistakes,st=m<=1?3:m<=3?2:1,p=P[S.n];
- p.complete=true;p.stars=Math.max(p.stars||0,st);p.placed=[...S.placed];save();
+ p.complete=true;p.cleared=true;p.stars=Math.max(p.stars||0,st);p.placed=[...S.placed];save();
  const last=S.i==19,msg=['Hebat sekali!','Ruangan jadi bersih dan rapi!','Kamu pahlawan kebersihan!'][st-1];
- $('#modal').innerHTML=`<div class="box"><div style="font-size:3rem">${R[S.i][1]}✨</div><h2>${last?'Semua ruangan bersih!':'Ruangan bersih!'}</h2><div class="big">${stars(st)}</div><p><b>${msg}</b><br>Salah taruh: ${m} kali</p>${last?'':'<button class="btn g" id="nx">Level berikutnya ▶</button>'}<button class="btn" id="mp">🏠 Peta</button></div>`;
+ $('#modal').innerHTML=`<div class="box"><div style="font-size:3rem">${R[S.i][1]}✨</div><h2>${last?'Hebat, '+esc(nameNow())+'! Semua ruangan bersih!':'Hore, '+esc(nameNow())+'! Ruangan bersih!'}</h2><div class="big">${stars(st)}</div><p><b>${msg}</b><br>Salah taruh: ${m} kali</p>${last?'':'<button class="btn g" id="nx">Level berikutnya ▶</button>'}<button class="btn" id="rp">🔄 Main lagi</button><button class="btn" id="mp">🏠 Peta</button></div>`;
  $('#modal').classList.remove('hidden');
  [0,120,240,360].forEach(t=>setTimeout(()=>beep(520+t*2),t));
  for(let k=0;k<30;k++){const c=document.createElement('div');c.className='cf';c.textContent=['⭐','🎉','✨','🌟','🎈'][k%5];c.style.left=Math.random()*100+'vw';c.style.animationDuration=2+Math.random()*2+'s';document.body.appendChild(c);setTimeout(()=>c.remove(),4500)}
- $('#mp').onclick=toMap;const nx=$('#nx');if(nx)nx.onclick=()=>start(S.i+1);
+ $('#mp').onclick=toMap;$('#rp').onclick=()=>start(S.i,true);const nx=$('#nx');if(nx)nx.onclick=()=>start(S.i+1);
 }
 function toMap(){$('#modal').classList.add('hidden');$('#game').classList.add('hidden');$('#map').classList.remove('hidden');renderMap();window.scrollTo(0,0)}
 $('#back').onclick=toMap;
-$('#redo').onclick=()=>start(S.i,true);
-$('#reset').onclick=()=>{if(confirm('Hapus semua progres dan mulai dari awal?')){P={};save();renderMap()}};
+function ask(em,h,txt,yes,fn){const m=$('#modal');
+ m.innerHTML=`<div class="box"><div style="font-size:3rem">${em}</div><h2>${h}</h2><p>${txt}</p><button class="btn g" id="y">${yes}</button><button class="btn" id="n">Batal</button></div>`;
+ m.classList.remove('hidden');$('#y').onclick=()=>{m.classList.add('hidden');fn()};$('#n').onclick=()=>m.classList.add('hidden')}
+function who(){
+ const us=Object.values(DB.users),m=$('#modal');
+ m.innerHTML=`<div class="box"><div style="font-size:3rem">👋</div><h2>${us.length?'Siapa yang main?':'Halo! Siapa namamu?'}</h2>${us.length?'<p>Pilih namamu:</p>'+us.map(u=>`<button class="btn g pl" data-n="${esc(u.name)}">${esc(u.name)}</button>`).join('')+'<p>atau tulis nama baru:</p>':''}<input id="nn" maxlength="12" placeholder="Tulis namamu" autocomplete="off"><br><button class="btn" id="go">Mulai main ▶</button>${DB.users[DB.cur]?'<button class="btn" id="cx">Batal</button>':''}</div>`;
+ m.classList.remove('hidden');
+ const pick=n=>{setUser(n);m.classList.add('hidden');renderMap();beep(700)};
+ m.querySelectorAll('.pl').forEach(b=>b.onclick=()=>pick(b.dataset.n));
+ $('#go').onclick=()=>{const n=$('#nn').value.trim().replace(/\s+/g,' ');if(n)pick(n);else{$('#nn').focus();beep(200,.2)}};
+ $('#nn').onkeydown=e=>{if(e.key==='Enter')$('#go').click()};
+ const cx=$('#cx');if(cx)cx.onclick=()=>m.classList.add('hidden');
+}
+$('#redo').onclick=()=>ask('🔄','Ulangi level ini?','Semua barang kembali berantakan. Bintang terbaikmu tetap aman.','Ya, ulangi',()=>start(S.i,true));
+$('#reset').onclick=()=>ask('🧽','Hapus progres?','Semua progres '+esc(nameNow())+' akan dihapus dan mulai dari level 1.','Ya, hapus',()=>{Object.keys(P).forEach(k=>delete P[k]);save();renderMap()});
+$('#chg').onclick=who;
 renderMap();
+if(!DB.users[DB.cur])who();
 </script>
 </body>
 </html>
