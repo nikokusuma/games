@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hero Stats Lab - Streamlined Edition</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Rajdhani', 'sans-serif'],
+                        code: ['Fira Code', 'monospace']
+                    },
+                    colors: {
+                        cyber: {
+                            bg: '#0B0F19',
+                            card: '#111827',
+                            border: '#1F2937',
+                            accent: '#06B6D4',
+                            string: '#38BDF8',
+                            number: '#10B981',
+                            boolean: '#F59E0B'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #0B0F19;
+            color: #E5E7EB;
+            font-family: 'Rajdhani', sans-serif;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(6, 182, 212, 0.12) 0%, transparent 60%),
+                linear-gradient(to bottom, rgba(17, 24, 39, 0.8), rgba(11, 15, 25, 1));
+            min-height: 100vh;
+        }
+
+        /* Custom Lightweight Scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111827;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1F2937;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #06B6D4;
+        }
+
+        /* Streamlined Code Line Inputs */
+        .code-input-row {
+            font-family: 'Fira Code', monospace;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(31, 41, 55, 0.8);
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+        }
+        .code-input-row:focus-within {
+            border-color: #06B6D4;
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        /* Animations */
+        @keyframes float-up {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-30px) scale(1.15); }
+        }
+        .dmg-popup {
+            position: absolute;
+            animation: float-up 0.75s ease-out forwards;
+            font-weight: 800;
+            font-size: 1.25rem;
+            text-shadow: 0 0 4px rgba(0,0,0,0.9);
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 12px rgba(6, 182, 212, 0.4); }
+            50% { box-shadow: 0 0 20px rgba(6, 182, 212, 0.7); }
+        }
+        .glow-active {
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+        .animate-shake {
+            animation: shake 0.35s ease-in-out;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-slate-100">
+
+    <!-- HEADER / NAVIGATION -->
+    <header class="border-b border-gray-800 bg-gray-900/80 backdrop-blur sticky top-0 z-40 py-2.5">
+        <div class="max-w-7xl mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500 flex items-center justify-center text-cyan-400 font-bold text-base">
+                    <i class="fa-solid fa-code"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 leading-none">HERO STATS LAB</h1>
+                    <p class="text-[10px] text-gray-400">Streamlined Variable Studio & Strategy Arena</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <div class="bg-gray-800/80 px-3 py-1 rounded-full border border-gray-700 flex items-center gap-2 text-xs">
+                    <span class="text-gray-400 font-semibold uppercase text-[10px]">Level:</span>
+                    <span id="navCurrentLevel" class="text-cyan-400 font-bold">Lvl 1 / 50</span>
+                </div>
+                
+                <button id="soundToggleBtn" onclick="toggleSound()" class="text-gray-400 hover:text-cyan-400 transition" title="Toggle Sound">
+                    <i class="fa-solid fa-volume-high text-lg" id="soundIcon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN DASHBOARD (COMPACT SPLIT LAYOUT) -->
+    <main class="max-w-7xl mx-auto px-4 py-4 flex-grow w-full grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+        <!-- LEFT PANEL: LEVEL SELECTOR + COMPACT CODE SCRATCHPAD (5 Cols) -->
+        <div class="lg:col-span-5 flex flex-col gap-4">
+            
+            <!-- LEVEL SELECTOR & BRIEFING -->
+            <div class="bg-gray-900/80 border border-gray-800 rounded-xl p-3.5 backdrop-blur shadow-md flex flex-col gap-2.5">
+                <div class="flex justify-between items-center">
+                    <h2 class="font-bold text-sm text-gray-200 flex items-center gap-1.5">
+                        <i class="fa-solid fa-map-location-dot text-cyan-400"></i> Peta Level (1 - 50)
+                    </h2>
+                    <span id="levelProgressText" class="text-[10px] text-cyan-400 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/50">1 / 50 Unlocked</span>
+                </div>
+
+                <!-- 50 Level Selector Grid -->
+                <div id="levelGrid" class="grid grid-cols-10 gap-1 max-h-24 overflow-y-auto p-1 bg-gray-950/60 rounded-lg border border-gray-800/80">
+                    <!-- Level Buttons injected via JS -->
+                </div>
+
+                <!-- Briefing Banner -->
+                <div class="bg-cyan-950/30 border border-cyan-800/40 rounded-lg p-2.5 text-xs">
+                    <div class="flex justify-between items-center mb-1">
+                        <span id="levelTitle" class="font-bold text-cyan-300">Level 1: Latihan Dasar</span>
+                        <span id="levelTargetType" class="text-[10px] bg-red-900/40 border border-red-700/50 text-red-300 px-1.5 py-0.5 rounded uppercase">PHYSICAL</span>
+                    </div>
+                    <p id="levelDescription" class="text-[11px] text-gray-300 leading-tight">Monster dasar. Sesuaikan HP & ATK untuk menang.</p>
+
+                    <div id="levelConstraints" class="mt-1.5 pt-1.5 border-t border-cyan-900/40 text-[10px] text-amber-300 font-semibold space-y-0.5">
+                        <!-- Dynamic Constraints -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- STREAMLINED CODE CONSOLE / SCRATCHPAD -->
+            <div class="bg-gray-900/80 border border-gray-800 rounded-xl p-3.5 backdrop-blur shadow-md flex flex-col gap-3">
+                
+                <!-- Header & Point Budget Tracker -->
+                <div class="flex justify-between items-center border-b border-gray-800 pb-2">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-terminal text-cyan-400"></i>
+                        <h2 class="font-bold text-sm text-cyan-300">Code Scratchpad</h2>
+                    </div>
+
+                    <!-- Compact Budget Badge -->
+                    <div class="bg-gray-950 border border-cyan-800/70 px-3 py-1 rounded-lg flex items-center gap-2">
+                        <i class="fa-solid fa-coins text-amber-400 text-xs"></i>
+                        <span class="text-[11px] font-code font-bold" id="budgetDisplay">
+                            Points: <span id="pointsUsed" class="text-cyan-400">0</span> / <span id="pointsMax" class="text-gray-400">10</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Quick Action Buttons -->
+                <div class="flex flex-wrap items-center gap-1.5 text-[11px] font-code">
+                    <button onclick="snippetAddHp(20)" class="px-2 py-1 bg-gray-800 hover:bg-emerald-950 border border-gray-700 hover:border-emerald-500 text-emerald-300 rounded transition">
+                        +20 HP
+                    </button>
+                    <button onclick="snippetAddAtk(5)" class="px-2 py-1 bg-gray-800 hover:bg-amber-950 border border-gray-700 hover:border-amber-500 text-amber-300 rounded transition">
+                        +5 ATK
+                    </button>
+                    <button onclick="snippetToggleFly()" class="px-2 py-1 bg-gray-800 hover:bg-cyan-950 border border-gray-700 hover:border-cyan-500 text-cyan-300 rounded transition">
+                        Fly: <span id="btnFlyState">OFF</span>
+                    </button>
+                    <button onclick="snippetToggleShield()" class="px-2 py-1 bg-gray-800 hover:bg-purple-950 border border-gray-700 hover:border-purple-500 text-purple-300 rounded transition">
+                        Shield: <span id="btnShieldState">OFF</span>
+                    </button>
+                    <button onclick="resetCodeToTemplate()" class="px-2 py-1 bg-gray-800 hover:bg-red-950 border border-gray-700 hover:border-red-500 text-red-300 rounded transition ml-auto" title="Reset Code">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                </div>
+
+                <!-- 5 COMPACT VARIABLE EDITABLE LINES -->
+                <div class="space-y-1.5">
+                    <!-- Line 1: namaHero -->
+                    <div class="code-input-row px-2.5 py-1 flex items-center gap-2 text-xs">
+                        <span class="text-purple-400 font-semibold text-[11px]">let</span>
+                        <span class="text-cyan-300 text-[11px]">namaHero</span>
+                        <span class="text-gray-500">=</span>
+                        <span class="text-cyan-400 font-semibold">"</span>
+                        <input type="text" id="varNameInput" value="CyberKnight" oninput="liveUpdateVariables()" 
+                            class="bg-transparent border-none outline-none font-code text-cyan-300 flex-1 min-w-0 text-xs py-0.5">
+                        <span class="text-cyan-400 font-semibold">"</span><span class="text-gray-500">;</span>
+                    </div>
+
+                    <!-- Line 2: levelDarah -->
+                    <div class="code-input-row px-2.5 py-1 flex items-center justify-between gap-2 text-xs">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="text-purple-400 font-semibold text-[11px]">let</span>
+                            <span class="text-cyan-300 text-[11px]">levelDarah</span>
+                            <span class="text-gray-500">=</span>
+                            <input type="number" id="varHpInput" value="100" min="10" step="10" oninput="liveUpdateVariables()" 
+                                class="bg-transparent border-none outline-none font-code text-emerald-400 font-bold w-20 text-xs py-0.5">
+                            <span class="text-gray-500">;</span>
+                        </div>
+                        <span class="text-[10px] text-gray-500 font-code truncate">(HP)</span>
+                    </div>
+
+                    <!-- Line 3: powerAttack -->
+                    <div class="code-input-row px-2.5 py-1 flex items-center justify-between gap-2 text-xs">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="text-purple-400 font-semibold text-[11px]">let</span>
+                            <span class="text-cyan-300 text-[11px]">powerAttack</span>
+                            <span class="text-gray-500">=</span>
+                            <input type="number" id="varAtkInput" value="10" min="1" step="1" oninput="liveUpdateVariables()" 
+                                class="bg-transparent border-none outline-none font-code text-amber-400 font-bold w-20 text-xs py-0.5">
+                            <span class="text-gray-500">;</span>
+                        </div>
+                        <span class="text-[10px] text-gray-500 font-code truncate">(ATK)</span>
+                    </div>
+
+                    <!-- Line 4: bisaTerbang -->
+                    <div class="code-input-row px-2.5 py-1 flex items-center justify-between gap-2 text-xs">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="text-purple-400 font-semibold text-[11px]">let</span>
+                            <span class="text-cyan-300 text-[11px]">bisaTerbang</span>
+                            <span class="text-gray-500">=</span>
+                            <select id="varFlyInput" onchange="liveUpdateVariables()" class="bg-gray-900 text-amber-400 font-bold border border-gray-700 rounded px-1.5 py-0.5 text-xs outline-none">
+                                <option value="false">false</option>
+                                <option value="true">true</option>
+                            </select>
+                            <span class="text-gray-500">;</span>
+                        </div>
+                        <span id="flyCostBadge" class="text-[10px] text-gray-400 font-code">(5 Pts)</span>
+                    </div>
+
+                    <!-- Line 5: perisaiAktif -->
+                    <div class="code-input-row px-2.5 py-1 flex items-center justify-between gap-2 text-xs">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="text-purple-400 font-semibold text-[11px]">let</span>
+                            <span class="text-cyan-300 text-[11px]">perisaiAktif</span>
+                            <span class="text-gray-500">=</span>
+                            <select id="varShieldInput" onchange="liveUpdateVariables()" class="bg-gray-900 text-amber-400 font-bold border border-gray-700 rounded px-1.5 py-0.5 text-xs outline-none">
+                                <option value="false">false</option>
+                                <option value="true">true</option>
+                            </select>
+                            <span class="text-gray-500">;</span>
+                        </div>
+                        <span id="shieldCostBadge" class="text-[10px] text-gray-400 font-code">(5 Pts)</span>
+                    </div>
+                </div>
+
+                <!-- CONSOLE LOG & VALIDATOR STATUS -->
+                <div class="bg-gray-950 rounded-lg p-2.5 border border-gray-800 font-code text-[11px] space-y-1">
+                    <div class="flex justify-between items-center text-gray-400 border-b border-gray-800/80 pb-1">
+                        <span class="flex items-center gap-1.5 text-[10px] font-semibold">
+                            <i class="fa-solid fa-microchip text-purple-400"></i> Code Validator Status
+                        </span>
+                        <span id="consoleStatus" class="text-[10px] text-emerald-400 font-bold uppercase">● Valid</span>
+                    </div>
+                    <div id="terminalConsole" class="text-gray-300 min-h-[32px] flex items-center">
+                        <span class="text-emerald-400">// Variabel valid. Siap bertanding!</span>
+                    </div>
+                </div>
+
+                <!-- HERO AVATAR PICKER (MINI) -->
+                <div class="pt-1 border-t border-gray-800">
+                    <div class="text-[11px] font-semibold text-gray-400 mb-1.5 flex justify-between items-center">
+                        <span>Hero Class Avatar:</span>
+                        <span id="avatarNameBadge" class="text-cyan-400">Cyber Ninja</span>
+                    </div>
+                    <div class="grid grid-cols-8 gap-1" id="avatarSelector">
+                        <!-- Avatars Injected JS -->
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT PANEL: BATTLE ARENA STAGE & LOGS (7 Cols) -->
+        <div class="lg:col-span-7 flex flex-col gap-4">
+
+            <!-- BATTLE ARENA CARD -->
+            <div class="bg-gray-900/80 border border-gray-800 rounded-xl p-4 backdrop-blur shadow-md flex flex-col gap-3">
+                
+                <!-- Arena Top Bar -->
+                <div class="flex justify-between items-center border-b border-gray-800 pb-2.5">
+                    <h2 class="font-bold text-base text-red-400 flex items-center gap-2">
+                        <i class="fa-solid fa-swords"></i> Real-time Battle Arena
+                    </h2>
+                    <span id="battleStatusBadge" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-gray-800 text-gray-400 border border-gray-700">
+                        Siap Bertarung
+                    </span>
+                </div>
+
+                <!-- Visual Arena Canvas Stage -->
+                <div id="battleStage" class="w-full h-56 bg-slate-950 rounded-xl border border-gray-800 relative flex items-center justify-between px-6 sm:px-12 overflow-hidden bg-cover bg-center">
+                    
+                    <!-- HERO GRAPHIC CARD -->
+                    <div id="heroCard" class="flex flex-col items-center gap-1.5 transition-all duration-300 z-10 relative">
+                        <!-- Flying Indicator -->
+                        <div id="heroFlyBadge" class="hidden text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full animate-bounce font-code">
+                            <i class="fa-solid fa-feather"></i> FLYING
+                        </div>
+                        
+                        <!-- Avatar Display Frame -->
+                        <div class="relative">
+                            <div id="heroShieldGlow" class="hidden absolute -inset-2 rounded-full bg-purple-500/30 blur-md animate-pulse"></div>
+                            <div id="heroAvatarDisplay" class="w-20 h-20 rounded-2xl bg-cyan-950/80 border-2 border-cyan-400 flex items-center justify-center text-4xl text-cyan-300 shadow-lg relative bg-gray-900">
+                                <i id="heroAvatarIcon" class="fa-solid fa-user-ninja"></i>
+                            </div>
+                        </div>
+
+                        <!-- Name & Health Bar -->
+                        <div class="w-32 text-center">
+                            <div id="heroNameDisplay" class="font-bold text-xs text-cyan-300 truncate">CyberKnight</div>
+                            <div class="w-full bg-gray-900 h-3 rounded-full border border-gray-700 p-0.5 mt-1 relative overflow-hidden">
+                                <div id="heroHpBar" class="bg-gradient-to-r from-emerald-500 to-green-400 h-full rounded-full transition-all duration-300" style="width: 100%;"></div>
+                            </div>
+                            <div class="text-[10px] font-code text-emerald-400 font-semibold mt-0.5">
+                                <span id="heroCurrentHp">100</span> / <span id="heroMaxHp">100</span> HP
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VS CENTER BADGE -->
+                    <div class="flex flex-col items-center z-10">
+                        <span class="font-bold text-xl italic text-gray-600 tracking-widest">VS</span>
+                        <div id="turnIndicator" class="text-[10px] font-code text-cyan-400 mt-1 hidden">BATTLE...</div>
+                    </div>
+
+                    <!-- MONSTER GRAPHIC CARD -->
+                    <div id="monsterCard" class="flex flex-col items-center gap-1.5 transition-all duration-300 z-10 relative">
+                        <!-- Monster Type Badge -->
+                        <div id="monsterTypeBadge" class="text-[10px] bg-red-950 text-red-300 border border-red-800 px-2 py-0.5 rounded-full font-code">
+                            PHYSICAL
+                        </div>
+
+                        <!-- Monster Graphic Frame -->
+                        <div class="w-20 h-20 rounded-2xl bg-red-950/40 border-2 border-red-600 flex items-center justify-center text-4xl text-red-400 shadow-lg bg-gray-900">
+                            <i id="monsterIcon" class="fa-solid fa-dragon"></i>
+                        </div>
+
+                        <!-- Name & Health Bar -->
+                        <div class="w-32 text-center">
+                            <div id="monsterNameDisplay" class="font-bold text-xs text-red-300 truncate">Goblin Scout</div>
+                            <div class="w-full bg-gray-900 h-3 rounded-full border border-gray-700 p-0.5 mt-1 relative overflow-hidden">
+                                <div id="monsterHpBar" class="bg-gradient-to-r from-red-600 to-amber-500 h-full rounded-full transition-all duration-300" style="width: 100%;"></div>
+                            </div>
+                            <div class="text-[10px] font-code text-red-400 font-semibold mt-0.5">
+                                <span id="monsterCurrentHp">50</span> / <span id="monsterMaxHp">50</span> HP
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- BATTLE BUTTON TRIGGER -->
+                <button id="btnStartBattle" onclick="executeBattleTrigger()" 
+                    class="w-full py-3 bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-bold text-base rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center gap-2 glow-active uppercase tracking-wider">
+                    <i class="fa-solid fa-play"></i> MULAI PERTANDINGAN
+                </button>
+            </div>
+
+            <!-- COMBAT LOG TERMINAL CARD -->
+            <div class="bg-gray-900/80 border border-gray-800 rounded-xl p-3.5 backdrop-blur shadow-md flex flex-col gap-2 flex-grow">
+                <div class="flex justify-between items-center border-b border-gray-800 pb-1.5">
+                    <span class="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-scroll text-amber-400"></i> Combat Event Log
+                    </span>
+                    <button onclick="clearCombatLog()" class="text-[10px] text-gray-500 hover:text-gray-300">Clear</button>
+                </div>
+
+                <div id="combatLog" class="bg-gray-950 rounded-lg p-2.5 border border-gray-800 font-code text-[11px] h-36 overflow-y-auto space-y-1 shadow-inner text-gray-300">
+                    <div class="text-gray-500 italic">// Konfigurasi variabel di sebelah kiri, lalu klik "MULAI PERTANDINGAN".</div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-gray-800 py-3 text-center text-[11px] text-gray-500">
+        Hero Stats Lab &copy; 2026 - Streamlined Coding Scratchpad & Strategy RPG.
+    </footer>
+
+    <!-- GAME ENGINE & LOGIC SCRIPT -->
+    <script>
+        /* ==========================================================================
+           1. GAME DATA & 50 LEVEL DEFINITIONS
+           ========================================================================== */
+        
+        const AVATARS = [
+            { id: 'ninja', icon: 'fa-user-ninja', name: 'Cyber Ninja' },
+            { id: 'wizard', icon: 'fa-hat-wizard', name: 'Code Mage' },
+            { id: 'cyborg', icon: 'fa-robot', name: 'Android MK-I' },
+            { id: 'valkyrie', icon: 'fa-shield-cat', name: 'Valkyrie' },
+            { id: 'superhero', icon: 'fa-mask', name: 'Meta Hero' },
+            { id: 'knight', icon: 'fa-user-shield', name: 'Paladin' },
+            { id: 'dragon', icon: 'fa-dragon', name: 'Draconic' },
+            { id: 'demon', icon: 'fa-ghost', name: 'Shadow Spectre' }
+        ];
+
+        function generate50Levels() {
+            const levels = [];
+            const monsterTypes = [
+                { name: 'Ground Shockwave', icon: 'fa-volcano', attackType: 'ground', desc: 'Serangan darat meledak! Blokir total damage jika bisaTerbang = true.' },
+                { name: 'Sniper Drone', icon: 'fa-crosshair', attackType: 'anti_air', desc: 'Musuh Udara! Hero Terbang (bisaTerbang = true) menerima 2.5x damage.' },
+                { name: 'Piercing Boss', icon: 'fa-bullseye', attackType: 'pierce', desc: 'Menembus Perisai! perisaiAktif = true tidak berpengaruh.' },
+                { name: 'Thorn Beast', icon: 'fa-dna', attackType: 'thorns', desc: 'Memantulkan damage jika ATK > Limit! Imbangi HP & ATK secukupnya.' },
+                { name: 'Speed Blaster', icon: 'fa-bolt', attackType: 'blitz', desc: 'Serangan Cepat Multi-Hit! perisaiAktif = true mengurangi 60% damage.' },
+                { name: 'Titan Golem', icon: 'fa-golem', attackType: 'heavy', desc: 'HP Monster tebal! Butuh powerAttack tinggi & HP memadai.' }
+            ];
+
+            for (let i = 1; i <= 50; i++) {
+                const budget = Math.floor(10 + (i * 3.5));
+                const typeObj = monsterTypes[(i - 1) % monsterTypes.length];
+                
+                let maxAtk = Math.floor(budget * 0.8);
+                let maxHp = Math.floor(budget * 25);
+                let hpRatio = 10;
+                let atkRatio = 2; 
+                let flyCost = 5;
+                let shieldCost = 5;
+                let flyLocked = false;
+                let shieldLocked = false;
+
+                let customNotes = [];
+
+                if (i === 1) {
+                    flyLocked = true;
+                    shieldLocked = true;
+                    maxAtk = 10;
+                    customNotes.push("bisaTerbang & perisaiAktif terkunci (harus false).");
+                } else if (typeObj.attackType === 'ground') {
+                    customNotes.push("Set bisaTerbang = true untuk menghindari damage darat.");
+                } else if (typeObj.attackType === 'anti_air') {
+                    customNotes.push("Set bisaTerbang = false (Musuh memiliki Anti-Air 2.5x damage).");
+                } else if (typeObj.attackType === 'pierce') {
+                    customNotes.push("perisaiAktif tidak berguna! Fokus HP & ATK.");
+                } else if (typeObj.attackType === 'thorns') {
+                    maxAtk = Math.floor(10 + (i * 0.8));
+                    customNotes.push(`JANGAN MAX ATK! Jika ATK > ${maxAtk}, musuh pantulkan 100% damage.`);
+                } else if (typeObj.attackType === 'blitz') {
+                    customNotes.push("perisaiAktif = true mengurangi 60% damage blitz musuh!");
+                }
+
+                const monsterHp = Math.floor(40 + Math.pow(i, 1.45) * 8);
+                const monsterAtk = Math.floor(6 + i * 2.8);
+
+                levels.push({
+                    level: i,
+                    title: `Level ${i}: ${typeObj.name}`,
+                    budget: budget,
+                    monster: {
+                        name: `${typeObj.name} MK-${i}`,
+                        icon: typeObj.icon,
+                        hp: monsterHp,
+                        atk: monsterAtk,
+                        type: typeObj.attackType
+                    },
+                    hpRatio: hpRatio,
+                    atkRatio: atkRatio,
+                    maxAtk: maxAtk,
+                    maxHp: maxHp,
+                    flyCost: flyCost,
+                    shieldCost: shieldCost,
+                    flyLocked: flyLocked,
+                    shieldLocked: shieldLocked,
+                    desc: typeObj.desc,
+                    customNotes: customNotes
+                });
+            }
+            return levels;
+        }
+
+        const GAME_LEVELS = generate50Levels();
+
+        /* ==========================================================================
+           2. STATE MANAGEMENT
+           ========================================================================== */
+        let state = {
+            unlockedLevel: 1,
+            currentLevelIndex: 0,
+            soundEnabled: true,
+            
+            heroName: "CyberKnight",
+            selectedAvatar: 'ninja',
+            heroHp: 100,
+            heroAtk: 10,
+            canFly: false,
+            shieldActive: false,
+
+            pointsUsed: 0,
+            inBattle: false
+        };
+
+        // Audio Context (Web Audio API)
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function playSynthSound(freq, type = 'sine', duration = 0.12) {
+            if (!state.soundEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new AudioCtx();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e){}
+        }
+
+        function toggleSound() {
+            state.soundEnabled = !state.soundEnabled;
+            const icon = document.getElementById('soundIcon');
+            if (state.soundEnabled) {
+                icon.className = 'fa-solid fa-volume-high text-lg';
+                playSynthSound(440, 'sine', 0.1);
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-lg text-red-400';
+            }
+        }
+
+        /* ==========================================================================
+           3. INITIALIZATION & LOCALSTORAGE
+           ========================================================================== */
+        window.onload = function() {
+            loadProgress();
+            renderAvatarOptions();
+            renderLevelGrid();
+            loadLevel(state.currentLevelIndex);
+        };
+
+        function saveProgress() {
+            try {
+                localStorage.setItem('hero_lab_unlocked', state.unlockedLevel);
+            } catch(e){}
+        }
+
+        function loadProgress() {
+            try {
+                const saved = localStorage.getItem('hero_lab_unlocked');
+                if (saved) {
+                    state.unlockedLevel = Math.min(50, Math.max(1, parseInt(saved)));
+                    state.currentLevelIndex = state.unlockedLevel - 1;
+                }
+            } catch(e){}
+        }
+
+        /* ==========================================================================
+           4. STREAMLINED LIVE VARIABLE VALIDATOR & BUDGET TRACKER
+           ========================================================================== */
+        function liveUpdateVariables() {
+            const lvl = GAME_LEVELS[state.currentLevelIndex];
+            
+            const nameInput = document.getElementById('varNameInput').value.trim() || "Hero";
+            const hpInput = parseInt(document.getElementById('varHpInput').value) || 0;
+            const atkInput = parseInt(document.getElementById('varAtkInput').value) || 0;
+            const flyInput = document.getElementById('varFlyInput').value === 'true';
+            const shieldInput = document.getElementById('varShieldInput').value === 'true';
+
+            // Point Budget Calculations
+            const hpPoints = Math.ceil(hpInput / lvl.hpRatio);
+            const atkPoints = Math.ceil(atkInput / lvl.atkRatio);
+            const flyCost = flyInput ? lvl.flyCost : 0;
+            const shieldCost = shieldInput ? lvl.shieldCost : 0;
+
+            const totalUsed = hpPoints + atkPoints + flyCost + shieldCost;
+            state.pointsUsed = totalUsed;
+
+            document.getElementById('pointsUsed').innerText = totalUsed;
+            document.getElementById('pointsMax').innerText = lvl.budget;
+
+            const consoleBox = document.getElementById('terminalConsole');
+            const consoleStatus = document.getElementById('consoleStatus');
+            const btnStart = document.getElementById('btnStartBattle');
+
+            // Quick button indicators
+            document.getElementById('btnFlyState').innerText = flyInput ? "ON" : "OFF";
+            document.getElementById('btnShieldState').innerText = shieldInput ? "ON" : "OFF";
+
+            let errors = [];
+
+            if (totalUsed > lvl.budget) {
+                errors.push(`Budget Terlampaui (${totalUsed}/${lvl.budget} Pts)! Kurangi HP, ATK, atau Skill.`);
+            }
+
+            if (lvl.flyLocked && flyInput) {
+                errors.push(`Skill 'bisaTerbang' terkunci pada level ini! Set ke false.`);
+            }
+
+            if (lvl.shieldLocked && shieldInput) {
+                errors.push(`Skill 'perisaiAktif' terkunci pada level ini! Set ke false.`);
+            }
+
+            if (errors.length > 0) {
+                document.getElementById('pointsUsed').className = "text-red-400 font-bold";
+                consoleStatus.className = "text-[10px] text-red-400 font-bold uppercase";
+                consoleStatus.innerText = "● Invalid Rule";
+                consoleBox.innerHTML = `<span class="text-red-400 font-semibold">${errors[0]}</span>`;
+                btnStart.disabled = true;
+                btnStart.classList.add('opacity-50', 'cursor-not-allowed');
+                return false;
+            }
+
+            // SUCCESS VALIDATION
+            state.heroName = nameInput;
+            state.heroHp = hpInput;
+            state.heroAtk = atkInput;
+            state.canFly = flyInput;
+            state.shieldActive = shieldInput;
+
+            document.getElementById('pointsUsed').className = "text-cyan-400";
+            consoleStatus.className = "text-[10px] text-emerald-400 font-bold uppercase";
+            consoleStatus.innerText = "● Valid";
+            consoleBox.innerHTML = `<span class="text-emerald-400">// Variabel valid. Penggunaan Poin: ${totalUsed}/${lvl.budget}.</span>`;
+
+            btnStart.disabled = false;
+            btnStart.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            updateHeroDisplay();
+            return true;
+        }
+
+        /* Quick Action Helper Buttons */
+        function snippetAddHp(amount) {
+            const currentHp = parseInt(document.getElementById('varHpInput').value) || 0;
+            document.getElementById('varHpInput').value = Math.max(10, currentHp + amount);
+            liveUpdateVariables();
+            playSynthSound(480, 'sine', 0.08);
+        }
+
+        function snippetAddAtk(amount) {
+            const currentAtk = parseInt(document.getElementById('varAtkInput').value) || 0;
+            document.getElementById('varAtkInput').value = Math.max(1, currentAtk + amount);
+            liveUpdateVariables();
+            playSynthSound(520, 'sine', 0.08);
+        }
+
+        function snippetToggleFly() {
+            const select = document.getElementById('varFlyInput');
+            select.value = select.value === 'true' ? 'false' : 'true';
+            liveUpdateVariables();
+            playSynthSound(580, 'triangle', 0.08);
+        }
+
+        function snippetToggleShield() {
+            const select = document.getElementById('varShieldInput');
+            select.value = select.value === 'true' ? 'false' : 'true';
+            liveUpdateVariables();
+            playSynthSound(620, 'triangle', 0.08);
+        }
+
+        function resetCodeToTemplate() {
+            const lvl = GAME_LEVELS[state.currentLevelIndex];
+            document.getElementById('varNameInput').value = "CyberKnight";
+            document.getElementById('varHpInput').value = Math.min(100, lvl.maxHp);
+            document.getElementById('varAtkInput').value = Math.min(10, lvl.maxAtk);
+            document.getElementById('varFlyInput').value = "false";
+            document.getElementById('varShieldInput').value = "false";
+            liveUpdateVariables();
+            playSynthSound(350, 'square', 0.1);
+        }
+
+        /* ==========================================================================
+           5. UI RENDERING & DISPLAY UPDATE
+           ========================================================================== */
+        function renderAvatarOptions() {
+            const container = document.getElementById('avatarSelector');
+            container.innerHTML = '';
+            
+            AVATARS.forEach(av => {
+                const isSelected = av.id === state.selectedAvatar;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `p-1.5 rounded-lg border flex flex-col items-center justify-center transition-all ${
+                    isSelected 
+                    ? 'border-cyan-400 bg-cyan-950/80 text-cyan-300 ring-1 ring-cyan-400' 
+                    : 'border-gray-800 bg-gray-950/50 text-gray-500 hover:text-gray-300 hover:border-gray-700'
+                }`;
+                btn.onclick = () => {
+                    state.selectedAvatar = av.id;
+                    document.getElementById('avatarNameBadge').innerText = av.name;
+                    renderAvatarOptions();
+                    updateHeroDisplay();
+                    playSynthSound(500, 'sine', 0.06);
+                };
+
+                btn.innerHTML = `<i class="fa-solid ${av.icon} text-sm"></i>`;
+                container.appendChild(btn);
+            });
+        }
+
+        function renderLevelGrid() {
+            const grid = document.getElementById('levelGrid');
+            grid.innerHTML = '';
+
+            for (let i = 1; i <= 50; i++) {
+                const isUnlocked = i <= state.unlockedLevel;
+                const isCurrent = (i - 1) === state.currentLevelIndex;
+                
+                const btn = document.createElement('button');
+                btn.className = `h-6 rounded font-code font-bold text-[10px] flex items-center justify-center border transition-all ${
+                    isCurrent 
+                        ? 'border-cyan-400 bg-cyan-500/30 text-cyan-300 ring-1 ring-cyan-400'
+                        : isUnlocked
+                            ? 'border-gray-700 bg-gray-800/80 text-gray-300 hover:bg-gray-700 hover:border-cyan-500/50'
+                            : 'border-gray-900 bg-gray-950 text-gray-700 cursor-not-allowed opacity-50'
+                }`;
+                
+                if (isUnlocked) {
+                    btn.innerHTML = i;
+                    btn.onclick = () => {
+                        if (state.inBattle) return;
+                        state.currentLevelIndex = i - 1;
+                        renderLevelGrid();
+                        loadLevel(state.currentLevelIndex);
+                        playSynthSound(380, 'triangle', 0.08);
+                    };
+                } else {
+                    btn.innerHTML = `<i class="fa-solid fa-lock text-[8px]"></i>`;
+                }
+
+                grid.appendChild(btn);
+            }
+
+            document.getElementById('navCurrentLevel').innerText = `Lvl ${state.currentLevelIndex + 1} / 50`;
+            document.getElementById('levelProgressText').innerText = `${state.unlockedLevel} / 50 Unlocked`;
+        }
+
+        function loadLevel(index) {
+            const lvl = GAME_LEVELS[index];
+
+            document.getElementById('levelTitle').innerText = lvl.title;
+            document.getElementById('levelTargetType').innerText = lvl.monster.type.toUpperCase();
+            document.getElementById('levelDescription').innerText = lvl.desc;
+
+            // Badges & Cost
+            document.getElementById('flyCostBadge').innerText = lvl.flyLocked ? "(LOCKED)" : `(${lvl.flyCost} Pts)`;
+            document.getElementById('shieldCostBadge').innerText = lvl.shieldLocked ? "(LOCKED)" : `(${lvl.shieldCost} Pts)`;
+
+            let constraintsHtml = `<div>• 1 Pts HP = ${lvl.hpRatio} HP | 1 Pts ATK = ${lvl.atkRatio} ATK</div>`;
+            if (lvl.customNotes.length > 0) {
+                lvl.customNotes.forEach(note => {
+                    constraintsHtml += `<div>• ${note}</div>`;
+                });
+            }
+            document.getElementById('levelConstraints').innerHTML = constraintsHtml;
+
+            // Setup Monster Card
+            document.getElementById('monsterNameDisplay').innerText = lvl.monster.name;
+            document.getElementById('monsterIcon').className = `fa-solid ${lvl.monster.icon}`;
+            document.getElementById('monsterCurrentHp').innerText = lvl.monster.hp;
+            document.getElementById('monsterMaxHp').innerText = lvl.monster.hp;
+            document.getElementById('monsterHpBar').style.width = '100%';
+
+            liveUpdateVariables();
+        }
+
+        function updateHeroDisplay() {
+            const avObj = AVATARS.find(a => a.id === state.selectedAvatar) || AVATARS[0];
+            document.getElementById('heroAvatarIcon').className = `fa-solid ${avObj.icon}`;
+            document.getElementById('heroNameDisplay').innerText = state.heroName;
+            
+            document.getElementById('heroCurrentHp').innerText = state.heroHp;
+            document.getElementById('heroMaxHp').innerText = state.heroHp;
+            document.getElementById('heroHpBar').style.width = '100%';
+
+            // Flying Badge & Shield Glow
+            const flyBadge = document.getElementById('heroFlyBadge');
+            const shieldGlow = document.getElementById('heroShieldGlow');
+
+            if (state.canFly) flyBadge.classList.remove('hidden');
+            else flyBadge.classList.add('hidden');
+
+            if (state.shieldActive) shieldGlow.classList.remove('hidden');
+            else shieldGlow.classList.add('hidden');
+        }
+
+        function logCombat(msg, type = 'normal') {
+            const combatLog = document.getElementById('combatLog');
+            const item = document.createElement('div');
+            
+            if (type === 'hero') item.className = 'text-cyan-400 font-semibold';
+            else if (type === 'monster') item.className = 'text-red-400 font-semibold';
+            else if (type === 'win') item.className = 'text-emerald-400 font-bold bg-emerald-950/40 p-1.5 rounded border border-emerald-800/50 mt-1';
+            else if (type === 'lose') item.className = 'text-red-400 font-bold bg-red-950/40 p-1.5 rounded border border-red-800/50 mt-1';
+            else item.className = 'text-gray-400';
+
+            item.innerHTML = msg;
+            combatLog.appendChild(item);
+            combatLog.scrollTop = combatLog.scrollHeight;
+        }
+
+        function clearCombatLog() {
+            document.getElementById('combatLog').innerHTML = `<div class="text-gray-500 italic">// Log dibersihkan.</div>`;
+        }
+
+        function spawnDamagePopup(targetEl, text, isCrit = false) {
+            const popup = document.createElement('div');
+            popup.className = `dmg-popup ${isCrit ? 'text-amber-400 scale-125' : 'text-red-500'}`;
+            popup.innerText = text;
+            
+            const rect = targetEl.getBoundingClientRect();
+            popup.style.left = `${rect.left + rect.width / 2 - 15}px`;
+            popup.style.top = `${rect.top}px`;
+            
+            document.body.appendChild(popup);
+            setTimeout(() => popup.remove(), 750);
+        }
+
+        /* ==========================================================================
+           6. BATTLE ENGINE (STRATEGIC RPG TURN-BASED MECHANICS)
+           ========================================================================== */
+        async function executeBattleTrigger() {
+            if (state.inBattle) return;
+            if (!liveUpdateVariables()) return;
+
+            state.inBattle = true;
+            const btnStart = document.getElementById('btnStartBattle');
+            btnStart.disabled = true;
+            btnStart.classList.add('opacity-50', 'cursor-not-allowed');
+
+            const statusBadge = document.getElementById('battleStatusBadge');
+            statusBadge.innerText = 'Bertarung...';
+            statusBadge.className = 'text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-800 animate-pulse';
+
+            document.getElementById('turnIndicator').classList.remove('hidden');
+
+            const lvl = GAME_LEVELS[state.currentLevelIndex];
+            const monster = lvl.monster;
+
+            clearCombatLog();
+            logCombat(`>>> PERTANDINGAN DIMULAI: ${state.heroName} VS ${monster.name}!`, 'normal');
+
+            let currentHeroHp = state.heroHp;
+            let currentMonsterHp = monster.hp;
+
+            const heroCard = document.getElementById('heroCard');
+            const monsterCard = document.getElementById('monsterCard');
+
+            let round = 1;
+
+            while (currentHeroHp > 0 && currentMonsterHp > 0) {
+                logCombat(`-- Turn ${round} --`, 'normal');
+                await new Promise(r => setTimeout(r, 600));
+
+                // --- HERO TURN ---
+                heroCard.classList.add('translate-x-4');
+                playSynthSound(400, 'sawtooth', 0.1);
+                
+                let heroDmg = state.heroAtk;
+                let isThornReflected = false;
+
+                // Thorns Mechanic check
+                if (monster.type === 'thorns' && state.heroAtk > lvl.maxAtk) {
+                    isThornReflected = true;
+                }
+
+                if (isThornReflected) {
+                    logCombat(`🛡️ ${monster.name} MEMANTULKAN ATTACK! (ATK > Limit ${lvl.maxAtk})`, 'monster');
+                    currentHeroHp -= heroDmg;
+                    if (currentHeroHp < 0) currentHeroHp = 0;
+                    
+                    spawnDamagePopup(heroCard, `-${heroDmg}`);
+                    heroCard.classList.add('animate-shake');
+                    setTimeout(() => heroCard.classList.remove('animate-shake'), 350);
+                } else {
+                    currentMonsterHp -= heroDmg;
+                    if (currentMonsterHp < 0) currentMonsterHp = 0;
+                    
+                    logCombat(`⚔️ ${state.heroName} menyerang ${monster.name} sebesar ${heroDmg} Damage!`, 'hero');
+                    spawnDamagePopup(monsterCard, `-${heroDmg}`);
+                    monsterCard.classList.add('animate-shake');
+                    setTimeout(() => monsterCard.classList.remove('animate-shake'), 350);
+                }
+
+                // Update Monster HP UI
+                const monsterHpPct = Math.max(0, (currentMonsterHp / monster.hp) * 100);
+                document.getElementById('monsterHpBar').style.width = `${monsterHpPct}%`;
+                document.getElementById('monsterCurrentHp').innerText = currentMonsterHp;
+
+                // Update Hero HP UI if reflected
+                const heroHpPct = Math.max(0, (currentHeroHp / state.heroHp) * 100);
+                document.getElementById('heroHpBar').style.width = `${heroHpPct}%`;
+                document.getElementById('heroCurrentHp').innerText = currentHeroHp;
+
+                heroCard.classList.remove('translate-x-4');
+
+                if (currentMonsterHp <= 0 || currentHeroHp <= 0) break;
+
+                await new Promise(r => setTimeout(r, 700));
+
+                // --- MONSTER TURN ---
+                monsterCard.classList.add('-translate-x-4');
+                playSynthSound(220, 'square', 0.15);
+
+                let monsterDmg = monster.atk;
+                let absorbed = false;
+
+                // Monster Type Calculations
+                if (monster.type === 'ground') {
+                    if (state.canFly) {
+                        monsterDmg = 0;
+                        absorbed = true;
+                        logCombat(`🕊️ ${state.heroName} TERBANG! Menerjang di atas Ground Shockwave (0 Damage).`, 'hero');
+                    }
+                } else if (monster.type === 'anti_air') {
+                    if (state.canFly) {
+                        monsterDmg = Math.floor(monsterDmg * 2.5);
+                        logCombat(`🎯 ${monster.name} menembak Hero Terbang! (2.5x Critical Damage!)`, 'monster');
+                    }
+                } else if (monster.type === 'blitz') {
+                    if (state.shieldActive) {
+                        monsterDmg = Math.floor(monsterDmg * 0.4);
+                        logCombat(`🛡️ perisaiAktif menahan serangan blitz (Damage berkurang 60%).`, 'hero');
+                    }
+                } else if (monster.type === 'pierce') {
+                    if (state.shieldActive) {
+                        logCombat(`⚠️ Serangan Menembus Perisai! Shield diabaikan.`, 'monster');
+                    }
+                } else {
+                    // Regular damage shield mitigation
+                    if (state.shieldActive) {
+                        monsterDmg = Math.max(1, monsterDmg - 8);
+                        logCombat(`🛡️ Perisai menyerap 8 Damage.`, 'hero');
+                    }
+                }
+
+                if (monsterDmg > 0) {
+                    currentHeroHp -= monsterDmg;
+                    if (currentHeroHp < 0) currentHeroHp = 0;
+                    logCombat(`🔥 ${monster.name} menyerang ${state.heroName} sebesar ${monsterDmg} Damage!`, 'monster');
+                    spawnDamagePopup(heroCard, `-${monsterDmg}`);
+                    heroCard.classList.add('animate-shake');
+                    setTimeout(() => heroCard.classList.remove('animate-shake'), 350);
+                }
+
+                // Update Hero HP UI
+                const updatedHeroPct = Math.max(0, (currentHeroHp / state.heroHp) * 100);
+                document.getElementById('heroHpBar').style.width = `${updatedHeroPct}%`;
+                document.getElementById('heroCurrentHp').innerText = currentHeroHp;
+
+                monsterCard.classList.remove('-translate-x-4');
+
+                round++;
+            }
+
+            document.getElementById('turnIndicator').classList.add('hidden');
+            await new Promise(r => setTimeout(r, 400));
+
+            // BATTLE RESULT
+            if (currentHeroHp > 0 && currentMonsterHp <= 0) {
+                playSynthSound(750, 'sine', 0.3);
+                logCombat(`🎉 KEMENANGAN! ${state.heroName} berhasil mengalahkan ${monster.name}!`, 'win');
+                statusBadge.innerText = 'VICTORY!';
+                statusBadge.className = 'text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-700 font-bold';
+
+                if (state.currentLevelIndex + 1 >= state.unlockedLevel && state.unlockedLevel < 50) {
+                    state.unlockedLevel++;
+                    saveProgress();
+                    renderLevelGrid();
+                    logCombat(`🔓 Level ${state.unlockedLevel} Terbuka!`, 'win');
+                }
+            } else {
+                playSynthSound(150, 'sawtooth', 0.4);
+                logCombat(`💀 KEKALAHAN! ${state.heroName} gugur. Evaluasi variabel kode Anda & coba lagi!`, 'lose');
+                statusBadge.innerText = 'DEFEATED';
+                statusBadge.className = 'text-xs font-semibold px-2.5 py-0.5 rounded-full bg-red-950 text-red-300 border border-red-700 font-bold';
+            }
+
+            state.inBattle = false;
+            btnStart.disabled = false;
+            btnStart.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    </script>
+</body>
+</html>
