@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Bersih-Bersih Rumah</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#2b2d5b;--sun:#ffd23f;--coral:#ff6b6b;--mint:#35c6b4;--sky:#bfe9ff;--card:#fff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{font-family:'Baloo 2','Comic Sans MS','Trebuchet MS',system-ui,sans-serif;color:var(--ink);background:linear-gradient(#bfe9ff,#e9f9ff 60%,#d9f5c9);background-attachment:fixed;user-select:none;-webkit-user-select:none}
+button{font:inherit;color:inherit;cursor:pointer;border:0}
+.btn{background:var(--sun);border-radius:999px;padding:8px 20px;font-weight:800;font-size:1.1rem;box-shadow:0 5px 0 #d9a900}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 #d9a900}
+.btn.g{background:var(--mint);box-shadow:0 5px 0 #1f9a8b;color:#fff}
+.screen{max-width:980px;margin:0 auto;padding:14px 14px 40px}
+.hidden{display:none!important}
+h1{margin:6px 0 0;font-size:clamp(2rem,6vw,3.2rem);font-weight:800;text-align:center;line-height:1.05}
+h1 span{display:inline-block;animation:wob 2.4s ease-in-out infinite}
+@keyframes wob{50%{transform:rotate(-8deg) scale(1.1)}}
+.sub{text-align:center;margin:4px 0 12px;font-size:1.1rem}
+.total{background:var(--card);border-radius:22px;padding:10px 16px;margin:0 auto 16px;max-width:560px;box-shadow:0 5px 0 rgba(43,45,91,.15)}
+.total b{font-size:1.1rem}
+.bar{height:20px;background:#e6edf5;border-radius:99px;overflow:hidden;position:relative;margin-top:4px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--mint),#8be28b);border-radius:99px;transition:width .4s}
+.map{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.lv{background:var(--card);border-radius:22px;padding:10px;text-align:center;box-shadow:0 6px 0 rgba(43,45,91,.15);position:relative;transition:transform .15s}
+.lv:hover{transform:translateY(-3px) rotate(-1deg)}
+.lv .n{position:absolute;top:-8px;left:-6px;background:var(--coral);color:#fff;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:800;box-shadow:0 3px 0 #c94a4a}
+.lv .e{font-size:2.6rem;line-height:1.1}
+.lv .nm{font-weight:700;line-height:1.1;min-height:2.2em;display:grid;place-items:center}
+.lv .bar{height:12px}
+.lv .st{font-size:1rem;letter-spacing:2px;min-height:1.4em}
+.lv .pc{font-size:.85rem;font-weight:700}
+.lv.lock{opacity:.55;filter:grayscale(.8);cursor:not-allowed}
+.lv.done{background:#fffbe0;outline:3px solid var(--sun)}
+.foot{text-align:center;margin-top:22px}
+.foot button{background:none;text-decoration:underline;font-size:.95rem;opacity:.7}
+/* game */
+.top{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.top .t{font-weight:800;font-size:clamp(1.1rem,4vw,1.7rem);text-align:center;flex:1}
+.top .btn{padding:6px 14px;font-size:1rem}
+#prog{background:var(--card);border-radius:18px;padding:6px 14px;margin:8px 0;font-weight:700;box-shadow:0 4px 0 rgba(43,45,91,.15)}
+.hint{text-align:center;font-weight:700;margin:2px 0 8px}
+.zones{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.zone{border-radius:20px;background:rgba(255,255,255,.85);border:4px dashed var(--ink);padding:6px;text-align:center;min-height:118px;transition:transform .15s,background .15s}
+.zone .ze{font-size:2.4rem;line-height:1}
+.zone .zl{font-weight:800;font-size:.95rem;line-height:1}
+.zone .got{font-size:1.25rem;min-height:1.5em;line-height:1.2}
+.zone.hot{background:#fff6b0;transform:scale(1.06)}
+.zone.ok{animation:pop .5s}
+.zone.bad{animation:shake .4s;border-color:var(--coral);background:#ffe1e1}
+@keyframes pop{40%{transform:scale(1.15);background:#c9f7d0}}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.floor{position:relative;margin-top:14px;border-radius:26px;padding:14px;min-height:210px;border:5px solid rgba(43,45,91,.25);overflow:hidden}
+.dirt{position:absolute;inset:0;pointer-events:none;transition:opacity .5s;
+background:radial-gradient(circle at 12% 30%,#7a5a3a 0 22px,transparent 24px),radial-gradient(circle at 70% 20%,#6b4e32 0 30px,transparent 32px),radial-gradient(circle at 40% 75%,#7a5a3a 0 26px,transparent 28px),radial-gradient(circle at 88% 70%,#6b4e32 0 20px,transparent 22px),radial-gradient(circle at 25% 85%,#8a6a46 0 16px,transparent 18px),radial-gradient(circle at 55% 45%,#8a6a46 0 14px,transparent 16px);opacity:.45}
+.slots{position:relative;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;z-index:2}
+.slot{width:74px;height:74px}
+.item{width:74px;height:74px;border-radius:20px;background:#fff;display:grid;place-items:center;font-size:2.7rem;cursor:grab;touch-action:none;box-shadow:0 5px 0 rgba(43,45,91,.25);transition:transform .15s}
+.item:hover{transform:scale(1.08)}
+.item.drag{position:fixed;z-index:99;pointer-events:none;transform:scale(1.2) rotate(6deg);box-shadow:0 14px 20px rgba(0,0,0,.25);transition:none}
+.spark{position:absolute;inset:0;display:none;place-items:center;font-size:4rem;z-index:3;pointer-events:none}
+.floor.clean .spark{display:grid;animation:pop .8s}
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(43,45,91,.55);display:grid;place-items:center;z-index:200;padding:16px}
+.box{background:#fff;border-radius:30px;padding:22px 26px;text-align:center;max-width:380px;animation:in .5s cubic-bezier(.2,1.6,.4,1)}
+@keyframes in{from{transform:scale(.3);opacity:0}}
+.box h2{margin:0;font-size:2rem}
+.big{font-size:3rem;letter-spacing:6px}
+.box .btn{margin:6px 4px}
+.cf{position:fixed;top:-40px;font-size:2rem;animation:fall linear forwards;z-index:300;pointer-events:none}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="map" class="screen">
+  <h1><span>🧹</span> Bersih-Bersih Rumah <span>✨</span></h1>
+  <p class="sub">Seret barang ke tempat yang benar. Yuk bersihkan 20 ruangan!</p>
+  <div class="total"><b id="tt"></b><div class="bar"><i id="tb"></i></div></div>
+  <div class="map" id="grid"></div>
+  <div class="foot"><button id="reset">Hapus semua progres</button></div>
+</div>
+
+<div id="game" class="screen hidden">
+  <div class="top"><button class="btn" id="back">🏠 Peta</button><div class="t" id="gt"></div><button class="btn" id="redo">🔄</button></div>
+  <div id="prog"><span id="pt"></span><div class="bar"><i id="pb"></i></div></div>
+  <div class="hint">👆 Pegang barang, lalu seret ke tempatnya!</div>
+  <div class="zones" id="zones"></div>
+  <div class="floor" id="floor"><div class="dirt" id="dirt"></div><div class="slots" id="slots"></div><div class="spark">✨🌟✨</div></div>
+</div>
+<div id="modal" class="modal hidden"></div>
+
+<script>
+const Z={sampah:['🗑️','Tempat Sampah'],lemari:['🚪','Lemari Baju'],rak:['📚','Rak Buku'],mainan:['🧸','Kotak Mainan'],piring:['🍽️','Rak Piring'],kulkas:['🧊','Kulkas'],sepatu:['👟','Rak Sepatu'],cucian:['🧺','Keranjang Baju'],tas:['🎒','Gantungan Tas'],alat:['🧰','Kotak Alat'],tanaman:['🪴','Pot Tanaman'],bola:['⚽','Kotak Bola'],pensil:['🥫','Tempat Pensil'],mandi:['🛁','Rak Mandi'],p3k:['🩺','Kotak P3K']};
+// [nama, emoji, warna lantai, "zona:barang,barang;zona:..."]
+const R=[
+['Kamar Tidur','🛏️','#ffd6e0','lemari:👕,👖;mainan:🧸,🚗;rak:📚;sampah:🍌,🧃'],
+['Ruang Tamu','🛋️','#ffe7b8','rak:📖,📰;mainan:🧩,⚽;sampah:🥤,🍬'],
+['Dapur','🍳','#fff3b0','piring:🍽️,🥄,🍴;kulkas:🥛,🧀,🍎;sampah:🍌'],
+['Kamar Mandi','🚿','#c9f0ff','cucian:👕,🧦;mandi:🧼,🪥,🧴;sampah:🧻'],
+['Ruang Makan','🍽️','#ffd9b8','piring:🥣,🥄,🍽️;kulkas:🧃,🍉;sampah:🥡,🍌'],
+['Ruang Belajar','📝','#e0d6ff','rak:📚,📘,📙;pensil:✏️,📏,🖍️;sampah:📄,🧻'],
+['Kamar Adik','🧸','#ffe0f0','mainan:🧸,🚂,🪀;lemari:🧦,👕;sampah:🍪,🍼'],
+['Teras','🏡','#d8f2c4','sepatu:👟,🥾,🩴;tanaman:🌱,🌷;sampah:🍂,🥤'],
+['Garasi','🚗','#dcdcdc','alat:🔧,🔨,🪛;bola:⚽,🏀,🎾;sampah:🥫,🧴'],
+['Taman','🌳','#c8f0b0','tanaman:🌷,🌻,🌱;alat:🧤,✂️;sampah:🍂,🍬,🥤'],
+['Kelas','🏫','#fff0b8','tas:🎒,👜;rak:📚,📕;pensil:✏️,🖍️;sampah:📄,🍬'],
+['Perpustakaan','📖','#ead9c0','rak:📚,📗,📘,📙;pensil:✏️,🖊️;tas:🎒;sampah:🧃,📄'],
+['Ruang Bermain','🎈','#ffd0d0','mainan:🧸,🪁,🎲;bola:⚽,🏀;rak:🎨,📖;sampah:🍭,🥤'],
+['Ruang Cuci','🧺','#d0eaff','cucian:👕,👖,🧦;lemari:🧥,👗;mandi:🧼;sampah:🧻,🧴'],
+['Kamar Orang Tua','🛌','#e8d8f8','lemari:👔,👗;sepatu:👠,👞;rak:📖,📰;sampah:🧻,🍌'],
+['Gudang','📦','#e6dcc8','alat:🔧,🪚,🔨;bola:🏀,🎾;mainan:🧸,🪀;sampah:🥫,🍂'],
+['Kantin Sekolah','🥪','#ffe9a8','piring:🍽️,🥣;kulkas:🥛,🍉,🧃;sampah:🥡,🍌,🍬'],
+['Ruang UKS','🏥','#d8fff0','p3k:🩹,🌡️,💊;rak:📗,📘;cucian:🧦;sampah:🧻,🥤'],
+['Aula Sekolah','🎭','#ffd8a8','bola:⚽,🏐,🏀;tas:🎒,👜;sepatu:👟,🥾;sampah:🥤,🍬'],
+['Rumah Besar','🏠','#ffe066','lemari:👕,👔;mainan:🧸,🚗;rak:📚,📖;piring:🍽️,🥄;sepatu:👟,👠;sampah:🍌,🥤,🧻']
+];
+const $=s=>document.querySelector(s), KEY='bersihkan-progres-v1';
+let P={};try{P=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(P))}catch(e){}};
+const rng=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const parse=i=>{const zk=[],items=[];R[i][3].split(';').forEach(p=>{const[k,v]=p.split(':');zk.push(k);v.split(',').forEach(e=>items.push({e,k}))});
+ const r=rng(i+7);for(let j=items.length-1;j>0;j--){const m=Math.floor(r()*(j+1));[items[j],items[m]]=[items[m],items[j]]}
+ items.forEach(it=>it.rot=Math.round((r()-.5)*30));return{zk,items}};
+const total=i=>parse(i).items.length;
+const stars=n=>'⭐'.repeat(n)+'☆'.repeat(3-n);
+let ac;const beep=(f,d=.12)=>{try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=f;o.type='triangle';g.gain.value=.12;g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+d);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}};
+
+function renderMap(){
+ const g=$('#grid');g.innerHTML='';let tl=0,ti=0,td=0;
+ R.forEach((r,i)=>{const n=i+1,p=P[n]||{},t=total(i),d=(p.placed||[]).length,open=n==1||(P[n-1]&&P[n-1].complete);
+  ti+=t;td+=p.complete?t:d;if(p.complete)tl++;
+  const c=document.createElement('button');c.className='lv'+(p.complete?' done':'')+(open?'':' lock');
+  c.innerHTML=`<span class="n">${n}</span><div class="e">${open?r[1]:'🔒'}</div><div class="nm">${r[0]}</div><div class="bar"><i style="width:${d/t*100}%"></i></div><div class="pc">${p.complete?'Bersih 100%':Math.round(d/t*100)+'% bersih'}</div><div class="st">${p.complete?stars(p.stars||1):''}</div>`;
+  c.onclick=()=>{open?start(i):beep(180,.2)};g.appendChild(c)});
+ $('#tt').textContent=`🏆 ${tl} dari 20 ruangan bersih · ${td}/${ti} barang rapi`;
+ $('#tb').style.width=(td/ti*100)+'%';
+}
+
+let S;
+function start(i,fresh){
+ const n=i+1,{zk,items}=parse(i);
+ if(fresh||!P[n]||P[n].complete)P[n]={placed:[],mistakes:0,stars:(P[n]||{}).stars||0,complete:false};
+ S={i,n,items,mistakes:P[n].mistakes||0,placed:new Set(P[n].placed)};
+ $('#map').classList.add('hidden');$('#game').classList.remove('hidden');$('#modal').classList.add('hidden');
+ $('#gt').textContent=`Level ${n}: ${R[i][1]} ${R[i][0]}`;
+ const fl=$('#floor');fl.style.background=R[i][2];fl.classList.remove('clean');
+ const zs=$('#zones');zs.innerHTML='';
+ zk.forEach(k=>{const z=document.createElement('div');z.className='zone';z.dataset.k=k;z.innerHTML=`<div class="ze">${Z[k][0]}</div><div class="zl">${Z[k][1]}</div><div class="got"></div>`;zs.appendChild(z)});
+ const sl=$('#slots');sl.innerHTML='';
+ items.forEach((it,j)=>{
+  if(S.placed.has(j)){zs.querySelector(`[data-k=${it.k}] .got`).append(it.e);return}
+  const s=document.createElement('div');s.className='slot';
+  s.innerHTML=`<div class="item" data-i="${j}" style="rotate:${it.rot}deg">${it.e}</div>`;sl.appendChild(s)});
+ upd(false);window.scrollTo(0,0);
+}
+function upd(persist=true){
+ const t=S.items.length,d=S.placed.size;
+ $('#pt').textContent=`🧼 Kebersihan: ${d} dari ${t} barang sudah rapi (${Math.round(d/t*100)}%)`;
+ $('#pb').style.width=(d/t*100)+'%';$('#dirt').style.opacity=.45*(1-d/t);
+ $('#floor').classList.toggle('clean',d==t);
+ if(persist){P[S.n]=Object.assign(P[S.n]||{},{placed:[...S.placed],mistakes:S.mistakes,total:t});save()}
+}
+// drag & drop (mouse + sentuh)
+let D=null;
+$('#floor').addEventListener('pointerdown',e=>{
+ const it=e.target.closest('.item');if(!it)return;e.preventDefault();
+ const r=it.getBoundingClientRect();D={it,dx:e.clientX-r.left,dy:e.clientY-r.top};
+ it.classList.add('drag');mv(e);beep(520,.08)});
+function mv(e){if(!D)return;D.it.style.left=e.clientX-D.dx+'px';D.it.style.top=e.clientY-D.dy+'px';
+ document.querySelectorAll('.zone.hot').forEach(z=>z.classList.remove('hot'));
+ const el=document.elementFromPoint(e.clientX,e.clientY),z=el&&el.closest('.zone');if(z)z.classList.add('hot')}
+window.addEventListener('pointermove',mv);
+window.addEventListener('pointerup',e=>{
+ if(!D)return;const it=D.it;D=null;
+ document.querySelectorAll('.zone.hot').forEach(z=>z.classList.remove('hot'));
+ const el=document.elementFromPoint(e.clientX,e.clientY),z=el&&el.closest('.zone');
+ it.classList.remove('drag');it.style.left=it.style.top='';
+ if(!z)return;
+ const j=+it.dataset.i,obj=S.items[j];
+ if(z.dataset.k===obj.k){
+  it.parentNode.remove();S.placed.add(j);z.querySelector('.got').append(obj.e);
+  z.classList.remove('ok');void z.offsetWidth;z.classList.add('ok');beep(700);setTimeout(()=>beep(900),90);
+  upd();if(S.placed.size==S.items.length)setTimeout(win,700);
+ }else{
+  S.mistakes++;z.classList.remove('bad');void z.offsetWidth;z.classList.add('bad');beep(200,.25);upd();
+ }
+});
+window.addEventListener('pointercancel',()=>{if(D){D.it.classList.remove('drag');D.it.style.left=D.it.style.top='';D=null}});
+
+function win(){
+ const m=S.mistakes,st=m<=1?3:m<=3?2:1,p=P[S.n];
+ p.complete=true;p.stars=Math.max(p.stars||0,st);p.placed=[...S.placed];save();
+ const last=S.i==19,msg=['Hebat sekali!','Ruangan jadi bersih dan rapi!','Kamu pahlawan kebersihan!'][st-1];
+ $('#modal').innerHTML=`<div class="box"><div style="font-size:3rem">${R[S.i][1]}✨</div><h2>${last?'Semua ruangan bersih!':'Ruangan bersih!'}</h2><div class="big">${stars(st)}</div><p><b>${msg}</b><br>Salah taruh: ${m} kali</p>${last?'':'<button class="btn g" id="nx">Level berikutnya ▶</button>'}<button class="btn" id="mp">🏠 Peta</button></div>`;
+ $('#modal').classList.remove('hidden');
+ [0,120,240,360].forEach(t=>setTimeout(()=>beep(520+t*2),t));
+ for(let k=0;k<30;k++){const c=document.createElement('div');c.className='cf';c.textContent=['⭐','🎉','✨','🌟','🎈'][k%5];c.style.left=Math.random()*100+'vw';c.style.animationDuration=2+Math.random()*2+'s';document.body.appendChild(c);setTimeout(()=>c.remove(),4500)}
+ $('#mp').onclick=toMap;const nx=$('#nx');if(nx)nx.onclick=()=>start(S.i+1);
+}
+function toMap(){$('#modal').classList.add('hidden');$('#game').classList.add('hidden');$('#map').classList.remove('hidden');renderMap();window.scrollTo(0,0)}
+$('#back').onclick=toMap;
+$('#redo').onclick=()=>start(S.i,true);
+$('#reset').onclick=()=>{if(confirm('Hapus semua progres dan mulai dari awal?')){P={};save();renderMap()}};
+renderMap();
+</script>
+</body>
+</html>
