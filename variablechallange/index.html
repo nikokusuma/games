@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Variable Master - Tebak Hasil Variabel</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Highlight.js for Python Code Syntax Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        code, pre {
+            font-family: 'Fira Code', monospace;
+        }
+        .custom-glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .shake-animation {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+        .pulse-success {
+            animation: pulse-green 0.4s ease-in-out;
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between items-center p-4 md:p-8">
+
+    <!-- Header / Navbar -->
+    <header class="w-full max-w-3xl flex justify-between items-center mb-6 px-4 py-3 custom-glass rounded-2xl">
+        <div class="flex items-center space-x-3">
+            <div class="bg-yellow-500/20 text-yellow-400 p-2 rounded-xl">
+                <i class="fa-brands fa-python text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-tight text-slate-100">Python Variable Challenge</h1>
+                <p class="text-xs text-slate-400">Tebak Nilai Akhir Variabel</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="text-right">
+                <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold block">Progres</span>
+                <span id="level-indicator" class="text-lg font-bold text-cyan-400">Level 1 / 30</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="w-full max-w-3xl flex-1 flex flex-col justify-center">
+        
+        <!-- Game Card -->
+        <div id="game-card" class="custom-glass rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden border border-slate-700/50">
+            
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-800 h-2 rounded-full mb-6 overflow-hidden">
+                <div id="progress-bar" class="bg-gradient-to-r from-cyan-500 to-blue-500 h-full w-0 transition-all duration-300"></div>
+            </div>
+
+            <!-- Question Description -->
+            <div class="mb-4 flex justify-between items-center">
+                <span id="target-var-badge" class="px-3 py-1 rounded-full bg-slate-800 text-slate-300 text-xs font-semibold border border-slate-700">
+                    Berapakah nilai dari variabel <code id="target-variable-name" class="text-yellow-400 font-bold">x</code> ?
+                </span>
+                <span class="text-xs text-rose-400 font-medium flex items-center gap-1">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Salah = Kembali ke Level 1
+                </span>
+            </div>
+
+            <!-- Code Display Area -->
+            <div class="relative rounded-2xl overflow-hidden mb-6 border border-slate-800 shadow-inner">
+                <pre class="m-0 p-4 bg-[#282c34] text-sm md:text-base leading-relaxed"><code id="python-code" class="language-python"># Code Python akan ditampilkan di sini</code></pre>
+            </div>
+
+            <!-- Multiple Choice Options -->
+            <div class="space-y-3" id="options-container">
+                <!-- Option buttons dynamically generated -->
+            </div>
+
+            <!-- Hint -->
+            <div class="mt-6 text-xs text-slate-400 bg-slate-900/50 p-3 rounded-xl border border-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-circle-info text-cyan-400 text-base"></i>
+                <span>Pilih salah satu jawaban yang benar. Hati-hati, jika salah kamu akan kembali ke Level 1!</span>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-6 text-center text-xs text-slate-500">
+        Python Variable Challenge &copy; 30 Level Keterampilan Variabel Tanpa Looping & Kondisional
+    </footer>
+
+    <!-- Custom Modal for Game Over / Reset -->
+    <div id="game-over-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden justify-center items-center p-4 z-50">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 max-w-md w-full text-center shadow-2xl relative transform transition-all scale-95 opacity-0" id="modal-card">
+            <div class="w-16 h-16 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-rose-500/20">
+                <i class="fa-solid fa-skull-crossbones text-3xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-white mb-2">Jawaban Salah!</h2>
+            <p class="text-slate-400 text-sm mb-4">
+                Kamu terhenti di <span id="failed-level" class="text-rose-400 font-bold">Level X</span>. 
+                Sesuai aturan, kamu harus mengulang kembali dari awal.
+            </p>
+            <div class="bg-slate-950 p-4 rounded-xl text-left font-mono text-xs mb-6 border border-slate-800">
+                <div class="text-slate-500 mb-1">Jawaban kamu: <span id="user-wrong-ans" class="text-rose-400"></span></div>
+                <div class="text-slate-500">Jawaban yang benar: <span id="correct-ans" class="text-emerald-400"></span></div>
+            </div>
+            <button onclick="restartGame()" class="w-full bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-400 hover:to-red-500 text-white font-bold py-3 px-6 rounded-xl transition-all transform active:scale-95 shadow-lg flex items-center justify-center gap-2">
+                <i class="fa-solid fa-rotate-right"></i>
+                <span>Mulai Lagi Dari Level 1</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Custom Modal for Game Win -->
+    <div id="game-win-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden justify-center items-center p-4 z-50">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 max-w-md w-full text-center shadow-2xl relative">
+            <div class="w-20 h-20 bg-yellow-500/10 text-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-yellow-500/20">
+                <i class="fa-solid fa-trophy text-4xl"></i>
+            </div>
+            <h2 class="text-3xl font-extrabold text-white mb-2">Selamat! 🎉</h2>
+            <p class="text-slate-300 text-sm mb-6">
+                Luar biasa! Kamu berhasil menyelesaikan seluruh <span class="text-yellow-400 font-bold">30 Level</span> tanpa membuat kesalahan sama sekali!
+            </p>
+            <button onclick="restartGame()" class="w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-slate-950 font-bold py-3.5 px-6 rounded-xl transition-all transform active:scale-95 shadow-lg flex items-center justify-center gap-2">
+                <i class="fa-solid fa-play"></i>
+                <span>Mainkan Lagi</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 30 Questions Dataset (Multiple Choice)
+        // Strictly testing Python basic variables, strings, integers, floats, booleans, dicts.
+        // ABSOLUTELY NO LISTS, TUPLES, IF/ELSE, or LOOPS.
+        const questions = [
+            {
+                id: 1,
+                code: `a = 5\nb = 3\nx = a + b`,
+                targetVar: "x",
+                options: ["8", "53", "2", "15"],
+                answer: "8"
+            },
+            {
+                id: 2,
+                code: `x = 10\nx = x + 5\nx = x * 2`,
+                targetVar: "x",
+                options: ["20", "25", "30", "15"],
+                answer: "30"
+            },
+            {
+                id: 3,
+                code: `a = "Python"\nb = "Keren"\nx = a + " " + b`,
+                targetVar: "x",
+                options: ["'PythonKeren'", "'Python Keren'", "'Python + Keren'", "Error"],
+                answer: "'Python Keren'"
+            },
+            {
+                id: 4,
+                code: `a = 15\nb = 4\nx = a // b`,
+                targetVar: "x",
+                answer: "3",
+                options: ["3.75", "3", "4", "3.0"]
+            },
+            {
+                id: 5,
+                code: `a = 17\nb = 5\nx = a % b`,
+                targetVar: "x",
+                options: ["3", "2", "3.4", "5"],
+                answer: "2"
+            },
+            {
+                id: 6,
+                code: `a = 2\nx = a ** 3`,
+                targetVar: "x",
+                options: ["6", "8", "9", "5"],
+                answer: "8"
+            },
+            {
+                id: 7,
+                code: `a = "5"\nb = "3"\nx = a + b`,
+                targetVar: "x",
+                options: ["8", "'53'", "53", "'8'"],
+                answer: "'53'"
+            },
+            {
+                id: 8,
+                code: `a = "5"\nb = "3"\nx = int(a) + int(b)`,
+                targetVar: "x",
+                options: ["8", "'53'", "'8'", "53"],
+                answer: "8"
+            },
+            {
+                id: 9,
+                code: `x = 10\ny = x\nx = 20`,
+                targetVar: "y",
+                options: ["10", "20", "None", "0"],
+                answer: "10"
+            },
+            {
+                id: 10,
+                code: `a, b = 5, 10\na, b = b, a\nx = a`,
+                targetVar: "x",
+                options: ["5", "10", "(5, 10)", "None"],
+                answer: "10"
+            },
+            {
+                id: 11,
+                code: `text = "Programming"\nx = text[0]`,
+                targetVar: "x",
+                options: ["'P'", "'p'", "'Programming'", "0"],
+                answer: "'P'"
+            },
+            {
+                id: 12,
+                code: `text = "Python"\nx = text[-1]`,
+                targetVar: "x",
+                options: ["'P'", "'n'", "'o'", "Error"],
+                answer: "'n'"
+            },
+            {
+                id: 13,
+                code: `text = "Indonesian"\nx = text[0:4]`,
+                targetVar: "x",
+                options: ["'Indo'", "'Indon'", "'indo'", "'Ind'"],
+                answer: "'Indo'"
+            },
+            {
+                id: 14,
+                code: `msg = "Ha"\nx = msg * 3`,
+                targetVar: "x",
+                options: ["'Ha3'", "'HaHaHa'", "'Ha Ha Ha'", "Error"],
+                answer: "'HaHaHa'"
+            },
+            {
+                id: 15,
+                code: `a = 10\nb = 4\nx = a / b`,
+                targetVar: "x",
+                options: ["2", "2.5", "2.0", "3"],
+                answer: "2.5"
+            },
+            {
+                id: 16,
+                code: `data = {"nama": "Budi", "umur": 20}\nx = data["nama"]`,
+                targetVar: "x",
+                options: ["'nama'", "'Budi'", "20", "None"],
+                answer: "'Budi'"
+            },
+            {
+                id: 17,
+                code: `x = 5\nx += 3\nx *= 2\nx -= 4`,
+                targetVar: "x",
+                options: ["12", "16", "8", "10"],
+                answer: "12"
+            },
+            {
+                id: 18,
+                code: `text = "coding"\nx = text.upper()`,
+                targetVar: "x",
+                options: ["'Coding'", "'CODING'", "'coding'", "Error"],
+                answer: "'CODING'"
+            },
+            {
+                id: 19,
+                code: `a = True\nb = False\nx = a and not b`,
+                targetVar: "x",
+                options: ["True", "False", "None", "Error"],
+                answer: "True"
+            },
+            {
+                id: 20,
+                code: `a = 10\nb = 20\nx = a > b`,
+                targetVar: "x",
+                options: ["True", "False", "10", "20"],
+                answer: "False"
+            },
+            {
+                id: 21,
+                code: `x = str(100) + str(200)`,
+                targetVar: "x",
+                options: ["300", "'300'", "'100200'", "100200"],
+                answer: "'100200'"
+            },
+            {
+                id: 22,
+                code: `a = "  python  "\nx = a.strip()`,
+                targetVar: "x",
+                options: ["'python'", "'  python  '", "'python  '", "'  python'"],
+                answer: "'python'"
+            },
+            {
+                id: 23,
+                code: `x = len("Hello World")`,
+                targetVar: "x",
+                options: ["10", "11", "12", "5"],
+                answer: "11"
+            },
+            {
+                id: 24,
+                code: `a = 10\nb = 3\nx = a % b + a // b`,
+                targetVar: "x",
+                options: ["4", "3", "1", "5"],
+                answer: "4"
+            },
+            {
+                id: 25,
+                code: `greeting = "Hello"\nx = greeting.replace("e", "a")`,
+                targetVar: "x",
+                options: ["'Hallo'", "'Hello'", "'Hallo '", "Error"],
+                answer: "'Hallo'"
+            },
+            {
+                id: 26,
+                code: `a = 5\nb = 2.0\nx = a + b`,
+                targetVar: "x",
+                options: ["7", "7.0", "'7.0'", "Error"],
+                answer: "7.0"
+            },
+            {
+                id: 27,
+                code: `x = bool(0)`,
+                targetVar: "x",
+                options: ["True", "False", "0", "None"],
+                answer: "False"
+            },
+            {
+                id: 28,
+                code: `a = "123"\nx = a.isdigit()`,
+                targetVar: "x",
+                options: ["True", "False", "123", "Error"],
+                answer: "True"
+            },
+            {
+                id: 29,
+                code: `user = {"id": 101, "role": "admin"}\nuser["role"] = "user"\nx = user["role"]`,
+                targetVar: "x",
+                options: ["'admin'", "'user'", "101", "None"],
+                answer: "'user'"
+            },
+            {
+                id: 30,
+                code: `a = 10\nb = 20\nc = 30\nx = a + b * c`,
+                targetVar: "x",
+                options: ["900", "610", "600", "500"],
+                answer: "610"
+            }
+        ];
+
+        let currentLevel = 0; // Index 0 to 29
+
+        // Elements
+        const levelIndicator = document.getElementById('level-indicator');
+        const progressBar = document.getElementById('progress-bar');
+        const pythonCodeElem = document.getElementById('python-code');
+        const targetVarName = document.getElementById('target-variable-name');
+        const optionsContainer = document.getElementById('options-container');
+        const gameCard = document.getElementById('game-card');
+        
+        const gameOverModal = document.getElementById('game-over-modal');
+        const modalCard = document.getElementById('modal-card');
+        const failedLevelElem = document.getElementById('failed-level');
+        const userWrongAnsElem = document.getElementById('user-wrong-ans');
+        const correctAnsElem = document.getElementById('correct-ans');
+        
+        const gameWinModal = document.getElementById('game-win-modal');
+
+        // Initialize Game
+        function loadLevel(index) {
+            const q = questions[index];
+            
+            // Update UI Level Info
+            levelIndicator.innerText = `Level ${q.id} / ${questions.length}`;
+            targetVarName.innerText = q.targetVar;
+            
+            // Progress Bar Width
+            const progressPercent = ((q.id - 1) / questions.length) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+
+            // Set Code Text
+            pythonCodeElem.textContent = q.code;
+            
+            // Re-highlight Code
+            delete pythonCodeElem.dataset.highlighted;
+            hljs.highlightElement(pythonCodeElem);
+
+            // Render Options
+            optionsContainer.innerHTML = '';
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'w-full text-left bg-slate-900/90 hover:bg-slate-800 border-2 border-slate-700/80 hover:border-cyan-500 text-emerald-400 font-mono text-base md:text-lg rounded-xl px-5 py-3.5 transition-all transform active:scale-[0.99] flex items-center justify-between group';
+                btn.onclick = () => handleOptionSelect(opt);
+                
+                const labels = ['A', 'B', 'C', 'D'];
+                btn.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="w-7 h-7 rounded-lg bg-slate-800 text-slate-400 text-xs font-bold flex items-center justify-center border border-slate-700 group-hover:bg-cyan-500 group-hover:text-slate-950 transition-colors">
+                            ${labels[idx]}
+                        </span>
+                        <span>${opt}</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-600 group-hover:text-cyan-400 text-xs transition-colors"></i>
+                `;
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        // Handle Option Selection
+        function handleOptionSelect(selectedOption) {
+            const currentQ = questions[currentLevel];
+
+            if (selectedOption === currentQ.answer) {
+                // Correct Answer
+                gameCard.classList.add('pulse-success');
+                setTimeout(() => gameCard.classList.remove('pulse-success'), 400);
+
+                if (currentLevel + 1 < questions.length) {
+                    currentLevel++;
+                    loadLevel(currentLevel);
+                } else {
+                    // Win Game
+                    progressBar.style.width = `100%`;
+                    showWinModal();
+                }
+            } else {
+                // Wrong Answer -> GAME OVER -> Restart from Level 1
+                triggerGameOver(selectedOption, currentQ.answer, currentQ.id);
+            }
+        }
+
+        // Show Game Over Modal
+        function triggerGameOver(userWrong, correct, levelNum) {
+            gameCard.classList.add('shake-animation');
+            setTimeout(() => gameCard.classList.remove('shake-animation'), 500);
+
+            failedLevelElem.innerText = `Level ${levelNum}`;
+            userWrongAnsElem.innerText = userWrong || "(kosong)";
+            correctAnsElem.innerText = correct;
+
+            gameOverModal.classList.remove('hidden');
+            gameOverModal.classList.add('flex');
+            
+            setTimeout(() => {
+                modalCard.classList.remove('scale-95', 'opacity-0');
+                modalCard.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        // Restart Game to Level 1
+        function restartGame() {
+            // Hide Modals
+            gameOverModal.classList.add('hidden');
+            gameOverModal.classList.remove('flex');
+            modalCard.classList.add('scale-95', 'opacity-0');
+            
+            gameWinModal.classList.add('hidden');
+            gameWinModal.classList.remove('flex');
+
+            // Reset Level
+            currentLevel = 0;
+            loadLevel(currentLevel);
+        }
+
+        // Show Win Modal
+        function showWinModal() {
+            gameWinModal.classList.remove('hidden');
+            gameWinModal.classList.add('flex');
+        }
+
+        // Load Game on Start
+        window.onload = function() {
+            loadLevel(0);
+        };
+    </script>
+</body>
+</html>
