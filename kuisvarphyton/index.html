@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mastering Python Variables - Kuis Interaktif SMP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between">
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-blue-600/20 text-blue-400 rounded-xl border border-blue-500/30">
+                    <i class="fa-brands fa-python text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight text-white">PyVar Master SMP</h1>
+                    <p class="text-xs text-slate-400">Mastering Python Variables step-by-step</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <button onclick="confirmReset()" class="px-3 py-1.5 text-xs font-semibold text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-lg transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-rotate-right"></i> Reset Progres
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="max-w-5xl mx-auto px-4 py-6 w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Sidebar / Progress Overview -->
+        <div class="lg:col-span-4 space-y-6">
+            <!-- Level Cards -->
+            <div class="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-4 backdrop-blur">
+                <h2 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center justify-between">
+                    <span>Level Pemahaman</span>
+                    <span id="overall-progress-text" class="text-xs text-blue-400 font-semibold">0% Selesai</span>
+                </h2>
+                
+                <div id="level-list" class="space-y-2">
+                    <!-- Dynamic Level Buttons rendered here -->
+                </div>
+            </div>
+
+            <!-- Error Log Tracker -->
+            <div class="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-4 backdrop-blur">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-400"></i> Catatan Kesalahan
+                    </h2>
+                    <span id="error-count" class="px-2 py-0.5 text-xs font-bold rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">0</span>
+                </div>
+                <p class="text-xs text-slate-400 mb-3">Tinjau kesalahan kamu di sini untuk memperkuat konsep variabel Python.</p>
+                
+                <div id="error-log-container" class="max-h-64 overflow-y-auto space-y-2 pr-1 text-xs">
+                    <div class="text-center py-6 text-slate-500 italic">Belum ada catatan kesalahan. Bagus sekali!</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question & Quiz Area -->
+        <div class="lg:col-span-8 flex flex-col">
+            <div id="quiz-card" class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-xl flex-grow flex flex-col justify-between">
+                
+                <!-- Screen: Start / Welcome -->
+                <div id="screen-welcome" class="space-y-6 my-auto text-center py-8">
+                    <div class="w-20 h-20 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-2xl flex items-center justify-center mx-auto text-4xl">
+                        <i class="fa-solid fa-code"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-white mb-2">Selamat Datang di PyVar Master!</h2>
+                        <p class="text-slate-300 max-w-md mx-auto text-sm leading-relaxed">
+                            Kuis ini dirancang khusus untuk siswa SMP agar memahami konsep <span class="text-blue-400 font-semibold">Variabel Python</span> dari dasar hingga mahir. 
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-900/60 border border-slate-700/50 p-4 rounded-xl max-w-md mx-auto text-left text-xs space-y-2 text-slate-300">
+                        <div class="flex items-center gap-2 font-semibold text-amber-400">
+                            <i class="fa-solid fa-lightbulb"></i> Aturan Permainan:
+                        </div>
+                        <ul class="list-disc list-inside space-y-1 text-slate-400">
+                            <li>Terdiri dari 5 Level berjenjang (total 30 soal).</li>
+                            <li><strong>Tidak bisa skip level:</strong> Wajib lulus level sebelumnya dengan nilai min. 80%.</li>
+                            <li><strong>Auto-Reset:</strong> Refresh halaman akan mengulang progres dari awal.</li>
+                            <li>Setiap kesalahan akan dicatat beserta pembahasannya.</li>
+                        </ul>
+                    </div>
+
+                    <button onclick="startLevel(1)" class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-600/30 transition duration-200">
+                        Mulai dari Level 1 <i class="fa-solid fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+
+                <!-- Screen: Quiz Active -->
+                <div id="screen-quiz" class="hidden flex-col h-full justify-between space-y-6">
+                    <div>
+                        <!-- Question Header -->
+                        <div class="flex justify-between items-center mb-4">
+                            <span id="quiz-level-badge" class="px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-semibold rounded-full">
+                                Level 1
+                            </span>
+                            <span id="quiz-counter" class="text-xs font-semibold text-slate-400">
+                                Soal 1 dari 6
+                            </span>
+                        </div>
+
+                        <!-- Question Text -->
+                        <h3 id="question-text" class="text-lg font-semibold text-white mb-4 leading-relaxed">
+                            <!-- Soal dinamis -->
+                        </h3>
+
+                        <!-- Code Block (if any) -->
+                        <div id="code-block-wrapper" class="hidden mb-4">
+                            <pre class="bg-slate-950 border border-slate-800 p-4 rounded-xl overflow-x-auto text-blue-300 code-font text-sm leading-relaxed" id="code-block"></pre>
+                        </div>
+
+                        <!-- Options -->
+                        <div id="options-container" class="space-y-3">
+                            <!-- Opsi dinamis -->
+                        </div>
+                    </div>
+
+                    <!-- Explanation Feedback Area -->
+                    <div id="feedback-card" class="hidden p-4 rounded-xl border text-sm space-y-2 transition-all">
+                        <div id="feedback-title" class="font-bold flex items-center gap-2"></div>
+                        <div id="feedback-text" class="text-slate-300 text-xs leading-relaxed"></div>
+                        <button id="btn-next" onclick="nextQuestion()" class="mt-3 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white font-semibold text-xs rounded-lg transition float-right">
+                            Soal Berikutnya <i class="fa-solid fa-chevron-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Screen: Level Completed -->
+                <div id="screen-result" class="hidden text-center py-8 space-y-6">
+                    <div id="result-icon-container" class="w-20 h-20 rounded-full flex items-center justify-center mx-auto text-3xl"></div>
+                    <div>
+                        <h2 id="result-title" class="text-2xl font-bold text-white mb-1"></h2>
+                        <p id="result-subtitle" class="text-sm text-slate-400"></p>
+                    </div>
+
+                    <div class="bg-slate-900/60 border border-slate-700/50 p-4 rounded-xl max-w-sm mx-auto flex justify-around items-center">
+                        <div>
+                            <p class="text-xs text-slate-400">Skor Kamu</p>
+                            <p id="result-score" class="text-2xl font-bold text-blue-400">0%</p>
+                        </div>
+                        <div class="h-8 w-px bg-slate-700"></div>
+                        <div>
+                            <p class="text-xs text-slate-400">Benar / Total</p>
+                            <p id="result-count" class="text-2xl font-bold text-emerald-400">0 / 6</p>
+                        </div>
+                    </div>
+
+                    <div id="result-action-buttons" class="flex justify-center gap-3">
+                        <!-- Dynamic buttons for retry / next level -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 bg-slate-950 py-4 text-center text-xs text-slate-500">
+        <p>PyVar Master &copy; 2026 - Modul Pembelajaran Pemrograman Python SMP</p>
+    </footer>
+
+    <!-- Custom Modal for Reset Confirmation -->
+    <div id="reset-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-triangle-exclamation text-rose-500"></i> Reset Semua Progres?
+            </h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+                Tindakan ini akan mengunci kembali level yang telah terbuka dan menghapus semua catatan kesalahan. Kamu harus mulai dari Level 1 lagi.
+            </p>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeResetModal()" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-lg transition">Batal</button>
+                <button onclick="executeReset()" class="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-lg transition">Ya, Reset Progres</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // Data 30 Soal Python Variables (5 Level x 6 Soal)
+        const quizData = [
+            // LEVEL 1: Aturan & Penamaan Variabel
+            {
+                level: 1,
+                title: "Level 1: Aturan & Penamaan Variabel",
+                questions: [
+                    {
+                        q: "Manakah di bawah ini nama variabel Python yang BENAR?",
+                        code: null,
+                        options: ["1nama_siswa", "nama_siswa", "nama-siswa", "nama siswa"],
+                        correct: 1,
+                        explanation: "Nama variabel Python hanya boleh diawali huruf atau underscore (_), tidak boleh diawali angka, tidak boleh ada spasi atau tanda hubung (-)."
+                    },
+                    {
+                        q: "Mengapa nama variabel '2026_total' TIDAK VALID dalam Python?",
+                        code: null,
+                        options: [
+                            "Menggunakan tanda garis bawah (_)",
+                            "Diawali dengan angka",
+                            "Terlalu panjang",
+                            "Menggunakan huruf kecil"
+                        ],
+                        correct: 1,
+                        explanation: "Aturan utama penamaan variabel di Python adalah tidak boleh diawali oleh angka."
+                    },
+                    {
+                        q: "Apakah variabel 'Skor' dan 'skor' dianggap sebagai variabel yang sama dalam Python?",
+                        code: null,
+                        options: [
+                            "Ya, karena hurufnya sama",
+                            "Ya, jika nilainya sama",
+                            "Tidak, karena Python bersifat Case-Sensitive (membedakan huruf besar & kecil)",
+                            "Tidak, kecuali diberi tanda kutip"
+                        ],
+                        correct: 2,
+                        explanation: "Python bersifat case-sensitive, sehingga 'Skor', 'skor', dan 'SKOR' dianggap 3 variabel yang berbeda."
+                    },
+                    {
+                        q: "Karakter khusus apa yang BOLEH digunakan dalam penamaan variabel Python?",
+                        code: null,
+                        options: ["Garis bawah / Underscore (_)", "Tanda pagar (#)", "Tanda dolar ($)", "Tanda strip / Minus (-)"],
+                        correct: 0,
+                        explanation: "Hanya tanda garis bawah (_) simbol khusus yang diizinkan dalam nama variabel Python."
+                    },
+                    {
+                        q: "Manakah di bawah ini kata kunci (keyword) Python yang TIDAK BOLEH dijadikan nama variabel?",
+                        code: null,
+                        options: ["variabel", "data", "for", "nilai"],
+                        correct: 2,
+                        explanation: "'for' adalah keyword resmi Python untuk perulangan (looping), sehingga dilarang digunakan sebagai nama variabel."
+                    },
+                    {
+                        q: "Manakah gaya penamaan variabel (convention) yang disarankan dalam Python untuk kata majemuk (Snake Case)?",
+                        code: null,
+                        options: ["nilaiSiswaSekolah", "NilaiSiswaSekolah", "nilai_siswa_sekolah", "nilai-siswa-sekolah"],
+                        correct: 2,
+                        explanation: "Penggunaan huruf kecil yang dipisahkan garis bawah (`snake_case`) adalah standar resmi rekomendasi Python (PEP 8)."
+                    }
+                ]
+            },
+
+            // LEVEL 2: Tipe Data & Nilai Variabel
+            {
+                level: 2,
+                title: "Level 2: Tipe Data & Nilai Variabel",
+                questions: [
+                    {
+                        q: "Perhatikan kode berikut. Apa tipe data dari variabel 'umur'?",
+                        code: "umur = 15",
+                        options: ["float", "int (integer)", "str (string)", "bool (boolean)"],
+                        correct: 1,
+                        explanation: "Angka bulat tanpa koma seperti 15 bertipe data 'int' (integer)."
+                    },
+                    {
+                        q: "Manakah contoh pembuatan variabel tipe data String (teks) yang benar?",
+                        code: null,
+                        options: ["nama = Budi", "nama = 'Budi'", "nama = (Budi)", "nama = <Budi>"],
+                        correct: 1,
+                        explanation: "Nilai string pada Python harus diapit tanda kutip tunggal ('...') atau tanda kutip ganda (\"...\")."
+                    },
+                    {
+                        q: "Apa tipe data dari variabel 'tinggi' berikut ini?",
+                        code: "tinggi = 162.5",
+                        options: ["int", "str", "float", "list"],
+                        correct: 2,
+                        explanation: "Angka pecahan atau yang memiliki titik desimal (koma) bertipe data 'float'."
+                    },
+                    {
+                        q: "Nilai apa yang bisa disimpan pada variabel tipe data Boolean (bool)?",
+                        code: null,
+                        options: ["Hanya Angka 1 sampai 100", "True atau False", "Teks bebas", "Angka desimal"],
+                        correct: 1,
+                        explanation: "Boolean (bool) hanya memiliki dua nilai kebenaran: True atau False."
+                    },
+                    {
+                        q: "Apa fungsi dari perintah type() pada Python?",
+                        code: "x = 10\nprint(type(x))",
+                        options: [
+                            "Mengubah variabel menjadi angka",
+                            "Menghapus variabel",
+                            "Mengetahui tipe data dari suatu variabel/nilai",
+                            "Mencetak isi variabel ke layar"
+                        ],
+                        correct: 2,
+                        explanation: "Fungsi type() digunakan untuk mengecek/memeriksa tipe data dari suatu variabel."
+                    },
+                    {
+                        q: "Apa keluaran (output) dari kode berikut?",
+                        code: "a = \"10\"\nprint(type(a))",
+                        options: ["<class 'int'>", "<class 'str'>", "<class 'float'>", "Error"],
+                        correct: 1,
+                        explanation: "Meskipun isinya angka 10, karena diapit tanda kutip (\"10\"), tipe datanya adalah string (str)."
+                    }
+                ]
+            },
+
+            // LEVEL 3: Assignment & Re-assignment
+            {
+                level: 3,
+                title: "Level 3: Assignment & Re-assignment",
+                questions: [
+                    {
+                        q: "Simbol apa yang digunakan untuk mengisi/memasukkan nilai ke dalam variabel (Assignment Operator)?",
+                        code: null,
+                        options: ["==", "=", "->", ":="],
+                        correct: 1,
+                        explanation: "Simbol '=' tunggal digunakan untuk memberi nilai pada variabel. Simbol '==' digunakan untuk pembanding."
+                    },
+                    {
+                        q: "Berapakah nilai akhir dari variabel 'x'?",
+                        code: "x = 5\nx = 10\nprint(x)",
+                        options: ["5", "10", "15", "Error"],
+                        correct: 1,
+                        explanation: "Python mengeksekusi kode dari atas ke bawah. Nilai 'x' yang baru (10) menimpa nilai lama (5)."
+                    },
+                    {
+                        q: "Apa hasil cetak dari kode Python berikut?",
+                        code: "a = 3\nb = a\na = 7\nprint(b)",
+                        options: ["3", "7", "10", "Error"],
+                        correct: 0,
+                        explanation: "Saat `b = a` dieksekusi, 'b' menyalin nilai 'a' saat itu (yaitu 3). Mengubah nilai 'a' setelahnya tidak otomatis mengubah nilai 'b'."
+                    },
+                    {
+                        q: "Manakah sintaks yang benar untuk memberi nilai sekaligus ke banyak variabel (Multiple Assignment)?",
+                        code: null,
+                        options: [
+                            "x, y, z = 1, 2, 3",
+                            "x = 1, y = 2, z = 3",
+                            "x & y & z = 1 & 2 & 3",
+                            "x; y; z = 1; 2; 3"
+                        ],
+                        correct: 0,
+                        explanation: "Python mendukung multiple assignment menggunakan koma: `x, y, z = 1, 2, 3`."
+                    },
+                    {
+                        q: "Apa nilai dari variabel 'poin' setelah baris kode berikut dijalankan?",
+                        code: "poin = 100\npoin = poin + 50",
+                        options: ["50", "100", "150", "Error"],
+                        correct: 2,
+                        explanation: "`poin + 50` bernilai `100 + 50 = 150`. Nilai 150 ini kemudian disimpan kembali ke dalam variabel `poin`."
+                    },
+                    {
+                        q: "Penulisan singkat (shorthand) dari `angka = angka + 1` dalam Python adalah...",
+                        code: null,
+                        options: ["angka ++", "angka =+ 1", "angka += 1", "angka + 1"],
+                        correct: 2,
+                        explanation: "Dalam Python, penambahan nilai ke variabel sendiri disingkat menggunakan operator `+=` (`angka += 1`). Python tidak mendukung `++`."
+                    }
+                ]
+            },
+
+            // LEVEL 4: Operasi Variabel & Input
+            {
+                level: 4,
+                title: "Level 4: Operasi Variabel & Input",
+                questions: [
+                    {
+                        q: "Apa hasil dari penggabungan (konkatenasi) dua variabel berikut?",
+                        code: "kata1 = \"Py\"\nkata2 = \"thon\"\nhasil = kata1 + kata2\nprint(hasil)",
+                        options: ["Py thon", "Python", "Py+thon", "Error"],
+                        correct: 1,
+                        explanation: "Operator '+' jika digunakan pada dua variabel String akan menggabungkannya tanpa spasi otomatis."
+                    },
+                    {
+                        q: "Apa output dari kode perkalian variabel string berikut?",
+                        code: "a = \"HA\"\nprint(a * 3)",
+                        options: ["HA3", "HAHAHA", "HA HA HA", "Error"],
+                        correct: 1,
+                        explanation: "Operator '*' pada string berfungsi mengulang string tersebut sebanyak n-kali."
+                    },
+                    {
+                        q: "Secara default, tipe data apa yang DIHASILKAN oleh fungsi `input()`?",
+                        code: "nilai = input(\"Masukkan angka: \")",
+                        options: ["int", "float", "str (string)", "boolean"],
+                        correct: 2,
+                        explanation: "Fungsi `input()` di Python SELALU menghasilkan tipe data String (str), meskipun pengguna memasukkan angka."
+                    },
+                    {
+                        q: "Jika pengguna memasukkan angka 5 pada input, apa hasil dari kode ini?",
+                        code: "a = input(\"Angka: \")\nprint(a + a)",
+                        options: ["10", "55", "5", "Error"],
+                        correct: 1,
+                        explanation: "Karena input berupa string \"5\", maka `\"5\" + \"5\"` melakukan penggabungan string, menghasilkan \"55\"."
+                    },
+                    {
+                        q: "Manakah operasi antar variabel angka dan string yang akan menyebabkan ERROR?",
+                        code: null,
+                        options: [
+                            "\"Umur: \" + \"15\"",
+                            "\"Halo \" * 2",
+                            "\"Umur: \" + 15",
+                            "10 + 5"
+                        ],
+                        correct: 2,
+                        explanation: "Python tidak bisa menggabungkan String dan Integer secara langsung dengan operator `+`. Harus dikonversi dulu dengan `str()`."
+                    },
+                    {
+                        q: "Apa output dari program sederhana perhitungan luas persegi berikut?",
+                        code: "sisi = 4\nluas = sisi * sisi\nprint(\"Luas:\", luas)",
+                        options: ["Luas: 8", "Luas: 16", "Luas: 44", "Luas: sisi * sisi"],
+                        correct: 1,
+                        explanation: "`sisi * sisi` berartikan `4 * 4 = 16`. Fungsi `print()` mencetak teks \"Luas:\" diikuti nilai variabel `luas` (16)."
+                    }
+                ]
+            },
+
+            // LEVEL 5: Konversi Tipe Data & Best Practices
+            {
+                level: 5,
+                title: "Level 5: Konversi Tipe Data & Best Practices",
+                questions: [
+                    {
+                        q: "Fungsi apa yang digunakan untuk mengonversi (mengubah) variabel string menjadi angka bulat (Integer)?",
+                        code: null,
+                        options: ["str()", "float()", "int()", "convert()"],
+                        correct: 2,
+                        explanation: "Fungsi `int()` digunakan untuk mengubah tipe data lain (seperti string angka) menjadi integer."
+                    },
+                    {
+                        q: "Bagaimana cara membaca input angka desimal dari pengguna agar bisa dihitung?",
+                        code: null,
+                        options: [
+                            "nilai = input(float())",
+                            "nilai = float(input(\"Masukkan angka: \"))",
+                            "nilai = str(input())",
+                            "nilai = input(\"float\")"
+                        ],
+                        correct: 1,
+                        explanation: "Membungkus `input()` dengan `float()` akan langsung mengonversi teks input menjadi angka pecahan desimal."
+                    },
+                    {
+                        q: "Apa hasil cetak dari konversi float ke int berikut?",
+                        code: "x = 9.8\nprint(int(x))",
+                        options: ["10", "9.8", "9", "Error"],
+                        correct: 2,
+                        explanation: "Fungsi `int()` memotong (membuang) bagian desimal tanpa pembulatan. Sehingga 9.8 menjadi 9."
+                    },
+                    {
+                        q: "Manakah contoh penggunaan f-string (formatted string) yang benar untuk mencetak variabel?",
+                        code: "nama = \"Budi\"\numur = 14",
+                        options: [
+                            "print(\"Nama: {nama}, Umur: {umur}\")",
+                            "print(f\"Nama: {nama}, Umur: {umur}\")",
+                            "print(f\"Nama: nama, Umur: umur\")",
+                            "print(\"f-Nama: nama, Umur: umur\")"
+                        ],
+                        correct: 1,
+                        explanation: "F-string ditandai dengan huruf `f` di depan tanda kutip, dan nama variabel diletakkan di dalam kurung kurawal `{variabel}`."
+                    },
+                    {
+                        q: "Apa yang terjadi jika kita menjalankan kode konversi berikut?",
+                        code: "teks = \"abc\"\nangka = int(teks)",
+                        options: [
+                            "angka berisi nilai 0",
+                            "teks berubah jadi \"123\"",
+                            "Terjadi ValueError (Error karena teks 'abc' bukan angka)",
+                            "Program berjalan tanpa masalah"
+                        ],
+                        correct: 2,
+                        explanation: "Fungsi `int()` hanya bisa mengonversi string yang berisi karakter angka valid (seperti \"123\"). String huruf seperti \"abc\" akan menghasilkan ValueError."
+                    },
+                    {
+                        q: "Manakah praktik penamaan variabel yang BAIK dan MUDAH DIPAHAMI (Clean Code)?",
+                        code: null,
+                        options: [
+                            "a = 85 (maksudnya nilai ujian)",
+                            "x123 = 85",
+                            "nilai_ujian_matematika = 85",
+                            "n = 85"
+                        ],
+                        correct: 2,
+                        explanation: "Nama variabel hendaknya deskriptif dan menjelaskan maknanya secara jelas agar kode mudah dibaca oleh diri sendiri maupun orang lain."
+                    }
+                ]
+            }
+        ];
+
+        // State Management (Auto reset on refresh because it's stored in memory only)
+        let currentState = {
+            unlockedLevel: 1,
+            currentLevel: 1,
+            currentQuestionIndex: 0,
+            scoreInLevel: 0,
+            answersHistory: {}, // format: { levelNum: [ { qIndex, isCorrect, selectedOption } ] }
+            errorLogs: [] // format: [ { level, question, selected, correct, explanation } ]
+        };
+
+        // Initialize App on DOM Load
+        document.addEventListener("DOMContentLoaded", () => {
+            renderLevelList();
+            updateOverallProgress();
+        });
+
+        // Render Level Sidebar
+        function renderLevelList() {
+            const container = document.getElementById("level-list");
+            container.innerHTML = "";
+
+            quizData.forEach((lvl) => {
+                const isUnlocked = lvl.level <= currentState.unlockedLevel;
+                const isActive = currentState.currentLevel === lvl.level && document.getElementById("screen-quiz").classList.contains("flex");
+
+                let statusBadge = "";
+                if (isUnlocked) {
+                    const levelAns = currentState.answersHistory[lvl.level];
+                    if (levelAns && levelAns.length === lvl.questions.length) {
+                        const correctCount = levelAns.filter(a => a.isCorrect).length;
+                        const scorePct = Math.round((correctCount / lvl.questions.length) * 100);
+                        statusBadge = `<span class="text-[10px] font-bold px-2 py-0.5 rounded ${scorePct >= 80 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}">${scorePct}%</span>`;
+                    } else {
+                        statusBadge = `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">Terbuka</span>`;
+                    }
+                } else {
+                    statusBadge = `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-700 text-slate-400"><i class="fa-solid fa-lock text-[9px] mr-1"></i>Terkunci</span>`;
+                }
+
+                const card = document.createElement("div");
+                card.className = `p-3 rounded-xl border text-xs flex items-center justify-between transition cursor-pointer ${
+                    isActive 
+                        ? 'bg-blue-600/20 border-blue-500 text-white' 
+                        : isUnlocked 
+                            ? 'bg-slate-800/80 border-slate-700/80 hover:border-slate-600 text-slate-200' 
+                            : 'bg-slate-900/40 border-slate-800/60 text-slate-500 cursor-not-allowed'
+                }`;
+
+                card.onclick = () => {
+                    if (isUnlocked) {
+                        startLevel(lvl.level);
+                    }
+                };
+
+                card.innerHTML = `
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-6 h-6 rounded-lg flex items-center justify-center font-bold text-[11px] ${
+                            isUnlocked ? 'bg-blue-600/30 text-blue-300' : 'bg-slate-800 text-slate-600'
+                        }">
+                            ${lvl.level}
+                        </div>
+                        <span class="font-medium">${lvl.title.split(':')[1] || lvl.title}</span>
+                    </div>
+                    <div>${statusBadge}</div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        // Start Level Quiz
+        function startLevel(levelNum) {
+            if (levelNum > currentState.unlockedLevel) return;
+
+            currentState.currentLevel = levelNum;
+            currentState.currentQuestionIndex = 0;
+            currentState.scoreInLevel = 0;
+            currentState.answersHistory[levelNum] = [];
+
+            // Update UI Screens
+            document.getElementById("screen-welcome").classList.add("hidden");
+            document.getElementById("screen-result").classList.add("hidden");
+            
+            const quizScreen = document.getElementById("screen-quiz");
+            quizScreen.classList.remove("hidden");
+            quizScreen.classList.add("flex");
+
+            renderLevelList();
+            loadQuestion();
+        }
+
+        // Load Question Data
+        function loadQuestion() {
+            const currentLvlData = quizData.find(l => l.level === currentState.currentLevel);
+            const questionData = currentLvlData.questions[currentState.currentQuestionIndex];
+
+            // Hide feedback
+            const feedbackCard = document.getElementById("feedback-card");
+            feedbackCard.classList.add("hidden");
+            feedbackCard.className = "hidden p-4 rounded-xl border text-sm space-y-2 transition-all";
+
+            // Set Header
+            document.getElementById("quiz-level-badge").innerText = `Level ${currentState.currentLevel}`;
+            document.getElementById("quiz-counter").innerText = `Soal ${currentState.currentQuestionIndex + 1} dari ${currentLvlData.questions.length}`;
+
+            // Set Question & Code
+            document.getElementById("question-text").innerText = questionData.q;
+            
+            const codeWrapper = document.getElementById("code-block-wrapper");
+            const codeBlock = document.getElementById("code-block");
+            if (questionData.code) {
+                codeBlock.innerText = questionData.code;
+                codeWrapper.classList.remove("hidden");
+            } else {
+                codeWrapper.classList.add("hidden");
+            }
+
+            // Render Options
+            const optionsContainer = document.getElementById("options-container");
+            optionsContainer.innerHTML = "";
+
+            questionData.options.forEach((opt, idx) => {
+                const btn = document.createElement("button");
+                btn.className = "w-full text-left p-3.5 rounded-xl border border-slate-700/80 bg-slate-900/50 hover:bg-slate-700/50 hover:border-slate-500 transition text-xs font-medium text-slate-200 flex items-start gap-3 option-btn";
+                btn.onclick = () => checkAnswer(idx);
+
+                const label = String.fromCharCode(65 + idx); // A, B, C, D
+                btn.innerHTML = `
+                    <span class="w-5 h-5 rounded-md bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-[10px] text-blue-400 shrink-0">
+                        ${label}
+                    </span>
+                    <span class="pt-0.5 leading-relaxed">${escapeHtml(opt)}</span>
+                `;
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        // Check Selected Answer
+        function checkAnswer(selectedIndex) {
+            const currentLvlData = quizData.find(l => l.level === currentState.currentLevel);
+            const questionData = currentLvlData.questions[currentState.currentQuestionIndex];
+            const isCorrect = selectedIndex === questionData.correct;
+
+            // Disable all option buttons
+            const buttons = document.querySelectorAll(".option-btn");
+            buttons.forEach((btn, idx) => {
+                btn.onclick = null;
+                btn.classList.remove("hover:bg-slate-700/50", "hover:border-slate-500");
+
+                if (idx === questionData.correct) {
+                    btn.classList.add("bg-emerald-950/60", "border-emerald-500/80", "text-emerald-200");
+                } else if (idx === selectedIndex && !isCorrect) {
+                    btn.classList.add("bg-rose-950/60", "border-rose-500/80", "text-rose-200");
+                } else {
+                    btn.classList.add("opacity-50");
+                }
+            });
+
+            // Record History
+            currentState.answersHistory[currentState.currentLevel].push({
+                qIndex: currentState.currentQuestionIndex,
+                isCorrect: isCorrect,
+                selectedOption: selectedIndex
+            });
+
+            if (isCorrect) {
+                currentState.scoreInLevel++;
+            } else {
+                // Add to Error Log Tracker
+                currentState.errorLogs.push({
+                    level: currentState.currentLevel,
+                    question: questionData.q,
+                    userAns: questionData.options[selectedIndex],
+                    correctAns: questionData.options[questionData.correct],
+                    explanation: questionData.explanation
+                });
+                renderErrorLogs();
+            }
+
+            // Show Feedback Card
+            const feedbackCard = document.getElementById("feedback-card");
+            const feedbackTitle = document.getElementById("feedback-title");
+            const feedbackText = document.getElementById("feedback-text");
+
+            feedbackCard.classList.remove("hidden");
+            if (isCorrect) {
+                feedbackCard.classList.add("bg-emerald-950/40", "border-emerald-500/40");
+                feedbackTitle.className = "font-bold flex items-center gap-2 text-emerald-400";
+                feedbackTitle.innerHTML = `<i class="fa-solid fa-circle-check"></i> Jawaban Tepat!`;
+            } else {
+                feedbackCard.classList.add("bg-rose-950/40", "border-rose-500/40");
+                feedbackTitle.className = "font-bold flex items-center gap-2 text-rose-400";
+                feedbackTitle.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Kurang Tepat!`;
+            }
+
+            feedbackText.innerHTML = `<strong>Pembahasan:</strong> ${questionData.explanation}`;
+        }
+
+        // Next Question or Finish Level
+        function nextQuestion() {
+            const currentLvlData = quizData.find(l => l.level === currentState.currentLevel);
+
+            if (currentState.currentQuestionIndex + 1 < currentLvlData.questions.length) {
+                currentState.currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                finishLevel();
+            }
+        }
+
+        // Finish Level Logic
+        function finishLevel() {
+            const currentLvlData = quizData.find(l => l.level === currentState.currentLevel);
+            const totalQ = currentLvlData.questions.length;
+            const scorePct = Math.round((currentState.scoreInLevel / totalQ) * 100);
+            const isPassed = scorePct >= 80;
+
+            // Unlock Next Level if Passed
+            if (isPassed && currentState.currentLevel === currentState.unlockedLevel && currentState.unlockedLevel < quizData.length) {
+                currentState.unlockedLevel++;
+            }
+
+            // Update UI Screen to Result
+            const quizScreen = document.getElementById("screen-quiz");
+            quizScreen.classList.remove("flex");
+            quizScreen.classList.add("hidden");
+
+            const resultScreen = document.getElementById("screen-result");
+            resultScreen.classList.remove("hidden");
+
+            // Result Elements
+            const iconContainer = document.getElementById("result-icon-container");
+            const title = document.getElementById("result-title");
+            const subtitle = document.getElementById("result-subtitle");
+            const scoreText = document.getElementById("result-score");
+            const countText = document.getElementById("result-count");
+            const btnContainer = document.getElementById("result-action-buttons");
+
+            scoreText.innerText = `${scorePct}%`;
+            countText.innerText = `${currentState.scoreInLevel} / ${totalQ}`;
+
+            if (isPassed) {
+                iconContainer.className = "w-20 h-20 rounded-full flex items-center justify-center mx-auto text-3xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
+                iconContainer.innerHTML = `<i class="fa-solid fa-trophy"></i>`;
+                title.innerText = "Selamat, Kamu Lulus!";
+                subtitle.innerText = `Kamu telah menguasai materi ${currentLvlData.title}`;
+            } else {
+                iconContainer.className = "w-20 h-20 rounded-full flex items-center justify-center mx-auto text-3xl bg-rose-500/10 text-rose-400 border border-rose-500/30";
+                iconContainer.innerHTML = `<i class="fa-solid fa-rotate-left"></i>`;
+                title.innerText = "Belum Mencapai Target";
+                subtitle.innerText = `Syarat kelulusan minimal 80%. Yuk pelajari lagi catatan kesalahan di samping!`;
+            }
+
+            // Action Buttons
+            btnContainer.innerHTML = "";
+            const retryBtn = document.createElement("button");
+            retryBtn.className = "px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-semibold text-xs rounded-xl transition";
+            retryBtn.innerHTML = `<i class="fa-solid fa-rotate-right mr-1.5"></i> Coba Lagi Level Ini`;
+            retryBtn.onclick = () => startLevel(currentState.currentLevel);
+            btnContainer.appendChild(retryBtn);
+
+            if (isPassed && currentState.currentLevel < quizData.length) {
+                const nextBtn = document.createElement("button");
+                nextBtn.className = "px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-blue-600/30 transition";
+                nextBtn.innerHTML = `Lanjut Level ${currentState.currentLevel + 1} <i class="fa-solid fa-arrow-right ml-1.5"></i>`;
+                nextBtn.onclick = () => startLevel(currentState.currentLevel + 1);
+                btnContainer.appendChild(nextBtn);
+            }
+
+            renderLevelList();
+            updateOverallProgress();
+        }
+
+        // Render Error Log Tracker
+        function renderErrorLogs() {
+            const container = document.getElementById("error-log-container");
+            const countBadge = document.getElementById("error-count");
+            
+            countBadge.innerText = currentState.errorLogs.length;
+
+            if (currentState.errorLogs.length === 0) {
+                container.innerHTML = `<div class="text-center py-6 text-slate-500 italic">Belum ada catatan kesalahan. Bagus sekali!</div>`;
+                return;
+            }
+
+            container.innerHTML = "";
+            currentState.errorLogs.slice().reverse().forEach((err) => {
+                const item = document.createElement("div");
+                item.className = "p-3 rounded-xl bg-slate-900/80 border border-slate-700/60 space-y-1.5";
+                item.innerHTML = `
+                    <div class="flex justify-between items-center text-[10px] text-slate-400">
+                        <span class="font-bold text-amber-400">Level ${err.level}</span>
+                        <i class="fa-solid fa-xmark text-rose-400"></i>
+                    </div>
+                    <p class="font-medium text-slate-200">${escapeHtml(err.question)}</p>
+                    <div class="text-[11px] space-y-0.5">
+                        <p class="text-rose-400"><strong>Kamu memilih:</strong> ${escapeHtml(err.userAns)}</p>
+                        <p class="text-emerald-400"><strong>Seharusnya:</strong> ${escapeHtml(err.correctAns)}</p>
+                    </div>
+                    <p class="text-[10px] text-slate-400 bg-slate-950 p-2 rounded-lg border border-slate-800 leading-relaxed mt-1">
+                        ${err.explanation}
+                    </p>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Update Progress Percentage Overall
+        function updateOverallProgress() {
+            const totalLevels = quizData.length;
+            let passedCount = 0;
+
+            for (let i = 1; i <= totalLevels; i++) {
+                const ans = currentState.answersHistory[i];
+                if (ans && ans.length === 6) {
+                    const correctCount = ans.filter(a => a.isCorrect).length;
+                    if ((correctCount / 6) >= 0.8) {
+                        passedCount++;
+                    }
+                }
+            }
+
+            const pct = Math.round((passedCount / totalLevels) * 100);
+            document.getElementById("overall-progress-text").innerText = `${pct}% Selesai`;
+        }
+
+        // Reset Modal Functions
+        function confirmReset() {
+            document.getElementById("reset-modal").classList.remove("hidden");
+        }
+
+        function closeResetModal() {
+            document.getElementById("reset-modal").classList.add("hidden");
+        }
+
+        function executeReset() {
+            closeResetModal();
+
+            // Re-initialize state
+            currentState = {
+                unlockedLevel: 1,
+                currentLevel: 1,
+                currentQuestionIndex: 0,
+                scoreInLevel: 0,
+                answersHistory: {},
+                errorLogs: []
+            };
+
+            // Reset UI View
+            document.getElementById("screen-quiz").classList.remove("flex");
+            document.getElementById("screen-quiz").classList.add("hidden");
+            document.getElementById("screen-result").classList.add("hidden");
+            document.getElementById("screen-welcome").classList.remove("hidden");
+
+            renderLevelList();
+            renderErrorLogs();
+            updateOverallProgress();
+        }
+
+        // Helper: Escape HTML string
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
