@@ -158,7 +158,7 @@
         // 30 Questions Dataset (Multiple Choice)
         // Strictly testing Python basic variables, strings, integers, floats, booleans, dicts.
         // ABSOLUTELY NO LISTS, TUPLES, IF/ELSE, or LOOPS.
-        const questions = [
+        const rawQuestions = [
             {
                 id: 1,
                 code: `a = 5\nb = 3\nx = a + b`,
@@ -371,7 +371,30 @@
             }
         ];
 
+        let questions = [];
         let currentLevel = 0; // Index 0 to 29
+
+        // Utility to shuffle an array (Fisher-Yates algorithm)
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // Initialize and shuffle questions & options
+        function prepareQuestions() {
+            // Shuffle question order
+            questions = shuffleArray(rawQuestions).map((q) => {
+                // Shuffle options for each question
+                return {
+                    ...q,
+                    options: shuffleArray(q.options)
+                };
+            });
+        }
 
         // Elements
         const levelIndicator = document.getElementById('level-indicator');
@@ -389,16 +412,17 @@
         
         const gameWinModal = document.getElementById('game-win-modal');
 
-        // Initialize Game
+        // Initialize Game Level
         function loadLevel(index) {
             const q = questions[index];
+            const levelNum = index + 1;
             
             // Update UI Level Info
-            levelIndicator.innerText = `Level ${q.id} / ${questions.length}`;
+            levelIndicator.innerText = `Level ${levelNum} / ${questions.length}`;
             targetVarName.innerText = q.targetVar;
             
             // Progress Bar Width
-            const progressPercent = ((q.id - 1) / questions.length) * 100;
+            const progressPercent = (index / questions.length) * 100;
             progressBar.style.width = `${progressPercent}%`;
 
             // Set Code Text
@@ -449,7 +473,7 @@
                 }
             } else {
                 // Wrong Answer -> GAME OVER -> Restart from Level 1
-                triggerGameOver(selectedOption, currentQ.answer, currentQ.id);
+                triggerGameOver(selectedOption, currentQ.answer, currentLevel + 1);
             }
         }
 
@@ -471,7 +495,7 @@
             }, 10);
         }
 
-        // Restart Game to Level 1
+        // Restart Game to Level 1 and Re-shuffle
         function restartGame() {
             // Hide Modals
             gameOverModal.classList.add('hidden');
@@ -481,7 +505,8 @@
             gameWinModal.classList.add('hidden');
             gameWinModal.classList.remove('flex');
 
-            // Reset Level
+            // Re-shuffle questions & options for a fresh attempt
+            prepareQuestions();
             currentLevel = 0;
             loadLevel(currentLevel);
         }
@@ -494,6 +519,7 @@
 
         // Load Game on Start
         window.onload = function() {
+            prepareQuestions();
             loadLevel(0);
         };
     </script>
