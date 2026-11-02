@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Cari yang Beda!</title>
+    <!-- Tailwind CSS untuk Layout & Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Inter & Bubblegum Sans untuk kesan ceria anak-anak -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti untuk efek selebrasi -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background: linear-gradient(135deg, #a8edd9 0%, #fed6e3 100%);
+            touch-action: manipulation;
+        }
+
+        .game-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+        }
+
+        .item-btn {
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .item-btn:hover {
+            transform: scale(1.08);
+        }
+
+        .item-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Animasi Salah */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-12px); }
+            40%, 80% { transform: translateX(12px); }
+        }
+        .animate-shake {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        /* Animasi Benar */
+        @keyframes pulse-success {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.25) rotate(10deg); }
+            100% { transform: scale(1); }
+        }
+        .animate-success {
+            animation: pulse-success 0.6s ease-in-out;
+        }
+
+        /* Progress Bar Custom */
+        .progress-bar-fill {
+            transition: width 0.4s ease-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-3 md:p-6 select-none">
+
+    <!-- Container Utama -->
+    <div class="w-full max-w-2xl game-card rounded-3xl p-4 md:p-8 border-4 border-white flex flex-col items-center justify-between min-h-[580px] relative overflow-hidden">
+        
+        <!-- Header Info (Level, Skor, Tombol Bantuan) -->
+        <div class="w-full flex justify-between items-center mb-2">
+            <!-- Badge Level -->
+            <div class="bg-amber-400 text-amber-900 px-4 py-2 rounded-2xl font-black text-lg md:text-xl shadow-md border-2 border-amber-200 flex items-center gap-2">
+                <i class="fa-solid fa-trophy text-amber-700"></i>
+                <span>Level <span id="level-num">1</span> / 50</span>
+            </div>
+
+            <!-- Judul Mini / Keterangan -->
+            <div class="hidden sm:block text-slate-700 font-bold text-center">
+                <span id="instruction-text" class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm">
+                    Temukan yang beda sendiri! 🔍
+                </span>
+            </div>
+
+            <!-- Tombol Suara & Reset -->
+            <div class="flex gap-2">
+                <button id="btn-sound" onclick="toggleSound()" class="w-11 h-11 bg-sky-100 text-sky-600 hover:bg-sky-200 rounded-2xl flex items-center justify-center font-bold text-lg shadow-sm transition">
+                    <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+                </button>
+                <button onclick="restartGame()" class="w-11 h-11 bg-rose-100 text-rose-600 hover:bg-rose-200 rounded-2xl flex items-center justify-center font-bold text-lg shadow-sm transition" title="Mulai Dari Awal">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="w-full bg-slate-200 h-3.5 rounded-full mb-4 overflow-hidden p-0.5 border border-slate-300">
+            <div id="progress-bar" class="bg-gradient-to-r from-emerald-400 to-teal-500 h-full rounded-full progress-bar-fill" style="width: 2%;"></div>
+        </div>
+
+        <!-- Area Pesan Instruksi Bergerak -->
+        <div class="text-center mb-4">
+            <h1 class="text-xl md:text-2xl font-black text-slate-800 tracking-wide flex items-center justify-center gap-2">
+                <span class="text-amber-500">Pilih 1</span> gambar yang beda! 
+                <button onclick="speakInstruction()" class="text-indigo-500 text-sm hover:scale-110 transition" title="Dengarkan Suara">
+                    <i class="fa-solid fa-circle-info text-xl"></i>
+                </button>
+            </h1>
+        </div>
+
+        <!-- Arena Permainan (5 Bentuk) -->
+        <div id="game-grid" class="w-full grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-5 my-auto justify-items-center items-center py-4">
+            <!-- 5 Tombol Objek akan di-generate via JavaScript -->
+        </div>
+
+        <!-- Floating Feedback Toast (Pesan Benar/Salah) -->
+        <div id="feedback-message" class="opacity-0 transition-opacity duration-300 font-extrabold text-lg md:text-xl py-2 px-6 rounded-full shadow-lg text-white my-2 pointer-events-none">
+            Hebat! 🎉
+        </div>
+
+        <!-- Footer / Motivasi -->
+        <div class="w-full text-center text-slate-400 text-xs font-semibold mt-2 border-t border-slate-100 pt-2 flex justify-between items-center">
+            <span>Kelas 1 - 2 SD</span>
+            <span id="streak-count" class="text-emerald-600 font-bold">Semangat Belajar! ✨</span>
+        </div>
+    </div>
+
+    <!-- Modal Tamat Game (Level 50 Selesai) -->
+    <div id="win-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl border-4 border-amber-300 transform scale-95 transition-transform duration-300">
+            <div class="w-24 h-24 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 text-5xl shadow-inner">
+                🏆
+            </div>
+            <h2 class="text-3xl font-black text-slate-800 mb-2">LUAR BIASA!</h2>
+            <p class="text-slate-600 font-bold mb-6">Kamu berhasil menyelesaikan seluruh <span class="text-amber-500 font-extrabold">50 Level</span> dengan sangat matang dan teliti!</p>
+            
+            <button onclick="restartGame()" class="w-full py-4 bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-xl rounded-2xl shadow-lg hover:shadow-xl transition transform active:scale-95">
+                Main Lagi Dari Level 1 🚀
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Data Palet Warna Anak SD
+        const COLORS = {
+            red: '#FF4B4B',
+            blue: '#1CB0F6',
+            green: '#58CC02',
+            yellow: '#FFC800',
+            purple: '#CE82FF',
+            orange: '#FF9600',
+            pink: '#FF86D0',
+            teal: '#2BDEAC',
+            brown: '#A52A2A',
+            darkBlue: '#00468B'
+        };
+
+        // Kumpulan Shape SVG Generator
+        const SHAPES = {
+            circle: (color, transform='') => `<svg class="w-16 h-16 md:w-20 md:h-20" viewBox="0 0 100 100" style="transform: ${transform}"><circle cx="50" cy="50" r="42" fill="${color}" stroke="#000" stroke-width="4" opacity="0.95"/></svg>`,
+            square: (color, transform='') => `<svg class="w-16 h-16 md:w-20 md:h-20" viewBox="0 0 100 100" style="transform: ${transform}"><rect x="12" y="12" width="76" height="76" rx="14" fill="${color}" stroke="#000" stroke-width="4"/></svg>`,
+            triangle: (color, transform='') => `<svg class="w-16 h-16 md:w-20 md:h-20" viewBox="0 0 100 100" style="transform: ${transform}"><polygon points="50,10 90,85 10,85" fill="${color}" stroke="#000" stroke-width="4" stroke-linejoin="round"/></svg>`,
+            star: (color, transform='') => `<svg class="w-16 h-16 md:w-20 md:h-20" viewBox="0 0 100 100" style="transform: ${transform}"><polygon points="50,8 63,38 95,38 69,59 79,91 50,70 21,91 31,59 5,38 37,38" fill="${color}" stroke="#000" stroke-width="4" stroke-linejoin="round"/></svg>`,
+            heart: (color, transform='') => `<svg class="w-16 h-16 md:w-20 md:h-20" viewBox="0 0 100 100" style="transform: ${transform}"><path d="M 50,30 A 20,20 0 0,0 20,50 C 20,70 50,90 50,90 C 50,90 80,70 80,50 A 20,20 0 0,0 50,30 Z" fill="${color}" stroke="#000" stroke-width="4" stroke-linejoin="round"/></svg>`,
+            diamond: (color, transform='') => `<svg class="w-16 h-16 md:w-20 md:h-20" viewBox="0 0 100 100" style="transform: ${transform}"><polygon points="50,10 88,50 50,90 12,50" fill="${color}" stroke="#000" stroke-width="4" stroke-linejoin="round"/></svg>`,
+            hexagon: (color, transform='') => `<svg class="w-16 h-16 md:w-20 md:h-20" viewBox="0 0 100 100" style="transform: ${transform}"><polygon points="50,10 85,30 85,70 50,90 15,70 15,30" fill="${color}" stroke="#000" stroke-width="4" stroke-linejoin="round"/></svg>`,
+            apple: (color, transform='') => `<svg class="w-16 h-16 md:w-20 md:h-20" viewBox="0 0 100 100" style="transform: ${transform}"><path d="M 50,35 C 40,20 20,25 20,50 C 20,75 40,85 50,85 C 60,85 80,75 80,50 C 80,25 60,20 50,35 Z" fill="${color}" stroke="#000" stroke-width="4"/><path d="M 50,35 C 50,20 60,15 65,10" fill="none" stroke="#5D4037" stroke-width="5" stroke-linecap="round"/></svg>`,
+            car: (color, transform='') => `<svg class="w-16 h-16 md:w-20 md:h-20" viewBox="0 0 100 100" style="transform: ${transform}"><rect x="15" y="45" width="70" height="25" rx="8" fill="${color}" stroke="#000" stroke-width="4"/><path d="M 30,45 L 40,25 L 65,25 L 75,45 Z" fill="${color}" stroke="#000" stroke-width="4"/><circle cx="30" cy="70" r="10" fill="#333" stroke="#000" stroke-width="3"/><circle cx="70" cy="70" r="10" fill="#333" stroke="#000" stroke-width="3"/></svg>`,
+            smile: (color, transform='') => `<svg class="w-16 h-16 md:w-20 md:h-20" viewBox="0 0 100 100" style="transform: ${transform}"><circle cx="50" cy="50" r="42" fill="${color}" stroke="#000" stroke-width="4"/><circle cx="35" cy="40" r="6" fill="#000"/><circle cx="65" cy="40" r="6" fill="#000"/><path d="M 30,60 Q 50,80 70,60" fill="none" stroke="#000" stroke-width="5" stroke-linecap="round"/></svg>`
+        };
+
+        // Variable State Game
+        let currentLevel = 1;
+        const totalLevels = 50;
+        let soundEnabled = true;
+        let oddIndex = -1;
+        let isProcessing = false;
+
+        // Inisialisasi Efek Suara Web Audio API (Synthesizer Tanpa Audio File Luar)
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new AudioCtx();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'correct') {
+                    // Nada Sukses (Ting-Ting Ceria)
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                    osc.frequency.exponentialRampToValueAtTime(783.99, audioCtx.currentTime + 0.15); // G5
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                } else if (type === 'wrong') {
+                    // Nada Salah (Buzzer Lembut)
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(130, audioCtx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.35);
+                } else if (type === 'win') {
+                    // Fanfare Sederhana ketika Menang
+                    const now = audioCtx.currentTime;
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.setValueAtTime(554.37, now + 0.1);
+                    osc.frequency.setValueAtTime(659.25, now + 0.2);
+                    osc.frequency.setValueAtTime(880, now + 0.3);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                    osc.start();
+                    osc.stop(now + 0.6);
+                }
+            } catch(e) {
+                console.log("Audio not supported or blocked");
+            }
+        }
+
+        // Suara Narasi / Text to Speech Bawaan Browser
+        function speakInstruction() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance("Cari satu gambar yang berbeda sendiri!");
+                utterance.lang = 'id-ID';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Generator Level Progresif 1 - 50
+        function generateLevelConfig(level) {
+            const shapeKeys = Object.keys(SHAPES);
+            const colorKeys = Object.keys(COLORS);
+
+            let baseShape = shapeKeys[Math.floor(Math.random() * shapeKeys.length)];
+            let baseColor = COLORS[colorKeys[Math.floor(Math.random() * colorKeys.length)]];
+            
+            let diffShape = baseShape;
+            let diffColor = baseColor;
+            let baseTransform = '';
+            let diffTransform = '';
+
+            // 1. Level 1 - 15: Perbedaan Warna Jelas / Mencolok
+            if (level <= 15) {
+                let otherColorKey = colorKeys.filter(k => COLORS[k] !== baseColor)[Math.floor(Math.random() * (colorKeys.length - 1))];
+                diffColor = COLORS[otherColorKey];
+            } 
+            // 2. Level 16 - 30: Perbedaan Bentuk Jelas
+            else if (level <= 30) {
+                let otherShapeKey = shapeKeys.filter(k => k !== baseShape)[Math.floor(Math.random() * (shapeKeys.length - 1))];
+                diffShape = otherShapeKey;
+            } 
+            // 3. Level 31 - 42: Perbedaan Bentuk + Warna Bergantian
+            else if (level <= 42) {
+                if (Math.random() > 0.5) {
+                    let otherShapeKey = shapeKeys.filter(k => k !== baseShape)[Math.floor(Math.random() * (shapeKeys.length - 1))];
+                    diffShape = otherShapeKey;
+                } else {
+                    let otherColorKey = colorKeys.filter(k => COLORS[k] !== baseColor)[Math.floor(Math.random() * (colorKeys.length - 1))];
+                    diffColor = COLORS[otherColorKey];
+                }
+            } 
+            // 4. Level 43 - 50: Level Detail (Perbedaan Rotasi / Ukuran Bentuk yang Sama)
+            else {
+                if (Math.random() > 0.5) {
+                    // Rotasi Terbalik/Miring
+                    diffTransform = 'rotate(180deg)';
+                } else {
+                    // Ukuran Sedikit Berbeda (Lebih Kecil/Besar)
+                    diffTransform = 'scale(0.75)';
+                }
+            }
+
+            // Susun 5 Item (4 Sama, 1 Beda)
+            oddIndex = Math.floor(Math.random() * 5);
+            let items = [];
+
+            for (let i = 0; i < 5; i++) {
+                if (i === oddIndex) {
+                    items.push({
+                        shape: diffShape,
+                        color: diffColor,
+                        transform: diffTransform,
+                        isDifferent: true
+                    });
+                } else {
+                    items.push({
+                        shape: baseShape,
+                        color: baseColor,
+                        transform: baseTransform,
+                        isDifferent: false
+                    });
+                }
+            }
+
+            return items;
+        }
+
+        // Render Level Ke Layar
+        function loadLevel() {
+            isProcessing = false;
+            document.getElementById('level-num').innerText = currentLevel;
+            
+            // Update Progress Bar
+            const progressPercent = (currentLevel / totalLevels) * 100;
+            document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+
+            const grid = document.getElementById('game-grid');
+            grid.innerHTML = '';
+
+            const levelData = generateLevelConfig(currentLevel);
+
+            levelData.forEach((item, index) => {
+                const btn = document.createElement('button');
+                btn.className = `item-btn bg-white rounded-3xl p-4 md:p-6 shadow-md border-4 border-slate-100 flex items-center justify-center hover:shadow-xl focus:outline-none ${index === 4 ? 'col-span-2 sm:col-span-1' : ''}`;
+                btn.setAttribute('aria-label', `Pilihan ${index + 1}`);
+                
+                // SVG Content
+                btn.innerHTML = SHAPES[item.shape](item.color, item.transform);
+                
+                // Click Listener
+                btn.onclick = () => handleChoice(index, btn);
+                
+                grid.appendChild(btn);
+            });
+
+            // Sembunyikan Pesan Feedback
+            const feedback = document.getElementById('feedback-message');
+            feedback.classList.add('opacity-0');
+        }
+
+        // Penanganan Pilihan User
+        function handleChoice(selectedIndex, btnElement) {
+            if (isProcessing) return;
+
+            const feedback = document.getElementById('feedback-message');
+
+            if (selectedIndex === oddIndex) {
+                // Jawaban Benar
+                isProcessing = true;
+                playSound('correct');
+                
+                btnElement.classList.add('animate-success', 'border-emerald-400', 'bg-emerald-50');
+                
+                feedback.innerText = getRandomEncouragement();
+                feedback.className = "opacity-100 transition-opacity duration-300 font-extrabold text-lg md:text-xl py-2 px-6 rounded-full shadow-lg text-white bg-emerald-500 my-2";
+
+                // Efek Confetti Kecil di Objek
+                if (typeof confetti === 'function') {
+                    confetti({
+                        particleCount: 25,
+                        spread: 50,
+                        origin: { y: 0.6 }
+                    });
+                }
+
+                setTimeout(() => {
+                    if (currentLevel < totalLevels) {
+                        currentLevel++;
+                        loadLevel();
+                    } else {
+                        // Tamat Semua Level (Level 50 Selesai)
+                        showWinScreen();
+                    }
+                }, 800);
+
+            } else {
+                // Jawaban Salah
+                playSound('wrong');
+                btnElement.classList.add('animate-shake', 'border-rose-400', 'bg-rose-50');
+                
+                feedback.innerText = "Coba Lagi ya! 😊";
+                feedback.className = "opacity-100 transition-opacity duration-300 font-extrabold text-lg md:text-xl py-2 px-6 rounded-full shadow-lg text-white bg-rose-500 my-2";
+
+                setTimeout(() => {
+                    btnElement.classList.remove('animate-shake', 'border-rose-400', 'bg-rose-50');
+                }, 500);
+            }
+        }
+
+        // Kata-kata Pujian Ceria
+        function getRandomEncouragement() {
+            const words = ["Pintar Sekali! 🎉", "Hebat! ⭐", "Luar Biasa! 🚀", "Benar! 👍", "Keren Banget! 🌟"];
+            return words[Math.floor(Math.random() * words.length)];
+        }
+
+        // Tampilan Tamat Game
+        function showWinScreen() {
+            playSound('win');
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 150,
+                    spread: 100,
+                    origin: { y: 0.4 }
+                });
+            }
+            document.getElementById('win-modal').classList.remove('hidden');
+        }
+
+        // Switch Suara On/Off
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const soundIcon = document.getElementById('sound-icon');
+            if (soundEnabled) {
+                soundIcon.className = "fa-solid fa-volume-high";
+            } else {
+                soundIcon.className = "fa-solid fa-volume-xmark text-slate-400";
+            }
+        }
+
+        // Restart dari Level 1
+        function restartGame() {
+            currentLevel = 1;
+            document.getElementById('win-modal').classList.add('hidden');
+            loadLevel();
+        }
+
+        // Jalankan saat Halaman Pertama Dimuat
+        window.onload = () => {
+            loadLevel();
+        };
+    </script>
+</body>
+</html>
