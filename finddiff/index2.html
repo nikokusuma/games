@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detektif Cilik - Cari yang Beda!</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Fredoka', cursive, sans-serif;
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+            touch-action: manipulation;
+        }
+
+        /* Shake animation for wrong answer */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-12px) rotate(-3deg); }
+            40%, 80% { transform: translateX(12px) rotate(3deg); }
+        }
+
+        .animate-shake {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        /* Bounce effect for correct icon */
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .animate-pop {
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .card-option {
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .card-option:hover {
+            transform: translateY(-6px) scale(1.03);
+        }
+
+        .card-option:active {
+            transform: translateY(2px) scale(0.97);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between p-4 sm:p-6 text-slate-800 select-none">
+
+    <!-- Header Section -->
+    <header class="w-full max-w-2xl bg-white/80 backdrop-blur-md rounded-3xl p-4 shadow-xl border-4 border-white mb-4">
+        <div class="flex justify-between items-center mb-2">
+            <div class="flex items-center gap-2">
+                <span class="text-3xl">🔍</span>
+                <h1 class="text-2xl sm:text-3xl font-bold text-indigo-600 tracking-wide">Cari yang Beda!</h1>
+            </div>
+            <!-- Reset Button -->
+            <button onclick="confirmReset()" class="bg-rose-100 hover:bg-rose-200 text-rose-600 px-3 py-1.5 rounded-2xl text-sm font-bold transition flex items-center gap-1.5 shadow-sm">
+                <i class="fa-solid => fa-rotate-left"></i> Reset
+            </button>
+        </div>
+
+        <!-- Progress Bar & Level Info -->
+        <div class="space-y-1.5">
+            <div class="flex justify-between items-center text-sm font-bold text-slate-600">
+                <span id="level-title" class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full">Level 1 / 50</span>
+                <span id="score-text" class="text-amber-500 flex items-center gap-1 text-base">⭐ Skor: 0</span>
+            </div>
+            <div class="w-full bg-slate-200 h-4 rounded-full overflow-hidden p-0.5 border border-slate-300">
+                <div id="progress-bar" class="bg-gradient-to-r from-amber-400 to-emerald-400 h-full rounded-full transition-all duration-500 w-[2%]"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Game Area -->
+    <main class="w-full max-w-2xl bg-white/90 backdrop-blur-md rounded-3xl p-6 shadow-2xl border-4 border-white flex-1 flex flex-col justify-between items-center relative overflow-hidden">
+        
+        <!-- Instruction / Clue -->
+        <div class="text-center mb-6">
+            <h2 class="text-xl sm:text-2xl font-bold text-slate-700 mb-1" id="instruction-text">Ada 1 benda yang beda sendiri!</h2>
+            <p class="text-sm text-slate-500">Temukan item yang beda di antara 2 pasang kembar ini!</p>
+        </div>
+
+        <!-- Options Grid Container -->
+        <div id="options-container" class="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6 w-full max-w-md my-auto">
+            <!-- Dynamic Buttons Generated Here -->
+        </div>
+
+        <!-- Feedback Message overlay -->
+        <div id="feedback-msg" class="mt-6 text-center font-bold text-xl h-8 transition-opacity duration-300 opacity-0 text-emerald-500">
+            Hebat sekali! 🌟
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-4 text-center text-xs font-semibold text-slate-500">
+        Game Edukasi Anak Kelas 1-2 SD • Semangat Belajar! ✨
+    </footer>
+
+    <!-- Completion Modal -->
+    <div id="win-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl border-4 border-amber-300 animate-pop">
+            <div class="text-6xl mb-3">🏆</div>
+            <h3 class="text-3xl font-bold text-indigo-600 mb-2">Hore! Menang!</h3>
+            <p class="text-slate-600 font-medium mb-6">Kamu telah menyelesaikan semua 50 Level dengan sangat teliti!</p>
+            <button onclick="resetGame()" class="w-full bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg transform active:scale-95 transition text-lg">
+                Main Lagi Dari Awal 🚀
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript Sound Effects (Web Audio API) -->
+    <script>
+        // Web Audio API Sound Effects generator (Pop & Error sound)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playPopSound() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+            
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        function playErrorSound() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.2);
+            
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.2);
+        }
+
+        function playWinSound() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const notes = [261.63, 329.63, 392.00, 523.25]; // C, E, G, High C
+            notes.forEach((freq, idx) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.1);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime + idx * 0.1);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + idx * 0.1 + 0.2);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(audioCtx.currentTime + idx * 0.1);
+                osc.stop(audioCtx.currentTime + idx * 0.1 + 0.2);
+            });
+        }
+    </script>
+
+    <!-- Game Logic -->
+    <script>
+        // Data Bank Icons / Emojis & Colors
+        const SHAPES = {
+            STAR: { icon: 'fa-star', type: 'fa' },
+            HEART: { icon: 'fa-heart', type: 'fa' },
+            CIRCLE: { icon: 'fa-circle', type: 'fa' },
+            SQUARE: { icon: 'fa-square', type: 'fa' },
+            TRIANGLE: { icon: 'triangle-svg', type: 'svg' },
+            DIAMOND: { icon: 'fa-gem', type: 'fa' },
+            BELL: { icon: 'fa-bell', type: 'fa' },
+            APPLE: { icon: '🍎', type: 'emoji' },
+            BANANA: { icon: '🍌', type: 'emoji' },
+            CAT: { icon: '🐱', type: 'emoji' },
+            DOG: { icon: '🐶', type: 'emoji' },
+            CAR: { icon: '🚗', type: 'emoji' },
+            FLOWER: { icon: '🌸', type: 'emoji' },
+            SUN: { icon: '☀️', type: 'emoji' },
+            MOON: { icon: '🌙', type: 'emoji' },
+            BALL: { icon: '⚽', type: 'emoji' },
+            FISH: { icon: '🐟', type: 'emoji' },
+            BEAR: { icon: '🐻', type: 'emoji' },
+            BUG: { icon: '🐞', type: 'emoji' }
+        };
+
+        const COLORS = {
+            RED: 'text-red-500',
+            BLUE: 'text-blue-500',
+            GREEN: 'text-emerald-500',
+            YELLOW: 'text-amber-400',
+            PURPLE: 'text-purple-500',
+            PINK: 'text-pink-400',
+            ORANGE: 'text-orange-500',
+            TEAL: 'text-teal-400'
+        };
+
+        // Generating 50 Levels Programmatically with increasing difficulty
+        function generateLevels() {
+            const levels = [];
+            
+            // Level 1-20: Simple shapes and strong contrast colors
+            const simpleShapes = [SHAPES.STAR, SHAPES.HEART, SHAPES.CIRCLE, SHAPES.SQUARE, SHAPES.BELL];
+            const simpleColors = [COLORS.RED, COLORS.BLUE, COLORS.GREEN, COLORS.YELLOW, COLORS.PURPLE];
+
+            for (let i = 1; i <= 20; i++) {
+                let pair1Shape = simpleShapes[i % simpleShapes.length];
+                let pair2Shape = simpleShapes[(i + 1) % simpleShapes.length];
+                let oddShape = pair1Shape;
+
+                let pair1Color = simpleColors[i % simpleColors.length];
+                let pair2Color = simpleColors[(i + 2) % simpleColors.length];
+                let oddColor = pair1Color;
+
+                // Alternate difference types (odd in color vs odd in shape)
+                if (i % 2 === 1) {
+                    // Odd item differs in Color
+                    oddColor = simpleColors[(i + 3) % simpleColors.length];
+                } else {
+                    // Odd item differs in Shape
+                    oddShape = simpleShapes[(i + 3) % simpleShapes.length];
+                }
+
+                levels.push({
+                    pair1: { ...pair1Shape, color: pair1Color },
+                    pair2: { ...pair2Shape, color: pair2Color },
+                    odd: { ...oddShape, color: oddColor }
+                });
+            }
+
+            // Level 21-35: Emoji mix and moderate combinations
+            const emojis = [SHAPES.APPLE, SHAPES.BANANA, SHAPES.CAT, SHAPES.DOG, SHAPES.CAR, SHAPES.FLOWER, SHAPES.SUN, SHAPES.MOON, SHAPES.BALL, SHAPES.FISH];
+            for (let i = 21; i <= 35; i++) {
+                let e1 = emojis[(i * 2) % emojis.length];
+                let e2 = emojis[(i * 2 + 1) % emojis.length];
+                let oddE = emojis[(i * 2 + 2) % emojis.length];
+
+                // Shape differences using emojis or colored shapes
+                if (i % 3 === 0) {
+                    // Shape difference with colored icons
+                    let color = simpleColors[i % simpleColors.length];
+                    levels.push({
+                        pair1: { ...SHAPES.DIAMOND, color: COLORS.RED },
+                        pair2: { ...SHAPES.BELL, color: COLORS.BLUE },
+                        odd: { ...SHAPES.HEART, color: COLORS.RED }
+                    });
+                } else {
+                    // Emoji difference
+                    levels.push({
+                        pair1: e1,
+                        pair2: e2,
+                        odd: oddE
+                    });
+                }
+            }
+
+            // Level 36-50: Subtle color shades and geometry combinations
+            const fineColors = [COLORS.RED, COLORS.PINK, COLORS.ORANGE, COLORS.YELLOW, COLORS.GREEN, COLORS.TEAL, COLORS.BLUE, COLORS.PURPLE];
+            for (let i = 36; i <= 50; i++) {
+                let pair1Shape = [SHAPES.STAR, SHAPES.DIAMOND, SHAPES.BEAR, SHAPES.BUG, SHAPES.FISH][i % 5];
+                let pair2Shape = [SHAPES.HEART, SHAPES.BELL, SHAPES.SUN, SHAPES.FLOWER, SHAPES.BALL][(i + 1) % 5];
+                let oddShape = pair1Shape;
+
+                let c1 = fineColors[i % fineColors.length];
+                let c2 = fineColors[(i + 2) % fineColors.length];
+                let oddC = c1;
+
+                if (i % 2 === 0) {
+                    oddC = fineColors[(i + 4) % fineColors.length];
+                } else {
+                    oddShape = pair2Shape;
+                    oddC = c2;
+                }
+
+                levels.push({
+                    pair1: { ...pair1Shape, color: c1 },
+                    pair2: { ...pair2Shape, color: c2 },
+                    odd: { ...oddShape, color: oddC }
+                });
+            }
+
+            return levels;
+        }
+
+        const GAME_LEVELS = generateLevels();
+        const TOTAL_LEVELS = 50;
+
+        // State variables
+        let currentLevel = 1;
+        let score = 0;
+        let isProcessing = false;
+
+        // Load saved state
+        function loadProgress() {
+            const savedLevel = localStorage.getItem('detektif_level');
+            const savedScore = localStorage.getItem('detektif_score');
+            
+            if (savedLevel) currentLevel = parseInt(savedLevel);
+            if (savedScore) score = parseInt(savedScore);
+
+            if (currentLevel > TOTAL_LEVELS) {
+                currentLevel = TOTAL_LEVELS;
+            }
+        }
+
+        // Save progress
+        function saveProgress() {
+            localStorage.setItem('detektif_level', currentLevel);
+            localStorage.setItem('detektif_score', score);
+        }
+
+        // Render Current Level
+        function renderLevel() {
+            isProcessing = false;
+            const levelData = GAME_LEVELS[currentLevel - 1];
+
+            // Update Header Status
+            document.getElementById('level-title').innerText = `Level ${currentLevel} / ${TOTAL_LEVELS}`;
+            document.getElementById('score-text').innerText = `⭐ Skor: ${score}`;
+            const progressPercent = Math.min(100, Math.max(4, (currentLevel / TOTAL_LEVELS) * 100));
+            document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+
+            // Reset feedback
+            const feedback = document.getElementById('feedback-msg');
+            feedback.classList.add('opacity-0');
+
+            // Build 5 items array: 2 Pair1 + 2 Pair2 + 1 Odd
+            const items = [
+                { ...levelData.pair1, isOdd: false, id: 1 },
+                { ...levelData.pair1, isOdd: false, id: 2 },
+                { ...levelData.pair2, isOdd: false, id: 3 },
+                { ...levelData.pair2, isOdd: false, id: 4 },
+                { ...levelData.odd, isOdd: true, id: 5 }
+            ];
+
+            // Shuffle array so odd item changes position every time
+            shuffleArray(items);
+
+            // Container Render
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            items.forEach((item, index) => {
+                const btn = document.createElement('button');
+                btn.className = `card-option bg-gradient-to-b from-slate-50 to-slate-100 hover:from-indigo-50 hover:to-indigo-100 border-4 border-slate-200 hover:border-indigo-300 rounded-3xl p-4 sm:p-6 flex items-center justify-center shadow-md text-5xl sm:text-6xl h-28 sm:h-36 w-full relative focus:outline-none`;
+                
+                // Content Rendering (Emoji vs FontAwesome Icon)
+                if (item.type === 'emoji') {
+                    btn.innerHTML = `<span class="animate-pop">${item.icon}</span>`;
+                } else if (item.type === 'fa') {
+                    btn.innerHTML = `<i class="fa-solid ${item.icon} ${item.color || ''} filter drop-shadow-sm animate-pop"></i>`;
+                } else {
+                    btn.innerHTML = `<span class="${item.color || 'text-indigo-500'} font-bold">▲</span>`;
+                }
+
+                // Click event
+                btn.onclick = () => handleChoice(btn, item.isOdd);
+                container.appendChild(btn);
+            });
+        }
+
+        // Shuffle Utility
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Handle Choice
+        function handleChoice(buttonElement, isOdd) {
+            if (isProcessing) return;
+
+            if (isOdd) {
+                // CORRECT CHOICE
+                isProcessing = true;
+                playPopSound();
+
+                // Button animations
+                buttonElement.classList.remove('border-slate-200', 'from-slate-50', 'to-slate-100');
+                buttonElement.classList.add('border-emerald-400', 'bg-emerald-100', 'scale-105');
+
+                // Confetti mini burst
+                confetti({
+                    particleCount: 35,
+                    spread: 60,
+                    origin: { y: 0.7 }
+                });
+
+                // Display Positive Feedback
+                const feedbacks = ["Hebat Sekali! 🎉", "Pintar! 🌟", "Luar Biasa! 🚀", "Benar! 👍", "Keren! 👑"];
+                const randomFb = feedbacks[Math.floor(Math.random() * feedbacks.length)];
+                const feedbackEl = document.getElementById('feedback-msg');
+                feedbackEl.innerText = randomFb;
+                feedbackEl.classList.remove('opacity-0');
+
+                score += 10;
+                saveProgress();
+
+                setTimeout(() => {
+                    if (currentLevel < TOTAL_LEVELS) {
+                        currentLevel++;
+                        saveProgress();
+                        renderLevel();
+                    } else {
+                        // Game Completed
+                        playWinSound();
+                        confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 } });
+                        document.getElementById('win-modal').classList.remove('hidden');
+                    }
+                }, 1000);
+
+            } else {
+                // WRONG CHOICE
+                playErrorSound();
+                buttonElement.classList.add('animate-shake', 'border-rose-300', 'bg-rose-50');
+                
+                setTimeout(() => {
+                    buttonElement.classList.remove('animate-shake', 'border-rose-300', 'bg-rose-50');
+                }, 500);
+            }
+        }
+
+        // Reset Game Confirmation
+        function confirmReset() {
+            if (confirm("Apakah kamu yakin ingin mengulang dari Level 1?")) {
+                resetGame();
+            }
+        }
+
+        function resetGame() {
+            currentLevel = 1;
+            score = 0;
+            saveProgress();
+            document.getElementById('win-modal').classList.add('hidden');
+            renderLevel();
+        }
+
+        // Start game on load
+        window.onload = function() {
+            loadProgress();
+            renderLevel();
+        };
+    </script>
+</body>
+</html>
