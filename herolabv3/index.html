@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hero Stats Lab</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:"Trebuchet MS",system-ui,sans-serif;background:#0c1b2a;color:#e8f3f1;min-height:100vh}
+button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:8px 14px;background:#14b8a6;color:#05221f;font-weight:700}
+button:disabled{opacity:.35;cursor:not-allowed}button:focus-visible,input:focus-visible{outline:3px solid #fde047}
+.w{max-width:880px;margin:auto;padding:12px}.card{background:#12293d;border:2px solid #1f4a5e;border-radius:14px;padding:12px;margin-bottom:12px}
+h1,h2{margin:.2em 0}.hid{display:none}small{color:#9fc3c0}
+.heroes{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}.hb{font-size:38px;background:#1b3d52;padding:6px 12px}.hb.on{outline:4px solid #fde047}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:8px}
+.lv{padding:6px 0;background:#1b3d52;color:#e8f3f1;line-height:1.2}.lv.done{background:#15803d;color:#fff}.lv.cur{background:#f59e0b}.lv.boss{border:2px solid #fb7185}
+code,.var{font-family:ui-monospace,Consolas,monospace}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 0;border-bottom:1px dashed #1f4a5e}.row code:first-child{min-width:130px;color:#fde047}
+.t{font-size:11px;padding:2px 7px;border-radius:6px;background:#38bdf8;color:#04202e;font-weight:700}.t.i{background:#c084fc}.t.b{background:#fb923c}
+.val{min-width:44px;text-align:center;font-family:ui-monospace,monospace;font-size:18px}.lk{color:#fb7185;font-size:13px}
+button.on{background:#fde047}.pts{height:10px;background:#0006;border-radius:6px;overflow:hidden;margin:6px 0}.pts i{display:block;height:100%;background:#fde047;transition:width .3s}
+input[type=text]{font:inherit;padding:7px 10px;border-radius:8px;border:2px solid #1f4a5e;background:#0c1b2a;color:#fff;width:170px}
+.arena{display:flex;justify-content:space-around;align-items:flex-end;height:250px;background:linear-gradient(#1d4e6b,#12293d 70%,#1b3d2c 70%);border-radius:14px;margin-bottom:12px;padding:0 4px 10px;overflow:hidden}
+.fig{text-align:center;width:44%;position:relative}.em{font-size:72px;line-height:1.1;display:inline-block;transition:transform .3s}.nm{font-weight:700}
+.bar{height:12px;background:#0007;border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;width:100%;background:#4ade80;transition:width .5s}.bar.lo i{background:#ef4444}
+.fly .em{transform:translateY(-50px)}.fly.rt .em{transform:translate(70px,-50px)}.rt .em{transform:translateX(70px)}.lt .em{transform:translateX(-70px)}
+.sk .em{animation:sk .3s}@keyframes sk{25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
+.shd .em::after{content:"🛡️";font-size:32px}.fl{position:absolute;left:40%;top:0;font-weight:800;font-size:26px;color:#f87171;animation:up 1s forwards;pointer-events:none}.fl.ok{color:#4ade80}
+@keyframes up{to{transform:translateY(-60px);opacity:0}}
+.chip{display:inline-block;background:#1b3d52;border-radius:8px;padding:3px 8px;margin:2px;font-size:13px}
+#log{max-height:150px;overflow:auto;font-size:14px;margin-top:8px}#res{margin-top:8px;font-weight:700}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation-duration:.01s!important}}
+</style></head><body><div class="w">
+<section id="s0"><div class="card" style="text-align:center"><h1>🧪 Hero Stats Lab</h1>
+<p>Atur variabel pahlawanmu, lalu kalahkan monster di 50 level. Setiap level punya batas dan poin sendiri.</p>
+<p>Pilih gambar pahlawan:</p><div class="heroes" id="hl"></div><p><button id="go">Mulai petualangan</button></p></div>
+<div class="card"><span class="t">String</span> teks &nbsp; <span class="t i">Integer</span> angka &nbsp; <span class="t b">Boolean</span> Benar atau Salah</div></section>
+<section id="s1" class="hid"><div class="card"><h2>Peta level</h2><small>Level terkunci terbuka setelah level sebelumnya dimenangkan. Tidak ada jalan pintas.</small></div>
+<div class="card"><div id="grid"></div></div><button id="bk0">Ganti hero</button> <button id="rs">Reset progres</button></section>
+<section id="s2" class="hid"><div class="card"><button id="bk">Peta</button> <b id="lt"></b><div><small id="mis"></small></div></div>
+<div class="arena" id="ar"><div class="fig" id="hf"><div class="nm" id="hn"></div><div class="em" id="he"></div><div class="bar" id="hbar"><i id="hb"></i></div><code>Level_Darah = <b id="hv"></b></code></div>
+<div class="fig" id="mf"><div class="nm" id="mn"></div><div class="em" id="me"></div><div class="bar"><i id="mb"></i></div><code>HP_Monster = <b id="mv"></b></code></div></div>
+<div class="card" id="mi"></div>
+<div class="card"><div class="row"><code>Nama_Hero</code><span class="t">String</span><code>=</code><input type="text" id="nm" maxlength="12" value="Hero"></div>
+<div id="pv"></div></div>
+<div class="card"><button id="fb">Mulai bertarung</button> <label><input type="checkbox" id="fast"> Cepat</label><div id="res"></div><div id="log"></div></div></section>
+</div>
+<script>
+const $=s=>document.querySelector(s),E=(t,c,h)=>{const e=document.createElement(t);e.className=c;e.innerHTML=h;return e};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms/($('#fast').checked?2:1)));
+const R=s=>()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const HE="🦸‍♂️,🦸‍♀️,🥷,🧙,🤖,🧝,🦊,🐱,🧑‍🚀,🐲".split(",");
+const MN=("Ulat Raksasa|🐛,Kelelawar Gua|🦇,Laba-laba Hutan|🕷️,Katak Beracun|🐸,Raja Tikus|🐀,Ular Berbisa|🐍,Lebah Ganas|🐝,Siput Raksasa|🐌,Zombi Rawa|🧟,Buaya Rawa|🐊,"+
+"Kalajengking Pasir|🦂,Unta Liar|🐫,Elang Gurun|🦅,Kerangka Prajurit|💀,Sphinx Kuno|🦁,Kepiting Baja|🦀,Ikan Buntal|🐡,Hiu Ganas|🦈,Cumi Racun|🦑,Kraken|🐙,"+
+"Serigala Salju|🐺,Beruang Gunung|🐻,Gorila Batu|🦍,Gajah Es|🐘,Banteng Api|🐂,Hantu Kastil|👻,Vampir Malam|🧛,Penyihir Gelap|🧙,Robot Penjaga|🤖,Raksasa Oni|👹,"+
+"Burung Hantu Kutukan|🦉,Babi Hutan Liar|🐗,Goblin Jahat|👺,Kuda Hitam|🐴,Rusa Kutukan|🦌,Tawon Baja|🐝,Kupu-kupu Racun|🦋,Kobra Raja|🐍,Naga Hutan|🐲,Harimau Bayangan|🐅,"+
+"Api Hidup|🔥,Golem Lava|🌋,Brontosaurus Marah|🦕,T-Rex Purba|🦖,Naga Api|🐉,Alien Pengintai|👽,UFO Penjajah|🛸,Monster Piksel|👾,Badut Jahat|🤡,Raja Kegelapan|😈").split(",").map(x=>x.split("|"));
+const NM=["Level_Darah","Level_Serangan","Bisa_Terbang","Perisai_Aktif"],MK=[2,1,4,8,3,9,6,11,13,15],IC={D:"🦶",U:"🏹",S:"🔮"},TN={D:"darat",U:"udara",S:"sihir"};
+let P={u:1,h:0,n:"Hero"};try{Object.assign(P,JSON.parse(localStorage.getItem("hsl")))}catch(e){}
+const save=()=>{try{localStorage.setItem("hsl",JSON.stringify(P))}catch(e){}};
+let cur,st,busy=0;const LV={};
+const hero=(S,a)=>({hp:S.hp0+5*a.i,atk:S.at0+a.j,fly:!!a.f,sh:!!a.s});
+/* Simulasi pertarungan (deterministik): hero memukul dulu, lalu monster menyerang sesuai pola */
+function sim(h,m,M,A,lg){let hp=h.hp,e=M;const p=v=>lg&&lg.push(v);
+for(let t=1;t<=m.T;t++){const d=Math.max(1,Math.round(h.atk*(h.fly?.8:1))-m.armor);e-=d;p({k:"h",t,d,e:Math.max(0,e)});
+if(e<=0){p({k:"end",w:1});return 1}
+if(m.th){const x=Math.round(d*m.th);hp-=x;p({k:"th",d:x,hp:Math.max(0,hp)});if(hp<=0){p({k:"end",w:0,y:"th"});return 0}}
+const ty=m.pat[(t-1)%m.pat.length],a=A*(t>m.enr?2:1);let x=a;
+if(ty=="D")x=h.fly?0:h.sh?a/2:a;else if(ty=="U")x=a*(h.fly?1.5:1)*(h.sh?.5:1);
+x=Math.round(x);hp-=x;p({k:"m",t,ty,d:x,hp:Math.max(0,hp),en:t>m.enr});
+if(hp<=0){p({k:"end",w:0,y:ty});return 0}
+if(m.po){hp-=m.po;p({k:"po",d:m.po,hp:Math.max(0,hp)});if(hp<=0){p({k:"end",w:0,y:"po"});return 0}}
+const g=Math.min(M-e,Math.ceil(m.rg*M));if(g>0){e+=g;p({k:"rg",d:g,e})}}
+p({k:"end",w:0,y:"time"});return 0}
+function maxM(h,m,A){let l=0,r=2000;while(l<r){const k=(l+r+1)>>1;sim(h,m,k,A)?l=k:r=k-1}return l}
+function allocs(S){const o=[];for(let i=0;i<=S.hs;i++)for(let j=0;j<=S.as;j++)for(let f=0;f<=S.f;f++)for(let s=0;s<=S.s;s++)if(i+2*j+6*f+5*s<=S.B)o.push({i,j,f,s});return o}
+/* Penyeimbang otomatis: HP monster dan serangan dicari agar level BISA dimenangkan,
+   tetapi build default dan build "semua poin ke serangan" pasti kalah. */
+function tune(S){const hs=allocs(S).map(a=>hero(S,a)),m=S.mon,def=hero(S,{i:0,j:0,f:0,s:0});
+const multi=S.m&2&&(S.m&(S.m-1))>0,lo=2*(S.at0+S.as)+1,ref=S.hp0+2.5*S.hs;
+const j=Math.min(S.as,S.B>>1),ch=hero(S,{i:Math.min(S.hs,S.B-2*j),j,f:0,s:0});let fb=null;
+for(let at=0;at<7;at++){if(at==1)m.th=.2;if(at==2)m.po=Math.round(ref*.03);if(at==3)m.th=.35;if(at==4){m.po=Math.round(ref*.06);m.enr=Math.min(m.enr,Math.round(S.T*.5))}if(at==5)m.th=.5;
+for(let k=0;k<12;k++){const A=Math.max(1,Math.round(ref*(.07+.002*S.L)*1.2**k));let b=0;for(const h of hs)b=Math.max(b,maxM(h,m,A));
+let M=Math.floor(b*.82);if(M<lo)break;if(!hs.some(h=>sim(h,m,M,A)))M=b;
+if(!fb)fb={mA:A,M,tr:{...m}};
+if(maxM(def,m,A)<M&&(!multi||maxM(ch,m,A)<M))return{mA:A,M}}
+if(!multi)break}
+if(fb){Object.assign(m,fb.tr);return fb}
+Object.assign(m,{armor:0,rg:0,th:0,po:0,enr:99});let b=0;for(const h of hs)b=Math.max(b,maxM(h,m,1));return{mA:1,M:Math.max(lo,Math.floor(b*.82))}}
+function build(L){if(LV[L])return LV[L];
+const r=R(L*977+13),m=L<=10?MK[L-1]:L%5?[3,5,6,7,9,10,11,12,13,14][r()*10|0]:15;
+const S={L,m,hp0:30+2*L,at0:4+(L/3|0),hs:m&1?6+(L/2|0):0,as:m&2?4+(L*.35|0):0,f:m>>2&1,s:m>>3&1,T:8+Math.min(6,L/6|0)};
+S.B=Math.max(3,S.f*6,S.s*5,Math.round(.5*(S.hs+2*S.as+6*S.f+5*S.s)));
+const ty=L<4?"D":L<8?"DU":"DUS",pa=[...ty];for(let i=r()*3|0;i>0;i--)pa.push(ty[r()*ty.length|0]);pa.sort(()=>r()-.5);
+const mx=S.at0+S.as;
+S.mon={pat:pa,armor:L>=6?Math.round(r()*mx*.3):0,rg:L>=12&&r()<.5?.03+r()*.04:0,th:L>=15&&r()<.4?.15:0,po:0,enr:L>=6?Math.round(S.T*(.5+r()*.3)):99,T:S.T};
+[S.nm,S.em]=MN[L-1];Object.assign(S,tune(S));return LV[L]=S}
+const show=n=>[0,1,2].forEach(i=>$("#s"+i).classList.toggle("hid",i!=n));
+function mapv(){show(1);const g=$("#grid");g.innerHTML="";for(let i=1;i<=50;i++){const dn=i<P.u||(i==50&&P.fin);
+const b=E("button","lv"+(dn?" done":i==P.u?" cur":"")+(i%5==0?" boss":""),i>P.u?"🔒<br>"+i:MN[i-1][1]+"<br>"+i);b.disabled=i>P.u;b.title=i>P.u?"Terkunci":MN[i-1][0];b.onclick=()=>openLv(i);g.append(b)}}
+function openLv(n){if(n>P.u)return;show(2);$("#lt").textContent=`Level ${n}${n%5==0?" 👑 Bos":""}: ${MN[n-1][0]}`;$("#mis").textContent="Menyiapkan arena...";
+setTimeout(()=>{cur=build(n);st={i:0,j:0,f:0,s:0};const S=cur;busy=0;$("#res").innerHTML="";$("#log").innerHTML="";
+$("#mis").textContent="Bisa diubah: "+(NM.filter((_,k)=>S.m>>k&1).join(", "))+". Terkunci: "+(NM.filter((_,k)=>!(S.m>>k&1)).join(", ")||"tidak ada")+".";
+const ch=[`❤️ HP ${S.M}`,`💥 Serangan ${S.mA}`,`⏱ Batas ${S.T} giliran`];const m=S.mon;
+if(m.armor)ch.push(`🪨 Armor ${m.armor} (pukulanmu −${m.armor})`);if(m.rg)ch.push(`💚 Regen ${Math.ceil(m.rg*S.M)}/giliran`);if(m.th)ch.push(`🌵 Duri: memantulkan ${Math.round(m.th*100)}% damage-mu`);
+if(m.po)ch.push(`☠️ Racun ${m.po}/giliran`);if(m.enr<99)ch.push(`😡 Murka giliran ${m.enr+1}+ (damage ×2)`);
+$("#mi").innerHTML=`<b>Pola serangan (berulang):</b> ${m.pat.map(t=>`<span class="chip">${IC[t]} ${TN[t]}</span>`).join("")}<br>${ch.map(c=>`<span class="chip">${c}</span>`).join("")}
+<br><small>🦶 Darat: dihindari saat terbang, perisai −50%. 🏹 Udara: tak bisa dihindari, saat terbang damage ×1,5, perisai −50%. 🔮 Sihir: menembus perisai dan tak bisa dihindari. Terbang membuat pukulanmu −20%.</small>`;
+ui();pv()},30)}
+function ui(){const S=cur;$("#hn").textContent=$("#nm").value||"Hero";$("#he").textContent=HE[P.h];$("#mn").textContent=S.nm;$("#me").textContent=S.em;
+const h=hero(S,st);$("#hv").textContent=h.hp;$("#mv").textContent=S.M;$("#hb").style.width="100%";$("#mb").style.width="100%";$("#hbar").classList.remove("lo");
+$("#hf").className="fig"+(st.f?" fly":"")+(st.s?" shd":"");$("#mf").className="fig"}
+function pv(){const S=cur,rem=S.B-(st.i+2*st.j+6*st.f+5*st.s),o=busy,h=hero(S,st),lk='<span class="lk">🔒 terkunci di level ini</span>';
+const num=(a,n,v,ad,dn,up,c)=>`<div class="row"><code>${n}</code><span class="t i">Integer</span><code>=</code>${ad?`<button data-a="${a}-" ${o||dn?"disabled":""}>−</button><b class="val">${v}</b><button data-a="${a}+" ${o||up||rem<c?"disabled":""}>+</button><small>${c} poin per langkah</small>`:`<b class="val">${v}</b>${lk}`}</div>`;
+const bo=(a,n,on,ad,c)=>`<div class="row"><code>${n}</code><span class="t b">Boolean</span><code>=</code>${ad?`<button data-a="${a}" class="${on?"on":""}" ${o||(!on&&rem<c)?"disabled":""}>${on?"Benar":"Salah"}</button><small>${c} poin</small>`:`<b class="val">Salah</b>${lk}`}</div>`;
+$("#pv").innerHTML=`<div><b>Poin: ${rem} / ${S.B}</b><div class="pts"><i style="width:${S.B?rem/S.B*100:0}%"></i></div><small>Kalau poin habis, tombol tambah terkunci, tapi Terbang dan Perisai yang sudah aktif tetap menyala.</small></div>`+
+num("h",NM[0],h.hp,S.m&1,st.i<=0,st.i>=S.hs,1)+num("a",NM[1],h.atk,S.m&2,st.j<=0,st.j>=S.as,2)+bo("f",NM[2],st.f,S.m&4,6)+bo("s",NM[3],st.s,S.m&8,5);$("#fb").disabled=!!o}
+$("#pv").onclick=e=>{const a=e.target.dataset.a;if(!a||busy)return;({"h+":()=>st.i++,"h-":()=>st.i--,"a+":()=>st.j++,"a-":()=>st.j--,f:()=>st.f^=1,s:()=>st.s^=1})[a]();ui();pv()};
+$("#nm").oninput=()=>{$("#hn").textContent=$("#nm").value||"Hero"};
+const tw=(el,a,b,ms)=>new Promise(r=>{const t0=performance.now();(function f(){const p=Math.min(1,(performance.now()-t0)/ms);el.textContent=Math.round(a+(b-a)*p);p<1?requestAnimationFrame(f):r()})()});
+async function fight(){if(busy)return;busy=1;const S=cur,h=hero(S,st),lg=[],nm=$("#nm").value||"Hero";P.n=nm;save();sim(h,S.mon,S.M,S.mA,lg);
+let hp=h.hp,e=S.M;ui();pv();$("#res").innerHTML="";$("#log").innerHTML="";
+const say=t=>$("#log").prepend(E("div","",t)),fl=(id,t,c)=>{const f=E("div","fl "+(c||""),t);$(id).append(f);setTimeout(()=>f.remove(),1000)};
+const mvf=async(id,c)=>{$(id).classList.add(c);await sleep(300);$(id).classList.remove(c)};
+const setE=n=>{tw($("#mv"),e,n,400);e=n;$("#mb").style.width=n/S.M*100+"%"},setH=n=>{tw($("#hv"),hp,n,400);hp=n;$("#hb").style.width=n/h.hp*100+"%";$("#hbar").classList.toggle("lo",n/h.hp<.3)};
+await sleep(500);
+for(const v of lg){
+if(v.k=="h"){say(`⚔️ Giliran ${v.t}: ${nm} memukul, −${v.d}`);await mvf("#hf","rt");fl("#mf","-"+v.d);setE(v.e);mvf("#mf","sk")}
+else if(v.k=="th"){say(`🌵 Duri memantul ke ${nm}, −${v.d}`);fl("#hf","-"+v.d);setH(v.hp);mvf("#hf","sk")}
+else if(v.k=="m"){if(!v.d){say(`💨 ${nm} terbang dan menghindari serangan darat ${S.nm}!`);fl("#hf","HINDAR!","ok")}
+else{await mvf("#mf","lt");say(`${IC[v.ty]} ${S.nm} menyerang ${TN[v.ty]}, −${v.d}${v.en?" 😡 murka":""}${st.s&&v.ty!="S"?" (perisai −50%)":""}`);fl("#hf","-"+v.d);setH(v.hp);mvf("#hf","sk")}}
+else if(v.k=="po"){say(`☠️ Racun melukai ${nm}, −${v.d}`);setH(v.hp)}
+else if(v.k=="rg"){say(`💚 ${S.nm} memulihkan ${v.d} HP`);setE(v.e)}
+else{busy=0;pv();const L=S.L;
+if(v.w){if(L==P.u&&L<50){P.u++;save()}if(L==50){P.fin=1;save()}
+$("#res").innerHTML=`🎉 Menang! ${L==50?"Kamu menamatkan semua 50 level!":"Level berikutnya terbuka."}<br>`+(L<50?`<button id="nx">Level ${L+1}</button> `:"")+`<button id="mp">Peta</button>`}
+else{const Y={th:"🌵 Duri memantulkan terlalu banyak damage. Serangan besar butuh darah.",po:"☠️ Racun menggerogoti darahmu.",D:"🦶 Serangan darat menumbangkanmu. Coba terbang atau perisai.",U:"🏹 Serangan udara menumbangkanmu. Terbang justru membuatnya lebih sakit.",S:"🔮 Sihir menembus perisai dan tak bisa dihindari. Butuh darah lebih.",time:"⏱ Batas giliran habis. Naikkan serangan atau cek armor dan regen."};
+$("#res").innerHTML=`💀 Kalah. ${Y[v.y]}<br><small>Ubah variabel lalu coba lagi. Satu bidang saja yang dimaksimalkan jarang cukup.</small>`}
+const nx=$("#nx");if(nx)nx.onclick=()=>openLv(L+1);const mp=$("#mp");if(mp)mp.onclick=mapv;break}
+await sleep(650)}}
+$("#fb").onclick=fight;$("#bk").onclick=()=>{if(!busy)mapv()};$("#bk0").onclick=()=>show(0);
+$("#rs").onclick=()=>{if(confirm("Hapus semua progres?")){P.u=1;P.fin=0;save();mapv()}};
+HE.forEach((h,i)=>{const b=E("button","hb"+(i==P.h?" on":""),h);b.onclick=()=>{P.h=i;[...$("#hl").children].forEach((c,k)=>c.classList.toggle("on",k==i));save()};$("#hl").append(b)});
+$("#nm").value=P.n||"Hero";$("#go").onclick=mapv;
+</script></body></html>
