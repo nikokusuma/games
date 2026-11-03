@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Misi Wakanda: Tangkap Sang Koruptor!</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;justify-content:center;padding:12px;font-family:'Baloo 2','Trebuchet MS',sans-serif;color:#1e1b4b;background:radial-gradient(circle at 20% 0,#6d28d9 0,#312e81 40%,#0f172a 100%) fixed}
+#app{width:100%;max-width:640px}
+h1{margin:0 0 6px;font-size:26px;line-height:1.15;font-weight:800}
+p{margin:6px 0;font-size:17px;line-height:1.35}
+.card{background:#fff7d6;border-radius:22px;padding:16px 18px;margin-bottom:12px;box-shadow:0 7px 0 #b45309}
+.tc{text-align:center}.big{font-size:60px;line-height:1.1}
+.btn{font:inherit;font-weight:800;font-size:19px;border:0;border-radius:16px;padding:8px 20px;background:#f97316;color:#fff;box-shadow:0 5px 0 #9a3412;cursor:pointer}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 #9a3412}
+.btn:disabled{background:#94a3b8;box-shadow:0 5px 0 #64748b;cursor:not-allowed}
+.top{display:flex;justify-content:space-between;align-items:center;color:#fff;font-weight:700;font-size:18px;margin:10px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.pb{font:inherit;font-weight:600;font-size:16px;line-height:1.2;text-align:left;display:flex;gap:10px;align-items:center;color:#1e1b4b;background:#fff;border:3px solid #a5b4fc;border-radius:18px;padding:10px 12px;cursor:pointer}
+.pb span{font-size:32px}.pb.on{background:#fde047;border-color:#f97316}
+.msg{background:#fff;border-radius:14px;padding:10px 14px;font-weight:700;margin:8px 0;font-size:16px}
+.pat{background:#e0e7ff;border-radius:14px;padding:6px 12px;font-size:21px;font-weight:700;text-align:center;margin-top:8px}
+.ms{margin:6px 0;padding-left:20px;font-size:16px}.tc .ms{text-align:left}
+.pl{margin:6px 0;padding-left:24px}.pl li{cursor:pointer;background:#fff;border-radius:10px;padding:5px 10px;margin:5px 0;font-size:16px}
+.em{color:#6b7280}
+.ln{background:#fff;border-radius:12px;padding:8px 12px;margin:6px 0;font-size:16px;font-weight:600}
+#mz{display:grid;grid-template-columns:repeat(9,1fr);gap:3px;background:#1e1b4b;padding:6px;border-radius:18px;margin:8px auto;max-width:480px}
+.c,.w{aspect-ratio:1;border-radius:8px}
+.w{background:#475569;box-shadow:inset 0 -4px 0 #334155}
+.c{position:relative;display:flex;align-items:center;justify-content:center;font-size:clamp(15px,4.6vw,28px);cursor:pointer;box-shadow:inset 0 -4px 0 rgba(0,0,0,.15)}
+.c.v{outline:3px solid #fbbf24;outline-offset:-3px}
+.c.me{outline:4px solid #ef4444;outline-offset:-4px;z-index:1;animation:p .7s infinite alternate}
+.c i{position:absolute;top:0;right:2px;font-size:.5em;font-style:normal}
+.c b{position:absolute;bottom:-5px;left:-3px;font-size:.62em}
+@keyframes p{to{transform:scale(1.1)}}
+.shake{animation:s .3s}@keyframes s{25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+.dp{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:12px}.dp div{display:flex;gap:6px}
+.dp button{font-size:26px;width:60px;height:48px;border:0;border-radius:14px;background:#fff;box-shadow:0 4px 0 #a5b4fc;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.c.me{animation:none}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const $=s=>document.querySelector(s),app=$('#app'),sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const sh=a=>{a=[...a];for(let i=a.length;i>1;){const j=Math.random()*i--|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const PAT=['⭐','🌙','❤️','🍀'],PL=PAT.length,LV=6,D=[[-1,0],[1,0],[0,-1],[0,1]],TINT=['#fde68a','#bae6fd','#bbf7d0','#fbcfe8','#ddd6fe'];
+// Labirin: # tembok, S awal, E pintu keluar, 1-3 kotak petunjuk, x jalan jebakan (gambar salah)
+const MAZE=["......1xE", ".#.#x###.", ".x....2x.", ".#x#####.", "...x...x.", ".#.#.#.#.", ".x.x.#...", ".#.#.#.#x", "Sx...x..3"];
+// Masalah: k = nomor masalah utama (0-2); tanpa k = pengecoh
+const PR=[
+{id:'a',k:0,ic:'💰',t:'Ke mana uang proyek sekolah mengalir?',ev:'📒',en:'Buku rekening rahasia',ed:'Uang proyek masuk ke rekening Tuan Rakus!'},
+{id:'b',k:1,ic:'✍️',t:'Siapa yang memerintahkan uang diambil?',ev:'📜',en:'Surat perintah bertanda tangan',ed:'Tanda tangannya milik Tuan Rakus!'},
+{id:'c',k:2,ic:'🏗️',t:'Apakah sekolahnya benar-benar dibangun?',ev:'📸',en:'Foto lahan sekolah yang masih kosong',ed:'Sekolahnya tidak pernah dibangun!'},
+{id:'d',ic:'👕',t:'Apa warna baju kesukaan pelaku?',ev:'👕',en:'Foto baju kesukaan'},
+{id:'e',ic:'🍛',t:'Apa makanan kesukaan pelaku?',ev:'🍛',en:'Resep nasi goreng'},
+{id:'f',ic:'🎤',t:'Siapa penyanyi favorit pelaku?',ev:'🎟️',en:'Tiket konser'},
+{id:'g',ic:'🐱',t:'Siapa nama kucing peliharaan pelaku?',ev:'🐱',en:'Foto kucing peliharaan'}];
+// Langkah rencana: r = urutan (langkah dengan r sama boleh bertukar), r<0 = langkah yang salah
+const ST=[
+{r:0,ic:'🗂️',t:'Kumpulkan semua petunjuk jadi satu berkas'},
+{r:1,ic:'💰',t:'Telusuri ke mana uang proyek mengalir',k:0},
+{r:1,ic:'✍️',t:'Cari tahu siapa yang memberi perintah',k:1},
+{r:1,ic:'🏗️',t:'Periksa sekolah yang katanya dibangun',k:2},
+{r:2,ic:'🧑‍⚖️',t:'Serahkan berkas bukti ke jaksa Wakanda'},
+{r:3,ic:'📜',t:'Minta surat perintah penangkapan'},
+{r:4,ic:'🚓',t:'Datangi rumah pelaku bersama polisi'},
+{r:5,ic:'🔒',t:'Tangkap pelaku dan bawa ke pengadilan'},
+{r:-1,ic:'🎉',t:'Berpesta kemenangan dulu'},
+{r:-1,ic:'📢',t:'Umumkan rencana ke TV supaya pelaku tahu'}];
+let G;
+function newGame(){G={ph:0,order:sh(PR),sel:[],plan:[],msg:''}}
+function go(p){G.ph=p;[d0,d1,d2,d3,d4][p]();scrollTo(0,0)}
+
+function d0(){app.innerHTML=`<div class="card tc"><div class="big">🌍🕵️🦝</div><h1>Misi Wakanda: Tangkap Sang Koruptor!</h1>
+<p>Di negara Wakanda, pemerintah menyiapkan 1 miliar koin emas 🪙 untuk membangun Sekolah Harapan 🏫. Setahun berlalu… sekolahnya tidak pernah jadi dan uangnya hilang! <b>Korupsi</b> artinya mengambil uang rakyat yang bukan haknya. Pelakunya diduga <b>Tuan Rakus 🦝</b>, tapi tanpa bukti ia tidak bisa ditangkap.</p>
+<p>Kamu adalah Agen Wakanda! Latih jurus berpikir komputasionalmu: 🧩 Dekomposisi, 🔄 Pola, 🎯 Abstraksi, 📋 Algoritma.</p>
+<button class="btn" onclick="go(1)">Mulai Misi 🚀</button></div>`}
+
+function d1(){const n=G.sel.length;app.innerHTML=`<div class="card"><h1>🧩 Langkah 1: Pecah Masalahnya!</h1>
+<p>Tugas besarnya: <b>Tangkap Tuan Rakus 🦝</b>. Tugas besar itu sulit, jadi kita pecah jadi masalah kecil. Pilih <b>3 masalah</b> yang paling penting untuk membuktikan korupsinya. Awas, ada pengecoh! 😉</p></div>
+<div class="grid">${G.order.map(p=>`<button class="pb${G.sel.includes(p)?' on':''}" onclick="pick('${p.id}')"><span>${p.ic}</span>${p.t}</button>`).join('')}</div>
+<div class="top"><span>Terpilih: ${n}/3${n==3?' (ketuk lagi untuk melepas)':''}</span><button class="btn" ${n<3?'disabled':''} onclick="go2()">Mulai 🔎</button></div>`}
+function pick(id){const p=PR.find(x=>x.id==id),i=G.sel.indexOf(p);if(i>=0)G.sel.splice(i,1);else if(G.sel.length<3)G.sel.push(p);d1()}
+
+function go2(){
+ const g=MAZE.map(r=>[...r]),d=g.map(r=>r.map(()=>-1)),q=[[8,0]];d[8][0]=0;
+ while(q.length){const[r,c]=q.shift();for(const[a,b]of D){const y=r+a,x=c+b,t=g[y]?.[x];if(t&&t!='#'&&t!='x'&&d[y][x]<0){d[y][x]=d[r][c]+1;q.push([y,x])}}}
+ const sym=g.map((row,r)=>row.map((t,c)=>{if(t=='#')return'';
+  if(t=='x'){const bad=new Set(D.map(([a,b])=>d[r+a]?.[c+b]).filter(v=>v>=0).map(v=>PAT[(v+1)%PL]));const f=PAT.filter(s=>!bad.has(s));return f[(r*3+c)%f.length]}
+  return PAT[d[r][c]%PL]}));
+ G.M={g,sym,tint:g.map(r=>r.map(()=>TINT[Math.random()*5|0])),s:[[8,0]],lives:LV,got:[0,0,0],msg:'Mulai dari 🏁. Temukan pola gambarnya, lalu ikuti terus sampai pintu 🚪!'};
+ go(2)}
+
+function d2(){const M=G.M,[pr,pc]=M.s.at(-1);
+ const cells=M.g.map((row,r)=>row.map((t,c)=>{if(t=='#')return'<div class="w"></div>';
+  const bd=t=='E'?'🚪':t=='S'?'🏁':'123'.includes(t)?(M.got['123'.indexOf(t)]?'✅':'📦'):'';
+  const v=M.s.some(p=>p[0]==r&&p[1]==c),me=r==pr&&c==pc;
+  return`<div class="c${v?' v':''}${me?' me':''}" style="background:${M.tint[r][c]}" onclick="tap(${r},${c})">${M.sym[r][c]}<i>${bd}</i>${me?'<b>🕵️</b>':''}</div>`}).join('')).join('');
+ app.innerHTML=`<div class="card"><h1>🔄 Langkah 2: Labirin Pola</h1>
+<p>Ikuti urutan gambar yang berulang untuk melangkah. Gambar yang salah membunyikan alarm 🚨. <b>Abaikan warna kotak</b>, lihat gambarnya saja! Labirin ini punya banyak cabang dan jalan buntu: kalau buntu, mundur dan coba jalan lain. Buka 3 kotak 📦 untuk mencari petunjuk, lalu cari pintu 🚪.</p>
+<div class="pat">Pola: ${[0,1,2,3,4,5].map(i=>PAT[i%PL]).join(' ')} ❓<br>Jejakmu: ${M.s.map(([r,c])=>M.sym[r][c]).slice(-9).join(' ')}</div></div>
+<div class="top"><span>${'❤️'.repeat(M.lives)+'🖤'.repeat(LV-M.lives)}</span><span>📦 ${M.got.filter(Boolean).length}/3</span></div>
+<div id="mz">${cells}</div><p class="msg">${M.msg}</p>
+<div class="dp"><button onclick="mv(-1,0)">⬆️</button><div><button onclick="mv(0,-1)">⬅️</button><button onclick="mv(1,0)">⬇️</button><button onclick="mv(0,1)">➡️</button></div></div>`}
+function tap(r,c){const[pr,pc]=G.M.s.at(-1),a=r-pr,b=c-pc;if(Math.abs(a)+Math.abs(b)==1)mv(a,b);else{G.M.msg='👆 Pilih kotak yang bersebelahan dengan 🕵️.';d2()}}
+function mv(a,b){
+ const M=G.M,[r,c]=M.s.at(-1),y=r+a,x=c+b,t=M.g[y]?.[x],pv=M.s.at(-2);
+ if(!t||t=='#'){M.msg='🧱 Itu tembok! Cari jalan lain.'}
+ else if(pv&&pv[0]==y&&pv[1]==x){M.s.pop();M.msg='↩️ Mundur satu langkah.'}
+ else if(M.sym[y][x]!=PAT[M.s.length%PL]){
+  M.lives--;M.msg=`🚨 Alarm! Gambar ${M.sym[y][x]} bukan kelanjutan polanya. Nyawa berkurang!`;
+  if(!M.lives){M.s=[[8,0]];M.lives=LV;M.msg='😵 Kamu tertangkap penjaga! Kembali ke awal dengan nyawa penuh. Petunjuk yang sudah ditemukan tetap aman.'}
+  d2();$('#mz').classList.add('shake');return}
+ else if(t=='E'&&!M.got.every(Boolean)&&!confirm('Masih ada kotak 📦 yang belum dibuka. Yakin mau keluar?')){M.msg='Oke, cari kotak 📦 yang tersisa!'}
+ else{M.s.push([y,x]);M.msg='✨ Benar! Lanjutkan polanya.';
+  const k='123'.indexOf(t);
+  if(k>=0&&!M.got[k]){M.got[k]=1;const p=G.sel[k];M.msg=p.k>=0?`🎁 Petunjuk penting! ${p.ev} ${p.en}. ${p.ed}`:`🎁 Isinya ${p.ev} ${p.en}. Hmm, ini tidak membantu membuktikan korupsi 😅`}
+  if(t=='E')return go3()}
+ d2()}
+document.addEventListener('keydown',e=>{if(G.ph!=2)return;const m={ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1]}[e.key];if(m){e.preventDefault();mv(...m)}});
+
+function go3(){G.have=[0,0,0];G.sel.forEach((p,j)=>{if(p.k>=0&&G.M.got[j])G.have[p.k]=1});G.cards=sh(ST);G.plan=[];G.msg='';go(3)}
+function d3(){const pl=G.plan,left=G.cards.filter(s=>!pl.includes(s));
+ app.innerHTML=`<div class="card"><h1>📋 Langkah 3: Susun Rencana!</h1>
+<p>Susun langkah penangkapan dari awal sampai akhir. Ketuk kartu untuk memasukkannya ke rencana, ketuk langkah di rencana untuk mengeluarkannya. Hati-hati, ada langkah yang tidak boleh dipakai!</p></div>
+<div class="card"><b>Rencanamu:</b>${pl.length?`<ol class="pl">${pl.map((s,i)=>`<li onclick="rm(${i})">${s.ic} ${s.t}</li>`).join('')}</ol>`:'<p class="em">Belum ada langkah…</p>'}</div>
+<div class="grid">${left.map(s=>`<button class="pb" onclick="add(${G.cards.indexOf(s)})"><span>${s.ic}</span>${s.t}</button>`).join('')}</div>
+${G.msg?`<p class="msg">${G.msg}</p>`:''}
+<div class="top"><button class="btn" onclick="G.plan=[];G.msg='';d3()">🗑️ Ulang</button><button class="btn" ${pl.length?'':'disabled'} onclick="run()">Jalankan ▶️</button></div>`}
+function add(i){G.plan.push(G.cards[i]);G.msg='';d3()}
+function rm(i){G.plan.splice(i,1);d3()}
+async function run(){
+ const pl=G.plan,bad=pl.find(s=>s.r<0);let m='';
+ if(bad)m=`⚠️ Langkah "${bad.t}" tidak membantu dan bisa membuat pelaku kabur. Keluarkan dari rencana!`;
+ else if(pl.length<8)m='🤔 Rencanamu belum lengkap. Masih ada langkah penting yang belum dipakai.';
+ else{const i=pl.findIndex((s,i)=>i&&s.r<pl[i-1].r);if(i>0)m=`🤔 Langkah ke-${i+1} belum tepat urutannya. Apa yang harus dikerjakan lebih dulu?`}
+ if(m){G.msg=m;return d3()}
+ app.innerHTML='<div class="card"><h1>🚀 Rencana dijalankan…</h1><div id="lg"></div></div>';
+ for(const s of pl){await sleep(900);$('#lg').innerHTML+=`<div class="ln">${s.ic} ${s.t} ${s.k==null||G.have[s.k]?'✅':'❌ Buktinya tidak ada!'}</div>`}
+ await sleep(1000);go(4)}
+
+function d4(){const miss=PR.filter(p=>p.k>=0&&!G.have[p.k]),ok=!miss.length;
+ app.innerHTML=`<div class="card tc"><div class="big">${ok?'🎉🦝🔒':'🦝💨'}</div><h1>${ok?'Tuan Rakus Tertangkap!':'Pelaku Terungkap, tapi Lolos!'}</h1>
+<p>${ok?'Semua bukti lengkap! Hakim Wakanda menyatakan Tuan Rakus bersalah dan uang Sekolah Harapan kembali untuk rakyat 🏫💰. Hebat, Agen!':'Tuan Rakus ketahuan, tetapi hakim berkata bukti kurang sehingga ia bebas. Bukti yang belum kamu punya:'}</p>
+${ok?'':`<ul class="ms">${miss.map(p=>`<li>${p.ic} ${p.t}: ${G.sel.includes(p)?'kotak 📦 petunjuknya belum kamu buka di labirin':'masalah ini belum kamu pilih di Langkah 1'}</li>`).join('')}</ul><p>Coba lagi dan pilih 3 masalah yang paling penting!</p>`}</div>
+<div class="card"><b>Jurus yang kamu pakai:</b><ul class="ms"><li>🧩 <b>Dekomposisi</b>: memecah tugas besar jadi masalah kecil</li><li>🔄 <b>Pengenalan pola</b>: menemukan gambar ⭐🌙❤️🍀 yang berulang</li><li>🎯 <b>Abstraksi</b>: mengabaikan warna, fokus pada hal penting</li><li>📋 <b>Algoritma</b>: menyusun langkah yang berurutan</li></ul></div>
+<div class="tc"><button class="btn" onclick="newGame();go(0)">Main Lagi 🔁</button></div>`}
+
+newGame();go(0);
+</script>
+</body>
+</html>
