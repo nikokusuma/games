@@ -72,19 +72,30 @@ let ac;function snd(f){try{ac=ac||new AudioContext();const o=ac.createOscillator
 // ---------- Network ----------
 const send=m=>isHost?H(m,'host'):conn&&conn.send(m);
 const bc=m=>{for(const c of Object.values(conns))c.open&&c.send(m);if(m.t!=='s')M(m)};
+// Server STUN/TURN untuk menembus NAT. Bila masih gagal antar jaringan, tambahkan TURN milikmu sendiri di sini.
+const ICE={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:stun.cloudflare.com:3478'},
+ {urls:['turn:eu-0.turn.peerjs.com:3478','turn:us-0.turn.peerjs.com:3478'],username:'peerjs',credential:'peerjsp'}]};
+const st=s=>$('st').textContent=s;
 function start(t){
  name=($('nm').value.trim()||'Player').slice(0,12);code=$('rm').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
  if(!code){$('st').textContent='Isi kode room dulu';return}
  team=t;$('st').textContent='Menghubungkan...';R.domElement.requestPointerLock();
- const rid='fps-rb-game-'+code;peer=new Peer(rid);
+ const rid='fps-rb-game-'+code;peer=new Peer(rid,{config:ICE});
  peer.on('open',()=>{isHost=true;myId='host';S=PL;initHost();enter()});
  peer.on('error',e=>{
   if(e.type==='unavailable-id'){ // room sudah ada → jadi client
-   peer=new Peer();peer.on('error',e2=>$('st').textContent='Error: '+e2.type);
-   peer.on('open',id=>{myId=id;conn=peer.connect(rid);
-    conn.on('open',()=>{send({t:'join',n:name,team});enter()});conn.on('data',M);
-    conn.on('close',()=>{alert('Koneksi ke host terputus');location.reload()})});
-  }else $('st').textContent='Error: '+e.type});
+   st('Room ditemukan, menyambung ke host...');
+   peer=new Peer({config:ICE});
+   peer.on('error',e2=>st(e2.type==='peer-unavailable'?'Host room tidak aktif (mungkin baru keluar/refresh). Tunggu ±1 menit atau pakai kode room lain.':'Error: '+e2.type));
+   peer.on('open',id=>{myId=id;conn=peer.connect(rid,{reliable:true});
+    const to=setTimeout(()=>{if(!joined)st('Gagal tersambung ke host dalam 15 detik. Jaringan/NAT kemungkinan memblokir koneksi P2P — coba Wi-Fi yang sama dengan host atau hotspot lain.')},15000);
+    const pc=conn.peerConnection;
+    pc&&pc.addEventListener('iceconnectionstatechange',()=>{const s=pc.iceConnectionState;
+     if(s==='failed')st('Koneksi P2P ke host diblokir jaringan (NAT/firewall). Coba Wi-Fi yang sama dengan host atau hotspot lain.');else if(!joined)st('Menyambung ke host ('+s+')...')});
+    conn.on('open',()=>{clearTimeout(to);send({t:'join',n:name,team});enter()});conn.on('data',M);
+    conn.on('error',er=>st('Error koneksi: '+(er.type||er)));
+    conn.on('close',()=>{if(joined){alert('Koneksi ke host terputus');location.reload()}})});
+  }else st('Error: '+e.type+' — cek koneksi internet / pemblokir WebRTC')});
 }
 function enter(){joined=true;$('lobby').style.display='none';if(isHost)H({t:'join',n:name,team},'host')}
 function initHost(){
@@ -170,7 +181,7 @@ const tk=t=>Object.values(S).reduce((a,p)=>a+(p.t===t?p.k:0),0);
 setInterval(()=>{const m=S[myId];if(!joined||!m)return;
  $('hp').innerHTML=`❤ ${Math.ceil(m.h)} &nbsp; 🛡 ${m.a}<br><span style="font-size:15px">K ${m.k} / D ${m.d} · <span style="color:${TC[m.t]}">${TN[m.t]}</span></span>`;
  $('wp').innerHTML=`${W[m.w].n}<br>💰 $${m.m}`;
- $('sc').innerHTML=`<b style="color:${TC[0]}">${tk(0)}</b> : <b style="color:${TC[1]}">${tk(1)}</b><br><span style="font-size:13px">Room ${esc(code)}</span>`;
+ $('sc').innerHTML=`<b style="color:${TC[0]}">${tk(0)}</b> : <b style="color:${TC[1]}">${tk(1)}</b><br><span style="font-size:13px">Room ${esc(code)} · ${Object.keys(S).length} pemain</span>`;
  $('dead').style.display=m.l?'none':'block';$('dtl').textContent=m.f?'Siap-siap! Beli senjata':'Kamu mati — revive dalam';$('dt').textContent=Math.ceil(m.r)+'s';
  [...$('shop').children].forEach((b,i)=>{const w=W[i];b.disabled=w?(m.m<w.p||m.w===i):(m.m<AP||m.a>=100);b.classList.toggle('on',!!w&&m.w===i)});
  $('hint').style.display=m.l&&document.pointerLockElement!==R.domElement?'block':'none';
