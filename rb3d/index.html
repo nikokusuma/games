@@ -37,8 +37,13 @@ WASD gerak · Spasi lompat · Klik tembak · Tab skor<br>Saat mati/awal: tekan 1
 <div id="cx" class="p">+</div><div id="hint" class="p">Klik layar untuk mengunci mouse</div>
 <div id="dead"><h2 id="dtl"></h2><div id="dt"></div><div id="shop"></div></div>
 <div id="sb"></div>
-<script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>window.THREE||document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\/script>')</script>
+<script>window.THREE||document.write('<script src="https://unpkg.com/three@0.128.0/build/three.min.js"><\/script>')</script>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>window.Peer||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"><\/script>')</script>
+<script>window.Peer||document.write('<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"><\/script>')</script>
+<script>if(!window.THREE||!window.Peer){$e=document.getElementById('st');$e.textContent='Gagal memuat Three.js/PeerJS dari CDN. Cek koneksi internet atau pemblokir/ekstensi, lalu refresh.';throw new Error('Library gagal dimuat')}</script>
 <script>
 const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 // n=nama, p=harga, d=damage, r=tembakan/detik, s=spread
