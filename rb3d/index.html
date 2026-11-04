@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Red vs Blue — FPS Multiplayer</title>
+<style>
+*{box-sizing:border-box}body{margin:0;overflow:hidden;background:#111;color:#fff;font:14px system-ui,sans-serif;user-select:none}
+canvas{display:block}.p{position:fixed;pointer-events:none;text-shadow:0 1px 3px #000;font-weight:600}
+#lobby{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0d1117;z-index:9}
+#lobby>div{width:350px;padding:26px;background:#161b22;border-radius:14px;text-align:center}
+h1{margin:0 0 6px;font-size:22px}small{color:#9aa4b0;line-height:1.6;display:block;margin-top:12px}
+input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid #333;background:#0d1117;color:#fff;font-size:15px}
+button{font:inherit;color:#fff;border:0;border-radius:8px;padding:10px;cursor:pointer}
+.t{width:48%;font-weight:700;font-size:15px;margin-top:8px}.r{background:#e53935}.b{background:#1e88e5}
+#st{color:#ffb74d;min-height:18px;margin-top:8px}
+#sc{top:10px;left:0;right:0;text-align:center;font-size:20px}
+#hp{left:20px;bottom:20px;font-size:22px}#wp{right:20px;bottom:20px;font-size:20px;text-align:right}
+#feed{top:10px;right:14px;text-align:right;line-height:1.6}
+#cx{top:50%;left:50%;transform:translate(-50%,-50%);font-size:26px;font-weight:300}
+#hint{bottom:90px;left:0;right:0;text-align:center;display:none}
+#dead{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;z-index:5;text-align:center;padding-top:9vh}
+#dead h2{margin:0 0 4px;font-size:28px}#dt{font-size:44px;font-weight:800;margin-bottom:14px}
+#shop{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;max-width:760px;margin:0 auto}
+#shop button{background:#252b34;width:230px;text-align:left;padding:12px}
+#shop button.on{outline:2px solid #66bb6a}#shop button:disabled{opacity:.4;cursor:default}
+#sb{position:fixed;top:12vh;left:50%;transform:translateX(-50%);width:560px;background:rgba(0,0,0,.75);border-radius:12px;padding:16px;display:none;gap:20px;z-index:6}
+#sb>div{flex:1}#sb h3{margin:0 0 8px}#sb div div{display:flex;justify-content:space-between;padding:2px 0}
+</style></head><body>
+<div id="lobby"><div>
+<h1>🔫 Red vs Blue</h1>
+<input id="nm" placeholder="Nama kamu" maxlength="12">
+<input id="rm" placeholder="Kode room (contoh: ABC123)" maxlength="12" style="text-transform:uppercase">
+<button class="t r" onclick="start(0)">Tim MERAH</button> <button class="t b" onclick="start(1)">Tim BIRU</button>
+<div id="st"></div>
+<small>Pemain pertama yang memasukkan kode room menjadi host. Teman memasukkan kode yang sama.<br>
+WASD gerak · Spasi lompat · Klik tembak · Tab skor<br>Saat mati/awal: tekan 1–5 beli pistol, 6 beli armor</small>
+</div></div>
+<div id="sc" class="p"></div><div id="hp" class="p"></div><div id="wp" class="p"></div><div id="feed" class="p"></div>
+<div id="cx" class="p">+</div><div id="hint" class="p">Klik layar untuk mengunci mouse</div>
+<div id="dead"><h2 id="dtl"></h2><div id="dt"></div><div id="shop"></div></div>
+<div id="sb"></div>
+<script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
+// n=nama, p=harga, d=damage, r=tembakan/detik, s=spread
+const W=[{n:'Glock-9',p:0,d:18,r:5,s:.02},{n:'Deagle-X',p:600,d:45,r:2,s:.012},{n:'Burst-7',p:900,d:22,r:9,s:.035},{n:'Magnum-R',p:1200,d:75,r:1.1,s:.004},{n:'Plasma-Z',p:1700,d:34,r:6,s:.01}];
+const AP=500,TC=['#e53935','#1e88e5'],TN=['MERAH','BIRU'];
+let S={},PL={},conns={},conn,peer,myId,joined=false,isHost=false,name,team,code;
+// ---------- 3D ----------
+const R=new THREE.WebGLRenderer({antialias:true});R.setSize(innerWidth,innerHeight);document.body.appendChild(R.domElement);
+const sc=new THREE.Scene();sc.background=new THREE.Color(0x87b8e0);sc.fog=new THREE.Fog(0x87b8e0,20,70);
+const cam=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.05,200);cam.rotation.order='YXZ';sc.add(cam);
+sc.add(new THREE.HemisphereLight(0xffffff,0x556655,.9));const dl=new THREE.DirectionalLight(0xffffff,.6);dl.position.set(10,20,5);sc.add(dl);
+const gr=new THREE.Mesh(new THREE.PlaneGeometry(60,60),new THREE.MeshLambertMaterial({color:0x4a6b4a}));gr.rotation.x=-Math.PI/2;sc.add(gr);
+const gd=new THREE.GridHelper(60,30,0x335533,0x335533);gd.position.y=.01;sc.add(gd);
+const OB=[];
+[[0,0,6,6,3],[-12,-8,4,4,3],[12,8,4,4,3],[12,-10,3,8,3],[-12,10,3,8,3],[-5,-14,5,2,1.2],[5,14,5,2,1.2],[-20,0,2,10,3],[20,0,2,10,3],
+ [0,-8,2,2,1.2],[0,8,2,2,1.2],[-6,6,2,2,1.2],[6,-6,2,2,1.2],[0,-30,60,1,6],[0,30,60,1,6],[-30,0,1,60,6],[30,0,1,60,6]].forEach(([x,z,w,d,h])=>{
+ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial({color:h>5?0x444455:h>2?0x8d8d96:0xb08d57}));
+ m.position.set(x,h/2,z);sc.add(m);OB.push(new THREE.Box3(new THREE.Vector3(x-w/2,0,z-d/2),new THREE.Vector3(x+w/2,h,z+d/2)))});
+const vm=new THREE.Mesh(new THREE.BoxGeometry(.08,.12,.4),new THREE.MeshLambertMaterial({color:0x222222}));vm.position.set(.22,-.2,-.45);cam.add(vm);
+const AV={},mat=c=>new THREE.MeshLambertMaterial({color:c});
+function mkAv(t){const g=new THREE.Group(),m=mat(t?0x1e88e5:0xe53935),a=(geo,mt,x,y,z)=>{const o=new THREE.Mesh(geo,mt);o.position.set(x,y,z);g.add(o)};
+ a(new THREE.BoxGeometry(.7,1.1,.4),m,0,.8,0);a(new THREE.SphereGeometry(.2),mat(0xf1c27d),0,1.6,0);
+ a(new THREE.BoxGeometry(.1,.12,.5),mat(0x222222),.3,1.1,-.35);a(new THREE.BoxGeometry(.6,.5,.3),m,0,.25,0);sc.add(g);return g}
+function tracer(a,b){const l=new THREE.Line(new THREE.BufferGeometry().setFromPoints([a,b]),new THREE.LineBasicMaterial({color:0xffee88}));sc.add(l);setTimeout(()=>{sc.remove(l);l.geometry.dispose()},60)}
+let ac;function snd(f){try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain();o.type='square';o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(ac.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.08);o.stop(ac.currentTime+.09)}catch(e){}}
+// ---------- Network ----------
+const send=m=>isHost?H(m,'host'):conn&&conn.send(m);
+const bc=m=>{for(const c of Object.values(conns))c.open&&c.send(m);if(m.t!=='s')M(m)};
+function start(t){
+ name=($('nm').value.trim()||'Player').slice(0,12);code=$('rm').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+ if(!code){$('st').textContent='Isi kode room dulu';return}
+ team=t;$('st').textContent='Menghubungkan...';R.domElement.requestPointerLock();
+ const rid='fps-rb-game-'+code;peer=new Peer(rid);
+ peer.on('open',()=>{isHost=true;myId='host';S=PL;initHost();enter()});
+ peer.on('error',e=>{
+  if(e.type==='unavailable-id'){ // room sudah ada → jadi client
+   peer=new Peer();peer.on('error',e2=>$('st').textContent='Error: '+e2.type);
+   peer.on('open',id=>{myId=id;conn=peer.connect(rid);
+    conn.on('open',()=>{send({t:'join',n:name,team});enter()});conn.on('data',M);
+    conn.on('close',()=>{alert('Koneksi ke host terputus');location.reload()})});
+  }else $('st').textContent='Error: '+e.type});
+}
+function enter(){joined=true;$('lobby').style.display='none';if(isHost)H({t:'join',n:name,team},'host')}
+function initHost(){
+ peer.on('connection',c=>{conns[c.peer]=c;c.on('data',m=>H(m,c.peer));c.on('close',()=>{delete PL[c.peer];delete conns[c.peer]})});
+ setInterval(()=>{const n=Date.now();for(const p of Object.values(PL)){p.r=Math.max(0,(p.ra-n)/1000);if(!p.l&&n>=p.ra)revive(p)}bc({t:'s',l:Object.values(PL)})},50);
+}
+function revive(p){
+ p.l=true;p.h=100;if(!p.f)p.m=Math.min(16000,p.m+200);p.f=0; // bonus uang revive
+ p.x=(Math.random()-.5)*30;p.y=0;p.z=p.t?24:-24;p.q=p.t?0:Math.PI;
+ const m={t:'sp',i:p.i,x:p.x,z:p.z,q:p.q};p.i==='host'?M(m):conns[p.i]&&conns[p.i].send(m)}
+// ---------- Host (otoritatif: HP, uang, skor, revive) ----------
+function H(m,id){
+ if(m.t==='join'){PL[id]={i:id,n:String(m.n).slice(0,12),t:m.team?1:0,h:100,a:0,m:1000,k:0,d:0,w:0,l:false,f:1,ra:Date.now()+8000,r:8,x:0,y:0,z:0,q:0,p:0};return}
+ const p=PL[id];if(!p)return;
+ if(m.t==='pos'&&p.l){p.x=m.x;p.y=m.y;p.z=m.z;p.q=m.q;p.p=m.p}
+ else if(m.t==='fx'&&p.l)bc({t:'fx',a:m.a,b:m.b,i:id});
+ else if(m.t==='hit'){
+  const v=PL[m.v];if(!p.l||!v||!v.l||v.t===p.t)return;
+  let d=Math.min(+m.d||0,W[p.w].d*2);
+  if(v.a>0){const ab=Math.min(v.a,d*.5);v.a-=ab;d-=ab}
+  v.h-=d;
+  if(v.h<=0){v.h=0;v.l=false;v.d++;v.ra=Date.now()+10000;v.w=0;v.a=0; // mati: 10 dtk, senjata & armor hilang
+   p.k++;p.m=Math.min(16000,p.m+300);bc({t:'kill',a:p.n,b:v.n,at:p.t,bt:v.t,w:p.w})}
+ }else if(m.t==='buy'&&!p.l){ // beli hanya saat menunggu revive
+  if(m.k==='w'){const w=W[m.i];if(w&&p.m>=w.p&&p.w!==m.i){p.m-=w.p;p.w=m.i}}
+  else if(m.k==='a'&&p.m>=AP&&p.a<100){p.m-=AP;p.a=100}
+ }
+}
+// ---------- Client ----------
+const me={p:new THREE.Vector3(),vy:0,yaw:0,pit:0};
+function M(m){
+ if(m.t==='s')S=Object.fromEntries(m.l.map(o=>[o.i,o]));
+ else if(m.t==='sp'){if(m.i===myId){me.p.set(m.x,0,m.z);me.yaw=m.q;me.pit=0;me.vy=0}}
+ else if(m.t==='fx'){if(m.i!==myId)tracer(new THREE.Vector3(...m.a),new THREE.Vector3(...m.b))}
+ else if(m.t==='kill'){const d=document.createElement('div');
+  d.innerHTML=`<b style="color:${TC[m.at]}">${esc(m.a)}</b> [${W[m.w].n}] <b style="color:${TC[m.bt]}">${esc(m.b)}</b>`;$('feed').prepend(d);setTimeout(()=>d.remove(),5000)}
+}
+const buy=(k,i)=>{if(joined)send({t:'buy',k,i})};
+$('shop').innerHTML=W.map((w,i)=>`<button data-i="${i}">[${i+1}] ${w.n}<br>$${w.p} · dmg ${w.d} · ${w.r}/dtk</button>`).join('')+`<button data-a="1">[6] Armor +100<br>$${AP}</button>`;
+$('shop').onclick=e=>{const b=e.target.closest('button');if(!b)return;b.dataset.a?buy('a'):buy('w',+b.dataset.i)};
+const K={};let fire=false,next=0,last=performance.now();
+addEventListener('keydown',e=>{K[e.code]=1;if(!joined)return;if(e.code==='Tab'){e.preventDefault();$('sb').style.display='flex'}
+ const n=+e.key;if(n>=1&&n<=5)buy('w',n-1);if(e.key==='6')buy('a')});
+addEventListener('keyup',e=>{K[e.code]=0;if(e.code==='Tab')$('sb').style.display='none'});
+addEventListener('mousemove',e=>{if(document.pointerLockElement===R.domElement){me.yaw-=e.movementX*.0022;me.pit=Math.max(-1.5,Math.min(1.5,me.pit-e.movementY*.0022))}});
+addEventListener('mousedown',e=>{if(!joined||e.target.tagName==='BUTTON')return;document.pointerLockElement!==R.domElement?R.domElement.requestPointerLock():fire=true});
+addEventListener('mouseup',()=>fire=false);
+addEventListener('resize',()=>{R.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()});
+const col=(x,z,y)=>OB.some(b=>y<b.max.y-.3&&x>b.min.x-.4&&x<b.max.x+.4&&z>b.min.z-.4&&z<b.max.z+.4);
+const gnd=(x,z,y)=>OB.reduce((g,b)=>x>b.min.x&&x<b.max.x&&z>b.min.z&&z<b.max.z&&b.max.y<=y+.3?Math.max(g,b.max.y):g,0);
+function shoot(w,my){
+ snd(260+my.w*70);
+ const o=cam.position.clone(),d=new THREE.Vector3((Math.random()-.5)*w.s*2,(Math.random()-.5)*w.s*2,-1).applyQuaternion(cam.quaternion).normalize();
+ const ray=new THREE.Ray(o,d),tg=new THREE.Vector3();let best=80,hit=null,head=false;
+ for(const b of OB){if(ray.intersectBox(b,tg))best=Math.min(best,o.distanceTo(tg))}
+ for(const id in S){const e=S[id],a=AV[id];if(id===myId||!e.l||e.t===my.t||!a)continue;
+  const bx=new THREE.Box3(new THREE.Vector3(a.position.x-.4,a.position.y,a.position.z-.4),new THREE.Vector3(a.position.x+.4,a.position.y+1.8,a.position.z+.4));
+  if(ray.intersectBox(bx,tg)){const dd=o.distanceTo(tg);if(dd<best){best=dd;hit=id;head=tg.y-a.position.y>1.45}}}
+ const end=o.clone().addScaledVector(d,best),st=o.clone();st.y-=.15;tracer(st,end);
+ send({t:'fx',a:[st.x,st.y,st.z],b:[end.x,end.y,end.z]});
+ if(hit)send({t:'hit',v:hit,d:w.d*(head?2:1)});
+}
+const _v=new THREE.Vector3();
+function loop(t){requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1000);last=t;const my=S[myId];
+ if(joined&&my){
+  vm.visible=my.l;
+  if(my.l){
+   let fx=(K.KeyD?1:0)-(K.KeyA?1:0),fz=(K.KeyW?1:0)-(K.KeyS?1:0);const l=Math.hypot(fx,fz)||1;fx/=l;fz/=l;
+   const s=Math.sin(me.yaw),c=Math.cos(me.yaw),dx=(fx*c-fz*s)*6*dt,dz=(-fx*s-fz*c)*6*dt,p=me.p;
+   if(!col(p.x+dx,p.z,p.y))p.x+=dx;if(!col(p.x,p.z+dz,p.y))p.z+=dz;
+   const g=gnd(p.x,p.z,p.y);if(K.Space&&p.y<=g+.01)me.vy=8.5;me.vy-=25*dt;p.y+=me.vy*dt;if(p.y<g){p.y=g;me.vy=0}
+   cam.position.set(p.x,p.y+1.6,p.z);cam.rotation.set(me.pit,me.yaw,0);cam.updateMatrixWorld(true);
+   if(fire&&document.pointerLockElement===R.domElement&&t>next){const w=W[my.w];next=t+1000/w.r;shoot(w,my)}
+  }
+ }
+ for(const id in S){if(id===myId)continue;const e=S[id];let a=AV[id];if(!a)a=AV[id]=mkAv(e.t);
+  const was=a.visible;a.visible=e.l;if(!was||!e.l)a.position.set(e.x,e.y,e.z);else a.position.lerp(_v.set(e.x,e.y,e.z),.3);a.rotation.y=e.q}
+ for(const id in AV)if(!S[id]){sc.remove(AV[id]);delete AV[id]}
+ R.render(sc,cam)}
+requestAnimationFrame(loop);
+setInterval(()=>{const m=S[myId];if(joined&&m&&m.l)send({t:'pos',x:+me.p.x.toFixed(2),y:+me.p.y.toFixed(2),z:+me.p.z.toFixed(2),q:+me.yaw.toFixed(3),p:+me.pit.toFixed(3)})},50);
+const tk=t=>Object.values(S).reduce((a,p)=>a+(p.t===t?p.k:0),0);
+setInterval(()=>{const m=S[myId];if(!joined||!m)return;
+ $('hp').innerHTML=`❤ ${Math.ceil(m.h)} &nbsp; 🛡 ${m.a}<br><span style="font-size:15px">K ${m.k} / D ${m.d} · <span style="color:${TC[m.t]}">${TN[m.t]}</span></span>`;
+ $('wp').innerHTML=`${W[m.w].n}<br>💰 $${m.m}`;
+ $('sc').innerHTML=`<b style="color:${TC[0]}">${tk(0)}</b> : <b style="color:${TC[1]}">${tk(1)}</b><br><span style="font-size:13px">Room ${esc(code)}</span>`;
+ $('dead').style.display=m.l?'none':'block';$('dtl').textContent=m.f?'Siap-siap! Beli senjata':'Kamu mati — revive dalam';$('dt').textContent=Math.ceil(m.r)+'s';
+ [...$('shop').children].forEach((b,i)=>{const w=W[i];b.disabled=w?(m.m<w.p||m.w===i):(m.m<AP||m.a>=100);b.classList.toggle('on',!!w&&m.w===i)});
+ $('hint').style.display=m.l&&document.pointerLockElement!==R.domElement?'block':'none';
+ $('sb').innerHTML=[0,1].map(t=>`<div><h3 style="color:${TC[t]}">${TN[t]} — ${tk(t)}</h3>`+Object.values(S).filter(p=>p.t===t).sort((a,b)=>b.k-a.k).map(p=>`<div><span>${esc(p.n)}</span><span>${p.k} / ${p.d}</span></div>`).join('')+'</div>').join('');
+},100);
+</script></body></html>
