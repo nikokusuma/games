@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Asesmen Berpikir Komputasional SD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#eef4fb;--gl:#d5e2f2;--card:#fff;--tx:#14284b;--mu:#5a6b88;--pr:#2457d6;--ok:#1f9d55;--bad:#d62839;--bd:#c9d7ea}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1a2e;--gl:#1a2a47;--card:#18243c;--tx:#edf2fb;--mu:#9fb1cf;--pr:#6b94ff;--ok:#43c17a;--bad:#ff6b79;--bd:#33466b}}
+:root[data-theme=dark]{--bg:#0f1a2e;--gl:#1a2a47;--card:#18243c;--tx:#edf2fb;--mu:#9fb1cf;--pr:#6b94ff;--ok:#43c17a;--bad:#ff6b79;--bd:#33466b}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;font:700 17px/1.45 Nunito,system-ui,sans-serif;color:var(--tx);background:var(--bg);background-image:linear-gradient(var(--gl) 1px,transparent 1px),linear-gradient(90deg,var(--gl) 1px,transparent 1px);background-size:28px 28px;min-height:100vh}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+#app{max-width:720px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:2px solid var(--bd);border-radius:20px;padding:20px}
+h1,h2{font-family:Fredoka,Nunito,sans-serif;font-weight:600;margin:0 0 8px;line-height:1.15}
+h1{font-size:30px}h2{font-size:24px}
+p{margin:0 0 12px;color:var(--mu)}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+button{font:inherit;color:inherit;cursor:pointer}
+.btn{background:var(--pr);color:#fff;border:0;border-radius:14px;padding:14px 18px;font-weight:800;font-size:18px}
+.btn.alt{background:transparent;color:var(--pr);border:2px solid var(--pr)}
+.g3 .btn{font-family:Fredoka,Nunito,sans-serif;font-size:22px;padding:22px 8px}
+.top{display:flex;justify-content:space-between;color:var(--mu);font-size:15px;margin-bottom:6px}
+.bar{height:10px;background:var(--gl);border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--pr);border-radius:9px;transition:width .4s}
+.qt{font-size:20px;color:var(--tx);margin:16px 0 8px}
+.ic{border:0;background:var(--gl);border-radius:10px;padding:2px 8px}
+.stim{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:14px;color:var(--mu);font-size:14px}
+.row{display:flex;justify-content:center;gap:5px;max-width:100%}.row svg{flex:0 1 auto;min-width:0;height:auto}
+.fig{gap:0;border:2px dashed var(--bd);border-radius:14px;padding:6px 10px}.bag{gap:10px}
+.grp{border:2px solid var(--bd);border-radius:14px;padding:8px 12px;text-align:center}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{background:var(--card);border:3px solid var(--bd);border-radius:16px;padding:10px 6px;min-height:96px;display:flex;align-items:center;justify-content:center;font:600 34px Fredoka,sans-serif}
+.opt:hover:not(:disabled){border-color:var(--pr)}
+.opt.good{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 15%,var(--card))}
+.opt.bad{border-color:var(--bad);opacity:.4}
+.fb{min-height:28px;text-align:center;margin-top:12px;font-weight:800}
+.pg{font:700 22px Nunito,sans-serif;letter-spacing:.06em;color:var(--tx);text-align:center}.opt .pg{font-size:19px}
+.stp{align-self:stretch;display:flex;flex-direction:column;gap:4px;align-items:center;color:var(--tx)}.stp>div{display:flex;align-items:center;gap:4px}.stp svg{flex:none}
+.opts.c1{grid-template-columns:1fr}
+input{font:inherit;width:100%;padding:14px;border:2px solid var(--bd);border-radius:12px;background:var(--card);color:var(--tx);margin:8px 0 14px}
+table{width:100%;border-collapse:collapse;margin:14px 0}th,td{border:1px solid var(--bd);padding:8px;text-align:center}th{background:var(--gl)}td:first-child{text-align:left}
+.mb{height:8px;background:var(--gl);border-radius:6px;margin-top:4px}.mb i{display:block;height:100%;background:var(--pr);border-radius:6px}
+.big{font:600 44px Fredoka,sans-serif;color:var(--pr)}
+.acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+@media(max-width:420px){body{font-size:16px}h1{font-size:26px}.opt{min-height:80px}}
+@page{size:A4;margin:16mm}
+@media print{:root{--bg:#fff!important;--gl:#fff!important;--card:#fff!important;--tx:#000!important;--mu:#333!important;--bd:#888!important;--pr:#1b3f9e!important}body{background:#fff;font-size:13pt}body::before{display:none}#app{max-width:none;padding:0}.card{border:0;padding:0}.np{display:none!important}.mb,th{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style></head><body><div id="app"></div>
+<script>
+const $=id=>document.getElementById(id),rI=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),pick=a=>a[rI(0,a.length-1)],sh=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=rI(0,i);[a[i],a[j]]=[a[j],a[i]]}return a};
+const COL=['#e63946','#1d7fd1','#2a9d4f','#f4c20d','#8e44ad','#f77f00'],CN=['merah','biru','hijau','kuning','ungu','jingga'],
+SN={ci:'lingkaran',sq:'persegi',tr:'segitiga',st:'bintang',hx:'segi enam',ar:'panah',ho:'segi lima'},
+PT={tr:'50,8 92,88 8,88',st:'50,6 61,38 95,38 68,58 78,92 50,71 22,92 32,58 5,38 39,38',hx:'27,10 73,10 96,50 73,90 27,90 4,50',ar:'50,5 88,45 66,45 66,92 34,92 34,45 12,45',ho:'50,6 92,40 78,92 22,92 8,40'},
+AS=['ci','sq','tr','st','hx'],DS=['tr','ar','ho'],DN=['atas','kanan','bawah','kiri'],
+NR=[{t:'berangka genap',f:n=>n%2==0},{t:'berangka ganjil',f:n=>n%2==1},{t:'berangka lebih dari 5',f:n=>n>5},{t:'berangka 5 atau kurang',f:n=>n<=5}];
+const SV=s=>s=='ci'?'<circle cx="50" cy="50" r="40"/>':s=='sq'?'<rect x="12" y="12" width="76" height="76" rx="6"/>':`<polygon points="${PT[s]}"/>`;
+const I=(t,px=64)=>{const b=`<svg viewBox="0 0 100 100" width="${px}" height="${px}">`;
+ if(!t)return b+'<rect x="6" y="6" width="88" height="88" rx="14" fill="none" stroke="currentColor" stroke-width="4" stroke-dasharray="8 6"/><text x="50" y="68" text-anchor="middle" font-size="52" font-weight="700" fill="currentColor">?</text></svg>';
+ const k=[.55,.8,1.05][t.z-1],fs=14+18*k;
+ return b+`<g transform="translate(50 50) rotate(${t.d}) scale(${k}) translate(-50 -50)" fill="${COL[t.c]}" stroke="rgba(0,0,0,.3)" stroke-width="3">${SV(t.s)}</g>`+(t.n!=null?`<text x="50" y="${50+fs*.35}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#111" stroke="#fff" stroke-width="3" paint-order="stroke">${t.n}</text>`:'')+'</svg>'};
+const G=g=>g>3?['s','c','z','d','n']:['s','c','z'],K=t=>[t.s,t.c,t.z,t.d,t.n].join();
+const dom=(c,a)=>a=='s'?(c.hd?DS:AS):a=='c'?[0,1,2,3,4,5].slice(0,c.g==1?3:6):a=='z'?[1,2,3]:a=='d'?[0,90,180,270]:[1,2,3,4,5,6,7,8,9];
+const ctx=(g,A)=>{const c={g,A,hd:A.includes('d')};c.f={s:pick(dom(c,'s')),c:rI(0,2),z:2,d:0,n:null};return c};
+const R=c=>{const t={...c.f};c.A.forEach(a=>t[a]=pick(dom(c,a)));return t};
+const mut=(c,t)=>{const u={...t},a=pick((Math.random()<.75?c.A:G(c.g)).filter(x=>x!='d'||c.hd));
+ if(a=='n')u.n=t.n==null?rI(1,9):Math.max(0,t.n+pick([-3,-2,-1,1,2,3]));else u[a]=pick(dom(c,a).filter(v=>v!==t[a]));return u};
+const pickA=(g,k)=>[...new Set([...(g>3?[pick(['d','n'])]:[]),...sh(G(g))])].slice(0,k);
+const uq=(n,fn,pre=[])=>{const s=new Set(pre.map(K)),o=[];for(let j=0;j<200&&o.length<n;j++){const t=fn();if(!s.has(K(t))){s.add(K(t));o.push(t)}}return o};
+const row=a=>`<div class="row">${a.join('')}</div>`,fig=(L,px)=>`<div class="row fig">${L.map(t=>I(t,px)).join('')}</div>`,bag=(L,px)=>`<div class="row bag">${sh(L).map(t=>I(t,px)).join('')}</div>`;
+const opts=(c,a)=>sh([{h:I(a,60),ok:1},...uq(3,()=>mut(c,a),[a]).map(t=>({h:I(t,60)}))]);
+const RT=(a,v)=>a=='s'?'berbentuk '+SN[v]:a=='c'?'berwarna '+CN[v]:a=='z'?'berukuran '+['kecil','sedang','besar'][v-1]:a=='d'?'menghadap ke '+DN[v/90]:NR[v].t;
+
+/* 1. PENGENALAN POLA */
+const pat=(g,i)=>{const k=Math.min([1,2,3,3,4,4][g-1],1+(i/5|0)),A=pickA(g,k),c=ctx(g,A),cy={},geo=g==6&&i>7&&Math.random()<.5,
+ d0=pick(dom(c,'d')),dl=pick([90,180,270]),n0=geo?1:rI(1,5),ns=geo?2:rI(1,[2,2,2,2,3,5][g-1]);
+ A.forEach(a=>{if(a!='d'&&a!='n')cy[a]=sh(dom(c,a)).slice(0,g==1?(i<10?2:3):(i<5?2:pick([2,3])))});
+ const at=j=>{const t={...c.f};A.forEach(a=>t[a]=a=='d'?(d0+dl*j)%360:a=='n'?(geo?n0*2**j:n0+ns*j):cy[a][j%cy[a].length]);return t},
+ S=[0,1,2,3,4,5,6].map(at),b=i<6?6:pick([2,3,4,5]);
+ return{t:b==6?'Gambar apa yang melanjutkan pola ini?':'Gambar apa yang cocok menggantikan tanda ?',s:row(S.map((t,j)=>I(j==b?null:t,58))),o:opts(c,S[b])}};
+
+/* 2. ABSTRAKSI */
+const abs=(g,i)=>{const k=Math.min([1,2,3,2,3,3][g-1],1+(i/5|0)),RA=pickA(g,k),pool=G(g).filter(a=>'dn'.indexOf(a)<0||RA.includes(a)),c=ctx(g,pool),rule={};
+ RA.forEach(a=>rule[a]=a=='n'?rI(0,g>5?3:1):pick(dom(c,a)));
+ const M=t=>RA.every(a=>a=='n'?NR[rule.n].f(t.n):t[a]===rule[a]),
+ ok=()=>{let t;do{t=R(c);RA.forEach(a=>a!='n'&&(t[a]=rule[a]))}while(!M(t));return t},
+ bad=()=>{const t=ok(),a=pick(RA);if(a=='n'){do{t.n=rI(1,9)}while(!NR[rule.n^1].f(t.n))}else t[a]=pick(dom(c,a).filter(v=>v!==rule[a]));return t},
+ amb=it=>pool.some(a=>!RA.includes(a)&&a!='n'&&it.some(x=>it.filter(y=>y[a]===x[a]).length==3)),
+ txt=RA.map(a=>RT(a,rule[a])).join(' dan '),ty=i%3,O=(good,bads)=>sh([{h:I(good,60),ok:1},...bads.map(t=>({h:I(t,60)}))]);
+ if(ty==0){let it;for(let j=0;j<99;j++){it=[ok(),ok(),ok(),bad()];if(!amb(it))break}
+  return{t:'Tiga gambar punya sifat penting yang sama. Mana yang berbeda sendiri? Abaikan hal yang tidak penting.',s:'',o:sh(it.map((t,j)=>({h:I(t,60),ok:j==3})))}}
+ if(ty==1)return{t:'Pilih gambar yang '+txt+'. Abaikan hal lain.',s:'',o:O(ok(),uq(3,bad))};
+ let ex;for(let j=0;j<99;j++){ex=[ok(),ok(),ok()];if(pool.every(a=>RA.includes(a)||a=='n'||new Set(ex.map(x=>x[a])).size==3))break}
+ return{t:'Gambar mana yang juga masuk Kelompok A? Cari kesamaannya, abaikan yang tidak penting.',s:`<div class="grp">Kelompok A${row(ex.map(t=>I(t,56)))}</div>`,o:O(uq(1,ok,ex)[0]||ok(),uq(3,bad,ex))}};
+
+/* 3. DEKOMPOSISI */
+const dek=(g,i)=>{const k=Math.min([1,2,3,3,4,4][g-1],1+(i/5|0)),A=pickA(g,k),c=ctx(g,A),N=[2,3,3,3,4,4][g-1]+(i>9?1:0),ty=i%4;let F;
+ do{F=Array.from({length:N},()=>R(c))}while(new Set(F.map(K)).size<2);
+ if(ty==0){const a=pick(A),v=a=='n'?rI(0,g>5?3:1):pick(F)[a],cnt=F.filter(t=>a=='n'?NR[v].f(t.n):t[a]===v).length;
+  return{t:'Berapa banyak bagian yang '+RT(a,v)+' pada gambar besar ini?',s:fig(F,56),o:sh([cnt,...sh([0,1,2,3,4,5,6].filter(x=>x!=cnt&&x<=N+1)).slice(0,3)].map((x,j)=>({h:x,ok:!j})))}}
+ if(ty==1){const m=rI(0,N-1);
+  return{t:'Satu bagian belum dipasang (tanda ?). Bagian mana yang harus dipasang?',s:`Bagian yang tersedia${bag(F,50)}Gambar yang sedang disusun<div class="row fig">${F.map((t,j)=>I(j==m?null:t,50)).join('')}</div>`,o:opts(c,F[m])}}
+ const ky=L=>L.map(K).sort().join('|'),s=new Set([ky(F)]),D=[];
+ for(let j=0;j<200&&D.length<3;j++){const L=[...F],x=rI(0,N-1);L[x]=mut(c,F[x]);if(!s.has(ky(L))){s.add(ky(L));D.push(L)}}
+ const sets=[F,...D].map((L,j)=>({h:ty==2?bag(L,38):fig(sh(L),38),ok:!j}));
+ return{t:ty==2?'Gambar besar ini tersusun dari bagian-bagian apa?':'Gambar besar mana yang bisa disusun dari semua bagian ini?',s:ty==2?fig(F,56):bag(F,56),o:sh(sets),c:1}};
+
+/* 4. ALGORITMA */
+const AR=['↑','→','↓','←'],DX=[[0,-1],[1,0],[0,1],[-1,0]],
+exp=p=>p.flatMap(b=>b.r?Array(b.r).fill(b.b).flat():[b.c]),
+pt=p=>p.map(b=>b.r?`ulangi ${b.r}× [${b.b.map(d=>AR[d]).join(' ')}]`:AR[b.c]).join('  '),
+endp=(s,p)=>exp(p).reduce((a,d)=>[a[0]+DX[d][0],a[1]+DX[d][1]],s),
+run=(n,s,p)=>{let a=s;for(const d of exp(p)){a=[a[0]+DX[d][0],a[1]+DX[d][1]];if(a[0]<0||a[1]<0||a[0]>=n||a[1]>=n)return null}return a},
+cn=p=>'ABCDEF'[p[0]]+(p[1]+1),
+nb=(n,e)=>{const o=[];for(let x=0;x<n;x++)for(let y=0;y<n;y++){const d=Math.abs(x-e[0])+Math.abs(y-e[1]);if(d&&d<=2)o.push([x,y])}return sh(o).slice(0,3)},
+mp=p=>{const q=p.map(b=>b.r?{r:b.r,b:[...b.b]}:{...b}),b=pick(q);if(b.r){if(Math.random()<.5)b.r=pick([2,3,4].filter(v=>v!=b.r));else{const x=rI(0,b.b.length-1);b.b[x]=pick([0,1,2,3].filter(v=>v!=b.b[x]))}}else b.c=pick([0,1,2,3].filter(v=>v!=b.c));return q},
+gp=(g,i)=>{const n=[3,4,4,5,5,6][g-1],st=[2,3,3,3,4,4][g-1]+(i>9?1:0),dd=()=>rI(0,3);
+ for(let j=0;j<300;j++){const s=[rI(0,n-1),rI(0,n-1)],p=[],li=g>3&&i>2&&Math.random()<.7?rI(0,st-1):-1;
+  for(let q=0;q<st;q++)p.push(q==li?{r:rI(2,g==4?2:3),b:Array.from({length:rI(1,2)},dd)}:{c:dd()});
+  const e=run(n,s,p);if(e&&(e[0]!=s[0]||e[1]!=s[1]))return{n,s,p,e}}
+ return{n:3,s:[0,0],p:[{c:2},{c:1}],e:[1,1]}},
+GR=(n,r,s)=>{const w=n*40+22;let h=`<svg viewBox="0 0 ${w} ${w}" width="${Math.min(w,260)}" style="color:var(--tx);max-width:100%;height:auto" font-family="Nunito,sans-serif" font-size="13" fill="currentColor" text-anchor="middle">`;
+ for(let a=0;a<n;a++){h+=`<text x="${42+a*40}" y="15">${'ABCDEF'[a]}</text><text x="10" y="${52+a*40}">${a+1}</text>`;for(let b=0;b<n;b++)h+=`<rect x="${22+a*40}" y="${22+b*40}" width="40" height="40" fill="none" stroke="currentColor" stroke-opacity=".4"/>`}
+ const E=(p,e)=>p?`<text x="${42+p[0]*40}" y="${51+p[1]*40}" font-size="24">${e}</text>`:'';return h+E(r,'🤖')+E(s,'⭐')+'</svg>'};
+const bld=(g,i)=>{const k=Math.min([1,2,3,3,4,4][g-1],1+(i/5|0)),c=ctx(g,pickA(g,k)),st=[2,3,3,3,3,4][g-1]+(i>9?1:0);let B,L;
+ for(let j=0;j<99;j++){B=Array.from({length:st},()=>g>2&&i>2&&Math.random()<.4?{r:rI(2,g<5?2:3),b:Array.from({length:rI(1,2)},()=>R(c))}:{t:R(c)});L=B.flatMap(x=>x.r?Array(x.r).fill(x.b).flat():[x.t]);if(L.length<=7)break}
+ const ky=l=>l.map(K).join('|'),s=new Set([ky(L)]),D=[];
+ for(let j=0;j<300&&D.length<3;j++){const M=[...L],x=rI(0,M.length-1);if(Math.random()<.5&&M.length>1){const y=rI(0,M.length-2);[M[y],M[y+1]]=[M[y+1],M[y]]}else M[x]=mut(c,M[x]);if(!s.has(ky(M))){s.add(ky(M));D.push(M)}}
+ return{t:'Robot menyusun gambar dengan mengikuti langkah dari atas ke bawah. Gambar apa yang dihasilkan?',s:`<div class="stp">${B.map((x,j)=>`<div>${j+1}. ${x.r?'Ulangi '+x.r+'× '+x.b.map(t=>I(t,34)).join(''):'Tambah '+I(x.t,34)}</div>`).join('')}</div>`,c:1,o:sh([L,...D].map((l,j)=>({h:fig(l,34),ok:!j})))}};
+const alg=(g,i)=>{const ty=i%3;if(ty==2)return bld(g,i);const P=gp(g,i),D=[];
+ if(ty==0)return{t:'Robot menjalankan program ini. Di kotak mana robot berhenti?',s:GR(P.n,P.s)+`<div class="pg">${pt(P.p)}</div>`,o:sh([P.e,...nb(P.n,P.e)].map((e,j)=>({h:cn(e),ok:!j})))};
+ const tx=new Set([pt(P.p)]);for(let j=0;j<300&&D.length<3;j++){const q=mp(P.p),t=pt(q),e=endp(P.s,q);if(!tx.has(t)&&(e[0]!=P.e[0]||e[1]!=P.e[1])){tx.add(t);D.push(q)}}
+ return{t:'Robot ingin sampai ke bintang. Program mana yang benar?',s:GR(P.n,P.s,P.e),c:1,o:sh([P.p,...D].map((p,j)=>({h:`<span class="pg">${pt(p)}</span>`,ok:!j})))}};
+
+/* ALUR */
+const CP=['Pengenalan Pola','Abstraksi','Dekomposisi','Algoritma'],GEN=[pat,abs,dek,alg],
+DESC=['Mengenali keteraturan bentuk, warna, ukuran'+'; di kelas 4–6 ditambah arah dan angka.','Menemukan sifat yang penting dan mengabaikan detail yang tidak penting.','Memecah gambar besar menjadi bagian-bagian kecil, lalu menyusunnya kembali.','Menyusun dan menjalankan langkah-langkah perintah secara berurutan, termasuk perulangan.'];
+let S={};
+function home(){$('app').innerHTML=`<div class="card"><h1>🧩 Asesmen Berpikir Komputasional</h1><p>Pilih kelasmu. Ada 4 bagian dan tiap bagian berisi 15 soal. Jawab sampai benar; makin sedikit salah, makin besar poinmu.</p><div class="g3">${[1,2,3,4,5,6].map(g=>`<button class="btn" onclick="start(${g})">Kelas ${g}</button>`).join('')}</div></div>`}
+function start(g){S={g,c:0,i:0,pts:[[],[],[],[]],ms:[[],[],[],[]]};intro()}
+function intro(){$('app').innerHTML=`<div class="card"><p>Bagian ${S.c+1} dari 4 · Kelas ${S.g}</p><h2>${CP[S.c]}</h2><p>${DESC[S.c]}</p><p>15 soal. Selamat mengerjakan!</p><button class="btn" onclick="ques()">Mulai</button></div>`}
+function ques(){S.q=GEN[S.c](S.g,S.i);S.m=0;S.done=0;
+ $('app').innerHTML=`<div class="card"><div class="top"><span>${CP[S.c]}</span><span>Soal ${S.i+1} dari 15</span></div><div class="bar"><i style="width:${(S.c*15+S.i)/60*100}%"></i></div><p class="qt">${S.q.t} <button class="ic" onclick="say()" aria-label="Bacakan soal">🔊</button></p><div class="stim">${S.q.s}</div><div class="opts${S.q.c?' c1':''}">${S.q.o.map((o,j)=>`<button class="opt" id="o${j}" onclick="ans(${j})">${o.h}</button>`).join('')}</div><div class="fb" id="fb" aria-live="polite"></div></div>`}
+function say(){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(S.q.t);u.lang='id-ID';speechSynthesis.speak(u)}catch(e){}}
+function ans(j){if(S.done)return;const o=S.q.o[j],b=$('o'+j);
+ if(o.ok){S.done=1;const p=[10,7,5,2][Math.min(S.m,3)];S.pts[S.c].push(p);S.ms[S.c].push(S.m);b.classList.add('good');$('fb').style.color='var(--ok)';$('fb').textContent='Benar! +'+p+' poin';setTimeout(nxt,1100)}
+ else{S.m++;b.classList.add('bad');b.disabled=true;$('fb').style.color='var(--bad)';$('fb').textContent='Belum tepat, coba lagi!'}}
+function nxt(){if(++S.i>14){S.i=0;if(++S.c>3)return nameScr();return intro()}ques()}
+function nameScr(){$('app').innerHTML=`<div class="card"><h2>Hebat, semua soal selesai! 🎉</h2><p>Tuliskan namamu untuk melihat laporan hasilnya.</p><input id="nm" maxlength="40" placeholder="Nama lengkap" autocomplete="off"><button class="btn" onclick="fin()">Lihat laporan</button></div>`;$('nm').focus()}
+function fin(){const v=$('nm').value.trim();if(!v){$('nm').focus();return}S.name=v;report()}
+const pred=n=>n>=90?'Sangat Baik':n>=75?'Baik':n>=60?'Cukup':'Perlu Bimbingan',sum=a=>a.reduce((x,y)=>x+y,0);
+function report(){const ns=S.pts.map(p=>Math.round(sum(p)/150*100)),avg=Math.round(sum(ns)/4),
+ esc=s=>s.replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+ $('app').innerHTML=`<div class="card"><h1>Laporan Pencapaian Berpikir Komputasional</h1><p>Nama: <b style="color:var(--tx)">${esc(S.name)}</b><br>Kelas: <b style="color:var(--tx)">${S.g}</b> · Tanggal: ${new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</p>
+ <table><tr><th>Kompetensi</th><th>Soal tanpa salah</th><th>Total salah</th><th>Poin</th><th>Nilai</th></tr>${CP.map((n,j)=>`<tr><td>${n}<div class="mb"><i style="width:${ns[j]}%"></i></div></td><td>${S.ms[j].filter(x=>!x).length}/15</td><td>${sum(S.ms[j])}</td><td>${sum(S.pts[j])}/150</td><td><b>${ns[j]}</b><br><small>${pred(ns[j])}</small></td></tr>`).join('')}</table>
+ <p>Nilai rata-rata</p><div class="big">${avg} <small style="font-size:20px">${pred(avg)}</small></div>
+ <p><small>Nilai = poin ÷ 150 × 100. Poin per soal: tanpa salah 10, 1 salah 7, 2 salah 5, 3 salah atau lebih 2. Predikat: 90–100 Sangat Baik, 75–89 Baik, 60–74 Cukup, di bawah 60 Perlu Bimbingan.</small></p>
+ <div class="acts np"><button class="btn" onclick="window.print()">🖨 Cetak (A4)</button><button class="btn alt" onclick="home()">Main lagi</button></div></div>`}
+home();
+</script></body></html>
