@@ -64,11 +64,25 @@ const OB=[];
  [0,-8,2,2,1.2],[0,8,2,2,1.2],[-6,6,2,2,1.2],[6,-6,2,2,1.2],[0,-30,60,1,6],[0,30,60,1,6],[-30,0,1,60,6],[30,0,1,60,6]].forEach(([x,z,w,d,h])=>{
  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial({color:h>5?0x444455:h>2?0x8d8d96:0xb08d57}));
  m.position.set(x,h/2,z);sc.add(m);OB.push(new THREE.Box3(new THREE.Vector3(x-w/2,0,z-d/2),new THREE.Vector3(x+w/2,h,z+d/2)))});
-const vm=new THREE.Mesh(new THREE.BoxGeometry(.08,.12,.4),new THREE.MeshLambertMaterial({color:0x222222}));vm.position.set(.22,-.2,-.45);cam.add(vm);
+const vm=new THREE.Group();vm.position.set(.2,-.2,-.3);cam.add(vm);let vmI=-1;
 const AV={},mat=c=>new THREE.MeshLambertMaterial({color:c});
-function mkAv(t){const g=new THREE.Group(),m=mat(t?0x1e88e5:0xe53935),a=(geo,mt,x,y,z)=>{const o=new THREE.Mesh(geo,mt);o.position.set(x,y,z);g.add(o)};
- a(new THREE.BoxGeometry(.7,1.1,.4),m,0,.8,0);a(new THREE.SphereGeometry(.2),mat(0xf1c27d),0,1.6,0);
- a(new THREE.BoxGeometry(.1,.12,.5),mat(0x222222),.3,1.1,-.35);a(new THREE.BoxGeometry(.6,.5,.3),m,0,.25,0);sc.add(g);return g}
+// model pistol berbeda per senjata (laras ke arah -z, titik pegang di origin)
+function mkGun(i){const g=new THREE.Group(),a=(w,h,l,c,x,y,z,bs)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,l),bs?new THREE.MeshBasicMaterial({color:c}):mat(c));o.position.set(x,y,z);g.add(o)};
+ if(i===0){a(.06,.09,.28,0x2b2b2b,0,0,-.15);a(.05,.1,.07,0x2b2b2b,0,-.08,-.04)}
+ else if(i===1){a(.08,.12,.42,0xcfd8dc,0,0,-.22);a(.07,.12,.08,0x546e7a,0,-.1,-.04);a(.04,.03,.1,0x90a4ae,0,.075,-.4)}
+ else if(i===2){a(.07,.1,.36,0x111111,0,0,-.2);a(.05,.24,.07,0x616161,0,-.15,-.24);a(.05,.05,.14,0x111111,0,.01,-.48);a(.04,.05,.16,0x111111,0,.08,-.1)}
+ else if(i===3){a(.07,.1,.3,0x8d6e1f,0,0,-.18);a(.045,.045,.36,0x424242,0,.02,-.5);a(.05,.1,.07,0x5d4a14,0,-.09,-.03);
+  const c=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,.12,10),mat(0x9e9e9e));c.rotation.x=Math.PI/2;c.position.set(0,.02,-.22);g.add(c)}
+ else{a(.08,.12,.4,0x263238,0,0,-.22);a(.09,.03,.3,0x00e5ff,0,.075,-.22,1);a(.05,.05,.08,0x00e5ff,0,0,-.46,1);a(.05,.1,.07,0x263238,0,-.1,-.04)}
+ return g}
+function mkAv(t){const g=new THREE.Group(),m=mat(t?0x1e88e5:0xe53935),sk=mat(0xf1c27d),a=(geo,mt,x,y,z,p)=>{const o=new THREE.Mesh(geo,mt);o.position.set(x,y,z);(p||g).add(o)};
+ a(new THREE.BoxGeometry(.7,1.1,.4),m,0,.8,0);a(new THREE.SphereGeometry(.2),sk,0,1.6,0);a(new THREE.BoxGeometry(.6,.5,.3),m,0,.25,0);
+ a(new THREE.BoxGeometry(.12,.12,.5),sk,.3,1.12,-.12);a(new THREE.BoxGeometry(.12,.5,.12),sk,-.42,.9,0);
+ // armor: rompi + bahu + helm (hanya tampil bila armor > 0)
+ const ar=new THREE.Group(),sm=mat(0x37474f),tm=mat(t?0x64b5f6:0xef9a9a);
+ a(new THREE.BoxGeometry(.78,.7,.5),sm,0,1,0,ar);a(new THREE.BoxGeometry(.2,.14,.5),tm,.4,1.38,0,ar);a(new THREE.BoxGeometry(.2,.14,.5),tm,-.4,1.38,0,ar);
+ const hm=new THREE.Mesh(new THREE.SphereGeometry(.26,12,8,0,Math.PI*2,0,Math.PI/2),sm);hm.position.y=1.62;ar.add(hm);
+ const sl=new THREE.Group();sl.position.set(.3,1.12,-.3);g.add(sl,ar);g.userData={sl,ar,gi:-1};sc.add(g);return g}
 function tracer(a,b){const l=new THREE.Line(new THREE.BufferGeometry().setFromPoints([a,b]),new THREE.LineBasicMaterial({color:0xffee88}));sc.add(l);setTimeout(()=>{sc.remove(l);l.geometry.dispose()},60)}
 let ac;function snd(f){try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain();o.type='square';o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(ac.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.08);o.stop(ac.currentTime+.09)}catch(e){}}
 // ---------- Network ----------
@@ -187,6 +201,7 @@ const _v=new THREE.Vector3();
 function loop(t){requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1000);last=t;const my=S[myId];
  if(joined&&my){
   vm.visible=my.l;
+  if(my.w!==vmI){vmI=my.w;while(vm.children.length)vm.remove(vm.children[0]);vm.add(mkGun(my.w))}
   if(my.rf!==amo.rf){amo.rf=my.rf;const w=W[my.w];amo.mag=w.mg;amo.rs=my.w?w.mg*3:Infinity;amo.rl=0} // beli/revive → amunisi penuh
   if(!my.l)amo.rl=0;
   if(amo.rl&&t>=amo.rl){const w=W[my.w],n=Math.min(w.mg-amo.mag,amo.rs);amo.mag+=n;amo.rs-=n;amo.rl=0}
@@ -201,7 +216,7 @@ function loop(t){requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1000
   }
  }
  for(const id in S){if(id===myId)continue;const e=S[id];let a=AV[id];if(!a)a=AV[id]=mkAv(e.t);
-  const was=a.visible;a.visible=e.l;if(!was||!e.l)a.position.set(e.x,e.y,e.z);else a.position.lerp(_v.set(e.x,e.y,e.z),.3);a.rotation.y=e.q}
+  const was=a.visible;a.visible=e.l;if(!was||!e.l)a.position.set(e.x,e.y,e.z);else a.position.lerp(_v.set(e.x,e.y,e.z),.3);a.rotation.y=e.q;const u=a.userData;if(u.gi!==e.w){u.gi=e.w;while(u.sl.children.length)u.sl.remove(u.sl.children[0]);u.sl.add(mkGun(e.w))}u.ar.visible=e.a>0}
  for(const id in AV)if(!S[id]){sc.remove(AV[id]);delete AV[id]}
  R.render(sc,cam)}
 requestAnimationFrame(loop);
