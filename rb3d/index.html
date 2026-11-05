@@ -15,6 +15,7 @@ button{font:inherit;color:#fff;border:0;border-radius:8px;padding:10px;cursor:po
 #hp{left:20px;bottom:20px;font-size:22px}#wp{right:20px;bottom:20px;font-size:20px;text-align:right}
 #feed{top:10px;right:14px;text-align:right;line-height:1.6}
 #cx{top:50%;left:50%;transform:translate(-50%,-50%);font-size:26px;font-weight:300}
+#ban{top:18%;left:0;right:0;text-align:center;font-size:34px;display:none;z-index:4}
 #hint{bottom:90px;left:0;right:0;text-align:center;display:none}
 #dead{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;z-index:5;text-align:center;padding-top:9vh;pointer-events:none}
 #dead h2{margin:0 0 4px;font-size:28px}#dt{font-size:44px;font-weight:800;margin-bottom:14px}
@@ -32,10 +33,10 @@ button{font:inherit;color:#fff;border:0;border-radius:8px;padding:10px;cursor:po
 <button class="t r" onclick="start(0)">Tim MERAH</button> <button class="t b" onclick="start(1)">Tim BIRU</button>
 <div id="st"></div>
 <small>Pemain pertama yang memasukkan kode room menjadi host. Teman memasukkan kode yang sama.<br>
-WASD gerak · Spasi lompat · Klik tembak · Tab skor<br>Tekan B untuk buka toko saat bermain (atau saat mati): 1–5 pistol, 6 armor, 7 amunisi · R reload<br>Maksimal 10 pemain per tim</small>
+WASD gerak · Spasi lompat · Klik tembak · Tab skor<br>Tekan B untuk buka toko saat bermain (atau saat mati): 1–5 pistol, 6 armor, 7 amunisi · R reload<br>Maksimal 10 pemain per tim · tim pertama yang mencapai 10 kill menang ronde, lalu peta berganti otomatis</small>
 </div></div>
 <div id="sc" class="p"></div><div id="hp" class="p"></div><div id="wp" class="p"></div><div id="feed" class="p"></div>
-<div id="cx" class="p">+</div><div id="hint" class="p">Klik layar untuk mengunci mouse</div>
+<div id="ban" class="p"></div><div id="cx" class="p">+</div><div id="hint" class="p">Klik layar untuk mengunci mouse</div>
 <div id="dead"><h2 id="dtl"></h2><div id="dt"></div><div id="shop"></div></div>
 <div id="sb"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -50,8 +51,8 @@ const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"']/g,c=>'
 // n=nama, p=harga, d=damage, r=tembakan/detik, s=spread
 // mg=isi magazen, rt=waktu reload (detik)
 const W=[{n:'Glock-9',p:0,d:18,r:5,s:.02,mg:12,rt:1.3},{n:'Deagle-X',p:600,d:45,r:2,s:.012,mg:7,rt:1.8},{n:'Burst-7',p:900,d:22,r:9,s:.035,mg:20,rt:1.6},{n:'Magnum-R',p:1200,d:75,r:1.1,s:.004,mg:6,rt:2.2},{n:'Plasma-Z',p:1700,d:34,r:6,s:.01,mg:15,rt:1.5}];
-const MAXT=10,AM=150,AP=500,TC=['#e53935','#1e88e5'],TN=['MERAH','BIRU'];
-let S={},PL={},conns={},conn,peer,myId,joined=false,isHost=false,name,team,code;
+const KILLS=10,MAXT=10,AM=150,AP=500,TC=['#e53935','#1e88e5'],TN=['MERAH','BIRU'];
+let GS={gk:[0,0],rw:[0,0],n:1,ip:0,win:-1},S={},PL={},conns={},conn,peer,myId,joined=false,isHost=false,name,team,code;
 // ---------- 3D ----------
 const R=new THREE.WebGLRenderer({antialias:true});R.setSize(innerWidth,innerHeight);document.body.appendChild(R.domElement);
 const sc=new THREE.Scene();sc.background=new THREE.Color(0x87b8e0);sc.fog=new THREE.Fog(0x87b8e0,20,70);
@@ -60,12 +61,25 @@ sc.add(new THREE.HemisphereLight(0xffffff,0x556655,.9));const dl=new THREE.Direc
 const gr=new THREE.Mesh(new THREE.PlaneGeometry(60,60),new THREE.MeshLambertMaterial({color:0x4a6b4a}));gr.rotation.x=-Math.PI/2;sc.add(gr);
 const gd=new THREE.GridHelper(60,30,0x335533,0x335533);gd.position.y=.01;sc.add(gd);
 const OB=[];
-[[0,0,6,6,3],[-12,-8,4,4,3],[12,8,4,4,3],[12,-10,3,8,3],[-12,10,3,8,3],[-5,-14,5,2,1.2],[5,14,5,2,1.2],[-20,0,2,10,3],[20,0,2,10,3],
- [0,-8,2,2,1.2],[0,8,2,2,1.2],[-6,6,2,2,1.2],[6,-6,2,2,1.2],[0,-30,60,1,6],[0,30,60,1,6],[-30,0,1,60,6],[30,0,1,60,6]].forEach(([x,z,w,d,h])=>{
- const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial({color:h>5?0x444455:h>2?0x8d8d96:0xb08d57}));
- m.position.set(x,h/2,z);sc.add(m);OB.push(new THREE.Box3(new THREE.Vector3(x-w/2,0,z-d/2),new THREE.Vector3(x+w/2,h,z+d/2)))});
 const vm=new THREE.Group();vm.position.set(.2,-.2,-.3);cam.add(vm);let vmI=-1;
 const AV={},mat=c=>new THREE.MeshLambertMaterial({color:c});
+// ---------- Peta prosedural: seed sama = peta sama di semua pemain; simetris agar adil ----------
+// tema: [langit, tanah, warna blok tinggi, warna blok rendah]
+const TH=[[0x87b8e0,0x4a6b4a,0x8d8d96,0xb08d57],[0xe0b887,0xc2a26b,0x9c6b4a,0xd9c27a],[0x9fb0c8,0xdfe6ee,0x6f7f95,0xaab8c9],[0x2b2f4a,0x2f3b34,0x5a5f88,0x8a6fb0],[0xb8e0c8,0x6b8f5a,0x7f8f7a,0xa3b36b]];
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+let curMap=null;const MM=[];
+function buildMap(seed){
+ curMap=seed;MM.forEach(m=>{sc.remove(m);m.geometry.dispose();m.material.dispose()});MM.length=0;OB.length=0;
+ const r=rng(seed),th=TH[seed%TH.length];
+ sc.background.setHex(th[0]);sc.fog.color.setHex(th[0]);gr.material.color.setHex(th[1]);
+ const add=(x,z,w,d,h,c)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));m.position.set(x,h/2,z);sc.add(m);MM.push(m);
+  OB.push(new THREE.Box3(new THREE.Vector3(x-w/2,0,z-d/2),new THREE.Vector3(x+w/2,h,z+d/2)))};
+ [[0,-30,60,1],[0,30,60,1],[-30,0,1,60],[30,0,1,60]].forEach(([x,z,w,d])=>add(x,z,w,d,6,0x444455));
+ const L=[],ov=(a,b)=>Math.abs(a.x-b.x)<(a.w+b.w)/2+1.5&&Math.abs(a.z-b.z)<(a.d+b.d)/2+1.5;
+ for(let i=0,n=0;i<100&&n<11;i++){ // blok di separuh peta, dicerminkan ke separuh lainnya; zona spawn (|z|>19) selalu kosong
+  const w=2+r()*5,d=2+r()*5,h=r()<.35?1.2:2.5+r()*1.5,x=(r()-.5)*46,z=-(1+r()*14),A={x,z,w,d,h},B={x:-x,z:-z,w,d,h};
+  if(L.some(q=>ov(q,A)||ov(q,B))||ov(A,B))continue;L.push(A,B);n++}
+ L.forEach(q=>add(q.x,q.z,q.w,q.d,q.h,q.h<2?th[3]:th[2]))}
 // model pistol berbeda per senjata (laras ke arah -z, titik pegang di origin)
 function mkGun(i){const g=new THREE.Group(),a=(w,h,l,c,x,y,z,bs)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,l),bs?new THREE.MeshBasicMaterial({color:c}):mat(c));o.position.set(x,y,z);g.add(o)};
  if(i===0){a(.06,.09,.28,0x2b2b2b,0,0,-.15);a(.05,.1,.07,0x2b2b2b,0,-.08,-.04)}
@@ -128,13 +142,21 @@ function go(){
 function enter(){joined=true;$('lobby').style.display='none';if(isHost)H({t:'join',n:name,team},'host')}
 function initHost(){
  peer.on('connection',c=>{conns[c.peer]=c;c.on('data',m=>H(m,c.peer));c.on('close',()=>{delete PL[c.peer];delete conns[c.peer]})});
- setInterval(()=>{const n=Date.now();for(const p of Object.values(PL)){p.r=Math.max(0,(p.ra-n)/1000);if(!p.l&&n>=p.ra)revive(p)}bc({t:'s',l:Object.values(PL)})},50);
+ setInterval(()=>{const n=Date.now();
+  if(G.until&&n>=G.until)newMap();
+  for(const p of Object.values(PL)){p.r=Math.max(0,(p.ra-n)/1000);if(!p.l&&n>=p.ra)revive(p)}
+  const sn={t:'s',l:Object.values(PL),ms:G.seed,gk:G.rk,rw:G.rw,n:G.n,ip:Math.max(0,(G.until-n)/1000),win:G.win};
+  GS=sn;if(curMap!==G.seed)buildMap(G.seed);bc(sn)},50);
 }
 function revive(p){
  p.l=true;p.h=100;p.rf++;if(!p.f)p.m=Math.min(16000,p.m+200);p.f=0; // bonus uang revive
  p.x=(Math.random()-.5)*30;p.y=0;p.z=p.t?24:-24;p.q=p.t?0:Math.PI;
  const m={t:'sp',i:p.i,x:p.x,z:p.z,q:p.q};p.i==='host'?M(m):conns[p.i]&&conns[p.i].send(m)}
-// ---------- Host (otoritatif: HP, uang, skor, revive) ----------
+// ---------- Host (otoritatif: HP, uang, skor, revive, ronde & peta) ----------
+const G={seed:(Math.random()*1e9)|0,rk:[0,0],rw:[0,0],n:1,until:0,win:-1}; // rk=kill ronde ini, rw=ronde menang
+function endRound(w){G.win=w;G.rw[w]++;G.until=Date.now()+7000} // jeda 7 dtk, lalu peta baru
+function newMap(){G.until=0;G.n++;G.rk=[0,0];G.win=-1;let s;do s=(Math.random()*1e9)|0;while(s===G.seed);G.seed=s;
+ for(const p of Object.values(PL)){p.f=1;revive(p)}} // semua pemain kembali ke spawn tim (uang & senjata tetap)
 function H(m,id){
  if(m.t==='join'){if(PL[id])return;const tm=m.team?1:0;
   if(Object.values(PL).filter(q=>q.t===tm).length>=MAXT){conns[id]&&conns[id].send({t:'full',team:tm});return}
@@ -144,12 +166,12 @@ function H(m,id){
  if(m.t==='pos'&&p.l){p.x=m.x;p.y=m.y;p.z=m.z;p.q=m.q;p.p=m.p}
  else if(m.t==='fx'&&p.l)bc({t:'fx',a:m.a,b:m.b,i:id});
  else if(m.t==='hit'){
-  const v=PL[m.v];if(!p.l||!v||!v.l||v.t===p.t)return;
+  const v=PL[m.v];if(G.until||!p.l||!v||!v.l||v.t===p.t)return;
   let d=Math.min(+m.d||0,W[p.w].d*2);
   if(v.a>0){const ab=Math.min(v.a,d*.5);v.a-=ab;d-=ab}
   v.h-=d;
   if(v.h<=0){v.h=0;v.l=false;v.d++;v.ra=Date.now()+10000;v.w=0;v.a=0; // mati: 10 dtk, senjata & armor hilang
-   p.k++;p.m=Math.min(16000,p.m+300);bc({t:'kill',a:p.n,b:v.n,at:p.t,bt:v.t,w:p.w})}
+   p.k++;p.m=Math.min(16000,p.m+300);bc({t:'kill',a:p.n,b:v.n,at:p.t,bt:v.t,w:p.w});if(++G.rk[p.t]>=KILLS)endRound(p.t)}
  }else if(m.t==='buy'){ // beli kapan saja (hidup maupun menunggu revive)
   if(m.k==='w'){const w=W[m.i];if(w&&p.m>=w.p&&p.w!==m.i){p.m-=w.p;p.w=m.i;p.rf++}}
   else if(m.k==='a'&&p.m>=AP&&p.a<100){p.m-=AP;p.a=100}
@@ -159,7 +181,7 @@ function H(m,id){
 // ---------- Client ----------
 const me={p:new THREE.Vector3(),vy:0,yaw:0,pit:0};
 function M(m){
- if(m.t==='s')S=Object.fromEntries(m.l.map(o=>[o.i,o]));
+ if(m.t==='s'){S=Object.fromEntries(m.l.map(o=>[o.i,o]));GS=m;if(m.ms!==curMap)buildMap(m.ms)}
  else if(m.t==='ok')enter();
  else if(m.t==='full'){st('Tim '+TN[m.team]+' sudah penuh (maks '+MAXT+' pemain). Pilih tim lain.');try{conn.close();peer.destroy()}catch(e){}}
  else if(m.t==='sp'){if(m.i===myId){me.p.set(m.x,0,m.z);me.yaw=m.q;me.pit=0;me.vy=0}}
@@ -211,7 +233,7 @@ function loop(t){requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1000
    if(!col(p.x+dx,p.z,p.y))p.x+=dx;if(!col(p.x,p.z+dz,p.y))p.z+=dz;
    const g=gnd(p.x,p.z,p.y);if(K.Space&&p.y<=g+.01)me.vy=8.5;me.vy-=25*dt;p.y+=me.vy*dt;if(p.y<g){p.y=g;me.vy=0}
    cam.position.set(p.x,p.y+1.6,p.z);cam.rotation.set(me.pit,me.yaw,0);cam.updateMatrixWorld(true);
-   if(fire&&document.pointerLockElement===R.domElement&&t>next&&!amo.rl){
+   if(fire&&document.pointerLockElement===R.domElement&&t>next&&!amo.rl&&!(GS.ip>0)){
     if(amo.mag<=0)reload(my);else{const w=W[my.w];next=t+1000/w.r;amo.mag--;shoot(w,my);if(!amo.mag)reload(my)}}
   }
  }
@@ -221,16 +243,22 @@ function loop(t){requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1000
  R.render(sc,cam)}
 requestAnimationFrame(loop);
 setInterval(()=>{const m=S[myId];if(joined&&m&&m.l)send({t:'pos',x:+me.p.x.toFixed(2),y:+me.p.y.toFixed(2),z:+me.p.z.toFixed(2),q:+me.yaw.toFixed(3),p:+me.pit.toFixed(3)})},50);
+let shownN=0,banUntil=0;
 const tk=t=>Object.values(S).reduce((a,p)=>a+(p.t===t?p.k:0),0);
 setInterval(()=>{const m=S[myId];if(!joined||!m)return;
+ if(GS.n!==shownN){shownN=GS.n;banUntil=Date.now()+4000}
+ const bn=$('ban');
+ if(GS.ip>0){bn.innerHTML=`<span style="color:${TC[GS.win]}">TIM ${TN[GS.win]} MENANG!</span><br><span style="font-size:18px">Peta baru dalam ${Math.ceil(GS.ip)} detik</span>`;bn.style.display='block'}
+ else if(GS.n>1&&Date.now()<banUntil){bn.innerHTML=`PETA BARU #${GS.n}<br><span style="font-size:18px">Tim pertama mencapai ${KILLS} kill menang</span>`;bn.style.display='block'}
+ else bn.style.display='none';
  $('hp').innerHTML=`❤ ${Math.ceil(m.h)} &nbsp; 🛡 ${m.a}<br><span style="font-size:15px">K ${m.k} / D ${m.d} · <span style="color:${TC[m.t]}">${TN[m.t]}</span></span>`;
  $('wp').innerHTML=`${W[m.w].n}<br>🔫 ${amo.rl?'RELOAD…':amo.mag+' / '+(amo.rs===Infinity?'∞':amo.rs)}<br>💰 $${m.m}<br><span style="font-size:12px">R reload · B toko</span>`;
- $('sc').innerHTML=`<b style="color:${TC[0]}">${tk(0)}</b> : <b style="color:${TC[1]}">${tk(1)}</b><br><span style="font-size:13px">Room ${esc(code)} · ${Object.keys(S).length} pemain</span>`;
+ $('sc').innerHTML=`<b style="color:${TC[0]}">${GS.gk[0]}</b> : <b style="color:${TC[1]}">${GS.gk[1]}</b> <span style="font-size:13px">(target ${KILLS})</span><br><span style="font-size:13px">Peta #${GS.n} · ronde menang ${GS.rw[0]}-${GS.rw[1]} · Room ${esc(code)} · ${Object.keys(S).length} pemain</span>`;
  if(!m.l)shopOpen=false;
  $('dead').style.display=!m.l||shopOpen?'block':'none';$('dead').classList.toggle('live',m.l);
  $('dtl').textContent=m.l?'TOKO — tekan B untuk menutup':m.f?'Siap-siap! Beli senjata':'Kamu mati — revive dalam';$('dt').textContent=Math.ceil(m.r)+'s';
  [...$('shop').children].forEach((b,i)=>{const w=W[i];b.disabled=w?(m.m<w.p||m.w===i):i===5?(m.m<AP||m.a>=100):(m.w<1||m.m<AM);b.classList.toggle('on',!!w&&m.w===i)});
  $('hint').style.display=m.l&&document.pointerLockElement!==R.domElement?'block':'none';
- $('sb').innerHTML=[0,1].map(t=>`<div><h3 style="color:${TC[t]}">${TN[t]} — ${tk(t)}</h3>`+Object.values(S).filter(p=>p.t===t).sort((a,b)=>b.k-a.k).map(p=>`<div><span>${esc(p.n)}</span><span>${p.k} / ${p.d}</span></div>`).join('')+'</div>').join('');
+ $('sb').innerHTML=[0,1].map(t=>`<div><h3 style="color:${TC[t]}">${TN[t]} — ${GS.gk[t]} kill · ${GS.rw[t]} ronde</h3>`+Object.values(S).filter(p=>p.t===t).sort((a,b)=>b.k-a.k).map(p=>`<div><span>${esc(p.n)}</span><span>${p.k} / ${p.d}</span></div>`).join('')+'</div>').join('');
 },100);
 </script></body></html>
