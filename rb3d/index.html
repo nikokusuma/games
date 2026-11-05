@@ -76,22 +76,34 @@ const bc=m=>{for(const c of Object.values(conns))c.open&&c.send(m);if(m.t!=='s')
 const ICE={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:stun.cloudflare.com:3478'},
  {urls:['turn:eu-0.turn.peerjs.com:3478','turn:us-0.turn.peerjs.com:3478'],username:'peerjs',credential:'peerjsp'}]};
 const st=s=>$('st').textContent=s;
+// OPSIONAL tapi sangat disarankan: server relay (TURN) gratis dari metered.ca agar bisa tersambung antar jaringan.
+// Daftar gratis di metered.ca, lalu isi dengan: 'https://NAMA-APP.metered.live/api/v1/turn/credentials?apiKey=API_KEY_KAMU'
+const TURN_URL='';
+let ICEC=ICE;
+function loadIce(cb){
+ if(!TURN_URL)return cb();st('Memuat server relay...');
+ fetch(TURN_URL).then(r=>r.json()).then(a=>{ICEC={iceServers:[...ICE.iceServers.slice(0,3),...a]}}).catch(()=>{}).finally(cb)}
+const rc=p=>p.on('disconnected',()=>{try{p.destroyed||p.reconnect()}catch(e){}}); // jaga koneksi ke signaling
 function start(t){
  name=($('nm').value.trim()||'Player').slice(0,12);code=$('rm').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
  if(!code){$('st').textContent='Isi kode room dulu';return}
- team=t;$('st').textContent='Menghubungkan...';R.domElement.requestPointerLock();
- const rid='fps-rb-game-'+code;peer=new Peer(rid,{config:ICE});
- peer.on('open',()=>{isHost=true;myId='host';S=PL;initHost();enter()});
+ team=t;st('Menghubungkan...');R.domElement.requestPointerLock();loadIce(go);
+}
+function go(){
+ const rid='fps-rb-game-'+code;peer=new Peer(rid,{config:ICEC});
+ peer.on('open',()=>{rc(peer);isHost=true;myId='host';S=PL;initHost();enter()});
  peer.on('error',e=>{
   if(e.type==='unavailable-id'){ // room sudah ada → jadi client
    st('Room ditemukan, menyambung ke host...');
-   peer=new Peer({config:ICE});
+   peer=new Peer({config:ICEC});
    peer.on('error',e2=>st(e2.type==='peer-unavailable'?'Host room tidak aktif (mungkin baru keluar/refresh). Tunggu ±1 menit atau pakai kode room lain.':'Error: '+e2.type));
-   peer.on('open',id=>{myId=id;conn=peer.connect(rid,{reliable:true});
-    const to=setTimeout(()=>{if(!joined)st('Gagal tersambung ke host dalam 15 detik. Jaringan/NAT kemungkinan memblokir koneksi P2P — coba Wi-Fi yang sama dengan host atau hotspot lain.')},15000);
-    const pc=conn.peerConnection;
+   peer.on('open',id=>{rc(peer);myId=id;conn=peer.connect(rid,{reliable:true});
+    const pc=conn.peerConnection,cc={};
+    pc&&pc.addEventListener('icecandidate',ev=>{if(ev.candidate){const k=ev.candidate.type||(/ typ (\w+)/.exec(ev.candidate.candidate)||[])[1];cc[k]=(cc[k]||0)+1}});
+    const why=()=>' [kandidat: '+(JSON.stringify(cc)||'{}')+']'+(cc.relay?'':' Server relay (TURN) tidak terjangkau — isi TURN_URL di index.html (lihat komentar di kode).');
+    const to=setTimeout(()=>{if(!joined)st('Gagal tersambung ke host dalam 15 detik.'+why())},15000);
     pc&&pc.addEventListener('iceconnectionstatechange',()=>{const s=pc.iceConnectionState;
-     if(s==='failed')st('Koneksi P2P ke host diblokir jaringan (NAT/firewall). Coba Wi-Fi yang sama dengan host atau hotspot lain.');else if(!joined)st('Menyambung ke host ('+s+')...')});
+     if(s==='failed')st('Koneksi P2P ke host gagal.'+why());else if(!joined)st('Menyambung ke host ('+s+')...')});
     conn.on('open',()=>{clearTimeout(to);send({t:'join',n:name,team});enter()});conn.on('data',M);
     conn.on('error',er=>st('Error koneksi: '+(er.type||er)));
     conn.on('close',()=>{if(joined){alert('Koneksi ke host terputus');location.reload()}})});
