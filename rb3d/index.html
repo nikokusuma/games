@@ -16,8 +16,9 @@ button{font:inherit;color:#fff;border:0;border-radius:8px;padding:10px;cursor:po
 #feed{top:10px;right:14px;text-align:right;line-height:1.6}
 #cx{top:50%;left:50%;transform:translate(-50%,-50%);font-size:26px;font-weight:300}
 #hint{bottom:90px;left:0;right:0;text-align:center;display:none}
-#dead{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;z-index:5;text-align:center;padding-top:9vh}
+#dead{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;z-index:5;text-align:center;padding-top:9vh;pointer-events:none}
 #dead h2{margin:0 0 4px;font-size:28px}#dt{font-size:44px;font-weight:800;margin-bottom:14px}
+#dead.live{background:rgba(0,0,0,.3);padding-top:16vh}#dead.live #dt{display:none}#dead.live h2{font-size:18px;margin-bottom:12px}#shop button{pointer-events:auto}
 #shop{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;max-width:760px;margin:0 auto}
 #shop button{background:#252b34;width:230px;text-align:left;padding:12px}
 #shop button.on{outline:2px solid #66bb6a}#shop button:disabled{opacity:.4;cursor:default}
@@ -31,7 +32,7 @@ button{font:inherit;color:#fff;border:0;border-radius:8px;padding:10px;cursor:po
 <button class="t r" onclick="start(0)">Tim MERAH</button> <button class="t b" onclick="start(1)">Tim BIRU</button>
 <div id="st"></div>
 <small>Pemain pertama yang memasukkan kode room menjadi host. Teman memasukkan kode yang sama.<br>
-WASD gerak · Spasi lompat · Klik tembak · Tab skor<br>Saat mati/awal: tekan 1–5 beli pistol, 6 beli armor</small>
+WASD gerak · Spasi lompat · Klik tembak · Tab skor<br>Tekan B untuk buka toko saat bermain (atau saat mati): 1–5 pistol, 6 armor, 7 amunisi · R reload<br>Maksimal 10 pemain per tim</small>
 </div></div>
 <div id="sc" class="p"></div><div id="hp" class="p"></div><div id="wp" class="p"></div><div id="feed" class="p"></div>
 <div id="cx" class="p">+</div><div id="hint" class="p">Klik layar untuk mengunci mouse</div>
@@ -47,8 +48,9 @@ WASD gerak · Spasi lompat · Klik tembak · Tab skor<br>Saat mati/awal: tekan 1
 <script>
 const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 // n=nama, p=harga, d=damage, r=tembakan/detik, s=spread
-const W=[{n:'Glock-9',p:0,d:18,r:5,s:.02},{n:'Deagle-X',p:600,d:45,r:2,s:.012},{n:'Burst-7',p:900,d:22,r:9,s:.035},{n:'Magnum-R',p:1200,d:75,r:1.1,s:.004},{n:'Plasma-Z',p:1700,d:34,r:6,s:.01}];
-const AP=500,TC=['#e53935','#1e88e5'],TN=['MERAH','BIRU'];
+// mg=isi magazen, rt=waktu reload (detik)
+const W=[{n:'Glock-9',p:0,d:18,r:5,s:.02,mg:12,rt:1.3},{n:'Deagle-X',p:600,d:45,r:2,s:.012,mg:7,rt:1.8},{n:'Burst-7',p:900,d:22,r:9,s:.035,mg:20,rt:1.6},{n:'Magnum-R',p:1200,d:75,r:1.1,s:.004,mg:6,rt:2.2},{n:'Plasma-Z',p:1700,d:34,r:6,s:.01,mg:15,rt:1.5}];
+const MAXT=10,AM=150,AP=500,TC=['#e53935','#1e88e5'],TN=['MERAH','BIRU'];
 let S={},PL={},conns={},conn,peer,myId,joined=false,isHost=false,name,team,code;
 // ---------- 3D ----------
 const R=new THREE.WebGLRenderer({antialias:true});R.setSize(innerWidth,innerHeight);document.body.appendChild(R.domElement);
@@ -104,7 +106,7 @@ function go(){
     const to=setTimeout(()=>{if(!joined)st('Gagal tersambung ke host dalam 15 detik.'+why())},15000);
     pc&&pc.addEventListener('iceconnectionstatechange',()=>{const s=pc.iceConnectionState;
      if(s==='failed')st('Koneksi P2P ke host gagal.'+why());else if(!joined)st('Menyambung ke host ('+s+')...')});
-    conn.on('open',()=>{clearTimeout(to);send({t:'join',n:name,team});enter()});conn.on('data',M);
+    conn.on('open',()=>{clearTimeout(to);st('Terhubung, meminta slot tim...');send({t:'join',n:name,team})});conn.on('data',M);
     conn.on('error',er=>st('Error koneksi: '+(er.type||er)));
     conn.on('close',()=>{if(joined){alert('Koneksi ke host terputus');location.reload()}})});
   }else st('Error: '+e.type+' — cek koneksi internet / pemblokir WebRTC')});
@@ -115,12 +117,15 @@ function initHost(){
  setInterval(()=>{const n=Date.now();for(const p of Object.values(PL)){p.r=Math.max(0,(p.ra-n)/1000);if(!p.l&&n>=p.ra)revive(p)}bc({t:'s',l:Object.values(PL)})},50);
 }
 function revive(p){
- p.l=true;p.h=100;if(!p.f)p.m=Math.min(16000,p.m+200);p.f=0; // bonus uang revive
+ p.l=true;p.h=100;p.rf++;if(!p.f)p.m=Math.min(16000,p.m+200);p.f=0; // bonus uang revive
  p.x=(Math.random()-.5)*30;p.y=0;p.z=p.t?24:-24;p.q=p.t?0:Math.PI;
  const m={t:'sp',i:p.i,x:p.x,z:p.z,q:p.q};p.i==='host'?M(m):conns[p.i]&&conns[p.i].send(m)}
 // ---------- Host (otoritatif: HP, uang, skor, revive) ----------
 function H(m,id){
- if(m.t==='join'){PL[id]={i:id,n:String(m.n).slice(0,12),t:m.team?1:0,h:100,a:0,m:1000,k:0,d:0,w:0,l:false,f:1,ra:Date.now()+8000,r:8,x:0,y:0,z:0,q:0,p:0};return}
+ if(m.t==='join'){if(PL[id])return;const tm=m.team?1:0;
+  if(Object.values(PL).filter(q=>q.t===tm).length>=MAXT){conns[id]&&conns[id].send({t:'full',team:tm});return}
+  PL[id]={i:id,n:String(m.n).slice(0,12),t:tm,h:100,a:0,m:1000,k:0,d:0,w:0,rf:0,l:false,f:1,ra:Date.now()+8000,r:8,x:0,y:0,z:0,q:0,p:0};
+  conns[id]&&conns[id].send({t:'ok'});return}
  const p=PL[id];if(!p)return;
  if(m.t==='pos'&&p.l){p.x=m.x;p.y=m.y;p.z=m.z;p.q=m.q;p.p=m.p}
  else if(m.t==='fx'&&p.l)bc({t:'fx',a:m.a,b:m.b,i:id});
@@ -131,26 +136,34 @@ function H(m,id){
   v.h-=d;
   if(v.h<=0){v.h=0;v.l=false;v.d++;v.ra=Date.now()+10000;v.w=0;v.a=0; // mati: 10 dtk, senjata & armor hilang
    p.k++;p.m=Math.min(16000,p.m+300);bc({t:'kill',a:p.n,b:v.n,at:p.t,bt:v.t,w:p.w})}
- }else if(m.t==='buy'&&!p.l){ // beli hanya saat menunggu revive
-  if(m.k==='w'){const w=W[m.i];if(w&&p.m>=w.p&&p.w!==m.i){p.m-=w.p;p.w=m.i}}
+ }else if(m.t==='buy'){ // beli kapan saja (hidup maupun menunggu revive)
+  if(m.k==='w'){const w=W[m.i];if(w&&p.m>=w.p&&p.w!==m.i){p.m-=w.p;p.w=m.i;p.rf++}}
   else if(m.k==='a'&&p.m>=AP&&p.a<100){p.m-=AP;p.a=100}
+  else if(m.k==='m'&&p.w>0&&p.m>=AM){p.m-=AM;p.rf++} // isi ulang amunisi
  }
 }
 // ---------- Client ----------
 const me={p:new THREE.Vector3(),vy:0,yaw:0,pit:0};
 function M(m){
  if(m.t==='s')S=Object.fromEntries(m.l.map(o=>[o.i,o]));
+ else if(m.t==='ok')enter();
+ else if(m.t==='full'){st('Tim '+TN[m.team]+' sudah penuh (maks '+MAXT+' pemain). Pilih tim lain.');try{conn.close();peer.destroy()}catch(e){}}
  else if(m.t==='sp'){if(m.i===myId){me.p.set(m.x,0,m.z);me.yaw=m.q;me.pit=0;me.vy=0}}
  else if(m.t==='fx'){if(m.i!==myId)tracer(new THREE.Vector3(...m.a),new THREE.Vector3(...m.b))}
  else if(m.t==='kill'){const d=document.createElement('div');
   d.innerHTML=`<b style="color:${TC[m.at]}">${esc(m.a)}</b> [${W[m.w].n}] <b style="color:${TC[m.bt]}">${esc(m.b)}</b>`;$('feed').prepend(d);setTimeout(()=>d.remove(),5000)}
 }
 const buy=(k,i)=>{if(joined)send({t:'buy',k,i})};
-$('shop').innerHTML=W.map((w,i)=>`<button data-i="${i}">[${i+1}] ${w.n}<br>$${w.p} · dmg ${w.d} · ${w.r}/dtk</button>`).join('')+`<button data-a="1">[6] Armor +100<br>$${AP}</button>`;
-$('shop').onclick=e=>{const b=e.target.closest('button');if(!b)return;b.dataset.a?buy('a'):buy('w',+b.dataset.i)};
+$('shop').innerHTML=W.map((w,i)=>`<button data-i="${i}">[${i+1}] ${w.n}<br>$${w.p} · dmg ${w.d} · ${w.r}/dtk</button>`).join('')+`<button data-a="1">[6] Armor +100<br>$${AP}</button><button data-m="1">[7] Isi amunisi<br>$${AM}</button>`;
+$('shop').onclick=e=>{const b=e.target.closest('button');if(!b)return;b.dataset.a?buy('a'):b.dataset.m?buy('m'):buy('w',+b.dataset.i)};
+const amo={rf:-1,mag:0,rs:0,rl:0};let shopOpen=false; // rl = waktu selesai reload (0 = tidak reload)
+function reload(my){const w=W[my.w];if(amo.rl||amo.mag>=w.mg||amo.rs<=0)return;amo.rl=performance.now()+w.rt*1000;snd(150)}
 const K={};let fire=false,next=0,last=performance.now();
 addEventListener('keydown',e=>{K[e.code]=1;if(!joined)return;if(e.code==='Tab'){e.preventDefault();$('sb').style.display='flex'}
- const n=+e.key;if(n>=1&&n<=5)buy('w',n-1);if(e.key==='6')buy('a')});
+ const m=S[myId];if(!m)return;
+ if(e.code==='KeyB'&&!e.repeat&&m.l)shopOpen=!shopOpen;
+ if(e.code==='KeyR'&&m.l)reload(m);
+ if(!m.l||shopOpen){const n=+e.key;if(n>=1&&n<=5)buy('w',n-1);if(e.key==='6')buy('a');if(e.key==='7')buy('m')}});
 addEventListener('keyup',e=>{K[e.code]=0;if(e.code==='Tab')$('sb').style.display='none'});
 addEventListener('mousemove',e=>{if(document.pointerLockElement===R.domElement){me.yaw-=e.movementX*.0022;me.pit=Math.max(-1.5,Math.min(1.5,me.pit-e.movementY*.0022))}});
 addEventListener('mousedown',e=>{if(!joined||e.target.tagName==='BUTTON')return;document.pointerLockElement!==R.domElement?R.domElement.requestPointerLock():fire=true});
@@ -174,13 +187,17 @@ const _v=new THREE.Vector3();
 function loop(t){requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1000);last=t;const my=S[myId];
  if(joined&&my){
   vm.visible=my.l;
+  if(my.rf!==amo.rf){amo.rf=my.rf;const w=W[my.w];amo.mag=w.mg;amo.rs=my.w?w.mg*3:Infinity;amo.rl=0} // beli/revive → amunisi penuh
+  if(!my.l)amo.rl=0;
+  if(amo.rl&&t>=amo.rl){const w=W[my.w],n=Math.min(w.mg-amo.mag,amo.rs);amo.mag+=n;amo.rs-=n;amo.rl=0}
   if(my.l){
    let fx=(K.KeyD?1:0)-(K.KeyA?1:0),fz=(K.KeyW?1:0)-(K.KeyS?1:0);const l=Math.hypot(fx,fz)||1;fx/=l;fz/=l;
    const s=Math.sin(me.yaw),c=Math.cos(me.yaw),dx=(fx*c-fz*s)*6*dt,dz=(-fx*s-fz*c)*6*dt,p=me.p;
    if(!col(p.x+dx,p.z,p.y))p.x+=dx;if(!col(p.x,p.z+dz,p.y))p.z+=dz;
    const g=gnd(p.x,p.z,p.y);if(K.Space&&p.y<=g+.01)me.vy=8.5;me.vy-=25*dt;p.y+=me.vy*dt;if(p.y<g){p.y=g;me.vy=0}
    cam.position.set(p.x,p.y+1.6,p.z);cam.rotation.set(me.pit,me.yaw,0);cam.updateMatrixWorld(true);
-   if(fire&&document.pointerLockElement===R.domElement&&t>next){const w=W[my.w];next=t+1000/w.r;shoot(w,my)}
+   if(fire&&document.pointerLockElement===R.domElement&&t>next&&!amo.rl){
+    if(amo.mag<=0)reload(my);else{const w=W[my.w];next=t+1000/w.r;amo.mag--;shoot(w,my);if(!amo.mag)reload(my)}}
   }
  }
  for(const id in S){if(id===myId)continue;const e=S[id];let a=AV[id];if(!a)a=AV[id]=mkAv(e.t);
@@ -192,10 +209,12 @@ setInterval(()=>{const m=S[myId];if(joined&&m&&m.l)send({t:'pos',x:+me.p.x.toFix
 const tk=t=>Object.values(S).reduce((a,p)=>a+(p.t===t?p.k:0),0);
 setInterval(()=>{const m=S[myId];if(!joined||!m)return;
  $('hp').innerHTML=`❤ ${Math.ceil(m.h)} &nbsp; 🛡 ${m.a}<br><span style="font-size:15px">K ${m.k} / D ${m.d} · <span style="color:${TC[m.t]}">${TN[m.t]}</span></span>`;
- $('wp').innerHTML=`${W[m.w].n}<br>💰 $${m.m}`;
+ $('wp').innerHTML=`${W[m.w].n}<br>🔫 ${amo.rl?'RELOAD…':amo.mag+' / '+(amo.rs===Infinity?'∞':amo.rs)}<br>💰 $${m.m}<br><span style="font-size:12px">R reload · B toko</span>`;
  $('sc').innerHTML=`<b style="color:${TC[0]}">${tk(0)}</b> : <b style="color:${TC[1]}">${tk(1)}</b><br><span style="font-size:13px">Room ${esc(code)} · ${Object.keys(S).length} pemain</span>`;
- $('dead').style.display=m.l?'none':'block';$('dtl').textContent=m.f?'Siap-siap! Beli senjata':'Kamu mati — revive dalam';$('dt').textContent=Math.ceil(m.r)+'s';
- [...$('shop').children].forEach((b,i)=>{const w=W[i];b.disabled=w?(m.m<w.p||m.w===i):(m.m<AP||m.a>=100);b.classList.toggle('on',!!w&&m.w===i)});
+ if(!m.l)shopOpen=false;
+ $('dead').style.display=!m.l||shopOpen?'block':'none';$('dead').classList.toggle('live',m.l);
+ $('dtl').textContent=m.l?'TOKO — tekan B untuk menutup':m.f?'Siap-siap! Beli senjata':'Kamu mati — revive dalam';$('dt').textContent=Math.ceil(m.r)+'s';
+ [...$('shop').children].forEach((b,i)=>{const w=W[i];b.disabled=w?(m.m<w.p||m.w===i):i===5?(m.m<AP||m.a>=100):(m.w<1||m.m<AM);b.classList.toggle('on',!!w&&m.w===i)});
  $('hint').style.display=m.l&&document.pointerLockElement!==R.domElement?'block':'none';
  $('sb').innerHTML=[0,1].map(t=>`<div><h3 style="color:${TC[t]}">${TN[t]} — ${tk(t)}</h3>`+Object.values(S).filter(p=>p.t===t).sort((a,b)=>b.k-a.k).map(p=>`<div><span>${esc(p.n)}</span><span>${p.k} / ${p.d}</span></div>`).join('')+'</div>').join('');
 },100);
