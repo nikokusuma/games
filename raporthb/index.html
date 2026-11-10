@@ -15,7 +15,7 @@ input,select,button{font:inherit}input,select{border:1px solid var(--ln);border-
 .t input.n{width:50px;padding:3px;text-align:center}.t input.w{width:100%}.t td.r,.t td.ak,.t td.tot{text-align:center;font-weight:600}
 #rapor .pg{background:#fff;width:215mm;padding:0 15mm;display:flex;flex-direction:column;box-shadow:0 1px 4px #0003;margin:0 auto 12px;font:12pt "Times New Roman",serif;color:#000;page-break-after:always}#rapor .pg:last-child{page-break-after:auto}.bd{flex:1;min-height:0;padding-bottom:3mm}.st{display:none}#rapor .pg.zh{font-family:"Times New Roman",KaiTi,"Kaiti SC","楷体","STKaiti","BiauKai","AR PL UKai CN",serif}.mh,.mr{table-layout:fixed}.mr{margin-top:-1px}.ft{border-top:1px solid #000;padding-top:1mm;margin-top:4mm;font-size:10pt;display:flex;justify-content:space-between}
 .rp{border-collapse:collapse;width:100%}.rp th,.rp td{border:1px solid #000;padding:1.5mm 2mm;font-size:11pt;vertical-align:top}.idn{width:100%;margin-bottom:4mm}.ttd{width:100%;text-align:center;margin-top:6mm}.ttd td{width:50%}
-@media print{header,.noprint{display:none!important}body{background:#fff}main{padding:0;max-width:none}#rapor .pg{margin:0;width:auto;padding:0 15mm;box-shadow:none}}
+@media print{header,.noprint,#toast{display:none!important}body{background:#fff}main{padding:0;max-width:none}#rapor .pg{margin:0;width:auto;padding:0 15mm;box-shadow:none}}
 #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:6px;max-width:90vw;z-index:9;display:none}#toast.bad{background:var(--bad)}
 </style></head>
 <body><header></header><main></main><div id="toast"></div>
@@ -35,7 +35,7 @@ let db,S={v:"umum",set:{},kelas:[],siswa:[],mapel:[],sem:"1",k:"",m:"",ag:AG[0],
 let tt;const T=(m,bad)=>{const t=$("#toast");t.textContent=m;t.className=bad?"bad":"";t.style.display="block";clearTimeout(tt);tt=setTimeout(()=>t.style.display="none",bad?12000:2000)};
 const em=e=>e.code=="permission-denied"?"Akses ditolak oleh Firestore. Buka Firestore Database > Rules, isi: allow read, write: if request.auth != null; lalu klik Publish.":["unavailable","failed-precondition","not-found"].includes(e.code)?"Tidak bisa terhubung ke database. Pastikan Firestore Database sudah dibuat (Build > Firestore Database > Create database) dan internet aktif.":e.message,er=e=>T(em(e),1),W=p=>p.then(()=>T("Tersimpan")).catch(er);
 addEventListener("error",e=>T("Terjadi kesalahan: "+e.message,1));addEventListener("unhandledrejection",e=>T("Terjadi kesalahan: "+((e.reason&&e.reason.message)||e.reason),1));
-function cetakRapor(){try{T("Membuka dialog cetak. Jika tidak muncul, tekan Ctrl+P.");window.print()}catch(e){T("Gagal membuka dialog cetak: "+e.message+". Coba tekan Ctrl+P.",1)}}
+function cetakRapor(){try{window.print()}catch(e){T("Gagal membuka dialog cetak: "+e.message+". Coba tekan Ctrl+P.",1)}}
 const C=n=>db.collection(n),upd=(c,id,k,v)=>W(C(c).doc(id).set({[k]:v},{merge:true})),su=()=>W(C("pengaturan").doc("umum").set(Object.fromEntries(["sekolah","kepsek","tahun","top","bot","tgl"].map(k=>[k,$("#u_"+k).value])),{merge:true}));
 const tk=()=>{const n=((S.kelas.find(k=>k.id==S.k)||{}).nama||"").toUpperCase(),d=n.match(/\d+/);if(d)return +d[0];const r=n.match(/\b(VI|V|IV|III|II|I)\b/);return r?{I:1,II:2,III:3,IV:4,V:5,VI:6}[r[1]]:0},ms=()=>S.mapel.filter(m=>!m.min||tk()>=m.min),cm=()=>ms().find(x=>x.id==S.m&&pm(x,S.v!="cp").length),sis=()=>S.siswa.filter(s=>s.kelas==S.k);
 const siswaM=m=>sis().filter(s=>!m.agama||s.agama==S.ag),nid=(s,m)=>s.id+"_"+m.id+"_"+S.sem;
