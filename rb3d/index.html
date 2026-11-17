@@ -89,14 +89,18 @@ function mkGun(i){const g=new THREE.Group(),a=(w,h,l,c,x,y,z,bs)=>{const o=new T
   const c=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,.12,10),mat(0x9e9e9e));c.rotation.x=Math.PI/2;c.position.set(0,.02,-.22);g.add(c)}
  else{a(.08,.12,.4,0x263238,0,0,-.22);a(.09,.03,.3,0x00e5ff,0,.075,-.22,1);a(.05,.05,.08,0x00e5ff,0,0,-.46,1);a(.05,.1,.07,0x263238,0,-.1,-.04)}
  return g}
-function mkAv(t){const g=new THREE.Group(),m=mat(t?0x1e88e5:0xe53935),sk=mat(0xf1c27d),a=(geo,mt,x,y,z,p)=>{const o=new THREE.Mesh(geo,mt);o.position.set(x,y,z);(p||g).add(o)};
+function mkTag(n,t){const c=document.createElement('canvas');c.width=256;c.height=64;const x=c.getContext('2d');
+ x.font='bold 30px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';x.lineWidth=7;x.lineJoin='round';
+ x.strokeStyle='rgba(0,0,0,.9)';x.strokeText(n,128,32);x.fillStyle=t?'#64b5f6':'#ff8a80';x.fillText(n,128,32);
+ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,fog:false}));sp.renderOrder=10;return sp}
+function mkAv(t,n){const g=new THREE.Group(),m=mat(t?0x1e88e5:0xe53935),sk=mat(0xf1c27d),a=(geo,mt,x,y,z,p)=>{const o=new THREE.Mesh(geo,mt);o.position.set(x,y,z);(p||g).add(o)};
  a(new THREE.BoxGeometry(.7,1.1,.4),m,0,.8,0);a(new THREE.SphereGeometry(.2),sk,0,1.6,0);a(new THREE.BoxGeometry(.6,.5,.3),m,0,.25,0);
  a(new THREE.BoxGeometry(.12,.12,.5),sk,.3,1.12,-.12);a(new THREE.BoxGeometry(.12,.5,.12),sk,-.42,.9,0);
  // armor: rompi + bahu + helm (hanya tampil bila armor > 0)
  const ar=new THREE.Group(),sm=mat(0x37474f),tm=mat(t?0x64b5f6:0xef9a9a);
  a(new THREE.BoxGeometry(.78,.7,.5),sm,0,1,0,ar);a(new THREE.BoxGeometry(.2,.14,.5),tm,.4,1.38,0,ar);a(new THREE.BoxGeometry(.2,.14,.5),tm,-.4,1.38,0,ar);
  const hm=new THREE.Mesh(new THREE.SphereGeometry(.26,12,8,0,Math.PI*2,0,Math.PI/2),sm);hm.position.y=1.62;ar.add(hm);
- const sl=new THREE.Group();sl.position.set(.3,1.12,-.3);g.add(sl,ar);g.userData={sl,ar,gi:-1};sc.add(g);return g}
+ const sl=new THREE.Group();sl.position.set(.3,1.12,-.3);g.add(sl,ar);const tag=mkTag(n,t);g.add(tag);g.userData={sl,ar,tag,gi:-1};sc.add(g);return g}
 function tracer(a,b){const l=new THREE.Line(new THREE.BufferGeometry().setFromPoints([a,b]),new THREE.LineBasicMaterial({color:0xffee88}));sc.add(l);setTimeout(()=>{sc.remove(l);l.geometry.dispose()},60)}
 let ac;function snd(f){try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain();o.type='square';o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(ac.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.08);o.stop(ac.currentTime+.09)}catch(e){}}
 // ---------- Network ----------
@@ -237,8 +241,8 @@ function loop(t){requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1000
     if(amo.mag<=0)reload(my);else{const w=W[my.w];next=t+1000/w.r;amo.mag--;shoot(w,my);if(!amo.mag)reload(my)}}
   }
  }
- for(const id in S){if(id===myId)continue;const e=S[id];let a=AV[id];if(!a)a=AV[id]=mkAv(e.t);
-  const was=a.visible;a.visible=e.l;if(!was||!e.l)a.position.set(e.x,e.y,e.z);else a.position.lerp(_v.set(e.x,e.y,e.z),.3);a.rotation.y=e.q;const u=a.userData;if(u.gi!==e.w){u.gi=e.w;while(u.sl.children.length)u.sl.remove(u.sl.children[0]);u.sl.add(mkGun(e.w))}u.ar.visible=e.a>0}
+ for(const id in S){if(id===myId)continue;const e=S[id];let a=AV[id];if(!a)a=AV[id]=mkAv(e.t,e.n);
+  const was=a.visible;a.visible=e.l;if(!was||!e.l)a.position.set(e.x,e.y,e.z);else a.position.lerp(_v.set(e.x,e.y,e.z),.3);a.rotation.y=e.q;const u=a.userData;if(u.gi!==e.w){u.gi=e.w;while(u.sl.children.length)u.sl.remove(u.sl.children[0]);u.sl.add(mkGun(e.w))}u.ar.visible=e.a>0;const k=Math.max(1,Math.min(3,cam.position.distanceTo(a.position)/12));u.tag.scale.set(2*k,.5*k,1);u.tag.position.y=1.95+.25*k}
  for(const id in AV)if(!S[id]){sc.remove(AV[id]);delete AV[id]}
  R.render(sc,cam)}
 requestAnimationFrame(loop);
@@ -251,7 +255,7 @@ setInterval(()=>{const m=S[myId];if(!joined||!m)return;
  if(GS.ip>0){bn.innerHTML=`<span style="color:${TC[GS.win]}">TIM ${TN[GS.win]} MENANG!</span><br><span style="font-size:18px">Peta baru dalam ${Math.ceil(GS.ip)} detik</span>`;bn.style.display='block'}
  else if(GS.n>1&&Date.now()<banUntil){bn.innerHTML=`PETA BARU #${GS.n}<br><span style="font-size:18px">Tim pertama mencapai ${KILLS} kill menang</span>`;bn.style.display='block'}
  else bn.style.display='none';
- $('hp').innerHTML=`❤ ${Math.ceil(m.h)} &nbsp; 🛡 ${m.a}<br><span style="font-size:15px">K ${m.k} / D ${m.d} · <span style="color:${TC[m.t]}">${TN[m.t]}</span></span>`;
+ $('hp').innerHTML=`❤ ${Math.ceil(m.h)} &nbsp; 🛡 ${m.a}<br><span style="font-size:15px">${esc(m.n)} · K ${m.k} / D ${m.d} · <span style="color:${TC[m.t]}">${TN[m.t]}</span></span>`;
  $('wp').innerHTML=`${W[m.w].n}<br>🔫 ${amo.rl?'RELOAD…':amo.mag+' / '+(amo.rs===Infinity?'∞':amo.rs)}<br>💰 $${m.m}<br><span style="font-size:12px">R reload · B toko</span>`;
  $('sc').innerHTML=`<b style="color:${TC[0]}">${GS.gk[0]}</b> : <b style="color:${TC[1]}">${GS.gk[1]}</b> <span style="font-size:13px">(target ${KILLS})</span><br><span style="font-size:13px">Peta #${GS.n} · ronde menang ${GS.rw[0]}-${GS.rw[1]} · Room ${esc(code)} · ${Object.keys(S).length} pemain</span>`;
  if(!m.l)shopOpen=false;
